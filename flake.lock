@@ -80,16 +80,16 @@
         "import-tree": "import-tree",
         "nanoyalla": "nanoyalla",
         "nixpkgs": "nixpkgs",
+        "rocq-linlog": "rocq-linlog",
         "rust-overlay": "rust-overlay",
-        "treefmt-nix": "treefmt-nix",
-        "yalla": "yalla"
+        "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1793408928,
-        "narHash": "sha256-XXpw1m16FVRQyoH3OVEB1E15jfoTrJ7VojVqnfadri4=",
+        "lastModified": 1793658693,
+        "narHash": "sha256-/W9IdcpUB9xU8OING6UmOy+6Z+p+Gb4WbfJcXN54vHA=",
         "owner": "linlog-prover",
         "repo": "linlog",
-        "rev": "f0449491854c61f1aa85ad1b74459c6df74faf06",
+        "rev": "1f4f986a519712a2e7ea2ea819d8042cfa027b68",
         "type": "github"
       },
       "original": {
@@ -126,6 +126,44 @@
       "original": {
         "type": "tarball",
         "url": "https://channels.nixos.org/nixpkgs-unstable/nixexprs.tar.zst"
+      }
+    },
+    "rocq-linlog": {
+      "inputs": {
+        "flake-parts": [
+          "linlog",
+          "flake-parts"
+        ],
+        "import-tree": [
+          "linlog",
+          "import-tree"
+        ],
+        "nanoyalla": [
+          "linlog",
+          "nanoyalla"
+        ],
+        "nixpkgs": [
+          "linlog",
+          "nixpkgs"
+        ],
+        "treefmt-nix": [
+          "linlog",
+          "treefmt-nix"
+        ],
+        "yalla": "yalla"
+      },
+      "locked": {
+        "lastModified": 1793658657,
+        "narHash": "sha256-Otspt7bfUtQd0WkQkdnRc/QyFreOVcbO3JZGR9n5fZk=",
+        "owner": "linlog-prover",
+        "repo": "rocq-linlog",
+        "rev": "b895ecd15b5da203ef11538e2f8ed953f289d6b6",
+        "type": "github"
+      },
+      "original": {
+        "owner": "linlog-prover",
+        "repo": "rocq-linlog",
+        "type": "github"
       }
     },
     "root": {
