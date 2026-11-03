@@ -25,5 +25,8 @@ says why each piece is as it is) and the author's learning sites'.
   and that it is executable. A new guard gets its cases there in the same change.
 - **Permissions**: git, `npm ci`, `npx`, `npm exec` and hand edits of `LICENSE` and both
   lock files are denied; `jj git push` and every `gh` command ask.
+- **Attribution**: `attribution.sessionUrl` is `false` (the author, 2026-11-03, for
+  privacy), so no commit gets a `Claude-Session:` link to its claude.ai session, as in
+  linlog. 33 commits from before carry one, kept as pushed. `Co-Authored-By` stays.
 - **Keep it current**: when the repo changes shape, amend `.claude/` and CLAUDE.md in the
   same change.

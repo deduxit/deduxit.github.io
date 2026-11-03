@@ -5,6 +5,9 @@
     "CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS": "1",
     "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "128000"
   },
+  "attribution": {
+    "sessionUrl": false
+  },
   "permissions": {
     "allow": [
       "Bash(nix build *)",
