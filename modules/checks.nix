@@ -2,8 +2,9 @@
 # Licensed under the EUPL
 
 # What `nix flake check' covers beyond the `treefmt' check treefmt-nix adds
-# on its own, `claude-hooks' (claude-hooks.nix) and `playwright-version'
-# (playwright.nix). Each check is also a target of its own:
+# on its own, `claude-hooks' and `claude-worktree-hook' (claude-hooks.nix)
+# and `playwright-version' (playwright.nix). Each check is also a target of
+# its own:
 # `nix build --no-link .#checks.x86_64-linux.<name>'. Each reads only its own
 # files (`lib.fileset'), so a change reruns only the checks it can affect.
 #

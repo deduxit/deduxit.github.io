@@ -1,6 +1,9 @@
 # Claude Code: personal, per-machine overrides
 .claude/settings.local.json
 CLAUDE.local.md
+# Claude Code's own git worktrees; .claude/hooks/jj-worktree.py makes jj
+# workspaces beside the repository instead, but the path stays ignored
+.claude/worktrees/
 
 # npm: node_modules is a directory of symlinks into the Nix store, made by
 # the dev shell (modules/devshell.nix); Vite and Astro add their caches.

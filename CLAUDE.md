@@ -27,6 +27,8 @@ which its flake, its tooling and its Claude Code setup are taken.
 
 1. **Jujutsu, never git.** The repo is colocated with git only so that nix and GitHub work.
    Every git command, reading ones included, is refused by `.claude/hooks/block-git.py`.
+   An isolated agent or session gets a jj workspace, `../linlog-prover.github.io-wt-NAME`,
+   in place of a git worktree; `.claude/hooks/jj-worktree.py prune` removes the empty ones.
    Commits are signed (jj signs every commit; the global CLAUDE.md says what to do when
    gpg's lock is stale).
 2. **Commit thematically, without being asked**: one logical unit per change, committed as
