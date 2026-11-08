@@ -10,12 +10,12 @@
 //
 // Its scope is the whole origin, since the page it serves is at / and a
 // scope is a path prefix; but linlog's documentation at
-// /linlog/ is another site on the same origin, and nothing of it passes
+// /sequentium/ is another site on the same origin, and nothing of it passes
 // through here. The worker answers only requests for the site's own files
 // (FILES) and navigations to the prover's page; every other request,
-// /linlog/ above all, goes to the network as if there were no worker, and
+// /sequentium/ above all, goes to the network as if there were no worker, and
 // where the browser can route by pattern (the Static Routing API) requests
-// under /linlog never reach the worker at all.
+// under /sequentium never reach the worker at all.
 //
 // The cache is written when the worker installs, every file of FILES fetched
 // past the browser's HTTP cache (Pages lets it keep a file ten minutes, and
@@ -36,14 +36,14 @@ const CACHE = PREFIX + VERSION;
 const OWN = new Set([...FILES, ...LATER]);
 
 /** Whether a path is linlog's own Pages site, which this worker never touches. */
-const isLinlog = (path) => path === "/linlog" || path.startsWith("/linlog/");
+const isDocs = (path) => path === "/sequentium" || path.startsWith("/sequentium/");
 
 self.addEventListener("install", (event) => {
   const routed = event.addRoutes
     ? event
         .addRoutes([
-          { condition: { urlPattern: "/linlog" }, source: "network" },
-          { condition: { urlPattern: "/linlog/*" }, source: "network" },
+          { condition: { urlPattern: "/sequentium" }, source: "network" },
+          { condition: { urlPattern: "/sequentium/*" }, source: "network" },
         ])
         .catch(() => undefined)
     : Promise.resolve();
@@ -75,7 +75,7 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const { request } = event;
   const url = new URL(request.url);
-  if (request.method !== "GET" || url.origin !== self.location.origin || isLinlog(url.pathname)) {
+  if (request.method !== "GET" || url.origin !== self.location.origin || isDocs(url.pathname)) {
     return;
   }
   const page =

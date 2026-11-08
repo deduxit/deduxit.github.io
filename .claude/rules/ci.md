@@ -31,6 +31,6 @@ paths:
   start with a dot), and the `deploy` job, the only one with `pages: write` and
   `id-token: write`, publishes it (`deploy-pages`) in the `github-pages` environment. The
   repository's Pages source is "GitHub Actions": no Jekyll build, no `.nojekyll`.
-- **`/linlog` is linlog's own Pages site** (its rustdoc), a project site on the same
-  address: nothing here may publish a path at `/linlog` (the `pages-paths` check), and
+- **`/sequentium` is the Pages site of linlog's repository** (its rustdoc and manual), a
+  project site on the same address: nothing here may publish a path at `/sequentium` (the `pages-paths` check), and
   the service worker leaves it alone (`.claude/rules/web.md`).

@@ -42,8 +42,9 @@
 #               sequent that `proof' accepts, no unprovable one with a session
 #               (modules/_checks/problems.py)
 #   pages-paths the site as Pages publishes it: a 404.html at its root, and
-#               nothing at /linlog or under it, where linlog's own Pages
-#               site (the rustdoc) lives on the same address
+#               nothing at /sequentium or under it, where the Pages site of
+#               linlog's repository (the rustdoc and the manual) lives on
+#               the same address
 #   licence-headers
 #               every source file starts with the project's licence header
 #               in its comment syntax
@@ -157,14 +158,14 @@
         problems = []
         if not (site / "404.html").is_file():
             problems.append("no 404.html at the site's root, which Pages serves for a missing path")
-        # Paths are matched as Pages matches them, case and all: /linlog is
-        # linlog's project site, which a file of this one must never shadow.
-        taken = sorted(str(p.relative_to(site)) for p in site.iterdir() if p.name.split(".")[0] == "linlog")
+        # Paths are matched as Pages matches them, case and all: /sequentium is
+        # the project site of linlog's repository, which a file of this one must never shadow.
+        taken = sorted(str(p.relative_to(site)) for p in site.iterdir() if p.name.split(".")[0] == "sequentium")
         if taken:
-            problems.append("the site has paths at /linlog, linlog's own Pages site: " + ", ".join(taken))
+            problems.append("the site has paths at /sequentium, the Pages site of linlog's repository: " + ", ".join(taken))
         if problems:
             sys.exit("\n".join(problems))
-        print("404.html is at the root, and nothing is at /linlog")
+        print("404.html is at the root, and nothing is at /sequentium")
       '';
 
       licenceHeaders = pkgs.writeText "check-licence-headers.py" ''

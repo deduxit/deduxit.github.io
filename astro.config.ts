@@ -31,7 +31,7 @@ const here = (path: string) => fileURLToPath(new URL(path, import.meta.url));
 const linked = (path: string) => (existsSync(here(path)) ? [realpathSync(here(path))] : []);
 
 export default defineConfig({
-  site: "https://linlog-prover.github.io",
+  site: "https://sequentium.github.io",
   output: "static",
   build: {
     format: "directory",

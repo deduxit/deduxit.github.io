@@ -9,7 +9,7 @@
 # to main and every pull request is checked; main, once its checks pass, is
 # deployed to GitHub Pages as the organization's site at its root address:
 # packages.default and nothing else. linlog's own Pages site, the rustdoc at
-# /linlog/, is a project site of linlog's repository on the same address,
+# /sequentium/, is a project site of linlog's repository on the same address,
 # which no deployment here touches. Actions are pinned to full commit SHAs,
 # with the version in a trailing comment.
 name: CI

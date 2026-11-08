@@ -1,7 +1,7 @@
 # linlog © Fabian Lukas Grubmüller 2026
 # Licensed under the EUPL
 
-# linlog's web front end, served at https://linlog-prover.github.io/, as a
+# linlog's web front end, served at https://sequentium.github.io/, as a
 # flake in the dendritic pattern (flake-parts + import-tree): every .nix file
 # under modules/ is discovered automatically and configures one aspect of the
 # flake (a path segment starting with `_' is skipped), so this file declares
@@ -16,7 +16,7 @@
     # Pinned by flake.lock to a commit on linlog's main; while a change of
     # linlog is under way, `--override-input linlog path:../linlog-…' points
     # a build at a local workspace without touching the lock.
-    linlog.url = "github:linlog-prover/linlog";
+    linlog.url = "github:sequentium/sequentium";
 
     # linlog's own nixpkgs, so that the bindings and the site share one
     # package set (and one store and one binary cache), and an update of

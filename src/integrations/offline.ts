@@ -16,7 +16,7 @@
  * - `/sw.js`: the service worker (src/offline/sw.js) with the list of every
  *   file of the site and a hash of their contents filled in.
  *
- * Nothing is written at /linlog, linlog's own Pages site on the same origin
+ * Nothing is written at /sequentium, linlog's own Pages site on the same origin
  * (the `pages-paths` check), and the worker leaves that path alone.
  */
 
@@ -93,8 +93,8 @@ export function offline(): AstroIntegration {
             url,
           ),
         );
-        if (urls.some((url) => url === "/linlog" || url.startsWith("/linlog/"))) {
-          throw new Error("a file at /linlog, linlog's own Pages site");
+        if (urls.some((url) => url === "/sequentium" || url.startsWith("/sequentium/"))) {
+          throw new Error("a file at /sequentium, linlog's own Pages site");
         }
         const source = await readFile(new URL("src/offline/sw.js", root), "utf8");
         if (

@@ -6,13 +6,13 @@ Maintainer notes (stripped before Claude sees this file).
 - What goes where (this file, path-scoped rules, hooks) is .claude/rules/claude-infra.md.
 -->
 
-linlog's web front end, to be served at https://linlog-prover.github.io/: a student types a
+linlog's web front end, to be served at https://sequentium.github.io/: a student types a
 sequent of linear logic and proves it by clicking, or lets the search close a goal, and
 sees the derivation and, for MLL, the net drawn as the command draws them. Nothing is
 installed and nothing is sent to a server: the prover runs in the page, as linlog's
 WebAssembly module in a module worker.
 
-The prover itself is the repository `linlog-prover/linlog` (locally
+The prover itself is the repository `sequentium/sequentium` (locally
 `~/Projects/own/linlog`): its crate `linlog-web` is the module and its JavaScript glue,
 built by linlog's flake as the package `linlog-web`, which this flake takes through its
 pinned input `linlog` and builds no Rust itself. A change the page needs from the library
@@ -84,7 +84,7 @@ and `src/` are the site:
   `privacy.astro` the privacy notice, every statement citing its source; `llms.txt.ts`
   the site's `/llms.txt` for AI models (llmstxt.org), its text `src/content/llms.txt`: what
   the page is and the links to linlog's guide for models, which linlog's rustdoc site
-  serves at `/linlog/llms.txt` and `/linlog/llms-full.txt`.
+  serves at `/sequentium/llms.txt` and `/sequentium/llms-full.txt`.
 - `src/content/`: the written content (CC BY 4.0), Markdown in content collections
   (`src/content.config.ts`): the store of problems with their sessions, Learn's lessons and
   the rules' schemas, the tour, and the texts (About, Practice's and Learn's openings).
