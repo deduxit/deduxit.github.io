@@ -85,11 +85,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1794165983,
-        "narHash": "sha256-l3FT2zgs42HfWSM9AnX6hmaJtTSW1aCBaG5zWB6mgQ8=",
+        "lastModified": 1794176283,
+        "narHash": "sha256-CL+pRWT4UWXL4H/wsR6DpQyfRRduXA3QL/Ilvm5yN/Q=",
         "owner": "sequentium",
         "repo": "sequentium",
-        "rev": "864bca2c93932f45458756b06aeb3c74f981679c",
+        "rev": "9c2c246409e1e005075c560cd01494466fcaae55",
         "type": "github"
       },
       "original": {
