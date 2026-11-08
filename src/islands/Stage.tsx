@@ -39,7 +39,9 @@ import {
   type Outcome,
   type StepForm,
 } from "../lib/linlog";
-import { goalAt, paths, searchMade } from "../lib/steps";
+import { isOrdinary } from "../lib/ordinary";
+import { goalAt, paths, searchMade, subtree } from "../lib/steps";
+import { intuitionistic } from "../lib/suites";
 import { readingOf, rungs, type Said, shown, stepLine } from "../lib/words";
 import {
   type Elim,
@@ -49,6 +51,8 @@ import {
   type On,
   type Prover,
   pathKey,
+  type Settings,
+  viewJson,
 } from "./state";
 import { ladderKey, phone, token, type Ui, Words } from "./ui";
 
@@ -105,6 +109,17 @@ const drawSettings = (
     ...(cutSteps ? { cut: { steps: cutSteps } } : {}),
     styles: { svg: { font_size: 30, essential, net, net_look: lookJson(look), font } },
     ...(twoSided ? { view: { classical: "two" } } : {}),
+  });
+
+/**
+ * The settings of an ordinary derivation's drawing: the formulas large enough to click, in the
+ * stage's font, its weakenings and contractions drawn where Settings asks it.
+ */
+const ordinaryDrawSettings = (settings: Settings) =>
+  JSON.stringify({
+    limits: { work: settings.budget },
+    styles: { svg: { font_size: 30, font: settings.stageFont } },
+    ...viewJson(settings, { suite: "ordinary", method: "sequent", logic: "classical" }),
   });
 
 export function Stage(props: { prover: Prover; ui: Ui }) {
@@ -170,7 +185,9 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
     const s = props.prover.settings();
     return drawSettings(
       s.budget,
-      (proof()?.mode ?? "classical").startsWith("intuitionistic"),
+      intuitionistic(
+        proof()?.calculus ?? { suite: "linear", method: "sequent", mode: "classical" },
+      ),
       s.net,
       s.netLook,
       s.stageFont,
@@ -195,6 +212,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
           props.prover.settings().netLook,
           props.prover.settings().stageFont,
           props.prover.settings().twoSided,
+          props.prover.settings().structural,
           proof()?.elim.tree?.reached,
           proof()?.elim.tree?.shown,
           proof()?.elim.net?.reached,
@@ -224,6 +242,11 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
               );
             }
             svg = drawing;
+          } else if (isOrdinary(session)) {
+            svg = await props.prover.api.ordinary.draw(
+              session,
+              ordinaryDrawSettings(props.prover.settings()),
+            );
           } else {
             // An intuitionistic proof's net is its essential net.
             const settings = drawSettings(
@@ -301,10 +324,19 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
     }
     setCutHits([]);
     const open = new Set(v.goals.map((g) => g.goal));
-    const made = searchMade(session);
     const act = active();
     const where = paths(session);
     const engines = proof()?.engines ?? {};
+    // An ordinary session cannot tell a search's graft from a step's own run of weakenings or
+    // contractions, so its grafts are the goals the page saw the search close.
+    const made = isOrdinary(session)
+      ? new Set(
+          Object.keys(engines).flatMap((key) => {
+            const at = goalAt(session, key === "" ? [] : key.split(".").map(Number));
+            return at === undefined ? [] : subtree(session, at);
+          }),
+        )
+      : searchMade(session);
     v.inferences.forEach((inference, n) => {
       const group = host.querySelector(`#i${n}`);
       if (!group) return;
@@ -1404,18 +1436,20 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
               >
                 Close goal
               </button>
-              <button
-                type="button"
-                class="btn btn-s"
-                data-tip="Cut this goal on a formula you type: two premises, one proving it, one using it"
-                aria-expanded={ui.cutting !== null}
-                onClick={() => {
-                  const goal = active();
-                  if (goal !== undefined) openCut(goal);
-                }}
-              >
-                Cut
-              </button>
+              <Show when={proof()?.calculus.suite === "linear"}>
+                <button
+                  type="button"
+                  class="btn btn-s"
+                  data-tip="Cut this goal on a formula you type: two premises, one proving it, one using it"
+                  aria-expanded={ui.cutting !== null}
+                  onClick={() => {
+                    const goal = active();
+                    if (goal !== undefined) openCut(goal);
+                  }}
+                >
+                  Cut
+                </button>
+              </Show>
               <button
                 type="button"
                 class="btn btn-s icon"
@@ -1650,7 +1684,10 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
               <label class="cut-field">
                 <span class="sub">
                   The cut formula, written as{" "}
-                  {(proof()?.mode ?? "").startsWith("intuitionistic")
+                  {proof()?.calculus.suite === "linear" &&
+                  intuitionistic(
+                    proof()?.calculus ?? { suite: "linear", method: "sequent", mode: "classical" },
+                  )
                     ? "in intuitionistic logic"
                     : "in this tab"}
                 </span>

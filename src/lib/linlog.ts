@@ -127,7 +127,8 @@ export interface Failure {
 
 /** What the page shows of a session. */
 export interface View {
-  readonly mode: Mode;
+  /** The linear mode; an ordinary view has none. */
+  readonly mode?: Mode;
   readonly fragment: string;
   readonly complete: boolean;
   readonly steps: number;
@@ -163,7 +164,12 @@ export interface Offered {
  * left, and for ∃R or ∀L the witness as text (left out: open, written `$1`, `$2`, …).
  */
 export interface StepForm {
+  /**
+   * The goal's formula: by its place in the goal; or, in an ordinary proof whose step acts on a
+   * goal another step opened (a hint's), by its `side` of ⊢ and its position there.
+   */
   readonly position: number;
+  readonly side?: "left" | "right";
   readonly rule: string;
   readonly left?: readonly number[];
   readonly witness?: string;

@@ -10,6 +10,7 @@
 
 import type {
   Closed,
+  Failure,
   ClosedAll,
   Hint,
   Inverted,
@@ -25,6 +26,7 @@ import type {
   StepForm,
   Stepped,
 } from "./linlog";
+import type { OrdinaryOutcome, OrdinarySession, OrdinaryStep, OrdinaryView } from "./ordinary";
 import { type Client, createClient, type WorkerLike } from "./protocol";
 import type { Action, Replayed } from "./steps";
 
@@ -33,6 +35,24 @@ export interface About {
   readonly linlog: string;
   readonly level: number;
   readonly stack_bytes: number;
+  /** The suites, each with the prefix of its calls and its parameters. */
+  readonly suites: readonly {
+    readonly suite: string;
+    readonly name: string;
+    readonly calls: string;
+    readonly parameters: readonly {
+      readonly name: string;
+      readonly values: readonly string[];
+      readonly default: string;
+    }[];
+    readonly settings: readonly string[];
+  }[];
+}
+
+/** An ordinary session with its view, as `ordinary_start`, `ordinary_apply` and `ordinary_undo` answer. */
+export interface OrdinaryPlayed {
+  readonly session: OrdinarySession;
+  readonly view: OrdinaryView;
 }
 
 /** The page's handle on linlog. */
@@ -132,6 +152,60 @@ export function createApi(changed: (pending: number) => void) {
       client.call<Uint8Array>("render", svg, format, font, settings),
     certificate: (outcome: Outcome, settings: string) =>
       client.call<string>("certificate", JSON.stringify(outcome), settings),
+    /** The ordinary suite's calls (`ordinary_…`): sessions of LK and LJ. */
+    ordinary: {
+      start: (sequent: string, logic: string, settings: string) =>
+        json<OrdinaryPlayed>("ordinary_start", sequent, logic, settings),
+      view: (session: OrdinarySession, settings: string) =>
+        json<OrdinaryView>("ordinary_view", JSON.stringify(session), settings),
+      rules: (
+        session: OrdinarySession,
+        goal: number,
+        side: string,
+        position: number,
+        settings: string,
+      ) =>
+        json<{ rule: string; split: boolean }[]>(
+          "ordinary_rules",
+          JSON.stringify(session),
+          goal,
+          side,
+          position,
+          settings,
+        ),
+      apply: (session: OrdinarySession, goal: number, step: OrdinaryStep, settings: string) =>
+        json<OrdinaryPlayed & { opened: number[] }>(
+          "ordinary_apply",
+          JSON.stringify(session),
+          goal,
+          JSON.stringify(step),
+          settings,
+        ),
+      undo: (session: OrdinarySession, settings: string) =>
+        json<OrdinaryPlayed & { reopened: number | null }>(
+          "ordinary_undo",
+          JSON.stringify(session),
+          settings,
+        ),
+      close: (session: OrdinarySession, goal: number, settings: string) =>
+        json<OrdinaryPlayed & { outcome: OrdinaryOutcome; refused: Failure | null }>(
+          "ordinary_close",
+          JSON.stringify(session),
+          goal,
+          settings,
+        ),
+      hint: (session: OrdinarySession, goal: number, settings: string) =>
+        json<{ outcome: OrdinaryOutcome; steps: OrdinaryStep[] }>(
+          "ordinary_hint",
+          JSON.stringify(session),
+          goal,
+          settings,
+        ),
+      draw: (session: OrdinarySession, settings: string) =>
+        client.call<string>("ordinary_draw", JSON.stringify(session), settings),
+      exportAs: (session: OrdinarySession, format: string, settings: string) =>
+        client.call<string>("ordinary_export", JSON.stringify(session), format, settings),
+    },
     replay: (session: SessionDoc, todo: readonly Action[], settings: string) =>
       json<Replayed>("replay", doc(session), JSON.stringify(todo), settings),
     play: (start: Played, todo: readonly Action[], settings: string) =>

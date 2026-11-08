@@ -1296,7 +1296,10 @@ function Exercise(props: {
   const proved = () => {
     const p = props.prover.current();
     const mine =
-      p?.view?.complete && p.input === props.example.sequent && p.mode === props.example.mode;
+      p?.view?.complete &&
+      p.input === props.example.sequent &&
+      p.calculus.suite === "linear" &&
+      p.calculus.mode === props.example.mode;
     return mine ? (p.session?.inferences.filter((i) => i.rule !== undefined).length ?? null) : null;
   };
   return (

@@ -1,6 +1,6 @@
 # linlog in the browser
 
-> This page is linlog's prover for linear logic in a web browser, made for people: type a sequent, prove it step by step by clicking, or let linlog's search close a goal, and see the derivation and the proof net drawn. The prover runs in the browser as WebAssembly; the page is static and offers no API to call.
+> This page is linlog's prover for linear logic and, through its translations, ordinary propositional logic (LK and LJ) in a web browser, made for people: type a sequent, prove it step by step by clicking, or let linlog's search close a goal, and see the derivation and the proof net drawn. The prover runs in the browser as WebAssembly; the page is static and offers no API to call.
 
 A model that is to decide, check, prove step by step or export sequents does so with linlog's command, `linlog`, or its Rust library, not through this page: the guide below says how, with every command, flag, format and JSON form. This text is under CC BY 4.0, as all of the page's written content.
 

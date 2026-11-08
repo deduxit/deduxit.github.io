@@ -14,13 +14,13 @@ import { type Api, createApi } from "../lib/api";
 import {
   type Engines,
   failure,
+  type Hint,
   type Failure,
   type GoalFormula,
   MATH_FONTS,
   type MathFont,
-  type Mode,
+  type Offered,
   type Outcome,
-  type Played,
   type Ran,
   type Reached,
   type SequentDoc,
@@ -31,6 +31,19 @@ import {
 } from "../lib/linlog";
 import type { Example } from "../lib/content";
 import { ENGINE_ORDER, engineName, engineOf, fromTab } from "../lib/engines";
+import {
+  asView,
+  hintSteps,
+  isOrdinary,
+  isOrdinarySequent,
+  json as parsed,
+  type OrdinarySession,
+  ordinaryRefusal,
+  ordinaryStep,
+  ordinaryVerdict,
+  retract as retractOrdinary,
+  sequentText as ordinaryText,
+} from "../lib/ordinary";
 import { Cancelled } from "../lib/protocol";
 import {
   type Shelf,
@@ -49,6 +62,15 @@ import {
   retract,
   within,
 } from "../lib/steps";
+import {
+  type Calculus,
+  linear,
+  type Logic,
+  modeOf,
+  ordinary,
+  SUITES,
+  sameCalculus,
+} from "../lib/suites";
 import {
   cutProblem,
   displayed,
@@ -111,15 +133,22 @@ export interface Elim {
   problem: Said | null;
 }
 
+/** A proof's session: its suite's own document. */
+export type Session = SessionDoc | OrdinarySession;
+
 /** One open proof. */
 export interface Proof {
   readonly id: string;
   /** The sequent field's text. */
   input: string;
-  mode: Mode;
-  session: SessionDoc | null;
+  /** The calculus it is proved in: its suite, method and the suite's parameter. */
+  calculus: Calculus;
+  session: Session | null;
   view: View | null;
+  /** What undo took back in a linear proof, replayed by redo. */
   redo: Action[][];
+  /** What undo took back in an ordinary proof: the sessions before each undo, restored by redo. */
+  later: OrdinarySession[];
   /** Whether the tab shows the sequent field. */
   editing: boolean;
   /** Why the field's text was not started, with the place to mark. */
@@ -166,6 +195,8 @@ export interface Settings {
   twoSided: boolean;
   /** The most steps an elimination to the end takes, `cut.steps`. */
   cutSteps: number;
+  /** Whether an ordinary derivation draws its weakenings and contractions, `view.structural`. */
+  structural: "admissible" | "explicit";
   /** How deep a witness the search builds at first order, `search.witness_depth`. */
   witnessDepth: number;
   /** The most instances of quantified formulas a first-order search holds, `search.instances`. */
@@ -174,9 +205,21 @@ export interface Settings {
   terms: number;
 }
 
-/** The view of the settings as linlog reads it: a classical derivation two-sided when asked. */
-export const viewJson = (settings: Settings) =>
-  settings.twoSided ? { view: { classical: "two" } } : {};
+/**
+ * The view of the settings as linlog reads it: a classical linear derivation two-sided when
+ * asked; an ordinary one with its structural rules drawn when asked.
+ */
+export const viewJson = (settings: Settings, calculus?: Calculus) => {
+  const view =
+    calculus?.suite === "ordinary"
+      ? settings.structural === "explicit"
+        ? { structural: "explicit" }
+        : null
+      : settings.twoSided
+        ? { classical: "two" }
+        : null;
+  return view ? { view } : {};
+};
 
 /** The math font the exports are set in: the one chosen for them, else the stage's. */
 export const exportFont = (settings: Settings): MathFont => settings.font ?? settings.stageFont;
@@ -260,6 +303,7 @@ function loadSettings(): Settings {
       font: MATH_FONTS.find((f) => f.key === stored.font)?.key ?? null,
       invertible: stored.invertible === true,
       twoSided: stored.twoSided === true,
+      structural: stored.structural === "explicit" ? "explicit" : "admissible",
       cutSteps:
         typeof stored.cutSteps === "number" && stored.cutSteps > 0
           ? stored.cutSteps
@@ -279,6 +323,7 @@ function loadSettings(): Settings {
       font: null,
       invertible: false,
       twoSided: false,
+      structural: "admissible",
       cutSteps: DEFAULT_CUT_STEPS,
       witnessDepth: DEFAULT_WITNESS_DEPTH,
       instances: DEFAULT_INSTANCES,
@@ -296,13 +341,14 @@ const isOpen = (open: Proof, stored: StoredProof) =>
     ? JSON.stringify(open.session) === JSON.stringify(stored.session)
     : !stored.session && open.input.trim() !== "" && open.input === stored.input;
 
-const blank = (mode: Mode): Proof => ({
+const blank = (calculus: Calculus): Proof => ({
   id: freshId(),
   input: "",
-  mode,
+  calculus,
   session: null,
   view: null,
   redo: [],
+  later: [],
   editing: true,
   inputProblem: null,
   active: null,
@@ -325,7 +371,8 @@ const keyOf = (formulas: readonly GoalFormula[]) =>
 /**
  * A goal's sequent as the sequent field reads it: two-sided where the formulas have sides, each
  * formula as linlog writes it, which in intuitionistic mode is as the reading writes it in its
- * position (a hypothesis `A ⊸ B`), in the syntax the strict reading takes.
+ * position (a hypothesis `A ⊸ B`), in the syntax the strict reading takes; an ordinary goal's
+ * formulas as the ordinary parser reads them.
  */
 const sequentText = (formulas: readonly GoalFormula[]) => {
   const left = formulas.filter((f) => f.side === "input").map((f) => f.text);
@@ -372,7 +419,8 @@ export function createProver(say: (text: string) => void = () => undefined) {
   });
   const [settings, setSettingsSignal] = createSignal<Settings>(loadSettings());
   const [aside, setAsideShelf] = createSignal<Shelf | undefined>(undefined);
-  const [lastMode, setLastMode] = createSignal<Mode>("classical");
+  /** The calculus last chosen in this visit, which a new empty tab starts in. */
+  const [lastCalculus, setLastCalculus] = createSignal<Calculus>(linear("classical"));
   const [busy, setBusy] = createSignal(false);
   /** This visit's key among the stored proofs. */
   const visit = freshId();
@@ -426,6 +474,23 @@ export function createProver(say: (text: string) => void = () => undefined) {
     });
   };
   /**
+   * The settings of an ordinary call: the budget, the terms where they are not the tab's, and
+   * the structural rules drawn when asked. A forced engine and the invertible rules are the
+   * linear suite's: the ordinary search runs on linlog's translation with its own choice.
+   */
+  const ordinaryJson = (budget = settings().budget) => {
+    const s = settings();
+    return JSON.stringify({
+      limits: { work: budget, ...(s.terms !== DEFAULT_TERMS ? { terms: s.terms } : {}) },
+      ...viewJson(s, ordinary("classical")),
+    });
+  };
+  /** A proof's ordinary session, with its logic, where it is one. */
+  const ordinaryOf = (p: Proof | undefined) =>
+    p?.calculus.suite === "ordinary" && p.session && isOrdinary(p.session)
+      ? { session: p.session, logic: p.calculus.logic }
+      : undefined;
+  /**
    * The settings of a replay, and of a start that only reads the sequent: without the
    * invertible rules, which a replay plays as the steps they were, so that applying them
    * again after each would leave the recorded ones no goal.
@@ -446,12 +511,13 @@ export function createProver(say: (text: string) => void = () => undefined) {
   /** Each finished tab's sequent as a key, by its mode and sequent document. */
   const keys = new Map<string, string>();
   const sequentKey = async (q: Proof): Promise<string | null> => {
-    if (!q.session) return null;
-    const at = `${q.mode}\n${JSON.stringify(q.session.sequent)}`;
+    if (!q.session || q.calculus.suite !== "linear") return null;
+    const mode = q.calculus.mode;
+    const at = `${mode}\n${JSON.stringify(q.session.sequent)}`;
     const known = keys.get(at);
     if (known !== undefined) return known;
     const started = await attempt(() =>
-      api.start(q.session?.sequent as SequentDoc, q.mode, replaying()),
+      api.start(q.session?.sequent as SequentDoc, mode, replaying()),
     );
     const root = started.ok ? started.value.view.goals[0] : undefined;
     if (!root) return null;
@@ -477,7 +543,7 @@ export function createProver(say: (text: string) => void = () => undefined) {
     p.session ? (paths(p.session).get(goal) ?? []) : [];
 
   /** Shows a played session, the active goal moved to `goal` (or kept where it is still open). */
-  const show = (id: string, played: Played, goal?: number) => {
+  const show = (id: string, played: { session: Session; view: View }, goal?: number) => {
     update(id, (p) => {
       p.session = played.session;
       p.view = played.view;
@@ -505,7 +571,7 @@ export function createProver(say: (text: string) => void = () => undefined) {
 
   function save() {
     const shelf: Shelf = {
-      version: 1,
+      version: 2,
       active: store.active,
       proofs: store.proofs
         .filter((p) => p.session || p.input.trim())
@@ -513,9 +579,10 @@ export function createProver(say: (text: string) => void = () => undefined) {
           (p): StoredProof => ({
             id: p.id,
             input: p.input,
-            mode: p.mode,
+            calculus: p.calculus,
             session: p.session,
             redo: p.redo,
+            ...(p.later.length ? { later: p.later } : {}),
             engines: p.engines,
             origin: p.origin,
             saved: Date.now(),
@@ -523,6 +590,195 @@ export function createProver(say: (text: string) => void = () => undefined) {
         ),
     };
     saveShelf(storage(), visit, shelf);
+  }
+
+  /** Why a text was not started, with the place to mark where linlog gives one. */
+  const problemAt = (failed: Failure) => {
+    const span = failed.details?.["span_utf16"] as { start: number; end: number } | undefined;
+    return { ...inputProblem(failed), ...(span ? { span } : {}) };
+  };
+
+  /** Shows an ordinary session on a proof, in its logic: a document opened, pasted or linked. */
+  async function showOrdinary(id: string, session: OrdinarySession): Promise<Failure | null> {
+    const view = await attempt(() => api.ordinary.view(session, ordinaryJson()));
+    if (!view.ok) return view.failed ?? { code: "page", kind: "stopped", message: "stopped" };
+    update(id, (q) => {
+      q.calculus = ordinary(session.logic);
+      q.input = ordinaryText(session);
+      q.redo = [];
+      q.later = [];
+      q.verdict = null;
+      q.engines = {};
+    });
+    show(id, { session, view: asView(view.value) }, view.value.goals[0]?.goal);
+    save();
+    return null;
+  }
+
+  /**
+   * Reads a text into a proof in a calculus and starts it: the field's text in the suite's own
+   * syntax, a sequent's JSON, or a session pasted there, an ordinary one in its own logic.
+   */
+  async function startText(id: string, text: string, calculus: Calculus) {
+    const doc = parsed(text);
+    if (isOrdinary(doc)) {
+      const failed = await showOrdinary(id, doc);
+      if (failed) update(id, (q) => (q.inputProblem = problemAt(failed)));
+      return;
+    }
+    if (calculus.suite === "ordinary") {
+      const started = await attempt(() => api.ordinary.start(text, calculus.logic, ordinaryJson()));
+      if (!started.ok) {
+        if (started.failed)
+          update(id, (q) => (q.inputProblem = problemAt(started.failed as Failure)));
+        return;
+      }
+      setLastCalculus(calculus);
+      update(id, (q) => {
+        q.calculus = calculus;
+        q.redo = [];
+        q.later = [];
+        q.verdict = null;
+        q.engines = {};
+      });
+      show(id, { session: started.value.session, view: asView(started.value.view) }, 0);
+      save();
+      return;
+    }
+    const read = await attempt(() => api.readAs(text, calculus.mode, json()));
+    if (!read.ok) {
+      if (read.failed) update(id, (q) => (q.inputProblem = problemAt(read.failed as Failure)));
+      return;
+    }
+    if (read.value.kind === "session" && read.value.session) {
+      const session = read.value.session;
+      const view = await attempt(() => api.view(session, json()));
+      if (view.ok) {
+        update(id, (q) => (q.calculus = linear(session.mode)));
+        show(id, { session, view: view.value }, view.value.goals[0]?.goal);
+      }
+      return;
+    }
+    const started = await attempt(() => api.start(read.value.sequent, calculus.mode, json()));
+    if (!started.ok) {
+      if (started.failed)
+        update(id, (q) => (q.inputProblem = inputProblem(started.failed as Failure)));
+      return;
+    }
+    setLastCalculus(calculus);
+    update(id, (q) => {
+      q.calculus = calculus;
+      q.redo = [];
+      q.later = [];
+      q.verdict = null;
+      q.engines = {};
+    });
+    show(id, started.value, 0);
+    save();
+  }
+
+  /**
+   * Opens an ordinary document or text as a new proof: a session in its own logic, a sequent
+   * (typed, or its JSON) in `into`'s logic, or the suite's first where `into` is linear.
+   */
+  async function openOrdinary(
+    text: string,
+    doc: unknown,
+    into: Calculus,
+  ): Promise<{ kind: string } | { problem: Said }> {
+    if (isOrdinary(doc)) {
+      const id = actions.add();
+      const failed = await showOrdinary(id, doc);
+      if (failed) {
+        actions.remove(id);
+        return { problem: inputProblem(failed) };
+      }
+      return { kind: "session" };
+    }
+    const start = SUITES.find((x) => x.key === "ordinary")?.start;
+    const logic: Logic =
+      into.suite === "ordinary"
+        ? into.logic
+        : start?.suite === "ordinary"
+          ? start.logic
+          : "intuitionistic";
+    const started = await attempt(() => api.ordinary.start(text, logic, ordinaryJson()));
+    if (!started.ok) {
+      const failed = started.failed;
+      if (!failed) return { problem: { keyword: "Stopped", sentence: "" } };
+      if (failed.code === "parse" || failed.code === "json") return { problem: problemAt(failed) };
+      const id = actions.add();
+      update(id, (q) => {
+        q.calculus = ordinary(logic);
+        q.input = text;
+        q.inputProblem = inputProblem(failed);
+      });
+      return { kind: "sequent" };
+    }
+    const id = actions.add();
+    setLastCalculus(ordinary(logic));
+    update(id, (q) => {
+      q.calculus = ordinary(logic);
+      q.input = doc === undefined ? text : ordinaryText(started.value.session);
+    });
+    show(id, { session: started.value.session, view: asView(started.value.view) }, 0);
+    save();
+    return { kind: "sequent" };
+  }
+
+  /**
+   * Closes an ordinary goal by the search within `budget`: the derivation found grafted, or the
+   * verdict noted at the goal (and on the tab for the root). Returns whether it closed.
+   */
+  async function closeOrdinary(
+    p: Proof,
+    session: OrdinarySession,
+    goal: number,
+    budget: number,
+  ): Promise<boolean> {
+    const path = pathOf(p, goal);
+    const result = await attempt(() => api.ordinary.close(session, goal, ordinaryJson(budget)));
+    if (!result.ok) {
+      const failed = result.failed;
+      update(p.id, (q) => {
+        q.note =
+          failed === null
+            ? {
+                path,
+                said: { keyword: "Stopped", sentence: "The search was stopped." },
+                tone: "warn",
+              }
+            : { path, said: inputProblem(failed), tone: "bad" };
+      });
+      return false;
+    }
+    const closed = result.value;
+    const outcome = closed.outcome as unknown as Outcome;
+    if (closed.outcome.verdict === "valid" && !closed.refused) {
+      const engine = engineOf(outcome);
+      update(p.id, (q) => {
+        q.later = [];
+        if (engine) q.engines = { ...q.engines, [pathKey(path)]: engine };
+      });
+      show(
+        p.id,
+        { session: closed.session, view: asView(closed.view) },
+        closed.view.goals[0]?.goal,
+      );
+      say(
+        `Goal ${goal + 1} closed${engine ? ` by the ${engineName(engine)}` : ""}${closed.view.complete ? ": the proof is finished" : ""}.`,
+      );
+      save();
+      return true;
+    }
+    const said = closed.refused
+      ? { keyword: "Proved, not grafted", sentence: closed.refused.message, tone: "warn" as Tone }
+      : ordinaryVerdict(closed.outcome);
+    update(p.id, (q) => {
+      q.note = { path, said, tone: said.tone, outcome, budget };
+      if (path.length === 0) q.verdict = { ...said, outcome };
+    });
+    return false;
   }
 
   const actions = {
@@ -576,11 +832,12 @@ export function createProver(say: (text: string) => void = () => undefined) {
         for (const stored of shelf.proofs) {
           if (store.proofs.some((p) => p.id === stored.id || isOpen(p, stored))) continue;
           const proof: Proof = {
-            ...blank(stored.mode),
+            ...blank(stored.calculus),
             id: stored.id,
             input: stored.input,
             session: stored.session,
             redo: stored.redo.map((r) => [...r]),
+            later: [...(stored.later ?? [])],
             engines: { ...(stored.engines ?? {}) },
             origin: stored.origin ?? null,
             editing: !stored.session,
@@ -612,13 +869,16 @@ export function createProver(say: (text: string) => void = () => undefined) {
     async refresh(id: string) {
       const p = store.proofs.find((q) => q.id === id);
       if (!p?.session) return;
-      const result = await attempt(() => api.view(p.session as SessionDoc, json()));
+      const o = ordinaryOf(p);
+      const result = o
+        ? await attempt(async () => asView(await api.ordinary.view(o.session, ordinaryJson())))
+        : await attempt(() => api.view(p.session as SessionDoc, json()));
       if (result.ok) update(id, (q) => (q.view = result.value));
     },
 
     /** Opens a new proof with the sequent field. */
     add(): string {
-      const proof = blank(lastMode());
+      const proof = blank(lastCalculus());
       setStore("proofs", (all) => [...all, proof]);
       setStore("active", proof.id);
       return proof.id;
@@ -655,84 +915,73 @@ export function createProver(say: (text: string) => void = () => undefined) {
 
     /** Reads the field's text as it is typed, for the fragment beside it. */
     async preview(id: string, input: string) {
-      const mode = store.proofs.find((q) => q.id === id)?.mode ?? lastMode();
-      const read = await attempt(() => api.readAs(input, mode, json()));
+      const calculus = store.proofs.find((q) => q.id === id)?.calculus ?? lastCalculus();
+      // An ordinary sequent has no fragment of linear logic: its mark is its calculus.
+      if (calculus.suite !== "linear") return;
+      const read = await attempt(() => api.readAs(input, calculus.mode, json()));
       const p = store.proofs.find((q) => q.id === id);
       if (!p || p.input !== input) return;
       update(id, (q) => (q.typed = read.ok ? (read.value.fragment ?? null) : null));
     },
 
     /**
-     * Starts the field's text as a new session in the proof's mode (or opens
-     * a session pasted there); asked for while another action runs, it waits
-     * for that one.
+     * Starts the field's text as a new session in the proof's calculus, or in `calculus` (or
+     * opens a session pasted there); asked for while another action runs, it waits for that one.
      */
-    submit: queued(async (id: string, mode?: Mode) => {
+    submit: queued(async (id: string, calculus?: Calculus) => {
       const p = store.proofs.find((q) => q.id === id);
-      if (!p) return;
-      const read = await attempt(() => api.readAs(p.input, mode ?? p.mode, json()));
-      if (!read.ok) {
-        if (read.failed) {
-          const span = read.failed.details?.["span_utf16"] as
-            | { start: number; end: number }
-            | undefined;
-          update(
-            id,
-            (q) =>
-              (q.inputProblem = {
-                ...inputProblem(read.failed as Failure),
-                ...(span ? { span } : {}),
-              }),
-          );
-        }
-        return;
-      }
-      if (read.value.kind === "session" && read.value.session) {
-        const session = read.value.session;
-        const view = await attempt(() => api.view(session, json()));
-        if (view.ok) {
-          update(id, (q) => (q.mode = session.mode));
-          show(id, { session, view: view.value }, view.value.goals[0]?.goal);
-        }
-        return;
-      }
-      const startMode = mode ?? p.mode;
-      const started = await attempt(() => api.start(read.value.sequent, startMode, json()));
-      if (!started.ok) {
-        if (started.failed)
-          update(id, (q) => (q.inputProblem = inputProblem(started.failed as Failure)));
-        return;
-      }
-      setLastMode(startMode);
-      update(id, (q) => {
-        q.mode = startMode;
-        q.redo = [];
-        q.verdict = null;
-        q.engines = {};
-      });
-      show(id, started.value, 0);
-      save();
+      if (p) await startText(id, p.input, calculus ?? p.calculus);
     }),
 
-    /** Changes the proof's calculus, which restarts a started proof from its sequent. */
-    setMode: guard(async (id: string, mode: Mode) => {
+    /**
+     * Changes the proof's calculus, which restarts a started proof: from its sequent within the
+     * suite, from the field's text in another suite, whose parser reads it anew.
+     */
+    setCalculus: guard(async (id: string, calculus: Calculus) => {
       const p = store.proofs.find((q) => q.id === id);
       if (!p) return;
-      setLastMode(mode);
+      setLastCalculus(calculus);
       if (!p.session) {
-        update(id, (q) => (q.mode = mode));
+        update(id, (q) => (q.calculus = calculus));
         return;
       }
-      const started = await attempt(() =>
-        api.start((p.session as SessionDoc).sequent, mode, json()),
-      );
+      if (calculus.suite !== p.calculus.suite) {
+        update(id, (q) => {
+          q.calculus = calculus;
+          q.session = null;
+          q.view = null;
+          q.redo = [];
+          q.later = [];
+          q.verdict = null;
+          q.engines = {};
+          q.note = null;
+          q.banner = null;
+          q.elim = { tree: null, net: null };
+          q.editing = true;
+        });
+        if (p.input.trim()) await startText(id, p.input, calculus);
+        return;
+      }
+      const session = p.session;
+      const started =
+        calculus.suite === "ordinary"
+          ? await attempt(async () => {
+              const played = await api.ordinary.start(
+                JSON.stringify(session.sequent),
+                calculus.logic,
+                ordinaryJson(),
+              );
+              return { session: played.session, view: asView(played.view) };
+            })
+          : await attempt(() => api.start((session as SessionDoc).sequent, calculus.mode, json()));
       if (!started.ok) {
         if (started.failed) update(id, (q) => (q.banner = inputProblem(started.failed as Failure)));
         return;
       }
       update(id, (q) => {
-        q.mode = mode;
+        q.calculus = calculus;
         q.redo = [];
+        q.later = [];
         q.verdict = null;
         q.engines = {};
       });
@@ -740,9 +989,21 @@ export function createProver(say: (text: string) => void = () => undefined) {
       save();
     }),
 
-    /** Opens a document (a sequent or a session as linlog writes them) as a new proof; says which it got. */
-    async open(text: string, mode?: Mode): Promise<{ kind: string } | { problem: Said }> {
-      const read = await attempt(() => api.readAs(text, mode ?? lastMode(), json()));
+    /**
+     * Opens a document (a sequent or a session as linlog writes them, of either suite) as a new
+     * proof, a sequent typed in `calculus` or the last chosen; says which it got.
+     */
+    async open(text: string, calculus?: Calculus): Promise<{ kind: string } | { problem: Said }> {
+      const doc = parsed(text);
+      const into = calculus ?? lastCalculus();
+      if (
+        isOrdinary(doc) ||
+        isOrdinarySequent(doc) ||
+        (doc === undefined && into.suite === "ordinary")
+      )
+        return openOrdinary(text, doc, into);
+      const mode = modeOf(into);
+      const read = await attempt(() => api.readAs(text, mode, json()));
       if (!read.ok)
         return {
           problem: read.failed ? inputProblem(read.failed) : { keyword: "Stopped", sentence: "" },
@@ -756,7 +1017,7 @@ export function createProver(say: (text: string) => void = () => undefined) {
             problem: view.failed ? inputProblem(view.failed) : { keyword: "Stopped", sentence: "" },
           };
         update(id, (q) => {
-          q.mode = session.mode;
+          q.calculus = linear(session.mode);
           q.input = read.value.text;
         });
         show(id, { session, view: view.value }, view.value.goals[0]?.goal);
@@ -764,14 +1025,14 @@ export function createProver(say: (text: string) => void = () => undefined) {
         return { kind: "session" };
       }
       update(id, (q) => (q.input = text.trim().startsWith("{") ? read.value.text : text));
-      const startMode = mode ?? read.value.mode ?? lastMode();
+      const startMode = calculus?.suite === "linear" ? calculus.mode : (read.value.mode ?? mode);
       const started = await attempt(() => api.start(read.value.sequent, startMode, json()));
       if (!started.ok) {
         if (started.failed)
           update(id, (q) => (q.inputProblem = inputProblem(started.failed as Failure)));
         return { kind: "sequent" };
       }
-      update(id, (q) => (q.mode = startMode));
+      update(id, (q) => (q.calculus = linear(startMode)));
       show(id, started.value, 0);
       save();
       return { kind: "sequent" };
@@ -789,13 +1050,13 @@ export function createProver(say: (text: string) => void = () => undefined) {
         const blankId = empty && !empty.session && !empty.input.trim() ? empty.id : null;
         const opened = await actions.open(
           watch && example.session ? example.session : example.sequent,
-          example.mode,
+          linear(example.mode),
         );
         if ("problem" in opened) return;
         const p = current();
         if (blankId && blankId !== p?.id) actions.remove(blankId);
         if (!watch || !p?.session) return;
-        const all = actionsOf(p.session, p.view?.cuts, p.view);
+        const all = actionsOf(p.session as SessionDoc, p.view?.cuts, p.view);
         const result = await attempt(() => api.replay(p.session as SessionDoc, [], replaying()));
         if (!result.ok) return;
         update(p.id, (q) => {
@@ -823,13 +1084,16 @@ export function createProver(say: (text: string) => void = () => undefined) {
         if (!example.session) return null;
         let p = store.proofs.find(
           (q) =>
-            q.id === tab && q.session && q.mode === example.mode && q.input === example.sequent,
+            q.id === tab &&
+            q.session &&
+            sameCalculus(q.calculus, linear(example.mode)) &&
+            q.input === example.sequent,
         );
         if (p) actions.activate(p.id);
         else {
           const empty = current();
           const blankId = empty && !empty.session && !empty.input.trim() ? empty.id : null;
-          const opened = await actions.open(example.session, example.mode);
+          const opened = await actions.open(example.session, linear(example.mode));
           if ("problem" in opened) return null;
           p = current();
           if (blankId && blankId !== p?.id) actions.remove(blankId);
@@ -881,9 +1145,20 @@ export function createProver(say: (text: string) => void = () => undefined) {
       actions.focus(next);
     },
 
-    async rules(goal: number, position: number) {
+    async rules(goal: number, position: number): Promise<Offered[]> {
       const p = current();
       if (!p?.session) return [];
+      const o = ordinaryOf(p);
+      if (o) {
+        const formulas = p.view?.goals.find((g) => g.goal === goal)?.formulas ?? [];
+        const { side, position: at } = ordinaryStep(formulas, { position, rule: "" });
+        const result = await attempt(() =>
+          api.ordinary.rules(o.session, goal, side, at, ordinaryJson()),
+        );
+        // A rule of two premises shares the goal's context, G3's form a first course reads: the
+        // page applies it at once.
+        return result.ok ? result.value.map((r) => ({ rule: r.rule, split: false })) : [];
+      }
       const result = await attempt(() =>
         api.rules(p.session as SessionDoc, goal, position, json()),
       );
@@ -903,6 +1178,28 @@ export function createProver(say: (text: string) => void = () => undefined) {
     apply: guard(async (goal: number, step: StepForm): Promise<boolean> => {
       const p = current();
       if (!p?.session) return false;
+      const o = ordinaryOf(p);
+      if (o) {
+        const formulas = p.view?.goals.find((g) => g.goal === goal)?.formulas ?? [];
+        const done = await attempt(() =>
+          api.ordinary.apply(o.session, goal, ordinaryStep(formulas, step), ordinaryJson()),
+        );
+        if (!done.ok) {
+          if (done.failed) {
+            const said = ordinaryRefusal(done.failed, formulas, step.rule);
+            update(p.id, (q) => (q.note = { path: pathOf(p, goal), said, tone: "bad" }));
+          }
+          return false;
+        }
+        update(p.id, (q) => (q.later = []));
+        show(
+          p.id,
+          { session: done.value.session, view: asView(done.value.view) },
+          done.value.opened[0] ?? done.value.view.goals[0]?.goal,
+        );
+        save();
+        return true;
+      }
       const result = await attempt(() => api.apply(p.session as SessionDoc, goal, step, json()));
       if (!result.ok) {
         if (result.failed) {
@@ -1082,11 +1379,44 @@ export function createProver(say: (text: string) => void = () => undefined) {
     undo: guard(async () => {
       const p = current();
       if (!p?.session) return;
+      const o = ordinaryOf(p);
+      if (o) {
+        // Undo on the active goal's branch; on a finished proof, its last step.
+        const back = retractOrdinary(o.session, p.view?.complete ? undefined : activeGoal(p));
+        if (!back) {
+          update(p.id, (q) => {
+            q.note = {
+              path: [],
+              said: {
+                keyword: "Nothing to undo on this branch",
+                sentence: "This goal is the sequent itself, with no step on it yet.",
+              },
+              tone: "plain",
+            };
+          });
+          return;
+        }
+        // linlog's reader checks the session again, every inference and the order of the steps.
+        const view = await attempt(() => api.ordinary.view(back.session, ordinaryJson()));
+        if (!view.ok) {
+          if (view.failed)
+            update(
+              p.id,
+              (q) =>
+                (q.note = { path: [], said: inputProblem(view.failed as Failure), tone: "bad" }),
+            );
+          return;
+        }
+        update(p.id, (q) => q.later.push(o.session));
+        show(p.id, { session: back.session, view: asView(view.value) }, back.reopened);
+        save();
+        return;
+      }
       // With the invertible rules on, undo takes back the visitor's last choice with the
       // invertible steps after it: taking back one of those alone, the page would apply it again.
       const invertible = settings().invertible ? new Set(p.view?.invertible ?? []) : undefined;
       const retracted = retract(
-        p.session,
+        p.session as SessionDoc,
         p.view?.complete ? undefined : activeGoal(p),
         invertible,
         p.view?.cuts,
@@ -1101,7 +1431,8 @@ export function createProver(say: (text: string) => void = () => undefined) {
         // Steps there are, but each one the page applied by itself.
         const automatic =
           invertible !== undefined &&
-          retract(p.session, activeGoal(p), undefined, p.view?.cuts, p.view) !== undefined;
+          retract(p.session as SessionDoc, activeGoal(p), undefined, p.view?.cuts, p.view) !==
+            undefined;
         update(p.id, (q) => {
           q.note = {
             path: [],
@@ -1131,7 +1462,29 @@ export function createProver(say: (text: string) => void = () => undefined) {
     backTo: guard(async (count: number) => {
       const p = current();
       if (!p?.session) return;
-      const all = actionsFor(p, actionsOf(p.session, p.view?.cuts, p.view));
+      const o = ordinaryOf(p);
+      if (o) {
+        // linlog's undo takes back the session's last step, so going back is undoing to there.
+        let session = o.session;
+        const before: OrdinarySession[] = [];
+        let reopened: number | null = null;
+        while (session.history.length > count) {
+          const now = session;
+          const back = await attempt(() => api.ordinary.undo(now, ordinaryJson()));
+          if (!back.ok) return;
+          before.push(now);
+          session = back.value.session;
+          reopened = back.value.reopened;
+        }
+        if (before.length === 0) return;
+        const view = await attempt(() => api.ordinary.view(session, ordinaryJson()));
+        if (!view.ok) return;
+        update(p.id, (q) => q.later.push(...before));
+        show(p.id, { session, view: asView(view.value) }, reopened ?? undefined);
+        save();
+        return;
+      }
+      const all = actionsFor(p, actionsOf(p.session as SessionDoc, p.view?.cuts, p.view));
       if (count >= all.length) return;
       const result = await attempt(() =>
         api.replay(p.session as SessionDoc, all.slice(0, count), replaying()),
@@ -1147,7 +1500,18 @@ export function createProver(say: (text: string) => void = () => undefined) {
 
     /** Redoes what the last undo took back. */
     redo: guard(async () => {
+      const o = ordinaryOf(current());
       const p = current();
+      if (o && p) {
+        const next = p.later.at(-1);
+        if (!next) return;
+        const view = await attempt(() => api.ordinary.view(next, ordinaryJson()));
+        if (!view.ok) return;
+        update(p.id, (q) => q.later.pop());
+        show(p.id, { session: next, view: asView(view.value) }, view.value.goals[0]?.goal);
+        save();
+        return;
+      }
       const todo = p?.redo.at(-1);
       if (!p?.session || !p.view || !todo) return;
       const result = await attempt(() =>
@@ -1187,7 +1551,7 @@ export function createProver(say: (text: string) => void = () => undefined) {
       const p = current();
       const g = p?.view?.goals.find((x) => x.goal === goal);
       if (!p?.session || !g) return;
-      const opened = await actions.open(sequentText(g.formulas), p.mode);
+      const opened = await actions.open(sequentText(g.formulas), p.calculus);
       if ("problem" in opened) return;
       const q = current();
       if (q && q.id !== p.id)
@@ -1254,6 +1618,11 @@ export function createProver(say: (text: string) => void = () => undefined) {
       // A unit of work is whole: a fraction of a budget the visitor set rounds to one.
       const budget = Math.max(1, Math.round(settings().budget * factor));
       const path = pathOf(p, goal);
+      const o = ordinaryOf(p);
+      if (o) {
+        await closeOrdinary(p, o.session, goal, budget);
+        return;
+      }
       const result = await attempt(() => api.close(p.session as SessionDoc, goal, json(budget)));
       if (!result.ok) {
         if (result.failed === null) {
@@ -1301,6 +1670,17 @@ export function createProver(say: (text: string) => void = () => undefined) {
     closeAll: guard(async () => {
       const p = current();
       if (!p?.session) return;
+      const o = ordinaryOf(p);
+      if (o) {
+        // Each open goal in turn, each within the budget, until one is not closed.
+        for (const goal of p.view?.goals.map((g) => g.goal) ?? []) {
+          const now = current();
+          const doc = ordinaryOf(now)?.session;
+          if (!now || now.id !== p.id || !doc) return;
+          if (!(await closeOrdinary(now, doc, goal, settings().budget))) return;
+        }
+        return;
+      }
       const result = await attempt(() => api.closeAll(p.session as SessionDoc, json()));
       if (!result.ok) {
         if (result.failed === null) {
@@ -1350,6 +1730,23 @@ export function createProver(say: (text: string) => void = () => undefined) {
 
     stop() {
       api.cancel();
+    },
+
+    /**
+     * The search's hint on a goal: its outcome and the first steps of the proof it found, none
+     * where it found none.
+     */
+    async hint(goal: number): Promise<Hint> {
+      const p = current();
+      const o = ordinaryOf(p);
+      if (!o) return api.hint(p?.session as SessionDoc, goal, json());
+      const formulas = p?.view?.goals.find((g) => g.goal === goal)?.formulas ?? [];
+      const answer = await api.ordinary.hint(o.session, goal, ordinaryJson());
+      return {
+        outcome: answer.outcome as unknown as Outcome,
+        steps: answer.steps.length ? hintSteps(formulas, answer.steps) : null,
+        invertible: null,
+      };
     },
 
     /**

@@ -14,6 +14,7 @@ import {
   setAside,
   type StoredProof,
 } from "./shelf";
+import { linear, ordinary } from "./suites";
 
 class Memory implements Store {
   map = new Map<string, string>();
@@ -37,13 +38,13 @@ class Memory implements Store {
 const proof = (id: string, saved = 1, input = "A |- A"): StoredProof => ({
   id,
   input,
-  mode: "classical",
+  calculus: linear("classical"),
   session: null,
   redo: [],
   saved,
 });
 const shelf = (...proofs: StoredProof[]): Shelf => ({
-  version: 1,
+  version: 2,
   proofs,
   active: proofs[0]?.id ?? null,
 });
@@ -60,10 +61,50 @@ describe("the stored proofs", () => {
     );
   });
 
+  it("keeps each proof's suite, method and parameter", () => {
+    const store = new Memory();
+    const kept = shelf(
+      { ...proof("a"), calculus: ordinary("minimal"), later: [] },
+      { ...proof("b"), calculus: linear("intuitionistic-affine") },
+    );
+    saveShelf(store, "v", kept);
+    expect(parseShelf(store.getItem(`${SHELF_PREFIX}v`))).toEqual(kept);
+  });
+
+  it("reads a shelf of the first version, written before suites, as the linear suite", () => {
+    // As the page saved them until 2026-11: a mode for each proof.
+    const old = {
+      version: 1,
+      active: "a",
+      proofs: [
+        { id: "a", input: "A |- A", mode: "mix", session: null, redo: [], saved: 3 },
+        { id: "b", input: "A |- A", mode: "intuitionistic", session: null, redo: [], saved: 4 },
+      ],
+    };
+    expect(parseShelf(JSON.stringify(old))).toEqual({
+      version: 2,
+      active: "a",
+      proofs: [
+        { id: "a", input: "A |- A", calculus: linear("mix"), session: null, redo: [], saved: 3 },
+        {
+          id: "b",
+          input: "A |- A",
+          calculus: linear("intuitionistic"),
+          session: null,
+          redo: [],
+          saved: 4,
+        },
+      ],
+    });
+  });
+
   it("refuses what is not a shelf", () => {
     expect(parseShelf("{")).toBeUndefined();
-    expect(parseShelf('{"version":2,"proofs":[]}')).toBeUndefined();
+    expect(parseShelf('{"version":3,"proofs":[]}')).toBeUndefined();
     expect(parseShelf('{"version":1,"proofs":[{"id":1}]}')).toBeUndefined();
+    // A calculus the registry does not know.
+    const unknown = { ...proof("a"), calculus: { suite: "modal", method: "sequent", logic: "K" } };
+    expect(parseShelf(JSON.stringify({ version: 2, proofs: [unknown] }))).toBeUndefined();
   });
 
   it("gathers what other visits left, so new work overwrites none of it", () => {

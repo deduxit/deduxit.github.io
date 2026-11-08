@@ -24,6 +24,11 @@ import type { Inference, Played, Prover, SessionDoc, StepForm, View } from "./li
 /** A goal's place in the tree: the premise taken at each inference from the root. */
 export type Path = readonly number[];
 
+/** A session as a tree, whichever suite's: each inference's premises, the root first. */
+export interface Tree {
+  readonly inferences: readonly { readonly premises?: readonly number[] | undefined }[];
+}
+
 /** What expanded a goal: a step the student applied, or a search's graft. */
 export type Action =
   | {
@@ -72,7 +77,7 @@ export type Action =
     };
 
 /** Every expanded and open inference's path, by its number. */
-export function paths(doc: SessionDoc): Map<number, Path> {
+export function paths(doc: Tree): Map<number, Path> {
   const found = new Map<number, Path>([[0, []]]);
   const todo: number[] = [0];
   for (let next = todo.pop(); next !== undefined; next = todo.pop()) {
@@ -86,7 +91,7 @@ export function paths(doc: SessionDoc): Map<number, Path> {
 }
 
 /** The inference at a path, if the tree has one there. */
-export function goalAt(doc: SessionDoc, path: Path): number | undefined {
+export function goalAt(doc: Tree, path: Path): number | undefined {
   let goal = 0;
   for (const index of path) {
     const next = doc.inferences[goal]?.premises?.[index];
@@ -102,7 +107,7 @@ export function within(path: Path, under: Path): boolean {
 }
 
 /** The inferences under one, itself included. */
-function subtree(doc: SessionDoc, root: number): number[] {
+export function subtree(doc: Tree, root: number): number[] {
   const found: number[] = [];
   const todo = [root];
   for (let next = todo.pop(); next !== undefined; next = todo.pop()) {

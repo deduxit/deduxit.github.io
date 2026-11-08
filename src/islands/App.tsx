@@ -14,13 +14,22 @@
 import { createEffect, createSignal, on, onCleanup, onMount, Show } from "solid-js";
 import { unwrap } from "solid-js/store";
 import { readLink, writeLink } from "../lib/link";
-import { MATH_FONTS, type MathFont, type Mode } from "../lib/linlog";
+import { MATH_FONTS, type MathFont } from "../lib/linlog";
+import { prettyOrdinary } from "../lib/ordinary";
 import { paths } from "../lib/steps";
 import { failure } from "../lib/linlog";
 import { Cancelled } from "../lib/protocol";
+import { calculusOf, parameterOf, SUITES } from "../lib/suites";
 import { inputProblem, pretty } from "../lib/words";
 import type { Theme } from "../lib/theme";
-import { type Example, type Lesson, type Rule, ruleNamed, type Stop } from "../lib/content";
+import {
+  type Example,
+  type Lesson,
+  type Rule,
+  ruleNamed,
+  type Sample,
+  type Stop,
+} from "../lib/content";
 import { BottomBand } from "./BottomBand";
 import { LearnFrame, Schema } from "./Learn";
 import { createPractice } from "./Practice";
@@ -35,6 +44,8 @@ export default function App(props: {
   fonts: Record<MathFont, string>;
   /** Learn's problems: the lessons' practice, in their order. */
   examples: readonly Example[];
+  /** The sequent field's examples of the ordinary suite, in their order. */
+  samples: readonly Sample[];
   /** The tour's stops, in their order. */
   stops: readonly Stop[];
   /** Learn's written lessons, in their order. */
@@ -101,16 +112,21 @@ export default function App(props: {
     prover.begin();
     const link = await readLink(location.hash);
     if (link) {
+      // A suite or parameter this page does not know opens in the suite's first calculus.
+      const calculus =
+        calculusOf(link.suite, "sequent", link.parameter) ??
+        SUITES.find((s) => s.key === link.suite)?.start ??
+        SUITES[0]?.start;
       const restored = link.session !== undefined ? await prover.open(link.session) : null;
       if (!restored || "problem" in restored) {
-        const opened = await prover.open(link.sequent, link.mode as Mode);
+        const opened = await prover.open(link.sequent, calculus);
         const p = prover.current();
         if ("problem" in opened) {
           // The link's sequent does not parse: it goes into the field with its
           // problem marked, as if it had been typed.
           const id = prover.add();
           prover.setInput(id, link.sequent);
-          await prover.setMode(id, link.mode as Mode);
+          if (calculus) await prover.setCalculus(id, calculus);
           await prover.submit(id);
         } else if (p && (link.session !== undefined || link.problem)) {
           prover.banner(p.id, {
@@ -136,7 +152,14 @@ export default function App(props: {
   let saving: ReturnType<typeof setTimeout> | undefined;
   createEffect(
     on(
-      () => prover.store.proofs.map((p) => [p.session, p.input, p.mode, p.redo.length]),
+      () =>
+        prover.store.proofs.map((p) => [
+          p.session,
+          p.input,
+          p.calculus,
+          p.redo.length,
+          p.later.length,
+        ]),
       () => {
         clearTimeout(saving);
         saving = setTimeout(() => prover.save(), 300);
@@ -149,12 +172,19 @@ export default function App(props: {
   let linking: ReturnType<typeof setTimeout> | undefined;
   createEffect(
     on(
-      () => [prover.current()?.session, prover.current()?.mode, prover.current()?.input] as const,
-      ([session, mode, input]) => {
+      () =>
+        [prover.current()?.session, prover.current()?.calculus, prover.current()?.input] as const,
+      ([session, calculus, input]) => {
         clearTimeout(linking);
-        if (!session || !mode || !input) return;
+        if (!session || !calculus || !input) return;
         linking = setTimeout(async () => {
-          const written = await writeLink(pretty(input), mode, JSON.stringify(unwrap(session)));
+          const text = calculus.suite === "ordinary" ? prettyOrdinary(input) : pretty(input);
+          const written = await writeLink(
+            text,
+            calculus.suite,
+            parameterOf(calculus),
+            JSON.stringify(unwrap(session)),
+          );
           history.replaceState(null, "", written.hash);
           setLinkShort(!written.whole);
         }, 400);
@@ -177,7 +207,7 @@ export default function App(props: {
           split: null,
           cutting: null,
           witnessing: null,
-          pendingMode: null,
+          pendingCalculus: null,
         }),
       { defer: true },
     ),
@@ -193,7 +223,7 @@ export default function App(props: {
     if (!ladder) {
       setUi("ladder", { key, rung: 1, hint: null });
       try {
-        const answer = await prover.api.hint(p.session, goal, prover.json());
+        const answer = await prover.hint(goal);
         if (ui.ladder?.key === key) setUi("ladder", (l) => (l ? { ...l, hint: answer } : l));
       } catch (thrown) {
         if (ui.ladder?.key === key) setUi("ladder", null);
@@ -257,11 +287,16 @@ export default function App(props: {
       const r = element.getBoundingClientRect();
       const key = element.getAttribute("data-key");
       // An intuitionistic proof is drawn two-sided, so its rules show their two-sided schemas.
-      const named = ruleNamed(
-        props.rules,
-        element.getAttribute("data-rule") ?? "",
-        prover.current()?.mode.startsWith("intuitionistic") ?? false,
-      );
+      // The reference's schemas are linear logic's: an ordinary rule has none there.
+      const calculus = prover.current()?.calculus;
+      const named =
+        calculus?.suite === "linear"
+          ? ruleNamed(
+              props.rules,
+              element.getAttribute("data-rule") ?? "",
+              calculus.mode.startsWith("intuitionistic"),
+            )
+          : undefined;
       // A rule the reference draws no schema of (Mix, weakening) has nothing to show.
       if (!named && !element.hasAttribute("data-tip")) return;
       setTip({
@@ -311,8 +346,8 @@ export default function App(props: {
         setUi("menu", null);
         closed = true;
       }
-      if (ui.pendingMode && outside(".mode-warn, .calc")) {
-        setUi("pendingMode", null);
+      if (ui.pendingCalculus && outside(".mode-warn, .calc")) {
+        setUi("pendingCalculus", null);
         closed = true;
       }
       if ((ui.selected || ui.split) && outside(".stage .pop, .fb")) {
@@ -400,12 +435,12 @@ export default function App(props: {
         p: () => setUi("menu", ui.menu === "practice" ? null : "practice"),
         Escape: () => {
           setTip(null);
-          setUi({ menu: null, pendingMode: null });
+          setUi({ menu: null, pendingCalculus: null });
         },
       };
       const action = act[event.key];
       if (!action) return;
-      if (event.key === "Escape" && ui.menu === null && !ui.pendingMode) return;
+      if (event.key === "Escape" && ui.menu === null && !ui.pendingCalculus) return;
       event.preventDefault();
       action();
     };
@@ -431,7 +466,13 @@ export default function App(props: {
       data-learn={ui.learn ? "" : undefined}
     >
       <div class="win">
-        <TopBand prover={prover} ui={view} theme={theme} setTheme={setTheme} />
+        <TopBand
+          prover={prover}
+          ui={view}
+          theme={theme}
+          setTheme={setTheme}
+          samples={props.samples}
+        />
         <Show when={prover.aside()}>
           {(shelf) => (
             <section class="restore cluster" aria-label="Restore">

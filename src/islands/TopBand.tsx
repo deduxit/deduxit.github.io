@@ -11,6 +11,7 @@
  */
 
 import {
+  BookOpen,
   CircleCheck,
   CircleDashed,
   CircleDot,
@@ -24,7 +25,10 @@ import {
 import { createEffect, createSignal, For, on, onMount, Show } from "solid-js";
 import { Dynamic } from "solid-js/web";
 import { effective, parseTheme, THEME_KEY, type Theme, toggled } from "../lib/theme";
-import { displayed, modeWords } from "../lib/words";
+import { prettyOrdinary } from "../lib/ordinary";
+import type { Sample } from "../lib/content";
+import { calculusWords, markOf, ordinary } from "../lib/suites";
+import { displayed } from "../lib/words";
 import { Calculus } from "./Calculus";
 import { Logo } from "./Logo";
 import type { Proof, Prover } from "./state";
@@ -62,17 +66,11 @@ const STATE_MARKS = {
 } as const;
 
 /** The calculus's short mark. */
-export function mark(proof: Proof): string {
-  const names: Record<string, string> = {
-    classical: "LL",
-    affine: "LL+aff",
-    mix: "LL+mix",
-    "affine-mix": "LL+aff+mix",
-    intuitionistic: "ILL",
-    "intuitionistic-affine": "ILL+aff",
-  };
-  return names[proof.mode] ?? proof.mode;
-}
+export const mark = (proof: Proof): string => markOf(proof.calculus);
+
+/** A proof's sequent as its tab shows it, in its suite's signs. */
+export const tabText = (proof: Proof): string =>
+  proof.calculus.suite === "ordinary" ? prettyOrdinary(proof.input) : displayed(proof.input);
 
 const storage = () => {
   try {
@@ -99,6 +97,8 @@ export function TopBand(props: {
   ui: Ui;
   theme: () => Theme;
   setTheme: (t: Theme) => void;
+  /** The sequent field's examples of the ordinary suite. */
+  samples: readonly Sample[];
 }) {
   const { setUi } = props.ui;
   const current = () => props.prover.current();
@@ -112,7 +112,9 @@ export function TopBand(props: {
       <Logo class="wordmark" />
       <nav class="proofs" aria-label="Open proofs">
         <For each={props.prover.store.proofs}>
-          {(proof) => <ProofTab proof={proof} prover={props.prover} ui={props.ui} />}
+          {(proof) => (
+            <ProofTab proof={proof} prover={props.prover} ui={props.ui} samples={props.samples} />
+          )}
         </For>
         <button
           type="button"
@@ -181,7 +183,7 @@ export function TopBand(props: {
   );
 }
 
-function ProofTab(props: { proof: Proof; prover: Prover; ui: Ui }) {
+function ProofTab(props: { proof: Proof; prover: Prover; ui: Ui; samples: readonly Sample[] }) {
   const isActive = () => props.prover.store.active === props.proof.id;
   const [draft, setDraft] = createSignal(props.proof.input);
   // The field follows a text set from elsewhere (a link's sequent).
@@ -192,16 +194,19 @@ function ProofTab(props: { proof: Proof; prover: Prover; ui: Ui }) {
   let keyed = false;
   let typing: ReturnType<typeof setTimeout> | undefined;
   /** The fragment beside the mark: the session's, or while typing the text's. */
-  const fragment = () =>
-    props.proof.view?.fragment ??
-    (props.proof.editing && props.proof.typed
-      ? props.proof.typed[
-          props.proof.mode.startsWith("intuitionistic") ? "intuitionistic" : "classical"
-        ]
-      : undefined);
+  const fragment = () => {
+    const c = props.proof.calculus;
+    if (c.suite !== "linear") return undefined;
+    return (
+      props.proof.view?.fragment ??
+      (props.proof.editing && props.proof.typed
+        ? props.proof.typed[c.mode.startsWith("intuitionistic") ? "intuitionistic" : "classical"]
+        : undefined)
+    );
+  };
   const { ui, setUi } = props.ui;
-  const calculusWords = () =>
-    `Calculus: ${modeWords(props.proof.mode)}${props.proof.view ? `; fragment ${props.proof.view.fragment}` : ""}`;
+  const markWords = () =>
+    `Calculus: ${calculusWords(props.proof.calculus)}${fragment() ? `; fragment ${fragment()}` : ""}`;
   // The mark's switches, opened by a key, closed with the focus lost (Escape): back to the mark.
   createEffect(
     on(
@@ -257,7 +262,7 @@ function ProofTab(props: { proof: Proof; prover: Prover; ui: Ui }) {
               } else props.prover.activate(props.proof.id);
             }}
           >
-            <span class="m">{props.proof.input ? displayed(props.proof.input) : "New proof"}</span>
+            <span class="m">{props.proof.input ? tabText(props.proof) : "New proof"}</span>
           </button>
         }
       >
@@ -269,7 +274,9 @@ function ProofTab(props: { proof: Proof; prover: Prover; ui: Ui }) {
           class="field"
           aria-label="Sequent"
           aria-invalid={props.proof.inputProblem ? "true" : undefined}
-          placeholder="A * B |- B * A"
+          placeholder={
+            props.proof.calculus.suite === "ordinary" ? "a /\\ b |- b /\\ a" : "A * B |- B * A"
+          }
           spellcheck={false}
           autocomplete="off"
           value={draft()}
@@ -292,12 +299,24 @@ function ProofTab(props: { proof: Proof; prover: Prover; ui: Ui }) {
           }}
         />
       </Show>
+      <Show when={props.proof.editing && isActive() && props.proof.calculus.suite === "ordinary"}>
+        <button
+          type="button"
+          class="pt-ex"
+          aria-label="Examples"
+          data-tip="Examples of ordinary logic to open in this tab"
+          aria-expanded={ui.menu === "examples"}
+          onClick={() => setUi("menu", ui.menu === "examples" ? null : "examples")}
+        >
+          <BookOpen aria-hidden="true" />
+        </button>
+      </Show>
       <button
         type="button"
         class="pt-mark"
         aria-expanded={isActive() && ui.menu === "calculus"}
-        data-tip={calculusWords()}
-        aria-label={calculusWords()}
+        data-tip={markWords()}
+        aria-label={markWords()}
         ref={chip}
         onClick={(event) => {
           props.prover.activate(props.proof.id);
@@ -324,6 +343,40 @@ function ProofTab(props: { proof: Proof; prover: Prover; ui: Ui }) {
       >
         <X aria-hidden="true" />
       </button>
+      <Show when={isActive() && ui.menu === "examples"}>
+        <div
+          class="cluster pop calc-pop examples"
+          role="dialog"
+          aria-label="Examples"
+          ref={(pop) => queueMicrotask(() => underTab(pop, 0))}
+        >
+          <ul class="mlist">
+            <For each={props.samples}>
+              {(sample) => (
+                <li>
+                  <button
+                    type="button"
+                    class="mi"
+                    data-tip={sample.note}
+                    onClick={() => {
+                      setUi("menu", null);
+                      props.prover.setInput(props.proof.id, sample.sequent);
+                      setDraft(sample.sequent);
+                      void props.prover.submit(props.proof.id, ordinary(sample.logic));
+                    }}
+                  >
+                    <span class="fmt">{sample.title}</span>
+                    <span class="fn">
+                      <span class="m">{prettyOrdinary(sample.sequent)}</span>
+                      {` in ${markOf(ordinary(sample.logic))}`}
+                    </span>
+                  </button>
+                </li>
+              )}
+            </For>
+          </ul>
+        </div>
+      </Show>
       <Show when={isActive() && ui.menu === "calculus"}>
         <div
           class="cluster pop calc-pop"
@@ -331,22 +384,15 @@ function ProofTab(props: { proof: Proof; prover: Prover; ui: Ui }) {
           aria-label="Logic"
           ref={(pop) => queueMicrotask(() => underTab(pop, 0))}
         >
-          <fieldset class="seg" aria-label="Logic">
-            <button type="button" class="seg-b" aria-pressed="true">
-              Linear
-            </button>
-            <button
-              type="button"
-              class="seg-b"
-              aria-pressed="false"
-              aria-disabled="true"
-              data-tip="Ordinary propositional logic, through linlog's translations, comes later"
-            >
-              Ordinary
-            </button>
-          </fieldset>
           <Calculus prover={props.prover} ui={props.ui} />
-          <p class="sub">Fragment: {props.proof.view?.fragment ?? "not started"}.</p>
+          <Show
+            when={props.proof.calculus.suite === "linear"}
+            fallback={
+              <p class="sub">Typed with {"-> /\\ \\/ ~ <-> true false"}, or their signs.</p>
+            }
+          >
+            <p class="sub">Fragment: {props.proof.view?.fragment ?? "not started"}.</p>
+          </Show>
         </div>
       </Show>
     </div>
@@ -394,10 +440,12 @@ function StatusDetails(props: { proof: Proof; prover: Prover; close: () => void 
               {(verdict) => <p class="sub">{verdict().sentence}</p>}
             </Show>
             <dl class="facts">
-              <dt>Fragment</dt>
-              <dd>{view().fragment}</dd>
+              <Show when={props.proof.calculus.suite === "linear"}>
+                <dt>Fragment</dt>
+                <dd>{view().fragment}</dd>
+              </Show>
               <dt>Calculus</dt>
-              <dd>{modeWords(props.proof.mode)}</dd>
+              <dd>{calculusWords(props.proof.calculus)}</dd>
               <dt>Steps</dt>
               <dd>{view().steps}</dd>
               <Show when={props.proof.verdict?.outcome?.engine}>

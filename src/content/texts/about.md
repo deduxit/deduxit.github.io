@@ -2,7 +2,7 @@
 title: About
 ---
 This page is [linlog](https://github.com/sequentium/sequentium)'s prover for
-linear logic, running in your browser: you type a sequent and prove it step by
+linear logic and for ordinary propositional logic in LK and LJ, running in your browser: you type a sequent and prove it step by
 step, or let linlog's search close a goal. linlog's library is compiled to
 WebAssembly and runs in the page; nothing you type is sent anywhere, and your
 proofs stay in this browser's storage.

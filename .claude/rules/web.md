@@ -36,6 +36,40 @@ the page reads.
 - **A replay is one request** (`replay`, `play` in the worker, over `src/lib/steps.ts`), so
   one `terminate()` stops it.
 
+## The suites (`src/lib/suites.ts`, `src/lib/ordinary.ts`)
+
+- **A tab's calculus is a `Calculus`: a suite, a method and the suite's parameter**, as
+  linlog's `about` names them (`{suite: "linear", method: "sequent", mode}`,
+  `{suite: "ordinary", method: "sequent", logic}`); `SUITES` is the registry (name, tip,
+  methods, parameter, the values the page offers, the calculus a new tab starts in, the prefix
+  of the suite's calls), `suites.test.ts` holds it to `about()`'s `suites` (names, prefixes,
+  parameters, the page's values a part of linlog's, the start linlog's default). A new suite
+  is an entry there, a variant of `Calculus`, its calls in `api.ts` and the worker's table,
+  and a branch where a call is made; the calculus popover lists the registry. Each suite has
+  one method today; a second method is a field of the link (`k`) and of the shelf's calculus.
+- **The ordinary suite** (linlog's `ordinary_…` calls, LK and LJ for classical,
+  intuitionistic and minimal logic) is shown through the shapes the linear stage reads:
+  `asView` makes its view a `View` whose goals number their formulas left of ⊢ first, as the
+  drawing's `i<n>-<p>` ids do; `ordinaryStep` turns a place back into a side and position, and
+  a hint's later steps carry their `side` (each acts on the goal the one before opened). A
+  rule of two premises is applied shared (G3's form, linlog's default): the page offers no
+  split in an ordinary proof. No net, no cut, no fill, no engine choice, no invertible rules;
+  the drawing and the exports are the ordinary calls', never the linear image.
+- **Undo on a branch in an ordinary proof cuts the step's subtree out of the session
+  document** (`retract`): it depends on linlog's layout of an ordinary session at wire level 8,
+  each history entry the goal a step expanded and a step's inferences that goal's subtree,
+  appended as one block after it. The page shows or stores a retracted document only after
+  `ordinary_view` (linlog's reader, which replays every inference and the history's order)
+  accepted it; a refusal leaves the session as it was and says so. A change of that layout in
+  linlog must change `retract`, and `ordinary.test.ts`'s property against the real module
+  (the reader accepts every retraction, which equals linlog's undo for the last step) is
+  what catches it. Redo restores the session before each undo (`Proof.later`).
+- **An ordinary session tells no search's graft from a step's own structural run**, so its
+  grafts are the paths the page saw the search close (`Proof.engines`), not `searchMade`.
+- **The sequent field's examples** are `src/content/examples.json` (the menu beside the field
+  of a tab of a suite Practice does not serve), each with linlog's verdict in every logic,
+  held by `src/content/examples.test.ts`; the file's order is the menu's.
+
 ## The step tree (`src/lib/steps.ts`)
 
 - **The tree is read off the session document**, never kept beside it: `inferences` (a
@@ -254,13 +288,16 @@ the page reads.
 
 ## What holds the work
 
-- **The link** (`src/lib/link.ts`): `#v=1&m=<mode>&s=<sequent>&d=<session>` in the fragment,
+- **The link** (`src/lib/link.ts`): `#v=2&u=<suite>&m=<parameter>&s=<sequent>&d=<session>` in
+  the fragment (a link of the first version, `#v=1&m=<mode>&…`, reads as the linear suite;
+  `link.test.ts` holds both),
   the session deflate-raw and base64url, dropped past 2000 characters (the export menu
   says so). A link whose session linlog refuses loads the sequent and the mode, with
   "Proof not restored"; one past `UNPACKED_LIMIT` (512 KiB, read through a capped
   inflate) says so, and one whose sequent does not parse puts it in the field with the
   parse error marked, as if typed. The sequent is the field's text with the ASCII connectives as their signs (`pretty`, which `words.test.ts` holds to read as the same sequent).
-- **Autosave** (`src/lib/shelf.ts`): every visit (tab) saves its open proofs under
+- **Autosave** (`src/lib/shelf.ts`, version 2: each proof's `calculus`; a shelf of version 1,
+  each proof with a linear `mode`, reads as the linear suite): every visit (tab) saves its open proofs under
   `linlog-proofs:<visit>`, each with the time, so two tabs never overwrite each other; at a
   visit's start the other visits' are gathered into `linlog-proofs-previous` for the restore
   bar, the copy of a proof saved last winning, and work begun before the visitor answers
@@ -587,8 +624,9 @@ the page reads.
 - **On a phone** the bottom band keeps undo, redo, close all, hint, Practice and Learn;
   `wide-only` actions move to More's sheet. Tips follow a mouse or a keyboard, never a
   touch (`App.tsx`).
-- **The calculus is each tab's** (`Proof.mode`, kept in the shelf; a new empty tab starts in
-  `lastMode`, the calculus last chosen in this visit, classical at a visit's start). A tab's
+- **The calculus is each tab's** (`Proof.calculus`, kept in the shelf; a new empty tab starts
+  in `lastCalculus`, the calculus last chosen in this visit, classical linear logic at a
+  visit's start). A change of suite reads the field's text anew in the other suite's syntax. A tab's
   calculus mark opens its switches (`Calculus` in the "Logic" popover) at every width, by a
   key too (the switches take the focus, Escape gives it back to the mark); that is their
   only place, the stage has none (`tests/modes.spec.ts`), and the restart warning

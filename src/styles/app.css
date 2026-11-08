@@ -359,6 +359,7 @@ button.kw {
 .dot-b,
 .pt-go,
 .pt-mark,
+.pt-ex,
 .pt-x,
 .pt-new,
 .seg-b,
@@ -386,6 +387,7 @@ button.kw {
   .dot-b,
   .pt-go,
   .pt-mark,
+  .pt-ex,
   .pt-x,
   .pt-new,
   .seg-b,
@@ -404,6 +406,7 @@ button.kw {
   .dot-b,
   .pt-go,
   .pt-mark,
+  .pt-ex,
   .pt-x,
   .pt-new,
   .seg-b,
@@ -463,7 +466,7 @@ button.kw {
   height: var(--size-icon);
   flex: none;
 }
-:is(.btn-s, .dot-b, .pt-x, .pt-new, .linkish) svg.lucide {
+:is(.btn-s, .dot-b, .pt-ex, .pt-x, .pt-new, .linkish) svg.lucide {
   width: var(--size-icon-small);
   height: var(--size-icon-small);
 }
@@ -485,6 +488,7 @@ button.kw {
   border-radius: var(--radius-key);
 }
 .dot-b,
+.pt-ex,
 .pt-x,
 .pt-new {
   display: grid;
@@ -533,6 +537,9 @@ button.kw {
 }
 .pt-x {
   color: var(--color-faint);
+}
+.pt-ex {
+  color: var(--color-dim);
 }
 .pt-new {
   border: var(--line) dashed var(--color-line);
@@ -1264,6 +1271,17 @@ button.kw {
 .status-pop,
 .calc-pop {
   position: fixed;
+}
+/* The sequent field's examples: each its name over its sequent, the list scrolling inside the
+   window. */
+.calc-pop.examples {
+  width: min(var(--size-menu), calc(100vw - 2 * var(--spacing-2)));
+  max-height: calc(100vh - 3 * var(--size-band));
+  overflow: auto;
+}
+.calc-pop.examples .mi {
+  grid-template-columns: 1fr;
+  gap: var(--spacing-0-5);
 }
 .restore {
   position: absolute;

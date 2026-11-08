@@ -51,8 +51,8 @@ async function tooSmall(page: Page, least: number): Promise<string[]> {
  * empty page, a proof with the rule popover, the split chooser, a refusal,
  * a hint, a proof closed and its net, every menu, the status and the
  * calculus, the restart warning, Practice and its filters, Learn's two
- * places and a lesson's parts, the tour, a field's parse error, and the
- * restore bar.
+ * places and a lesson's parts, the tour, a field's parse error, an ordinary
+ * tab's switches, examples and rules, and the restore bar.
  */
 async function walk(page: Page, least: number) {
   const found: string[] = [];
@@ -186,6 +186,28 @@ async function walk(page: Page, least: number) {
   await band("Tour");
   await expect(page.getByRole("dialog", { name: "Tour" })).toBeVisible();
   await measure("tour");
+  await page.keyboard.press("Escape");
+  // An ordinary tab: its calculus's switches, the field's examples, a proof begun.
+  await page.getByRole("button", { name: "New proof" }).click();
+  await page
+    .locator(".ptab[aria-current=true]")
+    .getByRole("button", { name: /^Calculus/ })
+    .click();
+  await page
+    .getByRole("dialog", { name: "Logic" })
+    .getByRole("button", { name: "Ordinary", exact: true })
+    .click();
+  await measure("ordinary calculus");
+  await page.keyboard.press("Escape");
+  await page.getByRole("button", { name: "Examples" }).click();
+  await measure("examples");
+  await page
+    .getByRole("dialog", { name: "Examples" })
+    .getByRole("button", { name: /^Modus ponens/ })
+    .click();
+  await expect(page.getByRole("button", { name: /^a → b, formula/ })).toBeVisible();
+  await page.getByRole("button", { name: /^a → b, formula/ }).click();
+  await measure("ordinary rules");
   await page.keyboard.press("Escape");
   await page.reload();
   await expect(page.getByRole("region", { name: "Restore" })).toBeVisible();

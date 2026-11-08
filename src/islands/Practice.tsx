@@ -63,7 +63,11 @@ export function createPractice(prover: Prover) {
     for (const proof of prover.store.proofs) {
       if (!proof.view?.complete || Object.keys(proof.engines).length > 0) continue;
       const problem = opened.get(proof.id);
-      if (!problem || keyOf(problem.mode, problem.sequent) !== keyOf(proof.mode, proof.input))
+      if (
+        !problem ||
+        proof.calculus.suite !== "linear" ||
+        keyOf(problem.mode, problem.sequent) !== keyOf(proof.calculus.mode, proof.input)
+      )
         continue;
       const id = problem.id;
       if (!proved.has(id)) {

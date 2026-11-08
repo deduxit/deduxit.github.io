@@ -42,7 +42,9 @@ import {
   type SessionDoc,
 } from "../lib/linlog";
 import { writeLink } from "../lib/link";
-import { actions, goalAt } from "../lib/steps";
+import { isOrdinary, prettyOrdinary, stepsOf } from "../lib/ordinary";
+import { actions, goalAt, paths } from "../lib/steps";
+import { intuitionistic, parameterOf } from "../lib/suites";
 import { notTaken, pretty } from "../lib/words";
 import type { Theme } from "../lib/theme";
 import {
@@ -139,7 +141,7 @@ export function BottomBand(props: {
             tip="Redo"
             keyName="⇧U"
             alone
-            disabled={!proof()?.redo.length || props.prover.busy()}
+            disabled={!(proof()?.redo.length || proof()?.later.length) || props.prover.busy()}
             onClick={() => void props.prover.redo()}
             show={key}
           />
@@ -383,15 +385,24 @@ function ExportMenu(props: {
       styles: {
         svg: {
           ids: false,
-          essential: proof()?.mode.startsWith("intuitionistic") ?? false,
+          essential:
+            proof()?.calculus.suite === "linear" &&
+            intuitionistic(
+              proof()?.calculus ?? { suite: "linear", method: "sequent", mode: "classical" },
+            ),
           net: props.prover.settings().net,
           net_look: lookJson(props.prover.settings().netLook),
           font: exportFont(props.prover.settings()),
         },
       },
-      ...viewJson(props.prover.settings()),
+      ...viewJson(props.prover.settings(), proof()?.calculus),
     });
   const name = () => "linlog-proof";
+  /** The proof's ordinary session, where it is one: its exports are the ordinary calls'. */
+  const ordinarySession = () => {
+    const s = proof()?.session;
+    return s && isOrdinary(s) ? s : undefined;
+  };
 
   async function run(what: () => Promise<void>) {
     setSaid(null);
@@ -403,10 +414,17 @@ function ExportMenu(props: {
   }
 
   const session = () => proof()?.session as SessionDoc;
+  /** A text export of the proof: the ordinary calls' for an ordinary session. */
+  const exported = (format: string) => {
+    const o = ordinarySession();
+    return o
+      ? props.prover.api.ordinary.exportAs(o, format, exportSettings())
+      : props.prover.api.exportAs(session(), format, exportSettings());
+  };
   const drawing = () =>
-    net()
+    net() && !ordinarySession()
       ? props.prover.api.drawNet(session(), exportSettings())
-      : props.prover.api.exportAs(session(), "svg", exportSettings());
+      : exported("svg");
 
   async function rendered(format: "png" | "pdf") {
     const now = new Date();
@@ -439,11 +457,7 @@ function ExportMenu(props: {
   }
 
   const text = (format: string, extension: string, type: string) => async () => {
-    download(
-      `${name()}.${extension}`,
-      await props.prover.api.exportAs(session(), format, exportSettings()),
-      type,
-    );
+    download(`${name()}.${extension}`, await exported(format), type);
   };
 
   const complete = () => proof()?.view?.complete === true;
@@ -482,7 +496,11 @@ function ExportMenu(props: {
       label: "Session",
       detail: "The proof as linlog's session document (JSON), to import again",
       act: async () =>
-        download(`${name()}.json`, JSON.stringify(session(), null, 2), "application/json"),
+        download(
+          `${name()}.json`,
+          JSON.stringify(proof()?.session ?? null, null, 2),
+          "application/json",
+        ),
     },
     {
       label: "Rocq",
@@ -499,7 +517,8 @@ function ExportMenu(props: {
           await props.prover.api.certificate(outcome() as Outcome, exportSettings()),
           "text/plain",
         ),
-      hidden: complete,
+      // An ordinary goal's certificate of non-validity is not among the page's calls.
+      hidden: () => complete() || ordinarySession() !== undefined,
       off: () => {
         const kind = outcome()?.refutation?.kind;
         if (!outcome()) return "Close a goal the search refutes first";
@@ -514,7 +533,12 @@ function ExportMenu(props: {
   async function copyLink() {
     const p = proof();
     if (!p?.session) return;
-    const written = await writeLink(pretty(p.input), p.mode, JSON.stringify(p.session));
+    const written = await writeLink(
+      p.calculus.suite === "ordinary" ? prettyOrdinary(p.input) : pretty(p.input),
+      p.calculus.suite,
+      parameterOf(p.calculus),
+      JSON.stringify(p.session),
+    );
     const url = `${location.origin}${location.pathname}${written.hash}`;
     try {
       await navigator.clipboard.writeText(url);
@@ -530,7 +554,7 @@ function ExportMenu(props: {
 
   return (
     <div class="cluster menu export" role="menu" aria-label="Export">
-      <p class="kw-label h">Export {net() ? "the net" : "the derivation"}</p>
+      <p class="kw-label h">Export {net() && !ordinarySession() ? "the net" : "the derivation"}</p>
       <ul class="mlist">
         <For each={items.filter((item) => !item.hidden?.())}>
           {(item) => (
@@ -948,10 +972,12 @@ function SettingsPanel(props: {
 function EngineChoice(props: { prover: Prover }) {
   const proof = () => props.prover.current();
   const engine = () => props.prover.settings().engine;
-  const [listed] = createResource(
-    () => proof()?.session ?? null,
-    (session) => props.prover.engines(session),
-  );
+  // An ordinary proof is searched through linlog's translation, the engine linlog's choice.
+  const linearSession = () => {
+    const s = proof()?.session;
+    return s && !isOrdinary(s) ? s : null;
+  };
+  const [listed] = createResource(linearSession, (session) => props.prover.engines(session));
   const refusalOf = (key: string): Failure | null =>
     listed()?.engines.find((e) => e.engine === key)?.refused ?? null;
   return (
@@ -994,6 +1020,12 @@ function EngineChoice(props: { prover: Prover }) {
       </div>
       <Show when={!proof()?.session}>
         <p class="sub">Start a proof to see which engines take its sequent.</p>
+      </Show>
+      <Show when={proof()?.calculus.suite === "ordinary"}>
+        <p class="sub">
+          An ordinary proof's searches run on linlog's translation into linear logic, where linlog
+          chooses the engine: the engine set here is for linear proofs.
+        </p>
       </Show>
       <p class="sub">A forced engine holds for this visit; the page starts on Automatic.</p>
       <Show when={engine() !== null && refusalOf(engine() ?? "")}>
@@ -1051,9 +1083,27 @@ function MoreSheet(props: { prover: Prover; ui: Ui; tour: () => void }) {
 
 function StepsPanel(props: { prover: Prover }) {
   const proof = () => props.prover.current();
+  /** Each step, as the list says it: its rule and goal, or the search that closed the goal. */
   const list = () => {
     const session = proof()?.session;
-    return session ? actions(session, proof()?.view?.cuts, proof()?.view) : [];
+    if (!session) return [];
+    if (isOrdinary(session)) {
+      const where = paths(session);
+      return stepsOf(session).map((step) => {
+        const path = where.get(step.goal) ?? [];
+        const engine = proof()?.engines[pathKey(path)];
+        return engine
+          ? `The ${engineName(engine)} closed goal ${step.goal + 1}`
+          : `${step.rule} on goal ${step.goal + 1}`;
+      });
+    }
+    return actions(session, proof()?.view?.cuts, proof()?.view).map((action) =>
+      action.kind === "step"
+        ? `${action.step.rule} on goal ${goalNumber(action.path)}`
+        : action.kind === "cut"
+          ? `cut on ${action.formula} in goal ${goalNumber(action.path)}`
+          : `The ${engineName(proof()?.engines[pathKey(action.path)] ?? "") || "search"} closed goal ${goalNumber(action.path)}`,
+    );
   };
   const goalNumber = (path: readonly number[]) => {
     const session = proof()?.session;
@@ -1070,17 +1120,11 @@ function StepsPanel(props: { prover: Prover }) {
           </button>
         </li>
         <For each={list()}>
-          {(action, i) => (
+          {(line, i) => (
             <li>
               <button type="button" class="mi" onClick={() => void props.prover.backTo(i() + 1)}>
                 <span class="fmt">{i() + 1}</span>
-                <span class="fn">
-                  {action.kind === "step"
-                    ? `${action.step.rule} on goal ${goalNumber(action.path)}`
-                    : action.kind === "cut"
-                      ? `cut on ${action.formula} in goal ${goalNumber(action.path)}`
-                      : `The ${engineName(proof()?.engines[pathKey(action.path)] ?? "") || "search"} closed goal ${goalNumber(action.path)}`}
-                </span>
+                <span class="fn">{line}</span>
               </button>
             </li>
           )}

@@ -45,6 +45,15 @@ const calls = {
   export_as: linlog.export_as,
   render: linlog.render,
   certificate: linlog.certificate,
+  ordinary_start: linlog.ordinary_start,
+  ordinary_view: linlog.ordinary_view,
+  ordinary_rules: linlog.ordinary_rules,
+  ordinary_apply: linlog.ordinary_apply,
+  ordinary_undo: linlog.ordinary_undo,
+  ordinary_close: linlog.ordinary_close,
+  ordinary_hint: linlog.ordinary_hint,
+  ordinary_draw: linlog.ordinary_draw,
+  ordinary_export: linlog.ordinary_export,
   replay: (session: string, todo: string, settings: string) =>
     JSON.stringify(
       replay(linlog, JSON.parse(session) as SessionDoc, JSON.parse(todo) as Action[], settings),

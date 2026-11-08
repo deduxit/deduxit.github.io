@@ -13,29 +13,50 @@ import {
 } from "./link";
 
 describe("the link's codec", () => {
-  it("reads back what it wrote: the sequent, the mode and the session", async () => {
+  it("reads back what it wrote: the sequent, the suite, its parameter and the session", async () => {
     await fc.assert(
       fc.asyncProperty(
         fc.string({ unit: "grapheme" }),
         fc.string(),
+        fc.string(),
         fc.option(fc.json()),
-        async (sequent, mode, session) => {
+        async (sequent, suite, parameter, session) => {
           const written = await writeLink(
             sequent,
-            mode,
+            suite,
+            parameter,
             session ?? undefined,
             Number.POSITIVE_INFINITY,
           );
           expect(written.whole).toBe(true);
           const read = await readLink(written.hash);
-          expect(read).toEqual(session === null ? { sequent, mode } : { sequent, mode, session });
+          const shown = { sequent, suite, parameter };
+          expect(read).toEqual(session === null ? shown : { ...shown, session });
         },
       ),
     );
   });
 
+  it("reads a link of the first version, written before suites, as the linear suite", async () => {
+    // As the page wrote them until 2026-11: `#v=1&m=<mode>&s=<sequent>&d=<session>`.
+    const session = JSON.stringify({ version: 7, mode: "mix" });
+    const packed = (await writeLink("A ⊢ A", "linear", "mix", session)).hash;
+    const old = `#${new URLSearchParams({ v: "1", m: "mix", s: "A ⊢ A", d: new URLSearchParams(packed.slice(1)).get("d") ?? "" })}`;
+    expect(await readLink(old)).toEqual({
+      sequent: "A ⊢ A",
+      suite: "linear",
+      parameter: "mix",
+      session,
+    });
+    expect(await readLink("#v=1&m=intuitionistic&s=A+%7C-+A")).toEqual({
+      sequent: "A |- A",
+      suite: "linear",
+      parameter: "intuitionistic",
+    });
+  });
+
   it("keeps the sequent readable in the fragment", async () => {
-    const { hash } = await writeLink("A ⊗ B ⊢ B ⊗ A", "classical");
+    const { hash } = await writeLink("A ⊗ B ⊢ B ⊗ A", "linear", "classical");
     expect(decodeURIComponent(hash)).toContain("A+⊗+B+⊢+B+⊗+A");
   });
 
@@ -46,22 +67,33 @@ describe("the link's codec", () => {
       state = (state * 1103515245 + 12345) % 2 ** 31;
       return String.fromCharCode(33 + (state % 90));
     }).join("");
-    const written = await writeLink("A |- A", "classical", JSON.stringify({ noise: random }));
+    const written = await writeLink(
+      "a |- a",
+      "ordinary",
+      "minimal",
+      JSON.stringify({ noise: random }),
+    );
     expect(written.whole).toBe(false);
     expect(written.hash.length).toBeLessThanOrEqual(LINK_LIMIT);
-    expect(await readLink(written.hash)).toEqual({ sequent: "A |- A", mode: "classical" });
+    expect(await readLink(written.hash)).toEqual({
+      sequent: "a |- a",
+      suite: "ordinary",
+      parameter: "minimal",
+    });
   });
 
   it("says when a session does not unpack, or the version is unknown, and keeps the sequent", async () => {
-    expect(await readLink("#v=1&m=classical&s=A&d=@@@")).toEqual({
+    expect(await readLink("#v=2&u=linear&m=classical&s=A&d=@@@")).toEqual({
       sequent: "A",
-      mode: "classical",
+      suite: "linear",
+      parameter: "classical",
       problem: "document",
     });
     expect(await readLink("#v=1&m=classical&s=A&d=AAAA")).toMatchObject({ problem: "document" });
-    expect(await readLink("#v=9&m=mix&s=A")).toEqual({
+    expect(await readLink("#v=9&u=ordinary&m=minimal&s=A")).toEqual({
       sequent: "A",
-      mode: "mix",
+      suite: "ordinary",
+      parameter: "minimal",
       problem: "version",
     });
     expect(await readLink("#about")).toBeUndefined();
@@ -70,17 +102,24 @@ describe("the link's codec", () => {
   it("refuses a session that unpacks past the cap, and keeps the sequent", async () => {
     // Eight times the cap of one repeated character: a few kilobytes deflated.
     const bomb = JSON.stringify({ pad: "a".repeat(8 * UNPACKED_LIMIT) });
-    const written = await writeLink("A |- A", "classical", bomb, Number.POSITIVE_INFINITY);
+    const written = await writeLink(
+      "A |- A",
+      "linear",
+      "classical",
+      bomb,
+      Number.POSITIVE_INFINITY,
+    );
     expect(written.hash.length).toBeLessThan(UNPACKED_LIMIT / 16);
     expect(await readLink(written.hash)).toEqual({
       sequent: "A |- A",
-      mode: "classical",
+      suite: "linear",
+      parameter: "classical",
       problem: "size",
     });
     // At the cap itself it still reads.
     const fits = JSON.stringify({ pad: "a".repeat(UNPACKED_LIMIT - 10) });
     expect(fits.length).toBe(UNPACKED_LIMIT);
-    const read = await readLink((await writeLink("A", "mix", fits, Infinity)).hash);
+    const read = await readLink((await writeLink("A", "linear", "mix", fits, Infinity)).hash);
     expect(read?.session).toBe(fits);
   });
 

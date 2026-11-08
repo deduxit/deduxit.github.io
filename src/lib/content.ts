@@ -11,6 +11,7 @@
  */
 
 import type { Mode } from "./linlog";
+import type { Logic } from "./suites";
 
 /** A level of difficulty, from 1, easy, to 4, very hard. */
 export type Level = 1 | 2 | 3 | 4;
@@ -28,6 +29,18 @@ export interface Example {
   readonly lesson: number;
   /** Its proof, linlog's session document as text, for a provable one. */
   readonly session: string | null;
+}
+
+/** An example of the sequent field's menu, for a suite Practice does not serve: an ordinary sequent. */
+export interface Sample {
+  readonly id: string;
+  readonly title: string;
+  /** In the ordinary syntax, as it is typed in the field. */
+  readonly sequent: string;
+  /** The logic it opens in. */
+  readonly logic: Logic;
+  /** What it shows, in a line. */
+  readonly note: string;
 }
 
 /** A problem of Practice's: provable, with what it is filtered by. */

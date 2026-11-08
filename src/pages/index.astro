@@ -23,7 +23,8 @@ import newcm from "linlog-fonts/NewCMMath-Book.otf?url";
 import stix from "linlog-fonts/STIXTwoMath-Regular.otf?url";
 import { getCollection, render } from "astro:content";
 import App from "../islands/App";
-import type { Example, Lesson, Rule, Stop } from "../lib/content";
+import examplesFile from "../content/examples.json";
+import type { Example, Lesson, Rule, Sample, Stop } from "../lib/content";
 import Base from "../layouts/Base.astro";
 
 const sessions = import.meta.glob<string>("../content/problems/*.session.json", {
@@ -35,6 +36,17 @@ const examples = (await getCollection("problems"))
   .filter((p) => p.data.lesson !== undefined)
   .sort((a, b) => (a.data.order ?? 0) - (b.data.order ?? 0));
 const stops = (await getCollection("tour")).sort((a, b) => a.id.localeCompare(b.id));
+// The file's order is the menu's, a lesson's order; the collection is sorted by id.
+const order = examplesFile.map((e) => e.id);
+const samples: Sample[] = (await getCollection("examples"))
+  .sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id))
+  .map((e) => ({
+  id: e.id,
+  title: e.data.title,
+  sequent: e.data.sequent,
+  logic: e.data.logic,
+  note: e.data.note,
+}));
 const texts = await getCollection("texts");
 const lessons = (await getCollection("lessons")).sort((a, b) => a.data.lesson - b.data.lesson);
 const rules = (await getCollection("rules")).sort((a, b) => a.id.localeCompare(b.id));
@@ -92,13 +104,14 @@ const rendered = await Promise.all(
 );
 ---
 
-<Base title="linlog" description="Prove sequents of linear logic step by step, in the browser.">
+<Base title="linlog" description="Prove sequents of linear logic, and of ordinary logic in LK and LJ, step by step, in the browser.">
   <main>
     <h1 class="sr-only">linlog: linear logic, proved in the browser</h1>
     <App
       client:only="solid-js"
       fonts={{ euler, "stix-two": stix, garamond, asana, "new-computer-modern": newcm }}
       examples={exampleData}
+      samples={samples}
       stops={stopData}
       lessons={lessonData}
       rules={ruleData}

@@ -36,6 +36,11 @@
  *             their inferences with it and without, and an attempt whose
  *             last step linlog refuses (its unfinished session beside the
  *             lesson as lessons/<n>-<name>.refusal.json).
+ *   examples  examples.json, the sequent field's menu of examples for the
+ *             suites Practice does not serve (ordinary logic): each a sequent
+ *             in its suite's syntax, the logic it opens in, linlog's verdict
+ *             in every logic of the suite, and a line on what it shows.
+ *             src/content/examples.test.ts holds every verdict to linlog.
  *   rules     rules/<nn>-<name>.md, the rules the reference draws as schemas
  *             and the stage's popover shows on hover: linlog's name, the
  *             premises over the conclusion, the lesson that teaches it, what
@@ -46,7 +51,7 @@
  */
 
 import { defineCollection } from "astro:content";
-import { glob } from "astro/loaders";
+import { file, glob } from "astro/loaders";
 import { z } from "astro/zod";
 
 /** The modes linlog's `start` takes. */
@@ -259,4 +264,26 @@ const rules = defineCollection({
     ),
 });
 
-export const collections = { problems, tour, texts, lessons, rules };
+/** An ordinary logic's verdict on an example. */
+const ordinaryVerdict = z.enum(["valid", "not_valid"]);
+
+const examples = defineCollection({
+  loader: file("src/content/examples.json"),
+  schema: z.object({
+    title: z.string(),
+    /** In the ordinary syntax, as it is typed in the field. */
+    sequent: z.string(),
+    /** The logic the example opens in. */
+    logic: z.enum(["classical", "intuitionistic", "minimal"]),
+    /** linlog's verdict in each logic. */
+    verdicts: z.object({
+      classical: ordinaryVerdict,
+      intuitionistic: ordinaryVerdict,
+      minimal: ordinaryVerdict,
+    }),
+    /** What it shows, in a line. */
+    note: z.string(),
+  }),
+});
+
+export const collections = { problems, tour, texts, lessons, rules, examples };

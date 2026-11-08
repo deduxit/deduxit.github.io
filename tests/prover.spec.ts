@@ -191,7 +191,7 @@ test("every export downloads, and the link is copied", async ({ page, context })
   await page.getByRole("button", { name: "Export" }).click();
   await page.getByRole("menuitem", { name: /^Link/ }).click();
   await expect(page.getByRole("status").filter({ hasText: "Link copied" })).toBeVisible();
-  expect(await page.evaluate(() => navigator.clipboard.readText())).toContain("#v=1");
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toContain("#v=2&u=linear");
 });
 
 test("Settings sets the formulas' font: the drawing laid out in it, every formula in it, the font fetched when chosen, the exports following it until they choose their own", async ({
@@ -299,7 +299,7 @@ test("the link in the fragment restores the proof, or says it could not", async 
 }) => {
   await start(page, "A * B |- B * A");
   await rule(page, /^A⊥ ⅋ B⊥/, "⅋");
-  await expect(page).toHaveURL(/#v=1&m=classical&s=.*&d=/);
+  await expect(page).toHaveURL(/#v=2&u=linear&m=classical&s=.*&d=/);
   const url = page.url();
   const fresh = await browser.newPage();
   await fresh.goto(url);

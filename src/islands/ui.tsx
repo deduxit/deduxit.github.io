@@ -12,6 +12,7 @@
 import { createSignal, For } from "solid-js";
 import { createStore } from "solid-js/store";
 import type { Hint, Offered } from "../lib/linlog";
+import type { Calculus } from "../lib/suites";
 
 /** A formula of a goal, by its position. */
 export interface Spot {
@@ -43,6 +44,7 @@ export type Menu =
   | "keys"
   | "status"
   | "calculus"
+  | "examples"
   | "steps"
   | "about"
   | "practice"
@@ -75,8 +77,8 @@ export function createUi() {
     tab: "tree" | "net";
     ladder: Ladder | null;
     live: string;
-    /** The mode a calculus switch asked for, until the visitor confirms the restart. */
-    pendingMode: string | null;
+    /** The calculus a switch asked for, until the visitor confirms the restart. */
+    pendingCalculus: Calculus | null;
     /** Learn's place shown, or null with Learn off. */
     learn: Rubric | null;
     /** The tour's stop shown (from 0), or null when no tour runs. */
@@ -99,7 +101,7 @@ export function createUi() {
     tab: "tree",
     ladder: null,
     live: "",
-    pendingMode: null,
+    pendingCalculus: null,
     learn: null,
     tour: null,
     spot: null,

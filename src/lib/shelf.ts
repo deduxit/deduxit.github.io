@@ -6,7 +6,10 @@
  * every change, and what the next visit offers to restore.
  *
  * Each proof is its session document (or, before it is started, the text
- * typed) with its mode, its redo stack and when it was saved. Nothing syncs
+ * typed) with its calculus (its suite, method and the suite's parameter), its
+ * redo stack and when it was saved. A shelf of the first version, written
+ * before the page had suites, held a linear mode for each proof, and reads as
+ * the linear suite in that mode. Nothing syncs
  * anywhere. Every visit (a tab) saves under a key of its own, so that two
  * tabs never overwrite each other. At a visit's start the page gathers what
  * other visits left, with what earlier visits set aside, into
@@ -16,19 +19,23 @@
  * to the open ones.
  */
 
-import type { Mode, SessionDoc } from "./linlog";
+import type { SessionDoc } from "./linlog";
+import type { OrdinarySession } from "./ordinary";
 import type { Action } from "./steps";
+import { type Calculus, calculusOf } from "./suites";
 
 /** One open proof, as stored. */
 export interface StoredProof {
   readonly id: string;
   /** What the visitor typed, kept for the sequent field. */
   readonly input: string;
-  readonly mode: Mode;
-  /** The session, once the sequent is started. */
-  readonly session: SessionDoc | null;
-  /** What undo took back, the last first out, until a new step. */
+  readonly calculus: Calculus;
+  /** The session, once the sequent is started: the suite's own document. */
+  readonly session: SessionDoc | OrdinarySession | null;
+  /** What undo took back in a linear proof, the last first out, until a new step. */
   readonly redo: readonly (readonly Action[])[];
+  /** What undo took back in an ordinary proof: the sessions before each undo, the last first out. */
+  readonly later?: readonly OrdinarySession[];
   /** The engine of each search that closed a goal, by the goal's path joined with dots. */
   readonly engines?: Readonly<Record<string, string>>;
   /** The tab and goal the proof was opened from, by the tab's id and the goal's path. */
@@ -39,7 +46,7 @@ export interface StoredProof {
 
 /** Every open proof of a visit and which one is shown. */
 export interface Shelf {
-  readonly version: 1;
+  readonly version: 2;
   readonly proofs: readonly StoredProof[];
   readonly active: string | null;
 }
@@ -52,29 +59,51 @@ export const PREVIOUS_KEY = "linlog-proofs-previous";
 /** The part of `Storage` the shelf uses; absent where the browser gives none. */
 export type Store = Pick<Storage, "getItem" | "setItem" | "removeItem" | "key" | "length">;
 
-const isProof = (p: unknown): p is StoredProof => {
-  if (!p || typeof p !== "object") return false;
+/**
+ * A stored proof read back, or undefined for anything that is not one: of a shelf of the first
+ * version, with its linear `mode`; of the second, with its `calculus` as the registry knows it.
+ */
+const proofOf = (p: unknown, version: 1 | 2): StoredProof | undefined => {
+  if (!p || typeof p !== "object") return undefined;
   const proof = p as Record<string, unknown>;
-  return (
+  const stored = proof["calculus"] as Record<string, unknown> | undefined;
+  const calculus =
+    version === 1
+      ? typeof proof["mode"] === "string"
+        ? calculusOf("linear", "sequent", proof["mode"])
+        : undefined
+      : stored && typeof stored === "object"
+        ? calculusOf(
+            String(stored["suite"]),
+            String(stored["method"]),
+            String(stored["mode"] ?? stored["logic"]),
+          )
+        : undefined;
+  const fine =
+    calculus !== undefined &&
     typeof proof["id"] === "string" &&
     typeof proof["input"] === "string" &&
-    typeof proof["mode"] === "string" &&
     (proof["session"] === null || typeof proof["session"] === "object") &&
     Array.isArray(proof["redo"]) &&
-    typeof proof["saved"] === "number"
-  );
+    (proof["later"] === undefined || Array.isArray(proof["later"])) &&
+    typeof proof["saved"] === "number";
+  if (!fine) return undefined;
+  const { mode: _, ...rest } = proof;
+  return { ...(rest as unknown as StoredProof), calculus };
 };
 
-/** A shelf read from its JSON, or undefined for anything that is not one. */
+/** A shelf read from its JSON, of either version, or undefined for anything that is not one. */
 export function parseShelf(text: string | null): Shelf | undefined {
   if (text === null) return undefined;
   try {
-    const shelf = JSON.parse(text) as Partial<Shelf>;
-    if (shelf.version !== 1 || !Array.isArray(shelf.proofs) || !shelf.proofs.every(isProof)) {
+    const shelf = JSON.parse(text) as { version?: unknown; proofs?: unknown; active?: unknown };
+    if ((shelf.version !== 1 && shelf.version !== 2) || !Array.isArray(shelf.proofs))
       return undefined;
-    }
+    const version = shelf.version;
+    const proofs = shelf.proofs.map((p) => proofOf(p, version));
+    if (!proofs.every((p): p is StoredProof => p !== undefined)) return undefined;
     const active = typeof shelf.active === "string" ? shelf.active : null;
-    return { version: 1, proofs: shelf.proofs, active };
+    return { version: 2, proofs, active };
   } catch {
     return undefined;
   }
@@ -108,7 +137,7 @@ export function setAside(store: Store | undefined, visit: string): Shelf | undef
       store.removeItem(PREVIOUS_KEY);
       return undefined;
     }
-    const aside: Shelf = { version: 1, proofs, active: proofs.at(-1)?.id ?? null };
+    const aside: Shelf = { version: 2, proofs, active: proofs.at(-1)?.id ?? null };
     store.setItem(PREVIOUS_KEY, JSON.stringify(aside));
     return aside;
   } catch {

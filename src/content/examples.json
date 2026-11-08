@@ -1,0 +1,182 @@
+[
+  {
+    "id": "modus-ponens",
+    "title": "Modus ponens",
+    "sequent": "a -> b, a |- b",
+    "logic": "intuitionistic",
+    "verdicts": {
+      "classical": "valid",
+      "intuitionistic": "valid",
+      "minimal": "valid"
+    },
+    "note": "→L splits the goal: one premise proves a, the other uses b."
+  },
+  {
+    "id": "and-commutes",
+    "title": "Conjunction commutes",
+    "sequent": "a /\\ b |- b /\\ a",
+    "logic": "intuitionistic",
+    "verdicts": {
+      "classical": "valid",
+      "intuitionistic": "valid",
+      "minimal": "valid"
+    },
+    "note": "∧R first or ∧L first: both orders reach the axioms."
+  },
+  {
+    "id": "syllogism",
+    "title": "Chained implications",
+    "sequent": "a -> b, b -> c |- a -> c",
+    "logic": "intuitionistic",
+    "verdicts": {
+      "classical": "valid",
+      "intuitionistic": "valid",
+      "minimal": "valid"
+    },
+    "note": "→R moves a left of ⊢; each →L then uses one hypothesis."
+  },
+  {
+    "id": "currying",
+    "title": "Currying",
+    "sequent": "(a /\\ b) -> c |- a -> (b -> c)",
+    "logic": "intuitionistic",
+    "verdicts": {
+      "classical": "valid",
+      "intuitionistic": "valid",
+      "minimal": "valid"
+    },
+    "note": "Two →R steps before the hypothesis can be used."
+  },
+  {
+    "id": "distribution",
+    "title": "Distribution",
+    "sequent": "a /\\ (b \\/ c) |- (a /\\ b) \\/ (a /\\ c)",
+    "logic": "intuitionistic",
+    "verdicts": {
+      "classical": "valid",
+      "intuitionistic": "valid",
+      "minimal": "valid"
+    },
+    "note": "∨L splits into two cases; in LJ each case must choose its disjunct with ∨R."
+  },
+  {
+    "id": "contraposition",
+    "title": "Contraposition",
+    "sequent": "a -> b |- ~b -> ~a",
+    "logic": "minimal",
+    "verdicts": {
+      "classical": "valid",
+      "intuitionistic": "valid",
+      "minimal": "valid"
+    },
+    "note": "A negation is an implication into ⊥, so minimal logic proves this without ex falso."
+  },
+  {
+    "id": "double-negation-in",
+    "title": "Double negation, introduced",
+    "sequent": "a |- ~~a",
+    "logic": "minimal",
+    "verdicts": {
+      "classical": "valid",
+      "intuitionistic": "valid",
+      "minimal": "valid"
+    },
+    "note": "Adding ¬¬ is valid in every logic here."
+  },
+  {
+    "id": "de-morgan-or",
+    "title": "De Morgan, the constructive half",
+    "sequent": "~(a \\/ b) |- ~a /\\ ~b",
+    "logic": "minimal",
+    "verdicts": {
+      "classical": "valid",
+      "intuitionistic": "valid",
+      "minimal": "valid"
+    },
+    "note": "Holds even in minimal logic; compare its dual, which needs classical logic."
+  },
+  {
+    "id": "ex-falso",
+    "title": "Ex falso",
+    "sequent": "false |- a",
+    "logic": "minimal",
+    "verdicts": {
+      "classical": "valid",
+      "intuitionistic": "valid",
+      "minimal": "not_valid"
+    },
+    "note": "Minimal logic has no rule for ⊥ left of ⊢; switch to intuitionistic logic and ⊥L closes it."
+  },
+  {
+    "id": "excluded-middle-lj",
+    "title": "Excluded middle, in LJ",
+    "sequent": "|- a \\/ ~a",
+    "logic": "intuitionistic",
+    "verdicts": {
+      "classical": "valid",
+      "intuitionistic": "not_valid",
+      "minimal": "not_valid"
+    },
+    "note": "LJ keeps one formula right of ⊢, so ∨R must choose a disjunct, and neither is provable."
+  },
+  {
+    "id": "excluded-middle-lk",
+    "title": "Excluded middle, in LK",
+    "sequent": "|- a \\/ ~a",
+    "logic": "classical",
+    "verdicts": {
+      "classical": "valid",
+      "intuitionistic": "not_valid",
+      "minimal": "not_valid"
+    },
+    "note": "LK keeps both disjuncts right of ⊢, and ¬R moves a to the left for the axiom."
+  },
+  {
+    "id": "double-negated-middle",
+    "title": "Excluded middle, doubly negated",
+    "sequent": "|- ~~(a \\/ ~a)",
+    "logic": "intuitionistic",
+    "verdicts": {
+      "classical": "valid",
+      "intuitionistic": "valid",
+      "minimal": "valid"
+    },
+    "note": "Its double negation is valid in LJ: the hypothesis ¬(a ∨ ¬a) is used twice."
+  },
+  {
+    "id": "double-negation-out",
+    "title": "Double negation, eliminated",
+    "sequent": "~~a |- a",
+    "logic": "classical",
+    "verdicts": {
+      "classical": "valid",
+      "intuitionistic": "not_valid",
+      "minimal": "not_valid"
+    },
+    "note": "Valid in LK; switch to intuitionistic logic to see it fail."
+  },
+  {
+    "id": "peirce",
+    "title": "Peirce's law",
+    "sequent": "|- ((a -> b) -> a) -> a",
+    "logic": "classical",
+    "verdicts": {
+      "classical": "valid",
+      "intuitionistic": "not_valid",
+      "minimal": "not_valid"
+    },
+    "note": "Classical without a negation: the proof keeps a twice right of ⊢."
+  },
+  {
+    "id": "de-morgan-and",
+    "title": "De Morgan, the classical half",
+    "sequent": "~(a /\\ b) |- ~a \\/ ~b",
+    "logic": "classical",
+    "verdicts": {
+      "classical": "valid",
+      "intuitionistic": "not_valid",
+      "minimal": "not_valid"
+    },
+    "note": "The dual of the constructive half needs LK's two formulas right of ⊢."
+  }
+]

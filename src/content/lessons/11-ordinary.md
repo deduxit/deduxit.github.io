@@ -43,6 +43,7 @@ every hypothesis goes under `!`, because an ordinary hypothesis may be used any 
 of times or not at all. Classical logic goes into affine linear logic, `∧` as `&` and
 `∨` as `⅋`, where weakening drops what is not needed.
 
-The page has no ordinary mode yet, so this lesson proves the images, as `linlog seq
-print --logic intuitionistic` and `--logic classical` print them: modus ponens, `A → B,
-A ⊢ B`, becomes `!(!A ⊸ B), !A ⊢ B`.
+This lesson proves the images, as `linlog seq print --logic intuitionistic` and `--logic
+classical` print them: modus ponens, `A → B, A ⊢ B`, becomes `!(!A ⊸ B), !A ⊢ B`. The
+ordinary sequents themselves are proved in a tab of their own: its calculus mark's Ordinary
+proves them in LK and LJ, and the sequent field's examples start there.

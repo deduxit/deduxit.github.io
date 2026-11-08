@@ -4,23 +4,28 @@
 /**
  * The link: a proof in the URL's fragment, which never reaches a server.
  *
- * `#v=1&m=<mode>&s=<sequent>[&d=<session>]`: a version mark of this
- * format, the mode, the sequent in the parser's own Unicode syntax (readable
- * in the address bar), and while a proof is under way or finished, the
+ * `#v=2&u=<suite>&m=<parameter>&s=<sequent>[&d=<session>]`: a version mark
+ * of this format, the suite (`linear`, `ordinary`), the suite's parameter that
+ * names the calculus (a linear mode, an ordinary logic), the sequent in the
+ * parser's own Unicode syntax (readable in the address bar), and while a
+ * proof is under way or finished, the
  * session itself: linlog's session document, a promised wire form with its
  * own level and its own sequent terms, so that no goal number or formula
  * position of one library version is ever stored. The document goes
  * deflate-raw (`CompressionStream`) and then base64url. Past `LINK_LIMIT`
- * characters the link holds the sequent and the mode alone, and says so.
+ * characters the link holds the sequent and the calculus alone, and says so.
+ * A link of the first version, `#v=1&m=<mode>&s=…`, written before the page had
+ * suites, reads as the linear suite in that mode.
  * Reading a link unpacks at most `UNPACKED_LIMIT` bytes: a crafted link can
  * hold a document that inflates a thousandfold, in the visitor's own tab,
  * before linlog's limits ever read it.
  */
 
-import type { Mode } from "./linlog";
-
 /** This format's version mark. */
-export const LINK_VERSION = "1";
+export const LINK_VERSION = "2";
+
+/** The version mark of the links written before suites, all of the linear suite. */
+const LINEAR_ONLY = "1";
 
 /** The longest link that carries the session; a longer one carries the sequent alone. */
 export const LINK_LIMIT = 2000;
@@ -35,7 +40,10 @@ export const UNPACKED_LIMIT = 512 * 1024;
 /** What a link holds. */
 export interface LinkContent {
   readonly sequent: string;
-  readonly mode: Mode | string;
+  /** The suite, as linlog names it: `linear` for a link of the first version. */
+  readonly suite: string;
+  /** The suite's parameter: a linear mode, an ordinary logic. */
+  readonly parameter: string;
   /** The session document's JSON text, when the link carried one that unpacked. */
   readonly session?: string;
   /** Why the session could not be read back: a version mark this page does not know, a document that did not unpack, or one past `UNPACKED_LIMIT`. */
@@ -99,14 +107,15 @@ export function fromBase64url(text: string): Uint8Array {
   return Uint8Array.from(binary, (c) => c.charCodeAt(0));
 }
 
-/** The fragment for a sequent and mode, and the session when there is one and it fits. */
+/** The fragment for a sequent in a suite's calculus, and the session when there is one and it fits. */
 export async function writeLink(
   sequent: string,
-  mode: string,
+  suite: string,
+  parameter: string,
   session?: string,
   limit = LINK_LIMIT,
 ): Promise<Written> {
-  const params = new URLSearchParams({ v: LINK_VERSION, m: mode, s: sequent });
+  const params = new URLSearchParams({ v: LINK_VERSION, u: suite, m: parameter, s: sequent });
   const bare = `#${params}`;
   if (session === undefined) return { hash: bare, whole: true };
   const packed = await through(
@@ -125,15 +134,18 @@ export async function readLink(
 ): Promise<LinkContent | undefined> {
   const params = new URLSearchParams(hash.replace(/^#/, ""));
   const sequent = params.get("s");
-  const mode = params.get("m");
-  if (sequent === null || mode === null) return undefined;
-  if (params.get("v") !== LINK_VERSION) return { sequent, mode, problem: "version" };
+  const parameter = params.get("m");
+  if (sequent === null || parameter === null) return undefined;
+  const version = params.get("v");
+  const suite = version === LINEAR_ONLY ? "linear" : (params.get("u") ?? "linear");
+  const read = { sequent, suite, parameter };
+  if (version !== LINK_VERSION && version !== LINEAR_ONLY) return { ...read, problem: "version" };
   const packed = params.get("d");
-  if (packed === null) return { sequent, mode };
+  if (packed === null) return read;
   try {
     const bytes = await inflate(fromBase64url(packed), limit);
-    return { sequent, mode, session: new TextDecoder("utf-8", { fatal: true }).decode(bytes) };
+    return { ...read, session: new TextDecoder("utf-8", { fatal: true }).decode(bytes) };
   } catch (thrown) {
-    return { sequent, mode, problem: thrown instanceof TooLarge ? "size" : "document" };
+    return { ...read, problem: thrown instanceof TooLarge ? "size" : "document" };
   }
 }
