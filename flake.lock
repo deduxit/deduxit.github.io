@@ -85,16 +85,16 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1793658693,
-        "narHash": "sha256-/W9IdcpUB9xU8OING6UmOy+6Z+p+Gb4WbfJcXN54vHA=",
-        "owner": "linlog-prover",
-        "repo": "linlog",
-        "rev": "1f4f986a519712a2e7ea2ea819d8042cfa027b68",
+        "lastModified": 1794152785,
+        "narHash": "sha256-FUy4YvapWlgP8yT0Irud6GzVtKFNbJaeqOvvyQjT9Mc=",
+        "owner": "sequentium",
+        "repo": "sequentium",
+        "rev": "5f308848c8150c678a5f2ee338c1697bf24398d9",
         "type": "github"
       },
       "original": {
-        "owner": "linlog-prover",
-        "repo": "linlog",
+        "owner": "sequentium",
+        "repo": "sequentium",
         "type": "github"
       }
     },
@@ -153,15 +153,15 @@
         "yalla": "yalla"
       },
       "locked": {
-        "lastModified": 1793658657,
-        "narHash": "sha256-Otspt7bfUtQd0WkQkdnRc/QyFreOVcbO3JZGR9n5fZk=",
-        "owner": "linlog-prover",
+        "lastModified": 1794148924,
+        "narHash": "sha256-Gq/oDtt7VXRnjoaYEwUsFQLqs/0zMROXEeWabh7/Cng=",
+        "owner": "sequentium",
         "repo": "rocq-linlog",
-        "rev": "b895ecd15b5da203ef11538e2f8ed953f289d6b6",
+        "rev": "ff02e644aa3caa351971554d49472608bf601f39",
         "type": "github"
       },
       "original": {
-        "owner": "linlog-prover",
+        "owner": "sequentium",
         "repo": "rocq-linlog",
         "type": "github"
       }
