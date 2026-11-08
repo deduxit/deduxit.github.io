@@ -51,8 +51,8 @@ async function tooSmall(page: Page, least: number): Promise<string[]> {
  * empty page, a proof with the rule popover, the split chooser, a refusal,
  * a hint, a proof closed and its net, every menu, the status and the
  * calculus, the restart warning, Practice and its filters, Learn's two
- * places and a lesson's parts, the tour, a field's parse error, an ordinary
- * tab's switches, examples and rules, and the restore bar.
+ * places and a lesson's parts, the tour, a field's parse error, and the
+ * restore bar.
  */
 async function walk(page: Page, least: number) {
   const found: string[] = [];
@@ -187,8 +187,19 @@ async function walk(page: Page, least: number) {
   await expect(page.getByRole("dialog", { name: "Tour" })).toBeVisible();
   await measure("tour");
   await page.keyboard.press("Escape");
-  // An ordinary tab: its calculus's switches, the field's examples, a proof begun.
-  await page.getByRole("button", { name: "New proof" }).click();
+  await page.reload();
+  await expect(page.getByRole("region", { name: "Restore" })).toBeVisible();
+  await measure("restore");
+  return found;
+}
+
+/** An ordinary tab: its calculus's switches, the field's examples, and a proof's rules. */
+async function ordinary(page: Page, least: number): Promise<string[]> {
+  const found: string[] = [];
+  const measure = async (state: string) => {
+    for (const small of await tooSmall(page, least)) found.push(`${state}: ${small}`);
+  };
+  await goto(page);
   await page
     .locator(".ptab[aria-current=true]")
     .getByRole("button", { name: /^Calculus/ })
@@ -205,13 +216,9 @@ async function walk(page: Page, least: number) {
     .getByRole("dialog", { name: "Examples" })
     .getByRole("button", { name: /^Modus ponens/ })
     .click();
-  await expect(page.getByRole("button", { name: /^a → b, formula/ })).toBeVisible();
   await page.getByRole("button", { name: /^a → b, formula/ }).click();
+  await expect(page.getByRole("dialog", { name: "Rules" })).toBeVisible();
   await measure("ordinary rules");
-  await page.keyboard.press("Escape");
-  await page.reload();
-  await expect(page.getByRole("region", { name: "Restore" })).toBeVisible();
-  await measure("restore");
   return found;
 }
 
@@ -240,9 +247,19 @@ test("every control is a target of 24 by 24 pixels at least, at a desktop's widt
   expect(await walk(page, 24)).toEqual([]);
 });
 
+test("an ordinary tab's controls are targets of 24 by 24 pixels at least, at a desktop's width", async ({
+  page,
+}) => {
+  expect(await ordinary(page, 24)).toEqual([]);
+});
+
 test.describe("at a phone's width", () => {
   const { defaultBrowserType: _, ...pixel } = devices["Pixel 7"];
   test.use(pixel);
+
+  test("an ordinary tab's controls are 44 by 44 pixels at least", async ({ page }) => {
+    expect(await ordinary(page, 44)).toEqual([]);
+  });
 
   test("every control is a target of 44 by 44 pixels at least", async ({ page }) => {
     expect(await walk(page, 44)).toEqual([]);
