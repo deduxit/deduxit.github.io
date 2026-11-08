@@ -29,8 +29,13 @@ which its flake, its tooling and its Claude Code setup are taken.
    Every git command, reading ones included, is refused by `.claude/hooks/block-git.py`.
    An isolated agent or session gets a jj workspace, `../linlog-prover.github.io-wt-NAME`,
    in place of a git worktree; `.claude/hooks/jj-worktree.py prune` removes the empty ones.
-   Commits are signed (jj signs every commit; the global CLAUDE.md says what to do when
-   gpg's lock is stale).
+   jj writes commits unsigned (the machine's jj config): a global hook signs a session's
+   new commits right after the jj command that made them and reports their new commit ids,
+   and a push signs any still unsigned. A lapsed passphrase cache stops no commit, only the
+   push: the hook says which commits wait, and the first jj command after the author
+   unlocks signs them. Cite change ids, or the commit ids the hook reported; never pass
+   `--config signing.behavior=…`. The global CLAUDE.md says what to do when gpg's lock is
+   stale.
 2. **Commit thematically, without being asked**: one logical unit per change, committed as
    soon as it is done with `jj commit -m`; never `jj new -m` (a hook blocks it). Run
    `jj st` right before every commit: another session may have committed meanwhile.
