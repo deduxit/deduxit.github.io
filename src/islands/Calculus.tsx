@@ -107,9 +107,9 @@ export function Calculus(props: { prover: Prover; ui: Ui }) {
                 type="checkbox"
                 checked={props.prover.settings().structural === "explicit"}
                 onChange={(event) =>
-                  props.prover.setSettings({
-                    structural: event.currentTarget.checked ? "explicit" : "admissible",
-                  })
+                  void props.prover.setStructural(
+                    event.currentTarget.checked ? "explicit" : "admissible",
+                  )
                 }
               />
               <span class="sw-t" aria-hidden="true" />

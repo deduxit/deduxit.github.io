@@ -63,9 +63,20 @@ the page reads.
   accepted it; a refusal leaves the session as it was and says so. A change of that layout in
   linlog must change `retract`, and `ordinary.test.ts`'s property against the real module
   (the reader accepts every retraction, which equals linlog's undo for the last step) is
-  what catches it. Redo restores the session before each undo (`Proof.later`).
+  what catches it. Redo restores the session before each undo with its grafts' engines
+  (`Proof.later`); undo keeps only the engines of grafts the session still holds
+  (`keptGrafts`), so a step taken by hand where a graft was is never drawn as the search's.
 - **An ordinary session tells no search's graft from a step's own structural run**, so its
   grafts are the paths the page saw the search close (`Proof.engines`), not `searchMade`.
+- **An ordinary view's `inferences` follow `view.structural`**: the switch is
+  `setStructural`, which asks every ordinary proof's view again and changes the setting and
+  the views together; a view kept from the other setting maps the drawing's ids to the wrong
+  goals.
+- **The linear suite's calls never get an ordinary session**: fill (`fillable`, `fill`), the
+  invertible rules (`setInvertible`), the engine choice and the cut are kept to linear proofs.
+- **The registry reads every linear mode linlog's `about` lists** (the switches build six; a
+  session pasted in cyclic linear logic or the Lambek calculus opens and is stored as one), and
+  `parseShelf` leaves out a proof it cannot read alone, never the whole shelf.
 - **The sequent field's examples** are `src/content/examples.json` (the menu beside the field
   of a tab of a suite Practice does not serve), each with linlog's verdict in every logic,
   held by `src/content/examples.test.ts`; the file's order is the menu's.

@@ -34,8 +34,14 @@ export interface StoredProof {
   readonly session: SessionDoc | OrdinarySession | null;
   /** What undo took back in a linear proof, the last first out, until a new step. */
   readonly redo: readonly (readonly Action[])[];
-  /** What undo took back in an ordinary proof: the sessions before each undo, the last first out. */
-  readonly later?: readonly OrdinarySession[];
+  /**
+   * What undo took back in an ordinary proof: the session before each undo with the engines of
+   * its searches' grafts, the last first out.
+   */
+  readonly later?: readonly {
+    readonly session: OrdinarySession;
+    readonly engines: Readonly<Record<string, string>>;
+  }[];
   /** The engine of each search that closed a goal, by the goal's path joined with dots. */
   readonly engines?: Readonly<Record<string, string>>;
   /** The tab and goal the proof was opened from, by the tab's id and the goal's path. */
@@ -100,8 +106,10 @@ export function parseShelf(text: string | null): Shelf | undefined {
     if ((shelf.version !== 1 && shelf.version !== 2) || !Array.isArray(shelf.proofs))
       return undefined;
     const version = shelf.version;
-    const proofs = shelf.proofs.map((p) => proofOf(p, version));
-    if (!proofs.every((p): p is StoredProof => p !== undefined)) return undefined;
+    // A proof this page cannot read (a suite of a later page's) is left out alone.
+    const proofs = shelf.proofs
+      .map((p) => proofOf(p, version))
+      .filter((p): p is StoredProof => p !== undefined);
     const active = typeof shelf.active === "string" ? shelf.active : null;
     return { version: 2, proofs, active };
   } catch {

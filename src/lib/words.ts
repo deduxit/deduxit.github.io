@@ -19,6 +19,13 @@ export interface Said {
 
 /** A mode in the calculus's switches' own words: "Intuitionistic, affine", "Classical, Mix". */
 export function modeWords(mode: Mode): string {
+  const ordered: Partial<Record<Mode, string>> = {
+    cyclic: "Cyclic",
+    lambek: "Lambek",
+    "lambek-star": "Lambek, empty antecedents allowed",
+  };
+  const named = ordered[mode];
+  if (named) return named;
   return [
     mode.startsWith("intuitionistic") ? "Intuitionistic" : "Classical",
     ...(mode.endsWith("mix") ? ["Mix"] : []),

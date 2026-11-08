@@ -98,13 +98,38 @@ describe("the stored proofs", () => {
     });
   });
 
-  it("refuses what is not a shelf", () => {
+  it("reads a stored proof in a mode the switches do not offer, of either version", () => {
+    // A session pasted in cyclic linear logic or the Lambek calculus is kept as one.
+    const old = {
+      version: 1,
+      active: "a",
+      proofs: [
+        { id: "a", input: "A |- A", mode: "classical", session: null, redo: [], saved: 1 },
+        { id: "b", input: "A |- A", mode: "cyclic", session: null, redo: [], saved: 2 },
+      ],
+    };
+    expect(parseShelf(JSON.stringify(old))?.proofs.map((p) => p.calculus)).toEqual([
+      linear("classical"),
+      linear("cyclic"),
+    ]);
+    const kept = shelf(proof("a"), { ...proof("b"), calculus: linear("lambek-star") });
+    expect(parseShelf(JSON.stringify(kept))).toEqual(kept);
+  });
+
+  it("leaves out a proof it cannot read alone, and refuses what is not a shelf", () => {
     expect(parseShelf("{")).toBeUndefined();
     expect(parseShelf('{"version":3,"proofs":[]}')).toBeUndefined();
-    expect(parseShelf('{"version":1,"proofs":[{"id":1}]}')).toBeUndefined();
-    // A calculus the registry does not know.
+    expect(parseShelf('{"version":1,"proofs":{}}')).toBeUndefined();
+    // A calculus the registry does not know, beside one it does: the other proof stays.
     const unknown = { ...proof("a"), calculus: { suite: "modal", method: "sequent", logic: "K" } };
-    expect(parseShelf(JSON.stringify({ version: 2, proofs: [unknown] }))).toBeUndefined();
+    expect(
+      parseShelf(JSON.stringify({ version: 2, active: "b", proofs: [unknown, proof("b")] })),
+    ).toEqual({ version: 2, active: "b", proofs: [proof("b")] });
+    expect(parseShelf('{"version":1,"active":null,"proofs":[{"id":1}]}')).toEqual({
+      version: 2,
+      active: null,
+      proofs: [],
+    });
   });
 
   it("gathers what other visits left, so new work overwrites none of it", () => {

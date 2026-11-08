@@ -8,16 +8,23 @@
  * page relies on (linlog's `plan/web/README.md`, "The bindings' API").
  */
 
-/** The calculus a session is proved in, as the bindings name it. */
+/**
+ * The calculus a session is proved in, as the bindings name it: the six the calculus's switches
+ * build, and cyclic linear logic and the Lambek calculus, which a session pasted or imported can
+ * be in (the switches offer neither).
+ */
 export type Mode =
   | "classical"
   | "affine"
   | "mix"
   | "affine-mix"
   | "intuitionistic"
-  | "intuitionistic-affine";
+  | "intuitionistic-affine"
+  | "cyclic"
+  | "lambek"
+  | "lambek-star";
 
-/** Every mode, in the order the calculus's switches build them. */
+/** The modes the calculus's switches build, in their order. */
 export const MODES: readonly Mode[] = [
   "classical",
   "affine",

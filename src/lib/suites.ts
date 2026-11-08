@@ -39,7 +39,7 @@ export interface Suite {
   readonly methods: readonly Method[];
   /** The parameter that names a calculus of the suite, as `about` names it. */
   readonly parameter: "mode" | "logic";
-  /** The values the page offers, a part of linlog's. */
+  /** The values the page reads, a part of linlog's (the calculus's switches offer some of them). */
   readonly values: readonly string[];
   /** The calculus a new tab of the suite starts in. */
   readonly start: Calculus;
@@ -55,7 +55,8 @@ export const SUITES: readonly Suite[] = [
     tip: "Linear logic: every formula used exactly once, unless an exponential allows more",
     methods: ["sequent"],
     parameter: "mode",
-    values: MODES,
+    // Every mode a session the page reads can be in, the switches' and the ordered ones.
+    values: [...MODES, "cyclic", "lambek", "lambek-star"],
     start: { suite: "linear", method: "sequent", mode: "classical" },
     calls: "",
   },
@@ -120,6 +121,9 @@ export function markOf(c: Calculus): string {
     "affine-mix": "LL+aff+mix",
     intuitionistic: "ILL",
     "intuitionistic-affine": "ILL+aff",
+    cyclic: "CyLL",
+    lambek: "L",
+    "lambek-star": "L*",
   };
   return names[c.mode];
 }

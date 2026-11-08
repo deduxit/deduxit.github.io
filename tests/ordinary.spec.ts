@@ -185,3 +185,61 @@ test("an ordinary proof's link and stored copy carry its suite; an old link open
   await expect(old.locator(".ptab[aria-current=true] .pt-mark")).toContainText("LL+mix");
   await expect(old.getByRole("button", { name: /^A, formula/ }).first()).toBeVisible();
 });
+
+test("a search's graft taken back by undo leaves no mark on the steps taken after", async ({
+  page,
+}) => {
+  await ordinary(page, "intuitionistic", "a, b |- a /\\ b");
+  await rule(page, /^a ∧ b, formula/, "∧R");
+  await rule(page, /^b, formula 3/, "ax");
+  await page.getByRole("button", { name: "Close goal" }).click();
+  await expect(page.locator(".ptab[aria-current=true] .dot[data-tone=ok]")).toBeVisible();
+  const marked = page.locator(".drawing g.search");
+  await expect(marked.first()).toBeAttached();
+  // Undo takes the search's graft back with its mark; redo brings both back.
+  await page.getByRole("button", { name: "Undo", exact: true }).click();
+  await expect(marked).toHaveCount(0);
+  await page.getByRole("button", { name: "Redo", exact: true }).click();
+  await expect(marked.first()).toBeAttached();
+  // A step taken by hand where the graft was is the visitor's.
+  await page.getByRole("button", { name: "Undo", exact: true }).click();
+  await rule(page, /^a, formula 3/, "ax");
+  await expect(page.locator(".ptab[aria-current=true] .dot[data-tone=ok]")).toBeVisible();
+  await expect(marked).toHaveCount(0);
+  await page.getByRole("button", { name: "Steps" }).click();
+  await expect(page.getByRole("dialog", { name: "Steps" })).not.toContainText("closed goal");
+});
+
+test("the structural switch with a goal open marks and buttons that goal in the new drawing", async ({
+  page,
+}) => {
+  await ordinary(page, "intuitionistic", "a, b |- a /\\ b");
+  await rule(page, /^a ∧ b, formula/, "∧R");
+  await rule(page, /^a, formula 3/, "ax");
+  const open = () => page.locator(".drawing svg g.open-goal").allTextContents();
+  const before = (await open()).join(" ");
+  expect(before).toContain("⊢");
+  const pop = await switches(page);
+  await pop.locator("label.sw", { hasText: "Structural rules" }).click();
+  await page.keyboard.press("Escape");
+  await expect.poll(() => page.locator(".drawing svg text").allTextContents()).toContain("WL");
+  await expect.poll(async () => (await open()).join(" ")).toBe(before);
+  await expect(page.getByRole("button", { name: /formula 1 of goal/ })).toHaveCount(1);
+  await rule(page, /^b, formula 2/, "ax");
+  await expect(page.locator(".ptab[aria-current=true] .dot[data-tone=ok]")).toBeVisible();
+});
+
+test("an ordinary goal is never offered a fill from a linear tab", async ({ page }) => {
+  await goto(page);
+  await page.getByRole("textbox", { name: "Sequent" }).fill("a |- a");
+  const pop = await switches(page);
+  await pop.getByRole("button", { name: "Intuitionistic", exact: true }).click();
+  await page.keyboard.press("Escape");
+  await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
+  await page.getByRole("button", { name: "Close goal" }).click();
+  await expect(page.locator(".ptab[aria-current=true] .dot[data-tone=ok]")).toBeVisible();
+  await page.getByRole("button", { name: "New proof" }).click();
+  await ordinary(page, "intuitionistic", "a |- a", false);
+  await expect(page.getByRole("button", { name: "Open this goal in a new tab" })).toBeVisible();
+  await expect(page.getByRole("button", { name: /^Fill from/ })).toHaveCount(0);
+});

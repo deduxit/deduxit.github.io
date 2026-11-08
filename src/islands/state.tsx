@@ -147,8 +147,11 @@ export interface Proof {
   view: View | null;
   /** What undo took back in a linear proof, replayed by redo. */
   redo: Action[][];
-  /** What undo took back in an ordinary proof: the sessions before each undo, restored by redo. */
-  later: OrdinarySession[];
+  /**
+   * What undo took back in an ordinary proof: the session before each undo with its grafts'
+   * engines, restored by redo.
+   */
+  later: { session: OrdinarySession; engines: Record<string, string> }[];
   /** Whether the tab shows the sequent field. */
   editing: boolean;
   /** Why the field's text was not started, with the place to mark. */
@@ -478,13 +481,24 @@ export function createProver(say: (text: string) => void = () => undefined) {
    * the structural rules drawn when asked. A forced engine and the invertible rules are the
    * linear suite's: the ordinary search runs on linlog's translation with its own choice.
    */
-  const ordinaryJson = (budget = settings().budget) => {
-    const s = settings();
+  const ordinaryJson = (budget = settings().budget, structural = settings().structural) => {
+    const s = { ...settings(), structural };
     return JSON.stringify({
       limits: { work: budget, ...(s.terms !== DEFAULT_TERMS ? { terms: s.terms } : {}) },
       ...viewJson(s, ordinary("classical")),
     });
   };
+  /**
+   * The engines of the grafts a session still holds: an entry whose goal undo reopened, or took
+   * back with the step below it, goes with it.
+   */
+  const keptGrafts = (session: OrdinarySession, engines: Readonly<Record<string, string>>) =>
+    Object.fromEntries(
+      Object.entries(engines).filter(([key]) => {
+        const at = goalAt(session, key === "" ? [] : key.split(".").map(Number));
+        return at !== undefined && session.inferences[at]?.rule !== undefined;
+      }),
+    );
   /** A proof's ordinary session, with its logic, where it is one. */
   const ordinaryOf = (p: Proof | undefined) =>
     p?.calculus.suite === "ordinary" && p.session && isOrdinary(p.session)
@@ -800,12 +814,33 @@ export function createProver(say: (text: string) => void = () => undefined) {
       actions.setSettings({ invertible: on });
       if (!on) return;
       for (const p of store.proofs) {
-        if (!p.session || p.view?.complete) continue;
+        // The invertible rules are the linear suite's.
+        if (!p.session || p.view?.complete || p.calculus.suite !== "linear") continue;
         const result = await attempt(() => api.invertAll(p.session as SessionDoc, replaying()));
         if (!result.ok || result.value.inverted === 0) continue;
         show(p.id, result.value, activeGoal({ ...p, ...result.value }));
       }
       save();
+    }),
+
+    /**
+     * Draws the ordinary derivations with their structural rules or without: each ordinary
+     * proof's view is asked again, since its map of the drawing's inferences to goals follows
+     * the setting, and the new views and the setting change together.
+     */
+    setStructural: guard(async (structural: Settings["structural"]) => {
+      const settings = ordinaryJson(undefined, structural);
+      const views = new Map<string, View>();
+      for (const p of store.proofs) {
+        const o = ordinaryOf(p);
+        if (!o) continue;
+        const result = await attempt(() => api.ordinary.view(o.session, settings));
+        if (result.ok) views.set(p.id, asView(result.value));
+      }
+      batch(() => {
+        actions.setSettings({ structural });
+        for (const [id, view] of views) update(id, (q) => (q.view = view));
+      });
     }),
 
     setSettings(change: Partial<Settings>) {
@@ -837,7 +872,10 @@ export function createProver(say: (text: string) => void = () => undefined) {
             input: stored.input,
             session: stored.session,
             redo: stored.redo.map((r) => [...r]),
-            later: [...(stored.later ?? [])],
+            later: (stored.later ?? []).map((l) => ({
+              session: l.session,
+              engines: { ...l.engines },
+            })),
             engines: { ...(stored.engines ?? {}) },
             origin: stored.origin ?? null,
             editing: !stored.session,
@@ -1407,7 +1445,10 @@ export function createProver(say: (text: string) => void = () => undefined) {
             );
           return;
         }
-        update(p.id, (q) => q.later.push(o.session));
+        update(p.id, (q) => {
+          q.later.push({ session: o.session, engines: { ...q.engines } });
+          q.engines = keptGrafts(back.session, q.engines);
+        });
         show(p.id, { session: back.session, view: asView(view.value) }, back.reopened);
         save();
         return;
@@ -1466,20 +1507,24 @@ export function createProver(say: (text: string) => void = () => undefined) {
       if (o) {
         // linlog's undo takes back the session's last step, so going back is undoing to there.
         let session = o.session;
-        const before: OrdinarySession[] = [];
+        const before: { session: OrdinarySession; engines: Record<string, string> }[] = [];
         let reopened: number | null = null;
         while (session.history.length > count) {
           const now = session;
           const back = await attempt(() => api.ordinary.undo(now, ordinaryJson()));
           if (!back.ok) return;
-          before.push(now);
+          before.push({ session: now, engines: keptGrafts(now, p.engines) });
           session = back.value.session;
           reopened = back.value.reopened;
         }
         if (before.length === 0) return;
         const view = await attempt(() => api.ordinary.view(session, ordinaryJson()));
         if (!view.ok) return;
-        update(p.id, (q) => q.later.push(...before));
+        const engines = keptGrafts(session, p.engines);
+        update(p.id, (q) => {
+          q.later.push(...before);
+          q.engines = engines;
+        });
         show(p.id, { session, view: asView(view.value) }, reopened ?? undefined);
         save();
         return;
@@ -1505,10 +1550,13 @@ export function createProver(say: (text: string) => void = () => undefined) {
       if (o && p) {
         const next = p.later.at(-1);
         if (!next) return;
-        const view = await attempt(() => api.ordinary.view(next, ordinaryJson()));
+        const view = await attempt(() => api.ordinary.view(next.session, ordinaryJson()));
         if (!view.ok) return;
-        update(p.id, (q) => q.later.pop());
-        show(p.id, { session: next, view: asView(view.value) }, view.value.goals[0]?.goal);
+        update(p.id, (q) => {
+          q.later.pop();
+          q.engines = { ...next.engines };
+        });
+        show(p.id, { session: next.session, view: asView(view.value) }, view.value.goals[0]?.goal);
         save();
         return;
       }
@@ -1568,7 +1616,8 @@ export function createProver(say: (text: string) => void = () => undefined) {
     async fillable(goal: number): Promise<{ id: string; tab: string }[]> {
       const p = current();
       const g = p?.view?.goals.find((x) => x.goal === goal);
-      if (!p || !g) return [];
+      // A fill is linlog's linear call: an ordinary goal is filled by none.
+      if (!p || !g || p.calculus.suite !== "linear") return [];
       const want = keyOf(g.formulas);
       const found: { id: string; tab: string }[] = [];
       for (const q of store.proofs) {
@@ -1587,7 +1636,7 @@ export function createProver(say: (text: string) => void = () => undefined) {
     fill: guard(async (goal: number, from: string) => {
       const p = current();
       const q = store.proofs.find((x) => x.id === from);
-      if (!p?.session || !q?.session) return;
+      if (!p?.session || !q?.session || p.calculus.suite !== "linear") return;
       const path = pathOf(p, goal);
       const result = await attempt(() =>
         api.fill(p.session as SessionDoc, goal, q.session as SessionDoc, json()),
