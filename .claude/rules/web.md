@@ -42,8 +42,8 @@ the page reads.
   linlog's `about` names them (`{suite: "linear", method: "sequent", mode}`,
   `{suite: "ordinary", method: "sequent", logic}`); `SUITES` is the registry (name, tip,
   methods, parameter, the values the page offers, the calculus a new tab starts in, the prefix
-  of the suite's calls), `suites.test.ts` holds it to `about()`'s `suites` (names, prefixes,
-  parameters, the page's values a part of linlog's, the start linlog's default). A new suite
+  of the suite's calls, its `term` call), `suites.test.ts` holds it to `about()`'s `suites`
+  (names, prefixes, term calls, parameters, the page's values a part of linlog's, the start linlog's default). A new suite
   is an entry there, a variant of `Calculus`, its calls in `api.ts` and the worker's table,
   and a branch where a call is made; the calculus popover lists the registry. Each suite has
   one method today; a second method is a field of the link (`k`) and of the shelf's calculus.
@@ -72,6 +72,15 @@ the page reads.
   `setStructural`, which asks every ordinary proof's view again and changes the setting and
   the views together; a view kept from the other setting maps the drawing's ids to the wrong
   goals.
+- **A finished proof's λ-term** is the last item of the bottom band's Export menu, not an action
+  of its own: with Learn on every label shows, and at 1280 pixels the band had 25 pixels left,
+  less than any action (`learn.spec.ts` holds it to one row). It is read by the suite's own call
+  (`Suite.term`: `term`, `ordinary_term`), keyed on the session document so that a changed proof
+  is read again; the judgement shows only while the term read is the current proof's
+  (`term.loading`: Solid's resource keeps its last value while it reads again), and "copied"
+  only while the judgement copied is the one shown. linlog answers a proof without a term with
+  `{"error": …}`, not a throw; the item is then off and words its `details.reason` (`noTerm` in
+  `words.ts`). A new suite with terms is its `term` in the registry, nothing in the menu.
 - **The linear suite's calls never get an ordinary session**: fill (`fillable`, `fill`), the
   invertible rules (`setInvertible`), the engine choice and the cut are kept to linear proofs.
 - **The registry reads every linear mode linlog's `about` lists** (the switches build six; a

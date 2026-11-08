@@ -4,8 +4,9 @@
 /**
  * The bottom band: what I can do with the proof, each action by name with
  * its key. Undo and redo (icons alone, as is conventional, with their names
- * on hover and focus), close all, hint; Export (a menu of the formats and
- * the link), Import (a file, a paste, or a drop onto the stage), Settings;
+ * on hover and focus), close all, hint; Export (a menu of the formats, the
+ * link and the finished proof's λ-term, each copied or saved), Import (a
+ * file, a paste, or a drop onto the stage), Settings;
  * Practice (a place of its own, its problems over the stage), Learn, the
  * tour, Keys and About. The menus open above the band. On a phone the row
  * keeps undo, redo, close all, hint, Practice and Learn, and More opens a
@@ -40,12 +41,13 @@ import {
   type MathFont,
   type Outcome,
   type SessionDoc,
+  type Termed,
 } from "../lib/linlog";
 import { writeLink } from "../lib/link";
 import { isOrdinary, prettyOrdinary, stepsOf } from "../lib/ordinary";
 import { actions, goalAt, paths } from "../lib/steps";
-import { intuitionistic, parameterOf } from "../lib/suites";
-import { notTaken, pretty } from "../lib/words";
+import { intuitionistic, parameterOf, suite } from "../lib/suites";
+import { noTerm, notTaken, pretty } from "../lib/words";
 import type { Theme } from "../lib/theme";
 import {
   DEFAULT_BUDGET,
@@ -182,7 +184,7 @@ export function BottomBand(props: {
           <Action
             label="Export"
             icon={<Upload aria-hidden="true" />}
-            tip="Every format, and the link"
+            tip="Every format, the link, and the finished proof's λ-term"
             keyName="E"
             wide
             expanded={ui.menu === "export"}
@@ -530,6 +532,42 @@ function ExportMenu(props: {
     },
   ];
 
+  // The finished proof's λ-term by its suite's call, keyed on the session document, which every
+  // step replaces: a changed proof is read again.
+  const [term] = createResource(
+    () => (complete() ? proof()?.session : undefined),
+    (session): Promise<Termed> =>
+      props.prover.api
+        .term(suite(isOrdinary(session) ? "ordinary" : "linear").term, session, "")
+        .catch((thrown: unknown) => ({
+          error: failure(thrown instanceof Error ? thrown.message : thrown),
+        })),
+  );
+  /** The term's judgement while the term read is the current proof's. */
+  const judgement = () => {
+    const t = term();
+    return complete() && !term.loading && t && !("error" in t) ? t.judgement : undefined;
+  };
+  /** Why the item copies nothing: an unfinished proof, a proof without a term, a term being read. */
+  const noJudgement = () => {
+    const t = term();
+    if (!complete()) return "A finished proof has a λ-term";
+    if (term.loading || !t) return "Reading the λ-term…";
+    return "error" in t ? `No λ-term: ${noTerm(t.error)}.` : null;
+  };
+  /** The judgement last copied: the status says so only while it is the one shown. */
+  const [copiedTerm, setCopiedTerm] = createSignal<string | null>(null);
+  async function copyTerm() {
+    const text = judgement();
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedTerm(text);
+    } catch {
+      setSaid("The browser keeps the clipboard closed: select the term to copy it.");
+    }
+  }
+
   async function copyLink() {
     const p = proof();
     if (!p?.session) return;
@@ -609,10 +647,28 @@ function ExportMenu(props: {
             <span class="fn">Copy a link to this proof</span>
           </button>
         </li>
+        <li>
+          <button
+            type="button"
+            role="menuitem"
+            class="mi term"
+            aria-disabled={noJudgement() ? "true" : undefined}
+            data-tip={noJudgement() ?? "Copy the proof's program, its λ-term, as text"}
+            onClick={() => void run(copyTerm)}
+          >
+            <span class="fmt">λ-term</span>
+            <span class={judgement() ? "fn judgement" : "fn"}>{judgement() ?? noJudgement()}</span>
+          </button>
+        </li>
       </ul>
       <Show when={said()}>
         <p class="said" role="status">
           {said()}
+        </p>
+      </Show>
+      <Show when={copiedTerm() !== null && copiedTerm() === judgement()}>
+        <p class="said" role="status">
+          λ-term copied as text.
         </p>
       </Show>
     </div>

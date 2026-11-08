@@ -39,6 +39,7 @@ const calls = {
   fill: linlog.fill,
   hint: linlog.hint,
   proof: linlog.proof,
+  term: linlog.term,
   prove: linlog.prove,
   draw: linlog.draw,
   draw_net: linlog.draw_net,
@@ -52,6 +53,7 @@ const calls = {
   ordinary_undo: linlog.ordinary_undo,
   ordinary_close: linlog.ordinary_close,
   ordinary_hint: linlog.ordinary_hint,
+  ordinary_term: linlog.ordinary_term,
   ordinary_draw: linlog.ordinary_draw,
   ordinary_export: linlog.ordinary_export,
   replay: (session: string, todo: string, settings: string) =>

@@ -25,6 +25,7 @@ import type {
   SessionDoc,
   StepForm,
   Stepped,
+  Termed,
 } from "./linlog";
 import type { OrdinaryOutcome, OrdinarySession, OrdinaryStep, OrdinaryView } from "./ordinary";
 import { type Client, createClient, type WorkerLike } from "./protocol";
@@ -46,6 +47,8 @@ export interface About {
       readonly default: string;
     }[];
     readonly settings: readonly string[];
+    /** The name of its call for a finished proof's λ-term. */
+    readonly term: string;
   }[];
 }
 
@@ -135,6 +138,9 @@ export function createApi(changed: (pending: number) => void) {
       json<Hint>("hint", doc(session), goal, settings),
     proof: (session: SessionDoc, settings: string) =>
       json<unknown>("proof", doc(session), settings),
+    /** A finished proof's λ-term by its suite's call (`Suite.term`), or why it has none. */
+    term: (call: string, session: SessionDoc | OrdinarySession, settings: string) =>
+      json<Termed>(call, JSON.stringify(session), settings),
     prove: (sequent: SequentDoc, mode: Mode, settings: string) =>
       json<{ outcome: Outcome; refutation_checked: boolean | null }>(
         "prove",

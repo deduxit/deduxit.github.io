@@ -45,6 +45,8 @@ export interface Suite {
   readonly start: Calculus;
   /** The prefix of the suite's calls in linlog's module, as `about` gives it. */
   readonly calls: string;
+  /** Its call that reads a finished proof back as a λ-term, as `about` names it. */
+  readonly term: string;
 }
 
 /** The registered suites, in the order the segmented control shows them. */
@@ -59,6 +61,7 @@ export const SUITES: readonly Suite[] = [
     values: [...MODES, "cyclic", "lambek", "lambek-star"],
     start: { suite: "linear", method: "sequent", mode: "classical" },
     calls: "",
+    term: "term",
   },
   {
     key: "ordinary",
@@ -69,6 +72,7 @@ export const SUITES: readonly Suite[] = [
     values: LOGICS,
     start: { suite: "ordinary", method: "sequent", logic: "intuitionistic" },
     calls: "ordinary_",
+    term: "ordinary_term",
   },
 ];
 

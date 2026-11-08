@@ -132,6 +132,22 @@ export interface Failure {
   readonly details?: { readonly kind?: string; readonly [key: string]: unknown } | null;
 }
 
+/**
+ * What `term` and `ordinary_term` answer: a finished proof's λ-term with its text and typing
+ * judgement as the settings' `lambda` writes them, or the library's refusal (`no_term` with
+ * `details.reason`, or a bound) where it has none.
+ */
+export type Termed =
+  | {
+      /** The calculus the term is of: `linear`, `affine` or `simple`. */
+      readonly calculus: string;
+      /** The term. */
+      readonly text: string;
+      /** Its typing judgement, `x : A ⊢ M : B`. */
+      readonly judgement: string;
+    }
+  | { readonly error: Failure };
+
 /** What the page shows of a session. */
 export interface View {
   /** The linear mode; an ordinary view has none. */

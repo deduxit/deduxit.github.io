@@ -134,6 +134,22 @@ export function notTaken(failed: Failure): Said {
   };
 }
 
+/** Why a finished proof has no λ-term, by linlog's reason; a bound's refusal in its own words. */
+export function noTerm(failed: Failure): string {
+  const reasons: Record<string, string> = {
+    classical:
+      "a proof of classical logic has several conclusions at once, and a λ-term has one type",
+    mix: "Mix has no λ-term",
+    ordered:
+      "the cyclic and the Lambek calculus have the terms of an ordered calculus of their own",
+    quantified: "quantifiers over first-order terms are not quantifiers over types",
+    open: "the proof has open goals",
+  };
+  const reason =
+    failed.code === "no_term" ? reasons[String(failed.details?.["reason"])] : undefined;
+  return reason ?? failed.message;
+}
+
 /** Why the sequent field's text is not a sequent the page can start. */
 export function inputProblem(failed: Failure): Said {
   const details = failed.details ?? {};

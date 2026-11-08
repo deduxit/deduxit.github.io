@@ -6,12 +6,13 @@ import { calculusOf, linear, ordinary, parameterOf, SUITES } from "./suites";
 import { linlog } from "./testing";
 
 describe("the suite registry", () => {
-  it("names each suite, its calls and its parameter as linlog's about does", () => {
+  it("names each suite, its calls, its term call and its parameter as linlog's about does", () => {
     const about = JSON.parse(linlog.about()) as {
       suites: {
         suite: string;
         name: string;
         calls: string;
+        term: string;
         parameters: { name: string; values: string[]; default: string }[];
       }[];
     };
@@ -20,6 +21,7 @@ describe("the suite registry", () => {
       expect(theirs, suite.key).toBeDefined();
       expect(theirs?.name).toBe(suite.name);
       expect(theirs?.calls).toBe(suite.calls);
+      expect(theirs?.term).toBe(suite.term);
       const parameter = theirs?.parameters.find((p) => p.name === suite.parameter);
       expect(parameter, `${suite.key}'s ${suite.parameter}`).toBeDefined();
       // The page offers a part of linlog's values (the linear suite's cyclic and Lambek modes

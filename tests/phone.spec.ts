@@ -2,7 +2,7 @@
 // Licensed under the EUPL
 
 import { expect, test } from "./fixtures";
-import { rule, start } from "./prover";
+import { calculus, rule, start } from "./prover";
 
 test("a proof goes at a phone's width, and the page does not scroll sideways", async ({ page }) => {
   await start(page, "A * B |- B * A");
@@ -80,4 +80,25 @@ test("the goal bar keeps one row at a phone's width, Cut and the new tab's butto
     return new Set(tops.filter((top) => top !== null)).size;
   });
   expect(rows).toBe(1);
+});
+
+test("a finished proof's λ-term shows in Export from More's sheet at a phone's width, without sideways scroll", async ({
+  page,
+}) => {
+  await start(page, "|- (a -o b) -o (b -o c) -o a -o c");
+  await calculus(page, ["Intuitionistic"]);
+  await page.getByRole("button", { name: "Close all" }).click();
+  await expect(
+    page.getByRole("status").filter({ hasText: "Proved: every goal is closed" }),
+  ).toBeVisible();
+  await page.locator("footer").getByRole("button", { name: "More" }).click();
+  await page.getByRole("dialog", { name: "More" }).getByRole("button", { name: "Export" }).click();
+  const item = page
+    .getByRole("menu", { name: "Export" })
+    .getByRole("menuitem", { name: /^λ-term/ });
+  await expect(item.locator(".judgement")).toContainText("λf. λg. λx. g (f x)");
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  );
+  expect(overflow).toBe(0);
 });

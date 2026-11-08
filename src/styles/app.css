@@ -1150,6 +1150,15 @@ button.kw {
   margin: var(--spacing-2) var(--spacing-1) 0;
   font-size: var(--text-small);
 }
+/* A finished proof's λ-term in the export menu: its judgement in the math font, broken
+   anywhere, since a long term has few spaces to break at. */
+.mi .fn.judgement {
+  font-family: var(--font-math);
+  font-size: var(--text-panel);
+  font-synthesis: none;
+  color: inherit;
+  overflow-wrap: anywhere;
+}
 .form {
   display: grid;
   gap: var(--spacing-3);
