@@ -65,3 +65,19 @@ test("Practice is in the bottom band at a phone's width, and a problem opens fro
   await expect(practice).toBeHidden();
   await expect(page.locator(".ptab[aria-current=true] .pt-go .m")).toHaveText("A & B ⊢ A");
 });
+
+test("the goal bar keeps one row at a phone's width, Cut and the new tab's button in it", async ({
+  page,
+}) => {
+  await start(page, "A * B |- B * A");
+  const bar = page.locator(".dock .gbar");
+  await expect(bar.getByRole("button", { name: "Cut", exact: true })).toBeVisible();
+  const rows = await bar.evaluate((element) => {
+    const tops = [...element.children].map((child) => {
+      const r = child.getBoundingClientRect();
+      return r.width === 0 ? null : Math.round(r.top + r.height / 2);
+    });
+    return new Set(tops.filter((top) => top !== null)).size;
+  });
+  expect(rows).toBe(1);
+});

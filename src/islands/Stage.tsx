@@ -153,6 +153,13 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
   let shownKind: string | undefined;
   /** Whether the proof drawn last was finished. */
   let shownComplete = false;
+  /**
+   * The session the host's drawing was made for. Between a change of the proof or its session
+   * and the new drawing, the host still holds the old one, whose ids the new view's goals may
+   * match: its buttons would be laid over the wrong formulas, at a zoom fitted to another
+   * drawing, narrower than a control.
+   */
+  let hostSession: unknown;
 
   const view = () => proof()?.view ?? null;
   const active = () => prover().activeGoal();
@@ -222,6 +229,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
         const mine = ++sequence;
         if (!session || !v) {
           host.replaceChildren();
+          hostSession = undefined;
           setHits([]);
           return;
         }
@@ -264,6 +272,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
         } catch (thrown) {
           if (mine !== sequence) return;
           host.replaceChildren();
+          hostSession = undefined;
           setHits([]);
           setCutHits([]);
           setProblem(failure(thrown instanceof Error ? thrown.message : thrown).message);
@@ -274,6 +283,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
         const hadFocus =
           stage.contains(document.activeElement) || document.activeElement === document.body;
         host.innerHTML = svg;
+        hostSession = session;
         decorate(net);
         // A net is drawn larger than its derivation, the compact net smaller
         // than the one with its formulas, and a look may add rows: each is
@@ -316,6 +326,11 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
     const v = view();
     const session = proof()?.session;
     if (!v || !session) return;
+    if (session !== hostSession) {
+      // The drawing of this session is on its way; the one shown is another's.
+      setHits([]);
+      return;
+    }
     const eliminating = proof()?.elim[net ? "net" : "tree"];
     if (eliminating) {
       setHits([]);
@@ -487,7 +502,11 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
       () => {
         const e = elim();
         if (host.firstChild && e) markElimination(e);
-        else if (host.firstChild && !(ui.tab === "net" && netReady()))
+        else if (
+          host.firstChild &&
+          hostSession === proof()?.session &&
+          !(ui.tab === "net" && netReady())
+        )
           setHits(targets(view()?.goals ?? []));
       },
       { defer: true },
@@ -1397,8 +1416,10 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
             >
               <ChevronLeft aria-hidden="true" />
             </button>
+            {/* On a phone the bar keeps one row: the count of open goals is the tab's status. */}
             <span class="gn">
-              Goal {goalNumber(active() ?? 0)} · {openCount()} open
+              Goal {goalNumber(active() ?? 0)}
+              <span class="wide-only"> · {openCount()} open</span>
             </span>
             <button
               type="button"

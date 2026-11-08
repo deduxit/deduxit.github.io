@@ -126,3 +126,18 @@ test("an elimination to the end says which bound stopped it", async ({ page }) =
   await expect(panel.getByRole("alert")).toContainText("Stopped after 1 step");
   await expect(panel.getByRole("alert")).toContainText("most steps allowed");
 });
+
+test("a replayed classical cut is drawn two-sided as before the replay", async ({ page }) => {
+  await start(page, "A, A -o B |- B");
+  await calculus(page, ["Two-sided"]);
+  await cut(page, "A -o B", [/^A ⊗ B⊥, formula 2/]);
+  const drawn = () => page.locator(".drawing svg text").allTextContents();
+  const before = await drawn();
+  expect(before.join(" ")).toContain("⊢");
+  // A step on the second premise, taken back: undo replays the session, its cut among the steps.
+  await page.getByRole("button", { name: /^A⊥ ⅋ B, formula 2 of goal 2/ }).click();
+  await page.getByRole("dialog", { name: "Rules" }).getByRole("button", { name: /^⅋/ }).click();
+  await expect.poll(drawn).not.toEqual(before);
+  await page.getByRole("button", { name: "Undo", exact: true }).click();
+  await expect.poll(drawn).toEqual(before);
+});

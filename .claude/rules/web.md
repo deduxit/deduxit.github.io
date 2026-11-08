@@ -213,6 +213,13 @@ the page reads.
   the fingers to spread past its slop: the test's page pinch goes from 20 to 100 pixels
   either side (20 to 60 zoomed nothing), and CDP's `Input.synthesizePinchGesture` zooms
   nothing in this Chromium at all.
+- **The buttons are laid only over the drawing of the current session** (`hostSession` in
+  `Stage.tsx`): between a change of the proof or its session and the new drawing the host
+  holds the old one, whose `i<n>-<p>` ids the new view may match, at a zoom fitted to another
+  drawing; buttons laid there were narrower than a control (the tour's first stop opens a new
+  tab: a 39-pixel button in `targets.spec.ts`, now and then).
+- **On a phone the goal bar keeps one row**: the navigator says "Goal N" there, the count of
+  open goals being the tab's status (`phone.spec.ts` measures the row with Cut in it).
 - Solid's narrowed accessor in `<Show>{(x) => …}` goes stale once its condition is false:
   read it before the handler changes what the condition reads (the restart warning).
 
