@@ -7,8 +7,9 @@ Maintainer notes (stripped before Claude sees this file).
 -->
 
 linlog's web front end, to be served at https://sequentium.github.io/: a student types a
-sequent of linear logic and proves it by clicking, or lets the search close a goal, and
-sees the derivation and, for MLL, the net drawn as the command draws them. Nothing is
+sequent of linear logic, or of ordinary logic in a tab whose calculus is the ordinary suite
+(LK and LJ), and proves it by clicking, or lets the search close a goal, and sees the
+derivation and, for MLL, the net drawn as the command draws them. Nothing is
 installed and nothing is sent to a server: the prover runs in the page, as linlog's
 WebAssembly module in a module worker.
 

@@ -1,8 +1,9 @@
 # linlog in the browser
 
 The web front end of [linlog](https://github.com/sequentium/sequentium), a prover for
-linear logic: type a sequent and prove it by clicking, step by step, or let the search
-close a goal; see the derivation and, for MLL, the proof net drawn. The prover runs in the
+linear logic and, through its translations, ordinary propositional logic: type a sequent
+and prove it by clicking, step by step, or let the search close a goal; see the derivation
+and, for MLL, the proof net drawn. The prover runs in the
 page, as linlog's library compiled to WebAssembly: nothing is installed and nothing is
 sent to a server.
 
@@ -12,6 +13,15 @@ sent to a server.
   proved in classical linear logic or, by the switches its tab's calculus mark opens,
   intuitionistic, with Mix or affine weakening; the fragment linlog detects is shown beside
   it.
+- Ordinary propositional logic, the calculus mark's other suite: a sequent of classical,
+  intuitionistic or minimal logic (`a -> b, a |- b`, or the signs `→ ∧ ∨ ¬ ↔ ⊢`) proved step
+  by step in Gentzen's LK or LJ and drawn as an LK or LJ derivation, never as its linear
+  image, the weakenings and contractions shown on request; the search closes a goal through
+  linlog's translation and the derivation it reads back is grafted, or the goal is not valid
+  or unknown; undo on a branch, the hints, the exports (SVG, PNG, PDF, LaTeX, Typst, text,
+  the session, the Rocq certificate over `Prop`), the link and the saved proofs as for a
+  linear proof; and fifteen examples in the sequent field's menu, from modus ponens to
+  Peirce's law. Learn and Practice stay with linear logic.
 - The derivation drawn as linlog draws it, under a camera that zooms and pans: a pinch of
   two fingers, a trackpad's pinch or ctrl with the wheel zooms the drawing about where it
   happens, one finger or the mouse pans it, and outside the drawing the browser's own zoom
@@ -53,25 +63,26 @@ sent to a server.
   meaning told apart under simulated colour-vision deficiencies and shown with a word, a
   sign or a shape beside it. On a phone every control is at least 44 by 44 pixels, and the
   rarer actions are under More. Each tab keeps its own calculus.
-- One store of problems (`src/content/problems/`, 425 of them), each decided by linlog's
+- One store of problems (`src/content/problems/`, 452 of them), each decided by linlog's
   command, which a flake check runs over them all: its sequent, calculus, verdict, a level
   of difficulty from easy to very hard, the categories it is found under and its fragment,
   and for a provable one a session that linlog's `proof` accepts. Most are generated from a
   chosen proof shape and kept at the level they aimed at; others are the classic sequents
   of the literature, each with its source.
 - Practice, a place of its own reached from the bottom band at every width: the store's
-  392 provable problems, filtered by their connectives, their logic, their source and
+  407 provable problems, filtered by their connectives, their logic, their source and
   their difficulty, or one at random within the filters, each opened as a proof on a new
   tab; the problems proved are marked, also on the next visit.
-- Learn, a frame around the page with the tutorial and the reference. The tutorial's
-  first five lessons (reading a sequent, the multiplicatives, the additives, the units, the
-  exponentials) each play a worked proof on the stage one inference at a time, the next rule
+- Learn, a frame around the page with the tutorial and the reference. The tutorial's eleven
+  lessons (reading a sequent, the multiplicatives, the additives, the units, the
+  exponentials, two sides, when there is no proof, proof nets, cut and its elimination, the
+  quantifiers, ordinary logic through the translations) each play a worked proof on the stage one inference at a time, the next rule
   predicted before each step and its reason shown beside it; then the same proof with its
   last steps left to the student; practice drawn from the store (provable and unprovable
   mixed, each opened as a proof, its answer kept until asked, and a provable one's proof
   watched step by step); a prompt to explain the densest step, with a model answer; and a
   check whose wrong answers each name a misconception and offer the faded proof again. The
-  later lessons have their practice. The reference holds the connectives, every rule the
+  reference holds the connectives, every rule the
   lessons use drawn as a schema with its two-sided names, and the engines with their
   literature; with Learn on, a rule in the stage's popover shows its schema on hover and a
   formula its connective's reading. A tour of the page proves a sequent as it goes; About
