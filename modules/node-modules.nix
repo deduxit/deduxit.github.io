@@ -21,8 +21,8 @@
 # platform without needing it.
 #
 # `npmTask' runs an npm command over some of the project's files in the
-# sandbox with node_modules linked in, and linlog's bindings and fonts and the
-# logo's rasters linked at .cache/ as the dev shell links them (linlog.nix,
+# sandbox with node_modules linked in, and deduxit's bindings and fonts and the
+# logo's rasters linked at .cache/ as the dev shell links them (deduxit.nix,
 # logo.nix): the shape shared by the site build (site.nix) and the checks
 # that need Node.js (checks.nix).
 # `fileSets' names those files by who reads them, so that each derivation
@@ -136,7 +136,7 @@
             to a derivation that runs `script` in a copy of `sources` (the
             site's, unless a check reads less) plus `files` (paths or
             filesets), with node_modules linked from `packages.node-modules`
-            and linlog's bindings and fonts and the logo's rasters at .cache/.
+            and deduxit's bindings and fonts and the logo's rasters at .cache/.
           '';
         };
       };
@@ -183,9 +183,9 @@
             buildPhase = ''
               runHook preBuild
               mkdir -p .cache
-              ln -s ${config.linlogWeb} .cache/linlog-web
-              ln -s ${config.linlogFonts} .cache/linlog-fonts
-              ln -s ${config.logoFiles} .cache/linlog-logo
+              ln -s ${config.deduxitWeb} .cache/deduxit-web
+              ln -s ${config.deduxitFonts} .cache/deduxit-fonts
+              ln -s ${config.logoFiles} .cache/deduxit-logo
               ${script}
               runHook postBuild
             '';

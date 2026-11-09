@@ -10,7 +10,7 @@
  * each engine under the id `engine-<key>`).
  */
 
-import type { Outcome } from "./linlog";
+import type { Outcome } from "./deduxit";
 
 /** One engine. */
 export interface Engine {

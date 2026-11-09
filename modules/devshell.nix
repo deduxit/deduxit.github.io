@@ -14,8 +14,8 @@
 # On entry the shell links node_modules from the store
 # (`packages.node-modules') into ./node_modules -- one symlink per entry, so
 # the directory itself stays writable for Vite's and Astro's caches -- and
-# linlog's bindings and fonts at .cache/linlog-web and .cache/linlog-fonts
-# (linlog.nix), each held by a garbage collector's root so that a collection
+# deduxit's bindings and fonts at .cache/deduxit-web and .cache/deduxit-fonts
+# (deduxit.nix), each held by a garbage collector's root so that a collection
 # cannot pull it from under the links. The scheme is the author's learning
 # sites' (website-learn's modules/devshell.nix).
 #
@@ -82,15 +82,15 @@
         # The bindings and the fonts, where astro.config.ts's aliases look, and
         # the logo's rasters, which the build copies (src/integrations/offline.ts).
         # `nix-store --add-root' makes the link itself the root.
-        devshell.startup.linlog.deps = [ "prj-root" ];
-        devshell.startup.linlog.text = ''
+        devshell.startup.deduxit.deps = [ "prj-root" ];
+        devshell.startup.deduxit.text = ''
           mkdir -p "$PRJ_ROOT/.cache"
-          nix-store --add-root "$PRJ_ROOT/.cache/linlog-web" --realise ${config.linlogWeb} >/dev/null \
-            || echo "could not link linlog-web at .cache/linlog-web" >&2
-          nix-store --add-root "$PRJ_ROOT/.cache/linlog-fonts" --realise ${config.linlogFonts} >/dev/null \
-            || echo "could not link the fonts at .cache/linlog-fonts" >&2
-          nix-store --add-root "$PRJ_ROOT/.cache/linlog-logo" --realise ${config.logoFiles} >/dev/null \
-            || echo "could not link the logo's rasters at .cache/linlog-logo" >&2
+          nix-store --add-root "$PRJ_ROOT/.cache/deduxit-web" --realise ${config.deduxitWeb} >/dev/null \
+            || echo "could not link deduxit-web at .cache/deduxit-web" >&2
+          nix-store --add-root "$PRJ_ROOT/.cache/deduxit-fonts" --realise ${config.deduxitFonts} >/dev/null \
+            || echo "could not link the fonts at .cache/deduxit-fonts" >&2
+          nix-store --add-root "$PRJ_ROOT/.cache/deduxit-logo" --realise ${config.logoFiles} >/dev/null \
+            || echo "could not link the logo's rasters at .cache/deduxit-logo" >&2
         '';
 
         env = [

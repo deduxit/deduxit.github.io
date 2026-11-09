@@ -2,10 +2,10 @@
 // Licensed under the EUPL
 
 /**
- * The documents linlog's bindings take and give, as the page reads them.
+ * The documents deduxit's bindings take and give, as the page reads them.
  * Every call of the bindings takes JSON text and returns JSON text, an SVG
  * document or bytes; the shapes here are the parts of those documents the
- * page relies on (linlog's `plan/web/README.md`, "The bindings' API").
+ * page relies on (deduxit's `plan/web/README.md`, "The bindings' API").
  */
 
 /**
@@ -34,12 +34,12 @@ export const MODES: readonly Mode[] = [
   "intuitionistic-affine",
 ];
 
-/** A math font linlog lays its drawings out in, by the name `styles.svg.font` takes. */
+/** A math font deduxit lays its drawings out in, by the name `styles.svg.font` takes. */
 export type MathFont = "euler" | "stix-two" | "garamond" | "asana" | "new-computer-modern";
 
 /**
- * linlog's math fonts, Euler Math (the page's default) first, each with its name, its look and
- * the family its file names, under which the page loads it and linlog's drawing asks for it.
+ * deduxit's math fonts, Euler Math (the page's default) first, each with its name, its look and
+ * the family its file names, under which the page loads it and deduxit's drawing asks for it.
  */
 export const MATH_FONTS: readonly { key: MathFont; name: string; look: string; family: string }[] =
   [
@@ -258,7 +258,7 @@ export interface Engines {
   readonly automatic: string | null;
   readonly engines: readonly {
     readonly engine: string;
-    /** linlog's refusal of a search forced to the engine, or null where it takes the sequent. */
+    /** deduxit's refusal of a search forced to the engine, or null where it takes the sequent. */
     readonly refused: Failure | null;
   }[];
 }
@@ -279,7 +279,7 @@ export interface Inverted extends Played {
 }
 
 /**
- * The bindings' calls the step tree replays with, as linlog's module exports
+ * The bindings' calls the step tree replays with, as deduxit's module exports
  * them: synchronous, JSON text in and out, a failure thrown as its JSON.
  */
 export interface Prover {

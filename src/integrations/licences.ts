@@ -12,7 +12,7 @@
  *   not assets, so the fonts are below.
  * - `/licenses/THIRD-PARTY-NOTICES.txt`: the notices of the Rust crates
  *   inside linlog's WebAssembly module, as linlog's flake collected them
- *   into the package `linlog-web`.
+ *   into the package `deduxit-web`.
  * - `/licenses/LICENSE.txt`: the EUPL-1.2, the licence of linlog and of
  *   this site's code.
  * - `/fonts/<Family>-OFL.txt`: each font's licence beside its files, which
@@ -38,22 +38,22 @@ export const LICENCES = {
  * root, and whether that licence is the OFL.
  */
 export const FONTS: readonly { family: string; files: string; licence: string; ofl?: false }[] = [
-  { family: "Euler-Math", files: "Euler-Math", licence: ".cache/linlog-fonts/OFL.txt" },
+  { family: "Euler-Math", files: "Euler-Math", licence: ".cache/deduxit-fonts/OFL.txt" },
   {
     family: "STIXTwoMath",
     files: "STIXTwoMath-",
-    licence: ".cache/linlog-fonts/STIXTwoMath-Regular-OFL.txt",
+    licence: ".cache/deduxit-fonts/STIXTwoMath-Regular-OFL.txt",
   },
   {
     family: "Garamond-Math",
     files: "Garamond-Math",
-    licence: ".cache/linlog-fonts/Garamond-Math-OFL.txt",
+    licence: ".cache/deduxit-fonts/Garamond-Math-OFL.txt",
   },
-  { family: "Asana-Math", files: "Asana-Math", licence: ".cache/linlog-fonts/Asana-Math-OFL.txt" },
+  { family: "Asana-Math", files: "Asana-Math", licence: ".cache/deduxit-fonts/Asana-Math-OFL.txt" },
   {
     family: "NewCMMath",
     files: "NewCMMath-",
-    licence: ".cache/linlog-fonts/NewCMMath-Book-LICENSE.txt",
+    licence: ".cache/deduxit-fonts/NewCMMath-Book-LICENSE.txt",
     ofl: false,
   },
   {
@@ -80,7 +80,7 @@ export function licences(): AstroIntegration {
         const root = new URL("../../", import.meta.url);
         await mkdir(new URL("licenses/", dir), { recursive: true });
         await copyFile(
-          new URL(".cache/linlog-web/THIRD-PARTY-NOTICES.txt", root),
+          new URL(".cache/deduxit-web/THIRD-PARTY-NOTICES.txt", root),
           new URL(LICENCES.crates, dir),
         );
         await copyFile(new URL("LICENSE", root), new URL(LICENCES.code, dir));

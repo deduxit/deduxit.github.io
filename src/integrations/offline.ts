@@ -7,7 +7,7 @@
  *
  * - `/logo/`: deduxit's mark, its SVGs (src/logo/, with their licence) and
  *   the rasters the flake draws from them (modules/logo.nix, linked at
- *   .cache/linlog-logo): the favicon's PNG fallback, the Apple touch icon,
+ *   .cache/deduxit-logo): the favicon's PNG fallback, the Apple touch icon,
  *   the link preview's image, and the manifest's icons at the 192 and 512
  *   pixels Chromium asks for, each also maskable, filling its square to the
  *   edge.
@@ -53,7 +53,7 @@ export function offline(): AstroIntegration {
       "astro:build:done": async ({ dir, logger }) => {
         const root = new URL("../../", import.meta.url);
         await mkdir(new URL("logo/", dir), { recursive: true });
-        for (const from of ["src/logo/", ".cache/linlog-logo/site/"]) {
+        for (const from of ["src/logo/", ".cache/deduxit-logo/site/"]) {
           for (const name of await readdir(new URL(from, root))) {
             await copyFile(new URL(name, new URL(from, root)), new URL(`logo/${name}`, dir));
           }

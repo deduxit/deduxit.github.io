@@ -9,7 +9,7 @@ CLAUDE.local.md
 # the dev shell (modules/devshell.nix); Vite and Astro add their caches.
 /node_modules/
 
-# The dev shell's links to node_modules, linlog's bindings and fonts in the
+# The dev shell's links to node_modules, deduxit's bindings and fonts in the
 # store (modules/devshell.nix)
 /.cache/
 

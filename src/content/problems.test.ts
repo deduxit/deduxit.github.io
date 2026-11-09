@@ -1,16 +1,16 @@
 // linlog © Fabian Lukas Grubmüller 2026
 // Licensed under the EUPL
 
-// The store of problems is what it says: linlog decides each sequent in its
+// The store of problems is what it says: deduxit decides each sequent in its
 // mode as its `verdict` says and detects its `fragment`, a provable one's
-// session (as `linlog interact` saved it) is a finished proof of that very
-// sequent in that mode (its cut formulas aside), which linlog's module reads and checks, and its
+// session (as `deduxit interact` saved it) is a finished proof of that very
+// sequent in that mode (its cut formulas aside), which deduxit's module reads and checks, and its
 // categories are the connectives it uses and its logic. Learn's lessons mix
 // provable and unprovable problems and end with harder ones.
 
 import { readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { linlog } from "../lib/testing";
+import { deduxit } from "../lib/testing";
 
 const here = new URL("./problems/", import.meta.url);
 const entries = readdirSync(here)
@@ -95,23 +95,23 @@ describe("the store of problems", () => {
     }
   });
 
-  it("writes every intuitionistic problem in its own syntax, which linlog's strict reading takes back from its print", () => {
+  it("writes every intuitionistic problem in its own syntax, which deduxit's strict reading takes back from its print", () => {
     const intuitionistic = entries.filter((e) => e.mode.startsWith("intuitionistic"));
     expect(intuitionistic.length).toBeGreaterThan(100);
     for (const e of intuitionistic) {
-      const read = JSON.parse(linlog.read_as(e.sequent, e.mode, ""));
-      expect(read.sequent, e.id).toEqual(JSON.parse(linlog.read(e.sequent, "")).sequent);
-      const again = JSON.parse(linlog.read_as(read.text, e.mode, ""));
+      const read = JSON.parse(deduxit.read_as(e.sequent, e.mode, ""));
+      expect(read.sequent, e.id).toEqual(JSON.parse(deduxit.read(e.sequent, "")).sequent);
+      const again = JSON.parse(deduxit.read_as(read.text, e.mode, ""));
       expect(again.sequent, `${e.id}: ${read.text}`).toEqual(read.sequent);
     }
     // A sequent written classically is refused there, with what to write instead.
-    expect(() => linlog.read_as("~(A * ~B), A |- B", "intuitionistic", "")).toThrow(/negation/);
+    expect(() => deduxit.read_as("~(A * ~B), A |- B", "intuitionistic", "")).toThrow(/negation/);
   });
 
   for (const problem of entries) {
-    it(`${problem.id}: linlog says ${problem.verdict} in ${problem.fragment}, and its session proves it`, () => {
-      const sequent = JSON.parse(linlog.read(problem.sequent, "")).sequent;
-      const outcome = JSON.parse(linlog.prove(JSON.stringify(sequent), problem.mode, "")).outcome;
+    it(`${problem.id}: deduxit says ${problem.verdict} in ${problem.fragment}, and its session proves it`, () => {
+      const sequent = JSON.parse(deduxit.read(problem.sequent, "")).sequent;
+      const outcome = JSON.parse(deduxit.prove(JSON.stringify(sequent), problem.mode, "")).outcome;
       expect(outcome.verdict).toBe(problem.verdict === "provable" ? "proved" : "unprovable");
       expect(outcome.fragment).toBe(problem.fragment);
       if (problem.verdict === "unprovable") {
@@ -119,20 +119,20 @@ describe("the store of problems", () => {
         return;
       }
       const file = new URL(`${problem.id}.session.json`, here);
-      const read = JSON.parse(linlog.read(readFileSync(file, "utf8"), ""));
+      const read = JSON.parse(deduxit.read(readFileSync(file, "utf8"), ""));
       expect(read.kind).toBe("session");
       expect(read.session.mode).toBe(problem.mode);
       if (read.sequent.cuts) {
         // A session with cuts keeps its cut formulas in its sequent; the sequent it proves is
-        // the one linlog starts from, which leaves them out.
+        // the one deduxit starts from, which leaves them out.
         const conclusion = (s: unknown) =>
-          JSON.parse(linlog.start(JSON.stringify(s), problem.mode, "")).session.sequent;
+          JSON.parse(deduxit.start(JSON.stringify(s), problem.mode, "")).session.sequent;
         expect(conclusion(read.sequent)).toEqual(conclusion(sequent));
       } else expect(read.sequent).toEqual(sequent);
-      const view = JSON.parse(linlog.view(JSON.stringify(read.session), ""));
+      const view = JSON.parse(deduxit.view(JSON.stringify(read.session), ""));
       expect(view.complete).toBe(true);
       // The proof checks.
-      expect(() => linlog.proof(JSON.stringify(read.session), "")).not.toThrow();
+      expect(() => deduxit.proof(JSON.stringify(read.session), "")).not.toThrow();
     });
   }
 });

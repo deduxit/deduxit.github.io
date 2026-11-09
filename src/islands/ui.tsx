@@ -11,7 +11,7 @@
 
 import { createSignal, For } from "solid-js";
 import { createStore } from "solid-js/store";
-import type { Hint, Offered } from "../lib/linlog";
+import type { Hint, Offered } from "../lib/deduxit";
 import type { Calculus } from "../lib/suites";
 
 /** A formula of a goal, by its position. */

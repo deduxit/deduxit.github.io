@@ -14,7 +14,7 @@
 #            the author can set, in GitHub's web interface.
 #
 # `nix build .#logo' builds it; the dev shell and every npm task link it at
-# .cache/linlog-logo (devshell.nix, node-modules.nix).
+# .cache/deduxit-logo (devshell.nix, node-modules.nix).
 { lib, ... }:
 {
   perSystem =
@@ -23,7 +23,7 @@
       options.logoFiles = lib.mkOption {
         type = lib.types.package;
         default =
-          pkgs.runCommand "linlog-logo"
+          pkgs.runCommand "deduxit-logo"
             {
               nativeBuildInputs = [
                 pkgs.python3

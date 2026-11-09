@@ -14,11 +14,11 @@ paths:
 Versions are newer than most training data: Astro 7.3, Vite 8, TypeScript 6, Tailwind 4.3,
 Solid 1.9, Vitest 5, Playwright 1.63, Biome 2.5 (package-lock.json and linlog's nixpkgs,
 2026-10-19). Check an API in `node_modules/<pkg>/**/*.d.ts` before using it from memory.
-linlog's own calls are in `.cache/linlog-web/linlog_web.d.ts`, and their documents in
-linlog's `plan/web/README.md` ("The bindings' API"); `src/lib/linlog.ts` types the parts
+linlog's own calls are in `.cache/deduxit-web/deduxit_web.d.ts`, and their documents in
+linlog's `plan/web/README.md` ("The bindings' API"); `src/lib/deduxit.ts` types the parts
 the page reads.
 
-## The worker and the protocol (`src/lib/protocol.ts`, `src/worker/linlog.worker.ts`)
+## The worker and the protocol (`src/lib/protocol.ts`, `src/worker/deduxit.worker.ts`)
 
 - **linlog's module runs in one module worker**, created as `new Worker(new URL(…,
   import.meta.url), { type: "module" })` in `src/lib/api.ts` (Vite bundles it from that
@@ -359,7 +359,7 @@ the page reads.
 
 - `/licenses/bundle.txt` is Vite's `build.license` (the npm packages in the bundle), plus
   Astro's notice, whose island runtime is inline in the pages where no bundle sees it;
-  `/licenses/THIRD-PARTY-NOTICES.txt` the Rust crates' (linlog-web's), `LICENSE.txt` the
+  `/licenses/THIRD-PARTY-NOTICES.txt` the Rust crates' (deduxit-web's), `LICENSE.txt` the
   EUPL. The upload to Pages drops dot-files, so nothing is under `.vite/`.
 - **Fonts live under `/fonts/`** beside `<Family>-OFL.txt`: `assetFileNames` sends them
   there, but only for what the server build emits (the stylesheet's fonts, and linlog's
@@ -605,7 +605,7 @@ the page reads.
   favicon's PNG, the Apple touch icon, the manifest's "any" and maskable icons at 192 and
   512, the link preview's `og.png`, GitHub's avatar and social preview) is drawn from them by
   `modules/_logo/derive.py` with nixpkgs' resvg (`modules/logo.nix`, `nix build .#logo`),
-  linked at `.cache/linlog-logo`; never draw or edit one by hand. They match the workshop's
+  linked at `.cache/deduxit-logo`; never draw or edit one by hand. They match the workshop's
   rasters pixel for pixel. The square's ink lies inside the maskable safe circle, so the
   maskable icons are the square to the edge, unscaled. The build copies `src/logo/` and the
   site's rasters to `/logo/` (`offline.ts`), where linlog's README and rustdoc fetch them by

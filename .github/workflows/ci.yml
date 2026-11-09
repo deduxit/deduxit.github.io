@@ -2,14 +2,14 @@
 # Licensed under the EUPL
 
 # Everything runs through the flake, so CI checks exactly what `nix flake
-# check` checks locally, with the tools flake.lock pins (linlog's among them,
-# whose package `linlog-web' comes from the Cachix cache `linlog-prover',
-# where linlog's own CI pushed it). The scheme of the author's sites
+# check` checks locally, with the tools flake.lock pins (deduxit's among them,
+# whose package `deduxit-web' comes from the Cachix cache `linlog-prover',
+# where deduxit's own CI pushed it). The scheme of the author's sites
 # (website-learn's deploy.yaml) for keeping the store between runs. Every push
 # to main and every pull request is checked; main, once its checks pass, is
 # deployed to GitHub Pages as the organization's site at its root address:
-# packages.default and nothing else. linlog's own Pages site, the rustdoc at
-# /deduxit/, is a project site of linlog's repository on the same address,
+# packages.default and nothing else. deduxit's own Pages site, the rustdoc at
+# /deduxit/, is a project site of deduxit's repository on the same address,
 # which no deployment here touches. Actions are pinned to full commit SHAs,
 # with the version in a trailing comment.
 name: CI
@@ -50,8 +50,8 @@ jobs:
         with:
           # Fetching the `github:` inputs anonymously runs into rate limits.
           github_access_token: ${{ github.token }}
-      # The organization's public cache, read only: linlog's package
-      # `linlog-web' comes from there, so this CI never builds Rust. Nothing
+      # The organization's public cache, read only: deduxit's package
+      # `deduxit-web' comes from there, so this CI never builds Rust. Nothing
       # is pushed by the action (below for what is).
       - uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
         with:

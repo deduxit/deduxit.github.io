@@ -13,7 +13,7 @@ import {
   sequentText,
   stepsOf,
 } from "./ordinary";
-import { linlog } from "./testing";
+import { deduxit } from "./testing";
 
 const S = "{}";
 
@@ -23,10 +23,10 @@ interface Played {
 }
 
 const start = (text: string, logic: string): Played =>
-  JSON.parse(linlog.ordinary_start(text, logic, S));
+  JSON.parse(deduxit.ordinary_start(text, logic, S));
 const apply = (p: Played, goal: number, side: string, position: number, rule: string): Played =>
   JSON.parse(
-    linlog.ordinary_apply(
+    deduxit.ordinary_apply(
       JSON.stringify(p.session),
       goal,
       JSON.stringify({ side, position, rule }),
@@ -34,7 +34,7 @@ const apply = (p: Played, goal: number, side: string, position: number, rule: st
     ),
   );
 const view = (session: OrdinarySession): OrdinaryView =>
-  JSON.parse(linlog.ordinary_view(JSON.stringify(session), S));
+  JSON.parse(deduxit.ordinary_view(JSON.stringify(session), S));
 
 describe("the ordinary suite", () => {
   it("numbers a goal's formulas as the drawing's ids do: left of ⊢ first", () => {
@@ -45,7 +45,7 @@ describe("the ordinary suite", () => {
       ["a", "input"],
       ["b", "output"],
     ]);
-    const svg = linlog.ordinary_draw(JSON.stringify(p.session), S);
+    const svg = deduxit.ordinary_draw(JSON.stringify(p.session), S);
     for (const position of [0, 1, 2]) expect(svg).toContain(`id="i0-${position}"`);
     expect(svg).not.toContain('id="i0-3"');
     // The formula right of ⊢ is the right side's first, by its place on the page.
@@ -107,7 +107,7 @@ describe("the ordinary suite", () => {
     expect(leftGoal).toBeDefined();
   });
 
-  it("retracts what linlog's reader accepts, as its undo does for the last step", () => {
+  it("retracts what deduxit's reader accepts, as its undo does for the last step", () => {
     const sequents = [
       ["a /\\ (b \\/ c) |- (a /\\ b) \\/ (a /\\ c)", "intuitionistic"],
       ["~(a /\\ b) |- ~a \\/ ~b", "classical"],
@@ -138,14 +138,14 @@ describe("the ordinary suite", () => {
               number,
             ];
             const rules: { rule: string }[] = JSON.parse(
-              linlog.ordinary_rules(JSON.stringify(p.session), goal.goal, side, position, S),
+              deduxit.ordinary_rules(JSON.stringify(p.session), goal.goal, side, position, S),
             );
             // Weakening and contraction loop without end: the random walk takes them rarely.
             const useful = rules.filter((r) => !["CL", "CR"].includes(r.rule));
             const rule = useful[(choice >> 6) % Math.max(1, useful.length)];
             if (choice % 7 === 0) {
               const closed = JSON.parse(
-                linlog.ordinary_close(
+                deduxit.ordinary_close(
                   JSON.stringify(p.session),
                   goal.goal,
                   JSON.stringify({ limits: { work: 4096 } }),
@@ -165,13 +165,13 @@ describe("the ordinary suite", () => {
           const back = retract(p.session, goal);
           if (!back) return;
           retracted++;
-          // linlog's reader takes the document, the reopened goal open in it.
+          // deduxit's reader takes the document, the reopened goal open in it.
           const after = view(back.session);
           expect(after.goals.map((g) => g.goal)).toContain(back.reopened);
           expect(stepsOf(back.session).length).toBe(back.session.history.length);
-          // The last step retracted is linlog's own undo.
+          // The last step retracted is deduxit's own undo.
           if (back.session.history.length === p.session.history.length - 1 && goal === undefined) {
-            const undone = JSON.parse(linlog.ordinary_undo(JSON.stringify(p.session), S));
+            const undone = JSON.parse(deduxit.ordinary_undo(JSON.stringify(p.session), S));
             expect(back.session).toEqual(undone.session);
             compared++;
           }

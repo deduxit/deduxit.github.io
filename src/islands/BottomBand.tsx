@@ -42,7 +42,7 @@ import {
   type Outcome,
   type SessionDoc,
   type Termed,
-} from "../lib/linlog";
+} from "../lib/deduxit";
 import { writeLink } from "../lib/link";
 import { isOrdinary, prettyOrdinary, stepsOf } from "../lib/ordinary";
 import { actions, goalAt, paths } from "../lib/steps";
@@ -1221,7 +1221,7 @@ function AboutPane(props: { prover: Prover }) {
       </p>
       <Written name="texts/about" />
       <p class="sub">
-        linlog {about()?.linlog ?? ""}, reading session documents up to level {about()?.level ?? ""}
+        linlog {about()?.deduxit ?? ""}, reading session documents up to level {about()?.level ?? ""}
         .
       </p>
       <p class="kw-label h">Licences</p>

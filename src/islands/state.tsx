@@ -28,7 +28,7 @@ import {
   type StepForm,
   type Taken,
   type View,
-} from "../lib/linlog";
+} from "../lib/deduxit";
 import type { Example } from "../lib/content";
 import { ENGINE_ORDER, engineName, engineOf, fromTab } from "../lib/engines";
 import {

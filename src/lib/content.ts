@@ -10,7 +10,7 @@
  * `licence`.
  */
 
-import type { Mode } from "./linlog";
+import type { Mode } from "./deduxit";
 import type { Logic } from "./suites";
 
 /** A level of difficulty, from 1, easy, to 4, very hard. */

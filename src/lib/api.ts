@@ -2,9 +2,9 @@
 // Licensed under the EUPL
 
 /**
- * linlog's calls as the page makes them: through the module worker
- * (src/worker/linlog.worker.ts), each answer read from its JSON. A call
- * rejects with what the call threw (linlog's error JSON, which `failure`
+ * deduxit's calls as the page makes them: through the module worker
+ * (src/worker/deduxit.worker.ts), each answer read from its JSON. A call
+ * rejects with what the call threw (deduxit's error JSON, which `failure`
  * reads), or with `Cancelled` when the page stopped it.
  */
 
@@ -26,14 +26,14 @@ import type {
   StepForm,
   Stepped,
   Termed,
-} from "./linlog";
+} from "./deduxit";
 import type { OrdinaryOutcome, OrdinarySession, OrdinaryStep, OrdinaryView } from "./ordinary";
 import { type Client, createClient, type WorkerLike } from "./protocol";
 import type { Action, Replayed } from "./steps";
 
 /** What `about` answers. */
 export interface About {
-  readonly linlog: string;
+  readonly deduxit: string;
   readonly level: number;
   readonly stack_bytes: number;
   /** The suites, each with the prefix of its calls and its parameters. */
@@ -58,14 +58,14 @@ export interface OrdinaryPlayed {
   readonly view: OrdinaryView;
 }
 
-/** The page's handle on linlog. */
+/** The page's handle on deduxit. */
 export type Api = ReturnType<typeof createApi>;
 
 /** A handle on a fresh worker; `changed` hears the number of pending calls. */
 export function createApi(changed: (pending: number) => void) {
   const client: Client = createClient(
     () =>
-      new Worker(new URL("../worker/linlog.worker.ts", import.meta.url), {
+      new Worker(new URL("../worker/deduxit.worker.ts", import.meta.url), {
         type: "module",
       }) as WorkerLike,
     changed,

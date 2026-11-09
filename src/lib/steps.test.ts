@@ -3,21 +3,21 @@
 
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
-import type { Offered, Played, SessionDoc } from "./linlog";
+import type { Offered, Played, SessionDoc } from "./deduxit";
 import { actions, goalAt, paths, play, replay, retract, searchMade } from "./steps";
-import { linlog } from "./testing";
+import { deduxit } from "./testing";
 
 const S = "";
 
 function started(text: string, mode = "classical"): Played {
-  const read = JSON.parse(linlog.read(text, S));
-  return JSON.parse(linlog.start(JSON.stringify(read.sequent), mode, S));
+  const read = JSON.parse(deduxit.read(text, S));
+  return JSON.parse(deduxit.start(JSON.stringify(read.sequent), mode, S));
 }
 
 function step(played: Played, goal: number, position: number, rule: string, left?: number[]) {
   const form = left ? { position, rule, left } : { position, rule };
   return JSON.parse(
-    linlog.apply(JSON.stringify(played.session), goal, JSON.stringify(form), S),
+    deduxit.apply(JSON.stringify(played.session), goal, JSON.stringify(form), S),
   ) as Played & { opened: number[] };
 }
 
@@ -28,9 +28,11 @@ describe("the step tree", () => {
     let p = started("A * B |- B * A");
     p = step(p, 0, 0, "⅋");
     const split = step(p, 1, 2, "⊗", [1]);
-    const closed = JSON.parse(linlog.close(JSON.stringify(split.session), split.opened[1] ?? 0, S));
+    const closed = JSON.parse(
+      deduxit.close(JSON.stringify(split.session), split.opened[1] ?? 0, S),
+    );
     const doc: SessionDoc = closed.session;
-    same(replay(linlog, doc, actions(doc), S).session, doc);
+    same(replay(deduxit, doc, actions(doc), S).session, doc);
   });
 
   it("undoes the last step on the active goal's branch, keeping later steps elsewhere", () => {
@@ -46,7 +48,7 @@ describe("the step tree", () => {
     const back = retract(doc, active);
     expect(back?.reopened).toEqual([1]);
     expect(back?.removed.map((a) => a.path)).toEqual([[1]]);
-    const after = replay(linlog, doc, back?.kept ?? [], S);
+    const after = replay(deduxit, doc, back?.kept ?? [], S);
     expect(after.failed).toEqual([]);
     const reopened = goalAt(after.session, [1]);
     expect(after.session.inferences[reopened ?? -1]?.rule).toBeUndefined();
@@ -56,14 +58,16 @@ describe("the step tree", () => {
   it("with the invertible rules applied by themselves, undoes the step they followed", () => {
     const on = JSON.stringify({ interactive: { invertible: true } });
     const begin = (text: string): Played => {
-      const read = JSON.parse(linlog.read(text, S));
-      return JSON.parse(linlog.start(JSON.stringify(read.sequent), "classical", on));
+      const read = JSON.parse(deduxit.read(text, S));
+      return JSON.parse(deduxit.start(JSON.stringify(read.sequent), "classical", on));
     };
     // The visitor's ⊗ at the root; the axiom on its left premise and the ⅋ on its right
     // one followed it by themselves.
     const start = begin("|- A * (B par C), ~A, ~B, ~C");
     const form = JSON.stringify({ position: 0, rule: "⊗", left: [1] });
-    const split = JSON.parse(linlog.apply(JSON.stringify(start.session), 0, form, on)) as Played & {
+    const split = JSON.parse(
+      deduxit.apply(JSON.stringify(start.session), 0, form, on),
+    ) as Played & {
       opened: number[];
     };
     const active = split.opened[0] ?? -1;
@@ -92,7 +96,7 @@ describe("the step tree", () => {
 
   it("sets the search's inferences apart from the student's", () => {
     const p = step(started("!A |- A * A"), 0, 0, "?c");
-    const closed = JSON.parse(linlog.close(JSON.stringify(p.session), 1, S));
+    const closed = JSON.parse(deduxit.close(JSON.stringify(p.session), 1, S));
     const made = searchMade(closed.session);
     expect(made.has(0)).toBe(false);
     expect(made.has(1)).toBe(true);
@@ -122,7 +126,7 @@ describe("the step tree", () => {
             if (!goal) break;
             const position = choice % goal.formulas.length;
             const offered: Offered[] = JSON.parse(
-              linlog.rules(JSON.stringify(p.session), goal.goal, position, S),
+              deduxit.rules(JSON.stringify(p.session), goal.goal, position, S),
             );
             const rule = offered[choice % Math.max(offered.length, 1)];
             if (!rule) continue;
@@ -135,11 +139,11 @@ describe("the step tree", () => {
             }
           }
           const doc = p.session;
-          same(replay(linlog, doc, actions(doc), S).session, doc);
+          same(replay(deduxit, doc, actions(doc), S).session, doc);
           for (const { goal } of p.view.goals) {
             const back = retract(doc, goal);
             if (!back) continue;
-            const after = replay(linlog, doc, back.kept, S);
+            const after = replay(deduxit, doc, back.kept, S);
             expect(after.failed).toEqual([]);
             const where = paths(after.session);
             const open = new Set(after.view.goals.map((g) => g.goal));
@@ -172,7 +176,7 @@ describe("the step tree", () => {
     p = step(p, first, 0, "⊗", [1]);
     expect(p.session.inferences[p.opened?.[0] ?? -1]?.sequent).toEqual([2, 2]);
     const doc = p.session;
-    same(replay(linlog, doc, actions(doc), S).session, doc);
+    same(replay(deduxit, doc, actions(doc), S).session, doc);
   });
 
   it("keeps a goal the search closed under a larger budget through an undo elsewhere", () => {
@@ -181,9 +185,9 @@ describe("the step tree", () => {
     let p = started("A * (B + C) |- ((A * B) + (A * C)) & (D -o D)");
     const and = step(p, 0, 1, "&");
     const [left, right] = and.opened as [number, number];
-    const tried = JSON.parse(linlog.close(JSON.stringify(and.session), left, small));
+    const tried = JSON.parse(deduxit.close(JSON.stringify(and.session), left, small));
     expect(tried.outcome.verdict).toBe("unknown");
-    const closed = JSON.parse(linlog.close(JSON.stringify(and.session), left, large));
+    const closed = JSON.parse(deduxit.close(JSON.stringify(and.session), left, large));
     expect(closed.outcome.verdict).toBe("proved");
     p = { session: closed.session, view: closed.view };
     const par = step(
@@ -193,7 +197,7 @@ describe("the step tree", () => {
       "⅋",
     );
     const back = retract(par.session, par.opened[0]);
-    const after = replay(linlog, par.session, back?.kept ?? [], small);
+    const after = replay(deduxit, par.session, back?.kept ?? [], small);
     expect(after.failed).toEqual([]);
     expect(after.session.inferences[goalAt(after.session, [0]) ?? -1]?.rule).toBeDefined();
   });
@@ -204,21 +208,21 @@ describe("the step tree", () => {
       ["A, A -o B, B -o C |- C", "intuitionistic", "B", [0, 1], "B"],
     ] as const) {
       // Typed, as the page starts a tab: a classical session keeps how it was written.
-      const p = JSON.parse(linlog.start(text, mode, S)) as Played;
+      const p = JSON.parse(deduxit.start(text, mode, S)) as Played;
       const tree = (doc: SessionDoc) => JSON.stringify([doc.sequent, doc.inferences, doc.history]);
       const cut = JSON.parse(
-        linlog.cut(JSON.stringify(p.session), 0, formula, JSON.stringify(left), S),
+        deduxit.cut(JSON.stringify(p.session), 0, formula, JSON.stringify(left), S),
       ) as Played & { opened: number[] };
       expect(cut.view.cuts).toEqual([{ inference: 0, formula: typed }]);
       const all = actions(cut.session, cut.view.cuts);
       expect(all[0]).toMatchObject({ kind: "cut", path: [], formula: typed, left });
-      expect(tree(replay(linlog, cut.session, all, S).session)).toBe(tree(cut.session));
+      expect(tree(replay(deduxit, cut.session, all, S).session)).toBe(tree(cut.session));
       // The second premise closed by the search, then taken back: the cut stays.
       const second = cut.opened[1] ?? -1;
-      const used = JSON.parse(linlog.close(JSON.stringify(cut.session), second, S)) as Played;
+      const used = JSON.parse(deduxit.close(JSON.stringify(cut.session), second, S)) as Played;
       const back = retract(used.session, undefined, undefined, used.view.cuts);
       expect(back?.kept).toEqual([all[0]]);
-      const after = replay(linlog, used.session, back?.kept ?? [], S);
+      const after = replay(deduxit, used.session, back?.kept ?? [], S);
       expect(after.failed).toEqual([]);
       expect(tree(after.session)).toBe(tree(cut.session));
     }
@@ -226,21 +230,21 @@ describe("the step tree", () => {
 
   it("keeps a cut on another branch through an undo of an earlier cut, and redoes it", () => {
     // ⊢ ~A, ~B, A ⊗ B split into ⊢ ~A, A and ⊢ ~B, B; each cut, the first one's first.
-    const p = JSON.parse(linlog.start("A, B |- A * B", "classical", S)) as Played;
+    const p = JSON.parse(deduxit.start("A, B |- A * B", "classical", S)) as Played;
     const split = step(p, 0, 2, "⊗", [0]);
     const [first, second] = split.opened as [number, number];
     const cutOn = (played: Played, goal: number, formula: string) =>
-      JSON.parse(linlog.cut(JSON.stringify(played.session), goal, formula, "[0]", S)) as Played & {
+      JSON.parse(deduxit.cut(JSON.stringify(played.session), goal, formula, "[0]", S)) as Played & {
         opened: number[];
       };
     const one = cutOn(split, first, "A * A");
     const two = cutOn(one, second, "B");
     const back = retract(two.session, one.opened[0], undefined, two.view.cuts);
     expect(back?.reopened).toEqual([0]);
-    const after = replay(linlog, two.session, back?.kept ?? [], S);
+    const after = replay(deduxit, two.session, back?.kept ?? [], S);
     expect(after.failed).toEqual([]);
     expect(after.session.inferences[goalAt(after.session, [1]) ?? -1]?.rule).toBe("cut");
-    const again = play(linlog, after, back?.removed ?? [], S);
+    const again = play(deduxit, after, back?.removed ?? [], S);
     expect(again.failed).toEqual([]);
     expect(again.session.inferences[goalAt(again.session, [0]) ?? -1]?.rule).toBe("cut");
   });
@@ -255,14 +259,14 @@ describe("the step tree", () => {
     };
     const apply = (played: Played, goal: number, form: object) =>
       JSON.parse(
-        linlog.apply(JSON.stringify(played.session), goal, JSON.stringify(form), S),
+        deduxit.apply(JSON.stringify(played.session), goal, JSON.stringify(form), S),
       ) as Played & { opened: number[] };
     const shown = (played: Played) =>
       played.view.goals.flatMap((g) => g.formulas.map((f) => f.reading ?? f.text));
 
     it("maps the eigenvariables' letters through an undo on another branch", () => {
       const text = "forall x. p(x), forall x. q(x) |- (forall y. p(y)) * (forall y. q(y))";
-      let p = JSON.parse(linlog.start(text, "intuitionistic", S)) as Played & { opened: number[] };
+      let p = JSON.parse(deduxit.start(text, "intuitionistic", S)) as Played & { opened: number[] };
       const left = at(p, 0, "∀x. p(x)");
       p = apply(p, 0, { position: at(p, 0, "(∀y. p(y)) ⊗ (∀y. q(y))"), rule: "⊗R", left: [left] });
       const [first, second] = p.opened as [number, number];
@@ -275,7 +279,7 @@ describe("the step tree", () => {
       p = apply(p, b, { position: at(p, b, "∀x. q(x)"), rule: "∀L", witness: "b" });
       expect(shown(p)).toContain("q(b)");
       const back = retract(p.session, a, undefined, p.view.cuts, p.view);
-      const after = play(linlog, started(text, "intuitionistic"), back?.kept ?? [], S);
+      const after = play(deduxit, started(text, "intuitionistic"), back?.kept ?? [], S);
       expect(after.failed).toEqual([]);
       // The second branch's eigenvariable is the first now, its witness with it.
       expect(shown(after)).toContain("q(a)");
@@ -284,7 +288,7 @@ describe("the step tree", () => {
 
     it("refuses a step whose witness was changed between save and replay", () => {
       const text = "p(c) |- exists y. (p(y) * (q(d) -o q(d)))";
-      const p = JSON.parse(linlog.start(text, "intuitionistic", S)) as Played;
+      const p = JSON.parse(deduxit.start(text, "intuitionistic", S)) as Played;
       const taken = apply(p, 0, {
         position: at(p, 0, "∃y. (p(y) ⊗ (q(d) ⊸ q(d)))"),
         rule: "∃R",
@@ -296,14 +300,14 @@ describe("the step tree", () => {
       const changed = all.map((action) =>
         action.kind === "step" ? { ...action, step: { ...action.step, witness: "d" } } : action,
       );
-      expect(replay(linlog, taken.session, changed, S).failed).toEqual([[]]);
-      expect(replay(linlog, taken.session, all, S).failed).toEqual([]);
+      expect(replay(deduxit, taken.session, changed, S).failed).toEqual([[]]);
+      expect(replay(deduxit, taken.session, all, S).failed).toEqual([]);
     });
 
     it("redoes a step whose witness names an eigenvariable an undo since lettered anew", () => {
       const text =
         "forall x. p(x), forall x. q(x) |- (forall y. p(y)) * (forall y. forall z. q(z))";
-      let p = JSON.parse(linlog.start(text, "intuitionistic", S)) as Played & { opened: number[] };
+      let p = JSON.parse(deduxit.start(text, "intuitionistic", S)) as Played & { opened: number[] };
       const left = at(p, 0, "∀x. p(x)");
       p = apply(p, 0, {
         position: at(p, 0, "(∀y. p(y)) ⊗ (∀y. (∀z. q(z)))"),
@@ -322,7 +326,7 @@ describe("the step tree", () => {
       // Undo the ∀L, then the first branch's ∀R: the second's eigenvariables become a and b.
       const undo = (played: Played, goal: number) => {
         const back = retract(played.session, goal, undefined, played.view.cuts, played.view);
-        const after = play(linlog, started(text, "intuitionistic"), back?.kept ?? [], S);
+        const after = play(deduxit, started(text, "intuitionistic"), back?.kept ?? [], S);
         expect(after.failed).toEqual([]);
         return { after, removed: back?.removed ?? [] };
       };
@@ -332,7 +336,7 @@ describe("the step tree", () => {
       expect(shown(two.after)).toContain("q(b)");
       expect(shown(two.after)).not.toContain("q(c)");
       // Redo both: the witness names the second branch's first eigenvariable, a now.
-      const redone = play(linlog, play(linlog, two.after, two.removed, S), one.removed, S);
+      const redone = play(deduxit, play(deduxit, two.after, two.removed, S), one.removed, S);
       expect(redone.failed).toEqual([]);
       expect(shown(redone)).toEqual(expect.arrayContaining(["q(a)", "q(b)"]));
       expect(shown(redone)).not.toContain("q(c)");
@@ -340,7 +344,7 @@ describe("the step tree", () => {
 
     it("finds a step's formulas by what they are when a replay orders a goal otherwise", () => {
       const text = "forall x. p(x), q(c) |- (exists z. (p(z) * q(z))) & (exists z. (p(z) * q(z)))";
-      let p = JSON.parse(linlog.start(text, "intuitionistic", S)) as Played & { opened: number[] };
+      let p = JSON.parse(deduxit.start(text, "intuitionistic", S)) as Played & { opened: number[] };
       p = apply(p, 0, {
         position: at(p, 0, "(∃z. (p(z) ⊗ q(z))) & (∃z. (p(z) ⊗ q(z)))"),
         rule: "&R",
@@ -361,18 +365,18 @@ describe("the step tree", () => {
         p.view.cuts,
         p.view,
       );
-      const after = play(linlog, started(text, "intuitionistic"), back?.kept ?? [], S);
+      const after = play(deduxit, started(text, "intuitionistic"), back?.kept ?? [], S);
       expect(after.failed).toEqual([]);
       expect(after.session.inferences[goalAt(after.session, [1, 0, 0]) ?? -1]?.rule).toBe("⊗R");
     });
 
     it("replays an open witness open, and a cut naming an eigenvariable", () => {
       const text = "forall x. (p(x) -o q(x)), forall x. p(x) |- forall y. q(y)";
-      let p = JSON.parse(linlog.start(text, "intuitionistic", S)) as Played & { opened: number[] };
+      let p = JSON.parse(deduxit.start(text, "intuitionistic", S)) as Played & { opened: number[] };
       p = apply(p, 0, { position: at(p, 0, "∀y. q(y)"), rule: "∀R" });
       const goal = p.opened[0] ?? -1;
       const cut = JSON.parse(
-        linlog.cut(
+        deduxit.cut(
           JSON.stringify(p.session),
           goal,
           "p(a)",
@@ -387,7 +391,7 @@ describe("the step tree", () => {
       // The eigenvariable a by the path of the step that made it, the root's.
       expect(all.map((a) => (a.kind === "step" ? a.term : a.kind))).toEqual(["{}", "cut", null]);
       expect(all[1]).toMatchObject({ kind: "cut", formula: "p({})" });
-      const again = replay(linlog, open.session, all, S);
+      const again = replay(deduxit, open.session, all, S);
       expect(again.failed).toEqual([]);
       same(again.session, open.session);
     });

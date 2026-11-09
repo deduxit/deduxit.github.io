@@ -20,7 +20,7 @@
             config.packages.default
             config.packages.node-modules
             config.playwrightBrowsers
-            config.linlogWeb
+            config.deduxitWeb
             pkgs.stdenvNoCC
             config.formatter
             pkgs.python3

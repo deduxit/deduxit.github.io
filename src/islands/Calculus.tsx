@@ -15,7 +15,7 @@
  */
 
 import { For, Show } from "solid-js";
-import type { Mode } from "../lib/linlog";
+import type { Mode } from "../lib/deduxit";
 import {
   type Calculus as Chosen,
   LOGICS,

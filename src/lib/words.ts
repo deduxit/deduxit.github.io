@@ -9,7 +9,7 @@
  */
 
 import { engineName } from "./engines";
-import type { Failure, GoalFormula, Mode, Outcome, StepForm } from "./linlog";
+import type { Failure, GoalFormula, Mode, Outcome, StepForm } from "./deduxit";
 
 /** A short keyword and the sentence behind it. */
 export interface Said {

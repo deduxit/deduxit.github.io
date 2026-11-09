@@ -38,7 +38,7 @@ import {
   type Offered,
   type Outcome,
   type StepForm,
-} from "../lib/linlog";
+} from "../lib/deduxit";
 import { isOrdinary } from "../lib/ordinary";
 import { goalAt, paths, searchMade, subtree } from "../lib/steps";
 import { intuitionistic } from "../lib/suites";

@@ -19,7 +19,7 @@
  * step out numbers every later one differently, while the paths stay.
  */
 
-import type { Inference, Played, Prover, SessionDoc, StepForm, View } from "./linlog";
+import type { Inference, Played, Prover, SessionDoc, StepForm, View } from "./deduxit";
 
 /** A goal's place in the tree: the premise taken at each inference from the root. */
 export type Path = readonly number[];

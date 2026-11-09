@@ -14,10 +14,10 @@
 import { createEffect, createSignal, on, onCleanup, onMount, Show } from "solid-js";
 import { unwrap } from "solid-js/store";
 import { readLink, writeLink } from "../lib/link";
-import { MATH_FONTS, type MathFont } from "../lib/linlog";
+import { MATH_FONTS, type MathFont } from "../lib/deduxit";
 import { prettyOrdinary } from "../lib/ordinary";
 import { paths } from "../lib/steps";
-import { failure } from "../lib/linlog";
+import { failure } from "../lib/deduxit";
 import { Cancelled } from "../lib/protocol";
 import { calculusOf, parameterOf, SUITES } from "../lib/suites";
 import { inputProblem, pretty } from "../lib/words";

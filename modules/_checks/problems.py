@@ -1,14 +1,14 @@
 # linlog © Fabian Lukas Grubmüller 2026
 # Licensed under the EUPL
 
-# The store of problems against linlog's command at the flake's pinned input:
-# every problem's verdict and fragment are the ones `linlog prove` gives (one
+# The store of problems against deduxit's command at the flake's pinned input:
+# every problem's verdict and fragment are the ones `deduxit prove` gives (one
 # batch, deterministic, a time limit each), every provable problem has a
-# session of its very sequent (its cut formulas aside) and mode that `linlog
+# session of its very sequent (its cut formulas aside) and mode that `deduxit
 # interact --state` resumes and `proof` accepts (exit 0), and no unprovable
 # problem has one. A store entry without that evidence, or one whose verdict a
-# later linlog changes, fails the check, which names it.
-# Usage: python3 problems.py PROBLEMS_DIR LINLOG
+# later deduxit changes, fails the check, which names it.
+# Usage: python3 problems.py PROBLEMS_DIR DEDUXIT
 import json
 import pathlib
 import subprocess
@@ -38,7 +38,7 @@ def front_matter(path):
     return meta
 
 
-def proves(linlog, tmp, held, sequent, mode):
+def proves(deduxit, tmp, held, sequent, mode):
     # Whether a session's sequent is the problem's. A session with cuts keeps its
     # cut formulas beside the sequent, which `seq print` leaves out: its
     # conclusion is compared, as the command prints both.
@@ -50,7 +50,7 @@ def proves(linlog, tmp, held, sequent, mode):
         path = pathlib.Path(tmp) / "sequent.json"
         path.write_text(json.dumps(doc))
         return subprocess.run(
-            [linlog, "seq", "print", *logic, "--file", str(path)],
+            [deduxit, "seq", "print", *logic, "--file", str(path)],
             capture_output=True,
             text=True,
             check=True,
@@ -59,7 +59,7 @@ def proves(linlog, tmp, held, sequent, mode):
     return printed(held) == printed(sequent)
 
 
-def main(store, linlog):
+def main(store, deduxit):
     problems = {p.stem: front_matter(p) for p in sorted(store.glob("*.md"))}
     failures = []
     with tempfile.TemporaryDirectory() as tmp:
@@ -73,7 +73,7 @@ def main(store, linlog):
         )
         run = subprocess.run(
             [
-                linlog,
+                deduxit,
                 "prove",
                 "--input-format",
                 "jsonl",
@@ -96,16 +96,16 @@ def main(store, linlog):
         for pid, p in problems.items():
             outcome = outcomes.get(pid)
             if outcome is None:
-                failures.append(f"{pid}: linlog answered nothing")
+                failures.append(f"{pid}: deduxit answered nothing")
                 continue
             if outcome["verdict"] != VERDICT.get(p["verdict"]):
                 failures.append(
-                    f"{pid}: the store says {p['verdict']}, linlog says {outcome['verdict']}"
+                    f"{pid}: the store says {p['verdict']}, deduxit says {outcome['verdict']}"
                 )
                 continue
             if outcome.get("fragment") != p["fragment"]:
                 failures.append(
-                    f"{pid}: the store says {p['fragment']}, linlog detects {outcome.get('fragment')}"
+                    f"{pid}: the store says {p['fragment']}, deduxit detects {outcome.get('fragment')}"
                 )
             session = store / f"{pid}.session.json"
             if p["verdict"] == "unprovable":
@@ -117,14 +117,14 @@ def main(store, linlog):
                 continue
             doc = json.loads(session.read_text(encoding="utf-8"))
             if doc.get("mode") != p["mode"] or not proves(
-                linlog, tmp, doc.get("sequent"), outcome["sequent"], p["mode"]
+                deduxit, tmp, doc.get("sequent"), outcome["sequent"], p["mode"]
             ):
                 failures.append(
                     f"{pid}: its session is not of its sequent in {p['mode']} mode"
                 )
                 continue
             checked = subprocess.run(
-                [linlog, "interact", "--state", str(session)],
+                [deduxit, "interact", "--state", str(session)],
                 input="proof\n",
                 capture_output=True,
                 text=True,
@@ -140,7 +140,7 @@ def main(store, linlog):
         )
     proved = sum(1 for p in problems.values() if p["verdict"] == "provable")
     print(
-        f"all {len(problems)} problems are as linlog's command decides them; "
+        f"all {len(problems)} problems are as deduxit's command decides them; "
         f"{proved} provable, each with a session that `proof` accepts"
     )
 

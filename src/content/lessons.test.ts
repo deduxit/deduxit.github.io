@@ -4,17 +4,17 @@
 // Learn's written lessons hold to what they claim: each worked proof is a
 // problem of the store whose session applies, step by step, the rules the
 // lesson gives reasons for; the faded proof and the self-explanation prompt
-// fall within it; a legal split shown as a dead end is one linlog's
+// fall within it; a legal split shown as a dead end is one deduxit's
 // split_passes refuses; a hinge question has one right answer, each wrong one
 // names a misconception, and a problem it names is provable exactly when it is
 // the right answer. An attempt that goes wrong is an unfinished session of the
 // worked proof's sequent whose one wrong step is the first that leaves a goal
 // with no proof; a search shown giving up answers unknown at its budget and
-// proves its sequent with a larger one; a problem asked of linlog has no proof,
+// proves its sequent with a larger one; a problem asked of deduxit has no proof,
 // one whose net is drawn has a net. A worked proof's cut eliminated on the stage
 // reaches a cut-free proof on the derivation and on the net, each step's case
 // with its reason; a problem proved with a cut has its inferences with the cut
-// and without as linlog counts them; an attempt whose last step linlog refuses
+// and without as deduxit counts them; an attempt whose last step deduxit refuses
 // is an unfinished session of a problem with no proof. Every lesson problem is
 // decided well inside the page's budget. Every rule a worked proof uses has its schema in the
 // reference, two-sided where the proof is intuitionistic, and the readings a
@@ -23,9 +23,9 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { parse } from "yaml";
-import type { SessionDoc } from "../lib/linlog";
+import type { SessionDoc } from "../lib/deduxit";
 import { actions, goalAt } from "../lib/steps";
-import { linlog } from "../lib/testing";
+import { deduxit } from "../lib/testing";
 import { READINGS } from "../lib/words";
 
 const read = (dir: string) =>
@@ -47,15 +47,15 @@ const schemas = (mode: string) =>
       .filter((r) => (mode.startsWith("intuitionistic") ? r.data.oneSided : r.data.twoSided))
       .map((r) => r.data.name),
   );
-/** linlog's tab default, the page's work budget (`DEFAULT_BUDGET`). */
+/** deduxit's tab default, the page's work budget (`DEFAULT_BUDGET`). */
 const TAB_BUDGET = 2 ** 26;
 const within = (work: number) => JSON.stringify({ limits: { work } });
 /** The open goals of a session, by number. */
 const open = (doc: SessionDoc): number[] =>
-  JSON.parse(linlog.view(JSON.stringify(doc), "")).goals.map((g: { goal: number }) => g.goal);
-/** linlog's verdict on a goal, by the search within the page's budget. */
+  JSON.parse(deduxit.view(JSON.stringify(doc), "")).goals.map((g: { goal: number }) => g.goal);
+/** deduxit's verdict on a goal, by the search within the page's budget. */
 const verdictOn = (doc: SessionDoc, goal: number): string =>
-  JSON.parse(linlog.close(JSON.stringify(doc), goal, within(TAB_BUDGET))).outcome.verdict;
+  JSON.parse(deduxit.close(JSON.stringify(doc), goal, within(TAB_BUDGET))).outcome.verdict;
 
 describe("Learn's lessons", () => {
   it("are the eleven lessons of the progression, in its order", () => {
@@ -96,24 +96,26 @@ describe("Learn's lessons", () => {
       const { before, left } = l.data.detour;
       const doc = session(l.data.worked);
       const all = actions(doc);
-      let at = JSON.parse(linlog.start(problems.get(l.data.worked)?.sequent, doc.mode, "")).session;
+      let at = JSON.parse(
+        deduxit.start(problems.get(l.data.worked)?.sequent, doc.mode, ""),
+      ).session;
       for (const action of all.slice(0, before)) {
         if (action.kind !== "step") throw new Error("a worked proof is made of steps");
         const goal = goalAt(at, action.path);
         at = JSON.parse(
-          linlog.apply(JSON.stringify(at), goal ?? -1, JSON.stringify(action.step), ""),
+          deduxit.apply(JSON.stringify(at), goal ?? -1, JSON.stringify(action.step), ""),
         ).session;
       }
       const action = all[before];
       if (action?.kind !== "step") throw new Error("the dead end replaces a step");
       const goal = goalAt(at, action.path) ?? -1;
       const wrong = JSON.stringify({ ...action.step, left });
-      expect(linlog.split_passes(JSON.stringify(at), goal, wrong, "")).toBe(false);
-      expect(linlog.split_passes(JSON.stringify(at), goal, JSON.stringify(action.step), "")).toBe(
+      expect(deduxit.split_passes(JSON.stringify(at), goal, wrong, "")).toBe(false);
+      expect(deduxit.split_passes(JSON.stringify(at), goal, JSON.stringify(action.step), "")).toBe(
         true,
       );
-      // Legal all the same: linlog applies it.
-      expect(() => linlog.apply(JSON.stringify(at), goal, wrong, "")).not.toThrow();
+      // Legal all the same: deduxit applies it.
+      expect(() => deduxit.apply(JSON.stringify(at), goal, wrong, "")).not.toThrow();
     },
   );
 
@@ -133,13 +135,13 @@ describe("Learn's lessons", () => {
       const wrong = steps.findIndex((s: { misconception?: string }) => !s.misconception);
       expect(steps.filter((s: { misconception?: string }) => !s.misconception)).toHaveLength(1);
       let at: SessionDoc = JSON.parse(
-        linlog.start(problems.get(l.data.worked)?.sequent, doc.mode, ""),
+        deduxit.start(problems.get(l.data.worked)?.sequent, doc.mode, ""),
       ).session;
       for (const [k, action] of actions(doc).entries()) {
         if (action.kind !== "step") throw new Error("an attempt is made of steps");
         const goal = goalAt(at, action.path) ?? -1;
         at = JSON.parse(
-          linlog.apply(JSON.stringify(at), goal, JSON.stringify(action.step), ""),
+          deduxit.apply(JSON.stringify(at), goal, JSON.stringify(action.step), ""),
         ).session;
         const verdicts = open(at).map((g) => verdictOn(at, g));
         if (k < wrong) expect(verdicts, `after step ${k + 1}`).not.toContain("unprovable");
@@ -157,9 +159,9 @@ describe("Learn's lessons", () => {
       expect([...problems.values()].some((p) => p.sequent === sequent && p.mode === mode)).toBe(
         false,
       );
-      const start = JSON.parse(linlog.start(sequent, mode, "")).session;
+      const start = JSON.parse(deduxit.start(sequent, mode, "")).session;
       const at = (work: number) =>
-        JSON.parse(linlog.close(JSON.stringify(start), 0, within(work))).outcome.verdict;
+        JSON.parse(deduxit.close(JSON.stringify(start), 0, within(work))).outcome.verdict;
       for (const work of [budget, 2 * budget, 4 * budget])
         expect(at(work), `${work}`).toBe("unknown");
       expect(l.data.unknown.text).toContain(`${8 * budget} units`);
@@ -169,14 +171,14 @@ describe("Learn's lessons", () => {
   );
 
   it.each(lessons.filter((l) => l.data.gallery))(
-    "$id's gallery shows problems of its own: those asked of linlog have no proof, those drawn have a net",
+    "$id's gallery shows problems of its own: those asked of deduxit have no proof, those drawn have a net",
     (l) => {
       for (const item of l.data.gallery.items) {
         const problem = problems.get(item.problem);
         expect(problem?.lesson, item.problem).toBe(l.data.lesson);
         if (l.data.gallery.act === "ask") expect(problem?.verdict, item.problem).toBe("unprovable");
         else {
-          const view = JSON.parse(linlog.view(JSON.stringify(session(item.problem)), ""));
+          const view = JSON.parse(deduxit.view(JSON.stringify(session(item.problem)), ""));
           expect(view.complete, item.problem).toBe(true);
           expect(view.net, item.problem).toBeNull();
         }
@@ -188,7 +190,7 @@ describe("Learn's lessons", () => {
     "$id's worked proof eliminates to a cut-free proof on the derivation and on the net, a reason for each step's case",
     (l) => {
       const doc = JSON.stringify(session(l.data.worked));
-      for (const call of [linlog.eliminate, linlog.net_eliminate]) {
+      for (const call of [deduxit.eliminate, deduxit.net_eliminate]) {
         const ran = JSON.parse(call(doc, "", ""));
         expect(ran.end, call.name).toBe("cut_free");
         expect(ran.steps.length, call.name).toBeGreaterThan(0);
@@ -205,14 +207,14 @@ describe("Learn's lessons", () => {
       for (const c of l.data.counts) {
         expect(problems.get(c.problem)?.lesson, c.problem).toBe(l.data.lesson);
         const doc = session(c.problem);
-        const view = JSON.parse(linlog.view(JSON.stringify(doc), ""));
+        const view = JSON.parse(deduxit.view(JSON.stringify(doc), ""));
         expect(
           view.cuts.map((x: { formula: string }) => x.formula),
           c.problem,
         ).toEqual([c.formula]);
         expect(doc.inferences.filter((i) => i.rule !== undefined).length, c.problem).toBe(c.with);
         // The cut-free proof's inferences, as its drawing numbers them.
-        const ran = JSON.parse(linlog.eliminate(JSON.stringify(doc), "", ""));
+        const ran = JSON.parse(deduxit.eliminate(JSON.stringify(doc), "", ""));
         expect(ran.end).toBe("cut_free");
         expect(ran.drawing.match(/id="i\d+"/g)?.length, c.problem).toBe(c.without);
         expect(c.without, c.problem).toBeGreaterThan(c.with);
@@ -221,7 +223,7 @@ describe("Learn's lessons", () => {
   );
 
   it.each(lessons.filter((l) => l.data.refusal))(
-    "$id's attempt is an unfinished session of a problem with no proof, whose last step linlog refuses",
+    "$id's attempt is an unfinished session of a problem with no proof, whose last step deduxit refuses",
     (l) => {
       const { problem: id, steps, refused } = l.data.refusal;
       const problem = problems.get(id);
@@ -231,7 +233,7 @@ describe("Learn's lessons", () => {
         readFileSync(new URL(`./lessons/${l.id}.refusal.json`, import.meta.url), "utf8"),
       );
       expect(doc.mode).toBe(problem?.mode);
-      const start = JSON.parse(linlog.start(problem?.sequent, doc.mode, "")).session;
+      const start = JSON.parse(deduxit.start(problem?.sequent, doc.mode, "")).session;
       expect(doc.sequent).toEqual(start.sequent);
       expect(steps.map((s: { rule: string }) => s.rule)).toEqual(
         doc.history.map((h) => doc.inferences[h]?.rule),
@@ -239,23 +241,23 @@ describe("Learn's lessons", () => {
       const [goal, ...more] = open(doc);
       expect(more).toEqual([]);
       const step = JSON.stringify({ position: refused.position, rule: refused.rule });
-      expect(() => linlog.apply(JSON.stringify(doc), goal ?? -1, step, "")).toThrow(
+      expect(() => deduxit.apply(JSON.stringify(doc), goal ?? -1, step, "")).toThrow(
         /eigenvariable/,
       );
     },
   );
 
   it.each(lessons.filter((l) => l.data.net))("$id's worked proof has a net to see", (l) => {
-    const view = JSON.parse(linlog.view(JSON.stringify(session(l.data.worked)), ""));
+    const view = JSON.parse(deduxit.view(JSON.stringify(session(l.data.worked)), ""));
     expect(view.net).toBeNull();
   });
 
   it("decides every problem of the lessons well inside the page's budget", () => {
     for (const [id, p] of problems) {
       if (p.lesson === undefined) continue;
-      const sequent = JSON.parse(linlog.read(p.sequent, "")).sequent;
+      const sequent = JSON.parse(deduxit.read(p.sequent, "")).sequent;
       const outcome = JSON.parse(
-        linlog.prove(JSON.stringify(sequent), p.mode, within(TAB_BUDGET)),
+        deduxit.prove(JSON.stringify(sequent), p.mode, within(TAB_BUDGET)),
       ).outcome;
       expect(outcome.verdict, id).toBe(p.verdict === "provable" ? "proved" : "unprovable");
       expect(outcome.statistics.work, id).toBeLessThan(TAB_BUDGET / 100);

@@ -12,7 +12,7 @@
 #               checks by itself)
 #   unit        Vitest: the client's logic under src/ (src/**/*.test.ts) --
 #               the link's codec, the step tree and its replay, the worker
-#               protocol -- some of it against linlog's real module in Node
+#               protocol -- some of it against deduxit's real module in Node
 #   typecheck   astro check: TypeScript over .ts, .tsx and .astro
 #   lint        biome lint, from biome.json
 #   e2e         Playwright in nixpkgs' Chromium (playwright.nix) against
@@ -31,19 +31,19 @@
 #               wholesale; no data: URL (modules/_checks/csp.py)
 #   licences    the site serves the licence of everything it sends: the npm
 #               bundle's notices (Vite's build.license) naming every run-time
-#               dependency at its locked version, linlog-web's
+#               dependency at its locked version, deduxit-web's
 #               THIRD-PARTY-NOTICES.txt and the code's LICENSE byte for byte,
 #               each font beside its OFL text, every image the logo's under
 #               logo/ beside its CC BY 4.0 notice, and CC BY 4.0 on every page
 #               of written content (modules/_checks/licences.py)
-#   problems    the store of problems (src/content/problems/) against linlog's
+#   problems    the store of problems (src/content/problems/) against deduxit's
 #               command at the pinned input: every verdict and fragment the
 #               command's, every provable problem with a session of its
 #               sequent that `proof' accepts, no unprovable one with a session
 #               (modules/_checks/problems.py)
 #   pages-paths the site as Pages publishes it: a 404.html at its root;
 #               nothing at /deduxit or /rocq-deduxit or under them, where
-#               the Pages sites of linlog's repository (the rustdoc and the
+#               the Pages sites of deduxit's repository (the rustdoc and the
 #               manual) and of the Rocq library live on the same address;
 #               and the Rocq library's old path, /rocq-linlog/, forwarding
 #               to /rocq-deduxit/
@@ -161,9 +161,9 @@
         if not (site / "404.html").is_file():
             problems.append("no 404.html at the site's root, which Pages serves for a missing path")
         # Paths are matched as Pages matches them, case and all: /deduxit and
-        # /rocq-deduxit are the project sites of linlog's repository and of
+        # /rocq-deduxit are the project sites of deduxit's repository and of
         # the Rocq library, which a file of this one must never shadow.
-        projects = {"deduxit": "linlog's repository", "rocq-deduxit": "the Rocq library"}
+        projects = {"deduxit": "deduxit's repository", "rocq-deduxit": "the Rocq library"}
         for project, whose in projects.items():
             taken = sorted(str(p.relative_to(site)) for p in site.iterdir() if p.name.split(".")[0] == project)
             if taken:
@@ -284,13 +284,13 @@
 
           licences = pkgs.runCommand "check-licences" { } ''
             ${pkgs.python3}/bin/python3 ${./_checks/licences.py} ${config.packages.default} \
-              ${config.linlogWeb} ${config.linlogFonts} ${../package.json} ${../package-lock.json} ${../LICENSE}
+              ${config.deduxitWeb} ${config.deduxitFonts} ${../package.json} ${../package-lock.json} ${../LICENSE}
             touch $out
           '';
 
           problems = pkgs.runCommand "check-problems" { } ''
             ${pkgs.python3}/bin/python3 ${./_checks/problems.py} ${../src/content/problems} \
-              ${config.linlogCli}/bin/linlog
+              ${config.deduxitCli}/bin/deduxit
             touch $out
           '';
 

@@ -9,7 +9,7 @@
  * linear suite, `logic` for the ordinary one); `suites.test.ts` holds the registry to `about`.
  */
 
-import { MODES, type Mode } from "./linlog";
+import { MODES, type Mode } from "./deduxit";
 import { modeWords } from "./words";
 
 /** The suites the page offers, by linlog's names. */

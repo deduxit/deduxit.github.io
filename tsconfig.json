@@ -9,8 +9,8 @@
     "verbatimModuleSyntax": true,
     "erasableSyntaxOnly": true,
     "paths": {
-      "linlog-web/*": ["./.cache/linlog-web/*"],
-      "linlog-fonts/*": ["./.cache/linlog-fonts/*"]
+      "deduxit-web/*": ["./.cache/deduxit-web/*"],
+      "deduxit-fonts/*": ["./.cache/deduxit-fonts/*"]
     }
   }
 }

@@ -2,19 +2,19 @@
 // Licensed under the EUPL
 
 import { describe, expect, it } from "vitest";
-import { linlog } from "../lib/testing";
+import { deduxit } from "../lib/testing";
 import examples from "./examples.json";
 
 /** The page's budget for a search, `DEFAULT_BUDGET` in state.tsx. */
 const BUDGET = 2 ** 26;
 
 describe("the sequent field's examples", () => {
-  it("are decided by linlog as the file says, in every logic, well within the page's budget", () => {
+  it("are decided by deduxit as the file says, in every logic, well within the page's budget", () => {
     for (const example of examples) {
       for (const [logic, verdict] of Object.entries(example.verdicts)) {
-        const started = JSON.parse(linlog.ordinary_start(example.sequent, logic, "{}"));
+        const started = JSON.parse(deduxit.ordinary_start(example.sequent, logic, "{}"));
         const closed = JSON.parse(
-          linlog.ordinary_close(
+          deduxit.ordinary_close(
             JSON.stringify(started.session),
             0,
             JSON.stringify({ limits: { work: Math.floor(BUDGET / 100) } }),

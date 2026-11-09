@@ -3,11 +3,11 @@
 
 import { describe, expect, it } from "vitest";
 import { calculusOf, linear, ordinary, parameterOf, SUITES } from "./suites";
-import { linlog } from "./testing";
+import { deduxit } from "./testing";
 
 describe("the suite registry", () => {
-  it("names each suite, its calls, its term call and its parameter as linlog's about does", () => {
-    const about = JSON.parse(linlog.about()) as {
+  it("names each suite, its calls, its term call and its parameter as deduxit's about does", () => {
+    const about = JSON.parse(deduxit.about()) as {
       suites: {
         suite: string;
         name: string;
@@ -24,8 +24,8 @@ describe("the suite registry", () => {
       expect(theirs?.term).toBe(suite.term);
       const parameter = theirs?.parameters.find((p) => p.name === suite.parameter);
       expect(parameter, `${suite.key}'s ${suite.parameter}`).toBeDefined();
-      // The page offers a part of linlog's values (the linear suite's cyclic and Lambek modes
-      // are not on the page), and a new tab starts in linlog's default.
+      // The page offers a part of deduxit's values (the linear suite's cyclic and Lambek modes
+      // are not on the page), and a new tab starts in deduxit's default.
       for (const value of suite.values) expect(parameter?.values).toContain(value);
       expect(parameterOf(suite.start)).toBe(parameter?.default);
     }

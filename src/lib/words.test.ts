@@ -2,9 +2,9 @@
 // Licensed under the EUPL
 
 import { describe, expect, it } from "vitest";
-import { MODES } from "./linlog";
+import { MODES } from "./deduxit";
 import { displayed, modeWords, pretty, readingOf, rungs, SHORT, short, verdict } from "./words";
-import { linlog } from "./testing";
+import { deduxit } from "./testing";
 
 describe("the typed sequent's signs", () => {
   it("read as the same sequent as the ASCII the visitor typed", () => {
@@ -17,8 +17,8 @@ describe("the typed sequent's signs", () => {
       "A&B|-B+A",
     ];
     for (const text of typed) {
-      const ascii = JSON.parse(linlog.read(text, "")).sequent;
-      expect(JSON.parse(linlog.read(pretty(text), "")).sequent, text).toEqual(ascii);
+      const ascii = JSON.parse(deduxit.read(text, "")).sequent;
+      expect(JSON.parse(deduxit.read(pretty(text), "")).sequent, text).toEqual(ascii);
     }
   });
 });
@@ -38,7 +38,7 @@ describe("the tab's sequent", () => {
 describe("a verdict", () => {
   it("names a saturation refutation, checked, as the other checked refutations", () => {
     const answer = JSON.parse(
-      linlog.prove("!(a -o a * a * a), !(a -o a), a |- a * (a + 0)", "intuitionistic", ""),
+      deduxit.prove("!(a -o a * a * a), !(a -o a), a |- a * (a + 0)", "intuitionistic", ""),
     );
     expect(answer.outcome.refutation.kind).toBe("saturated");
     expect(answer.outcome.version).toBe(3);
@@ -50,7 +50,7 @@ describe("a verdict", () => {
 });
 
 describe("a mode's words", () => {
-  it("are the switches' labels, not linlog's names", () => {
+  it("are the switches' labels, not deduxit's names", () => {
     expect(MODES.map(modeWords)).toEqual([
       "Classical",
       "Classical, affine",
@@ -76,7 +76,7 @@ describe("a tab's sequent, shortened to name the tab", () => {
 describe("the hint ladder's first rung", () => {
   const formulas = [{ text: "A ⊗ ~B", occurrence: 0, side: null }];
   const tensor = [{ position: 0, rule: "⊗", left: [] }];
-  it("names an invertible rule as linlog judges it, and a dereliction as no such rule", () => {
+  it("names an invertible rule as deduxit judges it, and a dereliction as no such rule", () => {
     expect(rungs([{ position: 0, rule: "⅋" }], formulas, true, false)[0]).toBe(
       "Work on this goal: an invertible rule comes next.",
     );
@@ -84,12 +84,12 @@ describe("the hint ladder's first rung", () => {
       "Work on this goal: an exponential rule comes next.",
     );
   });
-  it("takes whether a rule is invertible from linlog: not a dereliction, but \\R", () => {
+  it("takes whether a rule is invertible from deduxit: not a dereliction, but \\R", () => {
     const hinted = (text: string, mode: string) => {
-      const read = JSON.parse(linlog.read(text, ""));
-      const start = JSON.parse(linlog.start(JSON.stringify(read.sequent), mode, ""));
+      const read = JSON.parse(deduxit.read(text, ""));
+      const start = JSON.parse(deduxit.start(JSON.stringify(read.sequent), mode, ""));
       const goal = start.view.goals[0].goal as number;
-      const hint = JSON.parse(linlog.hint(JSON.stringify(start.session), goal, ""));
+      const hint = JSON.parse(deduxit.hint(JSON.stringify(start.session), goal, ""));
       const formulas = start.view.goals[0].formulas;
       return [hint.steps.at(-1).rule, rungs(hint.steps, formulas, hint.invertible, false)[0]];
     };

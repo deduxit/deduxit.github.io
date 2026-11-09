@@ -10,7 +10,7 @@ paths:
   roots everything the checks need.
 - **Two caches, for two kinds of path.** The public Cachix cache `linlog-prover` is the
   organization's and must receive only its projects' own outputs, never third-party files:
-  so the run reads it (linlog's CI pushes `linlog-web` there, and this CI never builds
+  so the run reads it (linlog's CI pushes `deduxit-web` there, and this CI never builds
   Rust) and pushes to it only the built site (`nix build .#default | cachix push`, a
   closure of itself alone), only from `main` and only while the secret
   `CACHIX_AUTH_TOKEN` exists. node_modules, Chromium, the formatters and the checks'

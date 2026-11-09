@@ -8,14 +8,14 @@
 # - licenses/bundle.txt lists every npm package the site depends on at run
 #   time (package.json's dependencies, at the version package-lock.json
 #   locks) but the font packages, each with its licence's text;
-# - licenses/THIRD-PARTY-NOTICES.txt is linlog-web's, the Rust crates inside
+# - licenses/THIRD-PARTY-NOTICES.txt is deduxit-web's, the Rust crates inside
 #   the module, byte for byte, and licenses/LICENSE.txt this repository's;
 # - every font file of the site is under fonts/, beside its family's
 #   <Family>-OFL.txt, an SIL Open Font License text, or New Computer Modern
-#   Math's <Family>-LICENSE.txt, the GUST Font License's, linlog's math
+#   Math's <Family>-LICENSE.txt, the GUST Font License's, deduxit's math
 #   fonts' (Euler Math, STIX Two Math, Garamond-Math, Asana Math, New
-#   Computer Modern Math) being the licences linlog keeps beside them, and
-#   their files linlog's, byte for byte;
+#   Computer Modern Math) being the licences deduxit keeps beside them, and
+#   their files deduxit's, byte for byte;
 # - every image the site serves is the logo's, under logo/, beside
 #   logo/LICENSE.txt, which puts it under CC BY 4.0 with a link to the
 #   licence, and every SVG of it has its text outlined (no <text>, so no
@@ -23,7 +23,7 @@
 # - every page that carries written content (an element marked
 #   data-written) says that it is under CC BY 4.0, with a link to the
 #   licence, and the prover's page is one of them.
-# Usage: python3 licences.py SITE LINLOG_WEB LINLOG_FONTS PACKAGE_JSON PACKAGE_LOCK LICENSE
+# Usage: python3 licences.py SITE DEDUXIT_WEB DEDUXIT_FONTS PACKAGE_JSON PACKAGE_LOCK LICENSE
 import html.parser
 import json
 import pathlib
@@ -111,7 +111,7 @@ for path in sorted(p for p in site.rglob("*") if p.suffix in FONT_FILES):
     beside = path.parent / f"{family}-{kind}.txt"
     if not beside.is_file() or phrase not in beside.read_text().lower():
         problems.append(f"{name}: no licence text beside it ({beside.name})")
-# linlog's math fonts, each served with the licence linlog keeps beside it.
+# deduxit's math fonts, each served with the licence deduxit keeps beside it.
 for served, source in [
     ("Euler-Math-OFL.txt", "OFL.txt"),
     ("STIXTwoMath-OFL.txt", "STIXTwoMath-Regular-OFL.txt"),
@@ -121,8 +121,8 @@ for served, source in [
 ]:
     path = site / "fonts" / served
     if not path.is_file() or path.read_bytes() != (fonts / source).read_bytes():
-        problems.append(f"fonts/{served} is not linlog's {source}")
-# linlog's math fonts are served unmodified, byte for byte linlog's files: a
+        problems.append(f"fonts/{served} is not deduxit's {source}")
+# deduxit's math fonts are served unmodified, byte for byte deduxit's files: a
 # font kept under its name must be (the OFL's Reserved Font Names, the
 # LPPL's clause 6 for New Computer Modern Math).
 for prefix, source in [
@@ -134,7 +134,7 @@ for prefix, source in [
 ]:
     served = [p for p in (site / "fonts").glob(f"{prefix}*") if p.suffix in FONT_FILES]
     if len(served) != 1 or served[0].read_bytes() != (fonts / source).read_bytes():
-        problems.append(f"fonts/{prefix}*: not linlog's {source}, unmodified, once")
+        problems.append(f"fonts/{prefix}*: not deduxit's {source}, unmodified, once")
 
 # The logo: the site's only images, under CC BY 4.0.
 logo = site / "logo"

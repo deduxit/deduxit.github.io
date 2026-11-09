@@ -10,7 +10,7 @@
  * `i<n>-<p>` ids number them; a step's formula by its side and its position there.
  */
 
-import type { Failure, GoalFormula, StepForm, View } from "./linlog";
+import type { Failure, GoalFormula, StepForm, View } from "./deduxit";
 import { subtree } from "./steps";
 import type { Logic } from "./suites";
 import type { Said, Tone } from "./words";

@@ -3,11 +3,11 @@
 
 // Astro builds the site into dist/ as static files; nothing of Astro's runs
 // on a server. The prover is one Solid island, rendered in the browser alone
-// (`client:only`), which runs linlog's WebAssembly module in a module worker.
+// (`client:only`), which runs deduxit's WebAssembly module in a module worker.
 // The module and the font its drawings are set in come from the flake's
-// input `linlog' (modules/linlog.nix), linked at .cache/ by the dev shell and
-// the sandbox alike, and imported through the aliases `linlog-web' and
-// `linlog-fonts', so Vite names them by their content as it does every asset.
+// input `deduxit' (modules/deduxit.nix), linked at .cache/ by the dev shell and
+// the sandbox alike, and imported through the aliases `deduxit-web' and
+// `deduxit-fonts', so Vite names them by their content as it does every asset.
 import { createHash } from "node:crypto";
 import { existsSync, realpathSync } from "node:fs";
 import { dirname } from "node:path";
@@ -47,7 +47,7 @@ export default defineConfig({
   // `is:inline', which Astro leaves alone, so its hash is added here. The
   // `csp' flake check recomputes them from the built HTML. Nothing else
   // inline is allowed, and no `style' attribute (`no-style-attributes').
-  // 'wasm-unsafe-eval' lets linlog's module compile; it runs in a worker,
+  // 'wasm-unsafe-eval' lets deduxit's module compile; it runs in a worker,
   // which the page creates from its own origin, as it registers the service
   // worker (worker-src). connect-src is the font's and the worker's fetches.
   security: {
@@ -84,8 +84,8 @@ export default defineConfig({
     plugins: [tailwindcss()],
     resolve: {
       alias: {
-        "linlog-web": here(".cache/linlog-web"),
-        "linlog-fonts": here(".cache/linlog-fonts"),
+        "deduxit-web": here(".cache/deduxit-web"),
+        "deduxit-fonts": here(".cache/deduxit-fonts"),
       },
     },
     build: {
@@ -109,15 +109,15 @@ export default defineConfig({
       fs: {
         allow: [
           here("."),
-          ...linked(".cache/linlog-web"),
-          ...linked(".cache/linlog-fonts"),
+          ...linked(".cache/deduxit-web"),
+          ...linked(".cache/deduxit-fonts"),
           // node_modules is a directory of links into the store, whose
           // fonts the stylesheets import.
           ...linked("node_modules/.bin").map(dirname),
         ],
       },
     },
-    // The worker that runs linlog's module is an ES module worker, as the
+    // The worker that runs deduxit's module is an ES module worker, as the
     // page creates it (`type: "module"`).
     worker: { format: "es" },
   },

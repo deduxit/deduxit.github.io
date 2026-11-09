@@ -14,9 +14,9 @@ installed and nothing is sent to a server: the prover runs in the page, as linlo
 WebAssembly module in a module worker.
 
 The prover itself is the repository `deduxit/deduxit` (locally
-`~/Projects/own/linlog`): its crate `linlog-web` is the module and its JavaScript glue,
-built by linlog's flake as the package `linlog-web`, which this flake takes through its
-pinned input `linlog` and builds no Rust itself. A change the page needs from the library
+`~/Projects/own/linlog`): its crate `deduxit-web` is the module and its JavaScript glue,
+built by linlog's flake as the package `deduxit-web`, which this flake takes through its
+pinned input `deduxit` and builds no Rust itself. A change the page needs from the library
 or the bindings is a change of linlog, made there (in a jj workspace of its own), and
 reaches this repository by moving the input. linlog's `plan/web/README.md` is the front
 end's plan and `plan/web/design.md` its design (D1 to D60, fixed with the author); the
@@ -91,7 +91,7 @@ and `src/` are the site:
   the rules' schemas, the tour, and the texts (About, Practice's and Learn's openings).
 - `src/integrations/licences.ts`: the licences written into the build.
 - `src/islands/`: the prover, one Solid island (`App.tsx` and its parts).
-- `src/worker/linlog.worker.ts`: the module worker that loads linlog's module and answers
+- `src/worker/deduxit.worker.ts`: the module worker that loads linlog's module and answers
   the page's requests.
 - `src/lib/`: the client's logic in plain TypeScript, each with its Vitest tests beside it:
   the worker protocol, the step tree and its replay, the link's codec, the stored proofs,

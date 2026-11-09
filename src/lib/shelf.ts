@@ -19,7 +19,7 @@
  * to the open ones.
  */
 
-import type { SessionDoc } from "./linlog";
+import type { SessionDoc } from "./deduxit";
 import type { OrdinarySession } from "./ordinary";
 import type { Action } from "./steps";
 import { type Calculus, calculusOf } from "./suites";

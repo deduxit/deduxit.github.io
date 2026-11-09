@@ -21,7 +21,7 @@ import { ArrowLeft, Compass, Play, X } from "lucide-solid";
 import { createEffect, createSignal, For, Match, onCleanup, Show, Switch } from "solid-js";
 import { Portal } from "solid-js/web";
 import { type Example, type Lesson, type Level, type Rule, written } from "../lib/content";
-import type { SessionDoc } from "../lib/linlog";
+import type { SessionDoc } from "../lib/deduxit";
 import { LEVEL_NAMES } from "../lib/practice";
 import { actions as actionsOf, goalAt } from "../lib/steps";
 import { displayed } from "../lib/words";
