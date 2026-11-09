@@ -1,19 +1,23 @@
-linlog's logo
+deduxit's mark
 
-The files of this directory are linlog's logo: the word mark
-(wordmark-light.svg, wordmark-dark.svg, wordmark-mono.svg), its square form
+The files of this directory are deduxit's mark: the word mark dēdūxit
+(wordmark-light.svg, wordmark-dark.svg, wordmark-mono.svg, and
+wordmark-band.svg at the page's band height), its square form dē
 (square-light.svg, square-dark.svg, square-mono.svg), and the images drawn
 from them (the favicon, the app icons, the Apple touch icon, the link
 preview's image).
 
-linlog's logo © Fabian Lukas Grubmüller 2026, licensed under the Creative
+deduxit's mark © Fabian Lukas Grubmüller 2026, licensed under the Creative
 Commons Attribution 4.0 International licence (CC BY 4.0):
 https://creativecommons.org/licenses/by/4.0/
 
-The name "linlog" and its mark identify the linlog project
-(https://github.com/deduxit/deduxit). They may not be used in a way
-that suggests that the project or its author endorses anything else.
+The name "deduxit" and its mark identify the deduxit project
+(https://github.com/deduxit/deduxit), whose prover is linlog. They may not
+be used in a way that suggests that the project or its author endorses
+anything else.
 
-The word is set in Figtree Bold and outlined, so no font file goes with
-these files. Figtree is under the SIL Open Font License 1.1, whose
-condition 5 exempts a document created using the font from that licence.
+The word is set in Gentium ExtraBold (Gentium 7.000, © 2003–2025 SIL
+Global) and outlined, so no font file goes with these files. Gentium is
+under the SIL Open Font License 1.1, whose condition 5 exempts a document
+created using the font from that licence; a logo of outlines is not a
+modified version of the font, so the Reserved Font Names do not bind it.

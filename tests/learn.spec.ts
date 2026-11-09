@@ -93,19 +93,22 @@ test("About says what the page is, and every licence it lists is served", async 
   await expect(about).toContainText(
     "GitHub, which serves this site, logs every visitor's IP address",
   );
-  await expect(about.getByRole("img", { name: "linlog" })).toBeVisible();
+  await expect(about.getByRole("img", { name: "deduxit" })).toBeVisible();
+  await expect(about).toContainText(
+    'dēdūxit [deːˈduːk.sɪt] Latin, verb: "it has derived", the perfect of dēdūcō, to lead down, derive.',
+  );
   // linlog's manual, which linlog's own Pages site serves beside its API.
   await expect(about.getByRole("link", { name: "manual" })).toHaveAttribute(
     "href",
     "/deduxit/manual/",
   );
   await expect(about).toContainText(
-    "The name linlog and its mark identify this project, and may not be used to suggest its endorsement of anything else.",
+    "The name deduxit and its mark identify this project, and may not be used to suggest its endorsement of anything else.",
   );
   const licence = (what: string) =>
     about.getByRole("listitem").filter({ hasText: what }).getByRole("link", { name: "CC BY 4.0" });
   await expect(licence("The written content")).toHaveAttribute("href", CC_BY);
-  await expect(licence("linlog's logo")).toHaveAttribute("href", "/logo/LICENSE.txt");
+  await expect(licence("deduxit's mark")).toHaveAttribute("href", "/logo/LICENSE.txt");
   const local = await about
     .getByRole("listitem")
     .getByRole("link")

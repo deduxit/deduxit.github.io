@@ -19,8 +19,15 @@
 // Color 4's `lin_sRGB` does. Distance is Euclidean in OKLab, times 100
 // (Ottosson, https://bottosson.github.io/posts/oklab/): at least 8 under each
 // deficiency, and 15 for full colour vision.
+//
+// deduxit's mark is not among them: its lapis is the project's identity, not
+// a meaning, and stays the mark's colour whatever the page's colours are.
+// WCAG draws the same line: SC 1.4.3 exempts text that is part of a logo or
+// brand name, and the Understanding document of SC 1.4.11 treats logotypes
+// alike. What holds it instead: the mark stands out from the backgrounds it
+// is drawn on, and nothing but the mark is painted with it.
 
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 type Rgb = readonly [number, number, number];
@@ -65,27 +72,7 @@ const GROUPS: Readonly<Record<string, readonly string[]>> = {
   // Every colour linlog may draw in one net, a witness's among them.
   "net drawing": ["ink", "net-par", "net-highlight"],
   "essential drawing": ["ink", "net-input", "net-dominator", "net-highlight"],
-  // The logo's ring in the top band, with the band's states and selection.
-  logo: ["logo", ...BANDS],
-  // And with each colour of meaning seen with the band: Learn's frame, the nets on the stage.
-  ...Object.fromEntries(
-    ["ink", "learn", "net-par", "net-input", "net-dominator"].map((c) => [
-      `logo and ${c}`,
-      ["logo", c],
-    ]),
-  ),
 };
-/** The groups the logo is in. */
-const LOGO = Object.fromEntries(
-  Object.entries(GROUPS).filter(([, names]) => names.includes("logo")),
-);
-/**
- * The one pair allowed to be one colour: the logo's ring is the accent's
- * violet by choice, and keeps its fixed values if the accent moves. The two
- * are exempt only while they are equal; an accent moved near the logo but
- * not onto it fails like any other colour.
- */
-const SAME = ["logo", "accent"] as const;
 
 /** Every pair of a group closer than the thresholds, in one scheme, read through `colourOf`. */
 function tooClose(
@@ -97,7 +84,6 @@ function tooClose(
     for (const [i, a] of names.entries()) {
       for (const b of names.slice(i + 1)) {
         const [x, y] = [colourOf(a), colourOf(b)];
-        if (x === y && SAME.includes(a as never) && SAME.includes(b as never)) continue;
         if (distance(x, y) < FULL) close.push(`${group}: ${a} and ${b} in full colour`);
         for (const [deficiency, m] of Object.entries(DEFICIENCIES))
           if (distance(x, y, m) < SIMULATED) close.push(`${group}: ${a} and ${b}, ${deficiency}`);
@@ -152,6 +138,15 @@ const distance = (a: string, b: string, m?: Matrix) => {
   const [p, q] = [lab(a), lab(b)];
   return 100 * Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2]);
 };
+/** WCAG 2's contrast ratio of two colours, from their relative luminance. */
+const contrast = (a: string, b: string) => {
+  const luminance = (hex: string) => {
+    const [r, g, b] = linear(hex);
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  };
+  const [dark, light] = [luminance(a), luminance(b)].sort((x, y) => x - y) as [number, number];
+  return (light + 0.05) / (dark + 0.05);
+};
 const hue = (hex: string) => {
   const [, a, b] = oklab(linear(hex));
   return (Math.atan2(b, a) * 180) / Math.PI;
@@ -178,18 +173,39 @@ describe("the colours that carry a meaning", () => {
     expect(distance("#2e7d32", "#c62828")).toBeGreaterThan(FULL);
     expect(distance("#2e7d32", "#c62828", m)).toBeLessThan(SIMULATED);
   });
+});
 
-  it("keep clear of the logo: a colour of meaning moved near it fails, the accent's equal violet passes", () => {
-    // The check's own check: the tokens of the light scheme, then one colour moved next to the logo's violet.
-    const light = (name: string) => colour(name).light;
-    const logo = light("logo");
-    expect(light("accent")).toBe(logo);
-    expect(tooClose(light, LOGO)).toEqual([]);
-    const moved = (changed: string) => (name: string) =>
-      name === changed ? "#6c47d0" : light(name);
-    for (const changed of ["line", "learn", "net-dominator", "accent"])
-      expect(tooClose(moved(changed), LOGO).join("\n")).toContain(
-        `logo and ${changed} in full colour`,
-      );
+describe("the mark's lapis", () => {
+  it("stands out from the band and the field it is drawn on, as SC 1.4.11 asks of a graphic", () => {
+    for (const scheme of schemes)
+      for (const ground of ["panel", "field"])
+        expect(
+          contrast(colour("logo")[scheme], colour(ground)[scheme]),
+          `logo on ${ground}, ${scheme}`,
+        ).toBeGreaterThanOrEqual(3);
+  });
+
+  it("paints the mark alone: no rule but the mark's names it, nor any token or component", () => {
+    const styles = new URL("./", import.meta.url);
+    const app = readFileSync(new URL("app.css", styles), "utf8");
+    // The `.logo` rule, nested braces and all: the only place the colour may be used.
+    const at = app.indexOf("\n.logo {");
+    expect(at).toBeGreaterThan(-1);
+    let depth = 0;
+    let end = app.indexOf("{", at);
+    do {
+      if (app[end] === "{") depth++;
+      if (app[end] === "}") depth--;
+      end++;
+    } while (depth > 0);
+    expect(app.slice(at, end)).toContain("var(--color-logo)");
+    expect(app.slice(0, at) + app.slice(end)).not.toContain("--color-logo");
+    expect(tokens.match(/--color-logo\b/g)).toHaveLength(1);
+    const src = new URL("../", import.meta.url);
+    const named = readdirSync(src, { recursive: true, encoding: "utf8" })
+      .filter((path) => /\.(tsx?|astro|css)$/.test(path) && !path.endsWith("colours.test.ts"))
+      .filter((path) => !/^styles[/\\](app|tokens)\.css$/.test(path))
+      .filter((path) => readFileSync(new URL(path, src), "utf8").includes("--color-logo"));
+    expect(named).toEqual([]);
   });
 });

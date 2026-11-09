@@ -98,7 +98,7 @@ and `src/` are the site:
   the theme.
 - `src/styles/tokens.css`: every colour, font and size (`@theme static`); `app.css` the
   page's rules.
-- `src/logo/`: linlog's logo (CC BY 4.0), the six SVGs every raster is drawn from by the
+- `src/logo/`: deduxit's mark (CC BY 4.0), the SVGs every raster is drawn from by the
   flake (`modules/logo.nix`); served at `/logo/`.
 - `tests/`: Playwright, one test per interaction of the island; `tests/serve.ts` the static
   server; `tests/fixtures.ts` the `test` every spec imports, failing on a CSP violation.
@@ -120,7 +120,7 @@ its comment syntax:
 
 (`#` in Nix, shell, Python and YAML; `/* … */` in CSS; inside an Astro component's
 frontmatter). The written content (explanations, tutorials, worked examples, exercises) is
-CC BY 4.0, as README says, and so is the logo (`src/logo/LICENSE.txt`). No third-party
+CC BY 4.0, as README says, and so is the mark (`src/logo/LICENSE.txt`). No third-party
 file is committed: fonts come from npm through
 the lock or from linlog's input, never copied in.
 

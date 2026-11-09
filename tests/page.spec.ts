@@ -45,27 +45,100 @@ test("the policy is in force: inline code the build did not hash is refused", as
   expect(outcome.blocked).toEqual(expect.arrayContaining(["script-src-elem", "style-src-attr"]));
 });
 
-test("the header and the 404 page show linlog's word mark, its ring in the logo's colour", async ({
+test("the header and the 404 page show deduxit's word mark, its long marks in lapis", async ({
   page,
 }) => {
-  const ring = (mark: Locator) =>
-    mark.locator("path[stroke]").evaluate((path: Element) => getComputedStyle(path).stroke);
-  for (const [scheme, colour] of [
-    ["light", "rgb(107, 70, 207)"],
-    ["dark", "rgb(149, 138, 213)"],
+  const macrons = (mark: Locator) =>
+    mark
+      .locator("rect")
+      .evaluateAll((rects: Element[]) => rects.map((rect) => getComputedStyle(rect).fill));
+  const letters = (mark: Locator) =>
+    mark
+      .locator("path")
+      .first()
+      .evaluate((path: Element) => getComputedStyle(path).fill);
+  for (const [scheme, lapis, ink] of [
+    ["light", "rgb(36, 86, 201)", "rgb(18, 26, 46)"],
+    ["dark", "rgb(122, 167, 255)", "rgb(227, 232, 244)"],
   ] as const) {
     await page.emulateMedia({ colorScheme: scheme });
     await page.goto("/");
-    const mark = page.locator("header.band.top").getByRole("img", { name: "linlog" });
+    const mark = page.locator("header.band.top").getByRole("button", { name: "deduxit" });
     await expect(mark).toBeVisible();
     expect((await mark.boundingBox())?.height).toBeCloseTo(30, 0);
-    expect(await ring(mark)).toBe(colour);
+    expect(await macrons(mark)).toEqual([lapis, lapis]);
+    expect(await letters(mark)).toBe(ink);
     await page.goto("/no-such-page");
-    const home = page.getByRole("link", { name: "linlog", exact: true });
+    const home = page.getByRole("link", { name: "deduxit", exact: true });
     await expect(home).toHaveAttribute("href", "/");
-    await expect(home.getByRole("img", { name: "linlog" })).toBeVisible();
-    expect(await ring(home)).toBe(colour);
+    await expect(home.getByRole("img", { name: "deduxit" })).toBeVisible();
+    expect(await macrons(home)).toEqual([lapis, lapis]);
   }
+});
+
+/** The dictionary line of the mark's word, as the page sets it. */
+const DICTIONARY =
+  'dēdūxit [deːˈduːk.sɪt] Latin, verb: "it has derived", the perfect of dēdūcō, to lead down, derive.';
+
+test("the band's mark shows its dictionary line on hover, keeps it under the pointer, and Escape dismisses it", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const mark = page.locator("header.band.top").getByRole("button", { name: "deduxit" });
+  const card = page.getByRole("tooltip").filter({ hasText: "dēdūxit" });
+  await expect(card).toBeHidden();
+  await mark.hover();
+  await expect(card).toBeVisible();
+  await expect(card).toHaveText(DICTIONARY);
+  // The pointer moves from the mark onto the card, across the gap, and back, and the card stays.
+  const from = await mark.boundingBox();
+  const to = await card.boundingBox();
+  if (!from || !to) throw new Error("the mark or its card has no box");
+  const onMark = [from.x + from.width / 2, from.y + from.height / 2] as const;
+  await page.mouse.move(...onMark);
+  await page.mouse.move(to.x + to.width / 2, to.y + to.height / 2, { steps: 8 });
+  await expect(card).toBeVisible();
+  await page.mouse.move(...onMark, { steps: 8 });
+  await expect(card).toBeVisible();
+  // Escape dismisses it with the pointer still on the mark, until the pointer leaves.
+  await page.keyboard.press("Escape");
+  await expect(card).toBeHidden();
+  await page.mouse.move(onMark[0] + 4, onMark[1]);
+  await expect(card).toBeHidden();
+  await page.getByRole("textbox", { name: "Sequent" }).hover();
+  await mark.hover();
+  await expect(card).toBeVisible();
+});
+
+test("the band's mark is reached by the keyboard and by a click, describes itself by its dictionary line, and Escape dismisses it", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const mark = page.locator("header.band.top").getByRole("button", { name: "deduxit" });
+  await expect(mark).toHaveAccessibleDescription(DICTIONARY);
+  const card = page.getByRole("tooltip").filter({ hasText: "dēdūxit" });
+  // The keyboard reaches the mark back from the sequent field, which the page opens with.
+  await page.getByRole("textbox", { name: "Sequent" }).focus();
+  const focused = () => mark.evaluate((el) => el === document.activeElement);
+  for (let stops = 0; stops < 10 && !(await focused()); stops++)
+    await page.keyboard.press("Shift+Tab");
+  await expect(mark).toBeFocused();
+  await expect(card).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(card).toBeHidden();
+  await expect(mark).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(mark).not.toBeFocused();
+  await page.keyboard.press("Shift+Tab");
+  await expect(card).toBeVisible();
+  // A click keeps the card under the mark until the focus leaves.
+  await page.getByRole("textbox", { name: "Sequent" }).click();
+  await expect(card).toBeHidden();
+  await mark.click();
+  await page.getByRole("textbox", { name: "Sequent" }).hover();
+  await expect(card).toBeVisible();
+  await page.getByRole("textbox", { name: "Sequent" }).click();
+  await expect(card).toBeHidden();
 });
 
 test("the pictograms are Lucide's, hidden from a screen reader, each action named", async ({

@@ -1,14 +1,15 @@
 # linlog © Fabian Lukas Grubmüller 2026
 # Licensed under the EUPL
 
-# linlog's logo, drawn: every raster of it, made from its SVGs under
+# deduxit's mark, drawn: every raster of it, made from its SVGs under
 # src/logo/ (the one source, CC BY 4.0, src/logo/LICENSE.txt) by
 # modules/_logo/derive.py with nixpkgs' resvg, never by hand:
 #
 #   site/    favicon-32.png, apple-touch-icon.png (180), icon-192.png,
-#            icon-512.png and icon-maskable-512.png (the manifest's), og.png
-#            (1200 by 630, the link preview's image), which the build copies
-#            to /logo/ beside the SVGs (src/integrations/offline.ts);
+#            icon-512.png, icon-maskable-192.png and icon-maskable-512.png
+#            (the manifest's), og.png (1200 by 630, the link preview's
+#            image), which the build copies to /logo/ beside the SVGs
+#            (src/integrations/offline.ts);
 #   github/  avatar.png (512) and social-preview.png (1280 by 640), which only
 #            the author can set, in GitHub's web interface.
 #
@@ -38,7 +39,7 @@
               } $out
             '';
         defaultText = lib.literalMD "the rasters `modules/_logo/derive.py` draws from `src/logo/`";
-        description = "The logo's rasters, drawn from its SVGs: `site/` for the site, `github/` for the author.";
+        description = "The mark's rasters, drawn from its SVGs: `site/` for the site, `github/` for the author.";
       };
 
       config.packages.logo = config.logoFiles;

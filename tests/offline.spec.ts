@@ -80,7 +80,7 @@ test("the service worker leaves linlog's documentation at /deduxit/ alone", asyn
   expect(prover?.fromServiceWorker()).toBe(true);
 });
 
-test("the logo's icons and link preview are served at the sizes the page and the manifest name", async ({
+test("the mark's icons and link preview are served at the sizes the page and the manifest name", async ({
   page,
   request,
 }) => {
@@ -108,11 +108,12 @@ test("the logo's icons and link preview are served at the sizes the page and the
       { purposes: manifest.icons.map((i) => i.purpose) },
     ];
   });
-  expect(named.at(-1)).toEqual({ purposes: ["any", "any", "maskable"] });
+  expect(named.at(-1)).toEqual({ purposes: ["any", "any", "maskable", "maskable"] });
   const files = named.slice(0, -1) as { src: string; sizes: string; type: string }[];
   expect(files.map((f) => f.src)).toEqual([
     "/logo/icon-192.png",
     "/logo/icon-512.png",
+    "/logo/icon-maskable-192.png",
     "/logo/icon-maskable-512.png",
     "/logo/favicon-32.png",
     "/logo/square-dark.svg",

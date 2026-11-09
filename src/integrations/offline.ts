@@ -5,12 +5,12 @@
  * Offline and installable: what the build writes once every other file of
  * the site is there.
  *
- * - `/logo/`: the logo, its SVGs (src/logo/, with their licence) and the
- *   rasters the flake draws from them (modules/logo.nix, linked at
+ * - `/logo/`: deduxit's mark, its SVGs (src/logo/, with their licence) and
+ *   the rasters the flake draws from them (modules/logo.nix, linked at
  *   .cache/linlog-logo): the favicon's PNG fallback, the Apple touch icon,
  *   the link preview's image, and the manifest's icons at the 192 and 512
- *   pixels Chromium asks for, with a maskable one that fills its square to
- *   the edge.
+ *   pixels Chromium asks for, each also maskable, filling its square to the
+ *   edge.
  * - `/manifest.webmanifest`: the web app manifest, linked by every page
  *   (layouts/Base.astro), with the panel's colour of tokens.css.
  * - `/sw.js`: the service worker (src/offline/sw.js) with the list of every
@@ -27,10 +27,11 @@ import { fileURLToPath } from "node:url";
 import type { AstroIntegration } from "astro";
 import { panelColors } from "../lib/colors";
 
-/** The manifest's icons under /logo/: the two sizes Chromium's install criteria ask for, and a maskable one. */
+/** The manifest's icons under /logo/: the two sizes Chromium's install criteria ask for, each also maskable. */
 export const ICONS = [
   { name: "icon-192", size: 192, purpose: "any" },
   { name: "icon-512", size: 512, purpose: "any" },
+  { name: "icon-maskable-192", size: 192, purpose: "maskable" },
   { name: "icon-maskable-512", size: 512, purpose: "maskable" },
 ] as const;
 
@@ -59,9 +60,10 @@ export function offline(): AstroIntegration {
 
         const colors = panelColors(await readFile(new URL("src/styles/tokens.css", root), "utf8"));
         const manifest = {
-          name: "linlog",
-          short_name: "linlog",
-          description: "Prove sequents of linear logic step by step, in the browser.",
+          name: "deduxit",
+          short_name: "deduxit",
+          description:
+            "Prove sequents of linear logic, and of ordinary logic in LK and LJ, step by step, in the browser.",
           id: "/",
           start_url: "/",
           scope: "/",

@@ -30,7 +30,7 @@ import type { Sample } from "../lib/content";
 import { calculusWords, markOf, ordinary } from "../lib/suites";
 import { displayed } from "../lib/words";
 import { Calculus } from "./Calculus";
-import { Logo } from "./Logo";
+import { BandMark } from "./Logo";
 import type { Proof, Prover } from "./state";
 import { token, type Ui } from "./ui";
 
@@ -109,7 +109,7 @@ export function TopBand(props: {
 
   return (
     <header class="band top">
-      <Logo class="wordmark" />
+      <BandMark />
       <nav class="proofs" aria-label="Open proofs">
         <For each={props.prover.store.proofs}>
           {(proof) => (

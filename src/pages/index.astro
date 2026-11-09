@@ -104,9 +104,9 @@ const rendered = await Promise.all(
 );
 ---
 
-<Base title="linlog" description="Prove sequents of linear logic, and of ordinary logic in LK and LJ, step by step, in the browser.">
+<Base title="deduxit" description="Prove sequents of linear logic, and of ordinary logic in LK and LJ, step by step, in the browser.">
   <main>
-    <h1 class="sr-only">linlog: linear logic, proved in the browser</h1>
+    <h1 class="sr-only">deduxit: linear and ordinary logic, proved in the browser</h1>
     <App
       client:only="solid-js"
       fonts={{ euler, "stix-two": stix, garamond, asana, "new-computer-modern": newcm }}
@@ -117,8 +117,8 @@ const rendered = await Promise.all(
       rules={ruleData}
     >
       <p slot="fallback" class="noscript">
-        linlog proves sequents of linear logic in the browser; the page needs JavaScript and
-        WebAssembly.
+        deduxit proves sequents of linear and ordinary logic in the browser; the page needs
+        JavaScript and WebAssembly.
       </p>
     </App>
     {

@@ -66,7 +66,7 @@ import {
   viewJson,
 } from "./state";
 import { Written } from "./Learn";
-import { Logo } from "./Logo";
+import { Dictionary, Logo } from "./Logo";
 import { type Practice, PracticePlace } from "./Practice";
 import { applyTheme } from "./TopBand";
 import type { Menu, Ui } from "./ui";
@@ -1194,7 +1194,7 @@ function StepsPanel(props: { prover: Prover }) {
 const LICENCES: readonly (readonly [string, string, string])[] = [
   ["The page's code and linlog", "EUPL-1.2", "/licenses/LICENSE.txt"],
   ["The written content", "CC BY 4.0", "https://creativecommons.org/licenses/by/4.0/"],
-  ["linlog's logo", "CC BY 4.0", "/logo/LICENSE.txt"],
+  ["deduxit's mark", "CC BY 4.0", "/logo/LICENSE.txt"],
   ["Euler Math, the formulas' font by default", "SIL OFL 1.1", "/fonts/Euler-Math-OFL.txt"],
   ["STIX Two Math, a font of the formulas", "SIL OFL 1.1", "/fonts/STIXTwoMath-OFL.txt"],
   ["Garamond-Math, a font of the formulas", "SIL OFL 1.1", "/fonts/Garamond-Math-OFL.txt"],
@@ -1216,6 +1216,9 @@ function AboutPane(props: { prover: Prover }) {
     <div class="cluster menu about" role="dialog" aria-label="About">
       <p class="kw-label h">About</p>
       <Logo class="large" />
+      <p class="dictionary-line">
+        <Dictionary />
+      </p>
       <Written name="texts/about" />
       <p class="sub">
         linlog {about()?.linlog ?? ""}, reading session documents up to level {about()?.level ?? ""}
@@ -1232,7 +1235,7 @@ function AboutPane(props: { prover: Prover }) {
         </For>
       </ul>
       <p class="sub">
-        The name linlog and its mark identify this project, and may not be used to suggest its
+        The name deduxit and its mark identify this project, and may not be used to suggest its
         endorsement of anything else.
       </p>
       <p class="sub privacy">

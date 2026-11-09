@@ -1,6 +1,9 @@
-# linlog in the browser
+# <picture><source media="(prefers-color-scheme: dark)" srcset="src/logo/wordmark-dark.svg"><img alt="deduxit" src="src/logo/wordmark-light.svg" height="80"></picture>
 
-The web front end of [linlog](https://github.com/deduxit/deduxit), a prover for
+> **dēdūxit** [deːˈduːk.sɪt] *Latin, verb*: "it has derived", the perfect of *dēdūcō*, to lead down, derive.
+
+deduxit's prover in the browser at https://deduxit.github.io/: the web front end of
+[linlog](https://github.com/deduxit/deduxit), a prover for
 linear logic and, through its translations, ordinary propositional logic: type a sequent
 and prove it by clicking, step by step, or let the search close a goal; see the derivation
 and, for MLL, the proof net drawn. The prover runs in the
@@ -115,10 +118,10 @@ since Pages sets no header.
 The code is licensed under the [EUPL-1.2](LICENSE). The written content (explanations,
 tutorials, worked examples and exercises, under `src/content/`) is licensed under
 [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), as the pages that carry it say.
-linlog's logo (`src/logo/`, served at `/logo/` with every image drawn from it) is
-licensed under CC BY 4.0 too (`src/logo/LICENSE.txt`); the name linlog and its mark
+deduxit's mark (`src/logo/`, served at `/logo/` with every image drawn from it) is
+licensed under CC BY 4.0 too (`src/logo/LICENSE.txt`); the name deduxit and its mark
 identify this project, and may not be used to suggest its endorsement of anything else.
-Its word is Figtree Bold outlined, so no font file goes with it.
+Its word is Gentium ExtraBold outlined, so no font file goes with it.
 The fonts are under the SIL Open Font License 1.1: Euler Math, STIX Two Math,
 Garamond-Math and Asana Math (from linlog), Figtree and Space Mono (from Fontsource); New
 Computer Modern Math (from linlog) is under the GUST Font License, which is the LaTeX
