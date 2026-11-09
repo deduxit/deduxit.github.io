@@ -141,6 +141,13 @@ test("the band's mark is reached by the keyboard and by a click, describes itsel
   await expect(card).toBeHidden();
 });
 
+test("the Rocq library's old address forwards to its new one", async ({ page }) => {
+  const forward = await page.goto("/rocq-linlog/");
+  expect(forward?.status()).toBe(200);
+  await page.waitForURL("/rocq-deduxit/");
+  await expect(page.getByRole("heading", { name: "rocq-deduxit's documentation" })).toBeVisible();
+});
+
 test("the pictograms are Lucide's, hidden from a screen reader, each action named", async ({
   page,
 }) => {

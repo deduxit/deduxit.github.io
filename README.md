@@ -109,8 +109,9 @@ of this one. The written content is Markdown under `src/content/`.
 
 GitHub Pages serves the site at https://deduxit.github.io/: every push to `main`
 whose checks pass is deployed by the CI workflow. linlog's API documentation at
-https://deduxit.github.io/deduxit/ is linlog's own Pages site, which nothing here
-touches, the service worker included. The Content-Security-Policy is a `<meta>` element,
+https://deduxit.github.io/deduxit/ is linlog's own Pages site, and the Rocq library's at
+https://deduxit.github.io/rocq-deduxit/ is its own; nothing here touches them, the service
+worker included. The library's old address, `/rocq-linlog/`, forwards to its new one. The Content-Security-Policy is a `<meta>` element,
 since Pages sets no header.
 
 ## Licences

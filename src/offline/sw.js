@@ -9,13 +9,13 @@
 // contents, so that a new deployment is a new worker.
 //
 // Its scope is the whole origin, since the page it serves is at / and a
-// scope is a path prefix; but linlog's documentation at
-// /deduxit/ is another site on the same origin, and nothing of it passes
-// through here. The worker answers only requests for the site's own files
-// (FILES) and navigations to the prover's page; every other request,
-// /deduxit/ above all, goes to the network as if there were no worker, and
-// where the browser can route by pattern (the Static Routing API) requests
-// under /deduxit never reach the worker at all.
+// scope is a path prefix; but linlog's documentation at /deduxit/ and the
+// Rocq library's at /rocq-deduxit/ are other sites on the same origin, and
+// nothing of them passes through here. The worker answers only requests for
+// the site's own files (FILES) and navigations to the prover's page; every
+// other request, those two sites' above all, goes to the network as if there
+// were no worker, and where the browser can route by pattern (the Static
+// Routing API) requests under them never reach the worker at all.
 //
 // The cache is written when the worker installs, every file of FILES fetched
 // past the browser's HTTP cache (Pages lets it keep a file ten minutes, and
@@ -35,16 +35,19 @@ const PREFIX = "linlog-site-";
 const CACHE = PREFIX + VERSION;
 const OWN = new Set([...FILES, ...LATER]);
 
-/** Whether a path is linlog's own Pages site, which this worker never touches. */
-const isDocs = (path) => path === "/deduxit" || path.startsWith("/deduxit/");
+/** The project sites on this origin, linlog's and the Rocq library's, which this worker never touches. */
+const PROJECTS = ["/deduxit", "/rocq-deduxit"];
+const isDocs = (path) => PROJECTS.some((root) => path === root || path.startsWith(`${root}/`));
 
 self.addEventListener("install", (event) => {
   const routed = event.addRoutes
     ? event
-        .addRoutes([
-          { condition: { urlPattern: "/deduxit" }, source: "network" },
-          { condition: { urlPattern: "/deduxit/*" }, source: "network" },
-        ])
+        .addRoutes(
+          PROJECTS.flatMap((root) => [
+            { condition: { urlPattern: root }, source: "network" },
+            { condition: { urlPattern: `${root}/*` }, source: "network" },
+          ]),
+        )
         .catch(() => undefined)
     : Promise.resolve();
   event.waitUntil(

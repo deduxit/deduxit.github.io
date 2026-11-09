@@ -16,8 +16,9 @@
  * - `/sw.js`: the service worker (src/offline/sw.js) with the list of every
  *   file of the site and a hash of their contents filled in.
  *
- * Nothing is written at /deduxit, linlog's own Pages site on the same origin
- * (the `pages-paths` check), and the worker leaves that path alone.
+ * Nothing is written at /deduxit or /rocq-deduxit, linlog's and the Rocq
+ * library's own Pages sites on the same origin (the `pages-paths` check), and
+ * the worker leaves those paths alone.
  */
 
 import { createHash } from "node:crypto";
@@ -95,8 +96,10 @@ export function offline(): AstroIntegration {
             url,
           ),
         );
-        if (urls.some((url) => url === "/deduxit" || url.startsWith("/deduxit/"))) {
-          throw new Error("a file at /deduxit, linlog's own Pages site");
+        for (const root of ["/deduxit", "/rocq-deduxit"]) {
+          if (urls.some((url) => url === root || url.startsWith(`${root}/`))) {
+            throw new Error(`a file at ${root}, a project's own Pages site`);
+          }
         }
         const source = await readFile(new URL("src/offline/sw.js", root), "utf8");
         if (

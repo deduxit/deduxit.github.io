@@ -11,6 +11,7 @@
 // from one the browser kept. No header beyond those, since Pages sets none
 // the site could choose. Under /deduxit/ it serves
 // tests/linlog-docs/, a stand-in for linlog's own Pages site (the rustdoc),
+// and under /rocq-deduxit/ tests/rocq-docs/, one for the Rocq library's,
 // which Pages serves on the same origin.
 // Usage: node tests/serve.ts DIR PORT
 import { createReadStream, statSync } from "node:fs";
@@ -19,7 +20,11 @@ import { extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const [dir = "dist", port = "8790"] = process.argv.slice(2);
-const docs = fileURLToPath(new URL("./linlog-docs/", import.meta.url));
+/** The project sites Pages serves on the same origin, each by its stand-in. */
+const PROJECTS: readonly (readonly [string, string])[] = [
+  ["/deduxit/", fileURLToPath(new URL("./linlog-docs/", import.meta.url))],
+  ["/rocq-deduxit/", fileURLToPath(new URL("./rocq-docs/", import.meta.url))],
+];
 
 const TYPES: Record<string, string> = {
   ".html": "text/html; charset=utf-8",
@@ -52,9 +57,8 @@ let responses = 0;
 createServer((request, response) => {
   const url = new URL(request.url ?? "/", "http://localhost");
   const pathname = decodeURIComponent(url.pathname);
-  const [root, rest] = pathname.startsWith("/deduxit/")
-    ? [docs, pathname.slice("/deduxit/".length)]
-    : [dir, pathname];
+  const project = PROJECTS.find(([prefix]) => pathname.startsWith(prefix));
+  const [root, rest] = project ? [project[1], pathname.slice(project[0].length)] : [dir, pathname];
   const path = normalize(join(root, rest));
   const found = path.startsWith(normalize(root)) ? file(path) : undefined;
   const served = found ?? file(join(dir, "404.html"));

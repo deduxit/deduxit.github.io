@@ -41,10 +41,12 @@
 #               command's, every provable problem with a session of its
 #               sequent that `proof' accepts, no unprovable one with a session
 #               (modules/_checks/problems.py)
-#   pages-paths the site as Pages publishes it: a 404.html at its root, and
-#               nothing at /deduxit or under it, where the Pages site of
-#               linlog's repository (the rustdoc and the manual) lives on
-#               the same address
+#   pages-paths the site as Pages publishes it: a 404.html at its root;
+#               nothing at /deduxit or /rocq-deduxit or under them, where
+#               the Pages sites of linlog's repository (the rustdoc and the
+#               manual) and of the Rocq library live on the same address;
+#               and the Rocq library's old path, /rocq-linlog/, forwarding
+#               to /rocq-deduxit/
 #   licence-headers
 #               every source file starts with the project's licence header
 #               in its comment syntax
@@ -158,14 +160,22 @@
         problems = []
         if not (site / "404.html").is_file():
             problems.append("no 404.html at the site's root, which Pages serves for a missing path")
-        # Paths are matched as Pages matches them, case and all: /deduxit is
-        # the project site of linlog's repository, which a file of this one must never shadow.
-        taken = sorted(str(p.relative_to(site)) for p in site.iterdir() if p.name.split(".")[0] == "deduxit")
-        if taken:
-            problems.append("the site has paths at /deduxit, the Pages site of linlog's repository: " + ", ".join(taken))
+        # Paths are matched as Pages matches them, case and all: /deduxit and
+        # /rocq-deduxit are the project sites of linlog's repository and of
+        # the Rocq library, which a file of this one must never shadow.
+        projects = {"deduxit": "linlog's repository", "rocq-deduxit": "the Rocq library"}
+        for project, whose in projects.items():
+            taken = sorted(str(p.relative_to(site)) for p in site.iterdir() if p.name.split(".")[0] == project)
+            if taken:
+                problems.append(f"the site has paths at /{project}, the Pages site of {whose}: " + ", ".join(taken))
+        # The Rocq library's old project site, which this site answers now.
+        forward = site / "rocq-linlog" / "index.html"
+        refresh = '<meta http-equiv="refresh" content="0; url=/rocq-deduxit/">'
+        if not forward.is_file() or refresh not in forward.read_text():
+            problems.append("/rocq-linlog/ does not forward to /rocq-deduxit/ at once")
         if problems:
             sys.exit("\n".join(problems))
-        print("404.html is at the root, and nothing is at /deduxit")
+        print("404.html is at the root, nothing is at /deduxit or /rocq-deduxit, and /rocq-linlog/ forwards")
       '';
 
       licenceHeaders = pkgs.writeText "check-licence-headers.py" ''

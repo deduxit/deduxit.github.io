@@ -37,6 +37,10 @@ paths:
   start with a dot), and the `deploy` job, the only one with `pages: write` and
   `id-token: write`, publishes it (`deploy-pages`) in the `github-pages` environment. The
   repository's Pages source is "GitHub Actions": no Jekyll build, no `.nojekyll`.
-- **`/deduxit` is the Pages site of linlog's repository** (its rustdoc and manual), a
-  project site on the same address: nothing here may publish a path at `/deduxit` (the `pages-paths` check), and
-  the service worker leaves it alone (`.claude/rules/web.md`).
+- **`/deduxit` is the Pages site of linlog's repository** (its rustdoc and manual), and
+  **`/rocq-deduxit` the Rocq library's**, project sites on the same address: nothing here may
+  publish a path at either (the `pages-paths` check), and the service worker leaves them
+  alone (`.claude/rules/web.md`). The library's old project site, `/rocq-linlog/`, is answered
+  by this site since its repository was renamed: `src/pages/rocq-linlog/` forwards it to
+  `/rocq-deduxit/` with a refresh (Pages has no redirects), which `pages-paths` and an e2e
+  test hold. A repository renamed later is forwarded the same way.

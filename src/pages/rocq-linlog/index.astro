@@ -1,0 +1,32 @@
+---
+// linlog © Fabian Lukas Grubmüller 2026
+// Licensed under the EUPL
+
+// The Rocq library's old address. Its repository was rocq-linlog, whose
+// Pages site lived at /rocq-linlog/ on this origin; it is rocq-deduxit now,
+// its site at /rocq-deduxit/, and Pages answers the old path from this site.
+// So the old path forwards there: a refresh at once, no script, and the link
+// for a browser that does not follow it. GitHub Pages sets no header, so no
+// HTTP redirect is to be had. The `pages-paths' check holds this page to
+// its target.
+const target = "/rocq-deduxit/";
+const canonical = new URL(target, Astro.site).href;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>rocq-deduxit, formerly rocq-linlog</title>
+    <meta http-equiv="refresh" content={`0; url=${target}`} />
+    <link rel="canonical" href={canonical} />
+    <meta name="robots" content="noindex" />
+  </head>
+  <body>
+    <p>
+      The Rocq library rocq-linlog is now rocq-deduxit:
+      <a href={target}>its documentation</a> is at {canonical}.
+    </p>
+  </body>
+</html>
