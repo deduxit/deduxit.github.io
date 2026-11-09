@@ -85,16 +85,16 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1794176283,
-        "narHash": "sha256-CL+pRWT4UWXL4H/wsR6DpQyfRRduXA3QL/Ilvm5yN/Q=",
-        "owner": "sequentium",
-        "repo": "sequentium",
-        "rev": "9c2c246409e1e005075c560cd01494466fcaae55",
+        "lastModified": 1794184816,
+        "narHash": "sha256-KYFVHLpIrPyA8V1ZIAsgi8CP3B9uy02QIh5g5FjST58=",
+        "owner": "deduxit",
+        "repo": "deduxit",
+        "rev": "b5bab11d5a56f59c4a2b3ccb5d9b7fd023f6e4d5",
         "type": "github"
       },
       "original": {
-        "owner": "sequentium",
-        "repo": "sequentium",
+        "owner": "deduxit",
+        "repo": "deduxit",
         "type": "github"
       }
     },
@@ -153,15 +153,15 @@
         "yalla": "yalla"
       },
       "locked": {
-        "lastModified": 1794155557,
-        "narHash": "sha256-NcHnddVh5ENSBr164M98ZmvaRPdouyJ0wRDbpr7+d74=",
-        "owner": "sequentium",
+        "lastModified": 1794182746,
+        "narHash": "sha256-Bfg/oI1t5qpjrJZ4lrcQnQ+wnbyFShBSXmbmNIS6LG0=",
+        "owner": "deduxit",
         "repo": "rocq-linlog",
-        "rev": "22f7de20cba131e5d59ed24dc87f7298ed912b9e",
+        "rev": "ea6602c4b050b30beb260a788e7b8a6877145e52",
         "type": "github"
       },
       "original": {
-        "owner": "sequentium",
+        "owner": "deduxit",
         "repo": "rocq-linlog",
         "type": "github"
       }
