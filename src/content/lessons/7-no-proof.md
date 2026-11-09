@@ -80,7 +80,7 @@ before it decided. Unknown says nothing either way.
 
 An attempt that gets stuck proves nothing about the sequent: a wrong step loses one
 attempt, and another may succeed. "No proof" is a claim about every attempt, so it needs
-a reason that holds for all of them. deduxit gives three:
+a reason that holds for all of them. The most common:
 - Atom balance: an atom and its dual do not pair off. Where no `⊤` and no `?` can drop
   a formula, every proof ends in axioms, each pairing an atom with its dual.
 - A classical countermodel: read as ordinary logic, the sequent is false, and every

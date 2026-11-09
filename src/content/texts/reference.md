@@ -36,7 +36,8 @@ eigenvariable condition.
 Each rule as a schema: its premises above the bar, its conclusion below, its name
 beside it, as the stage writes it. `Γ` and `Δ` stand for any formulas, `?Γ` for
 formulas each under `?`. No rule acts on `0`. On the stage, every rule's name shows
-its schema and what it does when you point at it, focus it or tap it. With Learn on,
+its schema and what it does when you point at it or focus it; on a touch screen, tap a
+rule's name in the drawing, or its ⓘ in the rule list. With Learn on,
 pointing at a formula shows its connective's reading.
 
 <div data-rules></div>

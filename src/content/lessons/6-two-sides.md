@@ -33,7 +33,7 @@ hinge:
       misconception: "Using `A ⊸ B` leaves `A` in place, as modus ponens does in ordinary logic."
       why: "`⊢ A` has no proof: `⊸L` consumes the `A` it needs, and then `B, A, C ⊢ B ⊗ C` has an `A` too many."
 ---
-In intuitionistic mode, chosen with the calculus's switch on the tab, a sequent has its
+In intuitionistic mode, chosen at the Logic mark beside the sequent, a sequent has its
 hypotheses on the left of `⊢` and exactly one formula on the right: `A ⊸ B, B ⊸ C ⊢
 A ⊸ C` reads "from `A ⊸ B` and `B ⊸ C`, `A ⊸ C`". It is typed with `-o` for `⊸`, which is
 `A⊥ ⅋ B` read one-sided, and has no `⊥`, `⅋` or `?`.

@@ -481,12 +481,12 @@ function ExportMenu(props: {
     { label: "PDF", detail: "The drawing, as a PDF/A document", act: () => rendered("pdf") },
     {
       label: "LaTeX",
-      detail: "The derivation for LaTeX; it needs the packages ebproof and cmll",
+      detail: "The derivation for LaTeX; it needs the packages ebproof, cmll and amssymb",
       act: text("latex", "tex", "text/x-tex"),
     },
     {
       label: "Typst",
-      detail: "The derivation for Typst, drawn with the package curryst",
+      detail: "The derivation for Typst: with the package curryst, or in plain Typst when tall",
       act: text("typst", "typ", "text/plain"),
     },
     {
@@ -506,8 +506,11 @@ function ExportMenu(props: {
     },
     {
       label: "Rocq",
-      detail:
-        "A certificate of the finished proof for Rocq; it needs NanoYalla, or rocq-deduxit beyond classical logic",
+      get detail() {
+        return ordinarySession()
+          ? "A certificate of the finished proof for Rocq, over Prop: it needs no library"
+          : "A certificate of the finished proof for Rocq: NanoYalla checks classical linear logic without Mix, weakening, cuts or quantifiers, rocq-deduxit the rest";
+      },
       act: text("rocq", "v", "text/plain"),
       off: () => (complete() ? null : "The certificate is of a finished proof"),
     },
