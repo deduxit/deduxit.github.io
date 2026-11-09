@@ -102,3 +102,17 @@ test("a finished proof's λ-term shows in Export from More's sheet at a phone's 
   );
   expect(overflow).toBe(0);
 });
+
+test("a tap opens a rule's hint, and a tap elsewhere closes it", async ({ page }) => {
+  await start(page, "A * B |- B * A");
+  await page.getByRole("button", { name: /^A⊥ ⅋ B⊥, formula/ }).tap();
+  await page
+    .getByRole("dialog", { name: "Rules" })
+    .getByRole("button", { name: "About par" })
+    .tap();
+  const hint = page.locator(".rule-tip");
+  await expect(hint).toContainText("⅋: par");
+  await expect(hint.getByRole("img", { name: "⅋: from ⊢ Γ, A, B to ⊢ Γ, A ⅋ B" })).toBeVisible();
+  await page.getByRole("dialog", { name: "Rules" }).locator(".pop-h").tap();
+  await expect(hint).toHaveCount(0);
+});

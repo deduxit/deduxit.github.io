@@ -26,7 +26,7 @@ test("the sequent field starts a proof, and marks where a sequent does not parse
 test("a formula's popover lists only the rules deduxit gives for it", async ({ page }) => {
   await start(page, "A * B |- B * A");
   await page.getByRole("button", { name: /^B ⊗ A, formula 2/ }).click();
-  const rules = page.getByRole("dialog", { name: "Rules" }).getByRole("button");
+  const rules = page.getByRole("dialog", { name: "Rules" }).getByRole("listitem");
   await expect(rules).toHaveCount(1);
   await expect(rules.first()).toContainText("⊗");
 });
@@ -122,7 +122,9 @@ test("the hint ladder climbs four rungs, and the last applies the step", async (
   await hint.click();
   await expect(page.locator(".dock .hint")).toContainText("Apply ⅋ to A⊥ ⅋ B⊥");
   await hint.click();
-  await expect(page.locator(".dock .hint")).toContainText("Can you say why this was the step to take?");
+  await expect(page.locator(".dock .hint")).toContainText(
+    "Can you say why this was the step to take?",
+  );
   // The page applied ⅋: its formula is gone, its premise's are the goal, and it is a step.
   await expect(page.getByRole("button", { name: /^A⊥, formula 1 of goal 2/ })).toBeVisible();
   await expect(page.getByRole("button", { name: /^A⊥ ⅋ B⊥/ })).toHaveCount(0);

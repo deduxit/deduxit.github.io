@@ -17,6 +17,7 @@
  * templates, with their licence.
  */
 
+import { hinted, RuleName } from "./RuleHint";
 import { ArrowLeft, Compass, Play, X } from "lucide-solid";
 import { createEffect, createSignal, For, Match, onCleanup, Show, Switch } from "solid-js";
 import { Portal } from "solid-js/web";
@@ -98,7 +99,7 @@ export function Stairs(props: { level: Level }) {
 }
 
 /** A rule drawn as its schema: the premises over a bar over the conclusion, its name beside the bar. */
-export function Schema(props: { rule: Rule }) {
+export function Schema(props: { rule: Pick<Rule, "name" | "premises" | "conclusion"> }) {
   return (
     <span
       class="schema m"
@@ -491,7 +492,7 @@ function LessonView(props: {
                       when={s().guess === s().rule}
                       fallback={
                         <>
-                          The step is <span class="m">{s().rule}</span>, not{" "}
+                          The step is <RuleName label={s().rule} />, not{" "}
                           <Show when={s().guess !== "no rule"} fallback="“no rule”">
                             <span class="m">{s().guess}</span>
                           </Show>
@@ -499,13 +500,13 @@ function LessonView(props: {
                         </>
                       }
                     >
-                      <span class="kw ok">Right</span> The step is <span class="m">{s().rule}</span>
-                      ; its reason is beside it on the stage.
+                      <span class="kw ok">Right</span> The step is <RuleName label={s().rule} />
+                      {"; its reason is beside it on the stage."}
                     </Show>
                   }
                 >
-                  The step is <span class="m">{s().rule}</span>; its reason is beside it on the
-                  stage.
+                  The step is <RuleName label={s().rule} />
+                  {"; its reason is beside it on the stage."}
                 </Show>
               </p>
             )}
@@ -566,6 +567,7 @@ function LessonView(props: {
                       type="button"
                       class="btn outline rule-guess m"
                       aria-label={`Predict ${rule}`}
+                      {...hinted(rule)}
                       onClick={() => void reveal(rule)}
                     >
                       {rule}
@@ -1205,7 +1207,7 @@ function Refusal(props: {
           fallback={
             <>
               <p>
-                Its last step, <span class="m">{props.refusal.refused.rule}</span>:{" "}
+                Its last step, <RuleName label={props.refusal.refused.rule} />:{" "}
                 <Words text={props.refusal.refused.reason} />
               </p>
               <p class="sub">

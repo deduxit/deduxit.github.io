@@ -22,22 +22,17 @@ import { Cancelled } from "../lib/protocol";
 import { calculusOf, parameterOf, SUITES } from "../lib/suites";
 import { inputProblem, pretty } from "../lib/words";
 import type { Theme } from "../lib/theme";
-import {
-  type Example,
-  type Lesson,
-  type Rule,
-  ruleNamed,
-  type Sample,
-  type Stop,
-} from "../lib/content";
+import type { Example, Lesson, Rule, Sample, Stop } from "../lib/content";
+import { hintsFor } from "../lib/rules";
 import { BottomBand } from "./BottomBand";
-import { LearnFrame, Schema } from "./Learn";
+import { LearnFrame } from "./Learn";
+import { RuleHints } from "./RuleHint";
 import { createPractice } from "./Practice";
 import { Stage } from "./Stage";
 import { createProver } from "./state";
 import { TopBand } from "./TopBand";
 import { Tour } from "./Tour";
-import { createUi, ladderKey, Words } from "./ui";
+import { createUi, ladderKey } from "./ui";
 
 export default function App(props: {
   /** The math fonts' addresses: the page imports them, so each is served under /fonts/ beside its licence. */
@@ -61,8 +56,6 @@ export default function App(props: {
   const [tip, setTip] = createSignal<{
     text: string;
     key?: string;
-    /** A rule's schema, which a rule of the popover shows with Learn on. */
-    rule?: Rule;
     x: number;
     y: number;
   } | null>(null);
@@ -270,8 +263,8 @@ export default function App(props: {
   }
 
   // The one hover rule: any element with a tip shows it on hover and on focus, its key after the
-  // words; a rule of the popover (`data-rule`, with Learn on) its schema and what it does.
-  // A finger neither hovers nor means the focus a tap leaves: no tip follows a touch.
+  // words. A finger neither hovers nor means the focus a tap leaves: no tip follows a touch.
+  // A rule label's hint is `RuleHints`', which a tap opens too.
   onMount(() => {
     let touched = false;
     const pointer = (event: PointerEvent) => {
@@ -282,30 +275,12 @@ export default function App(props: {
     };
     const show = (event: Event) => {
       if (touched || (event instanceof PointerEvent && event.pointerType === "touch")) return;
-      const element = (event.target as Element | null)?.closest?.("[data-tip], [data-rule]");
+      const element = (event.target as Element | null)?.closest?.("[data-tip]");
       if (!element) return;
       const r = element.getBoundingClientRect();
       const key = element.getAttribute("data-key");
-      // An intuitionistic proof is drawn two-sided, so its rules show their two-sided schemas.
-      // The reference's schemas are linear logic's: an ordinary rule has none there.
-      const calculus = prover.current()?.calculus;
-      const named =
-        calculus?.suite === "linear"
-          ? ruleNamed(
-              props.rules,
-              element.getAttribute("data-rule") ?? "",
-              calculus.mode.startsWith("intuitionistic"),
-            )
-          : undefined;
-      // A rule the reference draws no schema of (Mix, weakening) has nothing to show.
-      if (!named && !element.hasAttribute("data-tip")) return;
       setTip({
-        text: named
-          ? named.as === named.rule.name
-            ? named.rule.says
-            : `${named.as} is the two-sided name of ${named.rule.name}. ${named.rule.says}`
-          : (element.getAttribute("data-tip") ?? ""),
-        ...(named ? { rule: named.rule } : {}),
+        text: element.getAttribute("data-tip") ?? "",
         ...(key ? { key } : {}),
         x: r.left,
         y: r.bottom + 6,
@@ -524,20 +499,17 @@ export default function App(props: {
       <Show when={tip()}>
         {(t) => (
           <div class="tip" ref={tipBox} role="tooltip">
-            <Show when={t().rule} fallback={t().text}>
-              {(rule) => (
-                <>
-                  <Schema rule={rule()} />
-                  <span>
-                    <Words text={t().text} />
-                  </span>
-                </>
-              )}
-            </Show>
+            {t().text}
             <Show when={t().key}>{(k) => <kbd>{k()}</kbd>}</Show>
           </div>
         )}
       </Show>
+      <RuleHints
+        hints={(() => {
+          const calculus = prover.current()?.calculus;
+          return calculus ? hintsFor(props.rules, calculus, prover.settings().twoSided) : [];
+        })()}
+      />
       <div class="sr-only" aria-live="polite">
         {ui.live}
       </div>

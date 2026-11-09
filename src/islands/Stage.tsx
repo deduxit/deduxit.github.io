@@ -13,6 +13,7 @@
 import {
   ChevronLeft,
   ChevronRight,
+  Info,
   Maximize,
   SquareArrowOutUpRight,
   ZoomIn,
@@ -54,6 +55,7 @@ import {
   type Settings,
   viewJson,
 } from "./state";
+import { hinted, titled } from "./RuleHint";
 import { ladderKey, phone, token, type Ui, Words } from "./ui";
 
 /** A formula's button over the drawing, in the drawing's own pixels. */
@@ -67,6 +69,15 @@ interface Hit {
   readonly h: number;
   /** The part of the width that is padding past the formula's ends, the same on screen at every zoom. */
   readonly fixed: number;
+}
+
+/** A rule label's button over the drawing, in the drawing's own pixels, which opens its hint. */
+interface LabelHit {
+  readonly label: string;
+  readonly x: number;
+  readonly y: number;
+  readonly w: number;
+  readonly h: number;
 }
 
 /** A cut's button over the drawing, in the drawing's own pixels: what a step names it by. */
@@ -133,6 +144,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
   let popover: HTMLDivElement | undefined;
   const [hits, setHits] = createSignal<Hit[]>([]);
   const [cutHits, setCutHits] = createSignal<CutHit[]>([]);
+  const [labelHits, setLabelHits] = createSignal<LabelHit[]>([]);
   /** The cut chooser's formula as typed, and what deduxit said of it. */
   const [cutText, setCutText] = createSignal("");
   const [cutSaid, setCutSaid] = createSignal<Said | null>(null);
@@ -430,6 +442,48 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
     }
     setCutHits(found);
   }
+
+  /**
+   * The rule labels' buttons, read off the drawing shown: deduxit writes an inference's label
+   * right after its group `i<n>`, a text, or a group where the name has a subscript (`⊕₁`), whose
+   * digits the name writes as subscripts. Each is at least a control's height on the screen.
+   */
+  function labelTargets(): LabelHit[] {
+    if (ui.tab === "net" || !host.firstChild) return [];
+    const origin = host.getBoundingClientRect();
+    const k = camera().k;
+    const least = token("--size-control-small") / k;
+    const found: LabelHit[] = [];
+    for (const group of host.querySelectorAll("g[id]")) {
+      if (!/^i\d+$/.test(group.id)) continue;
+      const label = group.nextElementSibling;
+      if (!(label instanceof SVGGraphicsElement) || label.id || label.classList.contains("engine"))
+        continue;
+      const text = (label.textContent ?? "").replace(/\s+/g, "");
+      const name =
+        label instanceof SVGGElement
+          ? text.replace(/\d+$/, (d) => Array.from(d, (c) => "₀₁₂₃₄₅₆₇₈₉"[Number(c)]).join(""))
+          : text;
+      if (!name || !hinted(name)["data-rule-hint"]) continue;
+      const r = label.getBoundingClientRect();
+      const w = Math.max(r.width / k, least);
+      const h = Math.max(r.height / k, least);
+      found.push({
+        label: name,
+        x: (r.left - origin.left) / k + r.width / k / 2 - w / 2,
+        y: (r.top - origin.top) / k + r.height / k / 2 - h / 2,
+        w,
+        h,
+      });
+    }
+    return found;
+  }
+  // Whenever the formulas' or the cuts' buttons are laid again, so are the labels'.
+  createEffect(() => {
+    hits();
+    cutHits();
+    setLabelHits(labelTargets());
+  });
 
   /** The inference whose premise an inference is, or -1 for the root. */
   function parentOf(inference: number): number {
@@ -1118,6 +1172,24 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
       <div class="world" ref={world} data-glide={glide() ? "" : undefined}>
         <div class="drawing" ref={host} />
         <div class="hits">
+          {/* Under the formulas' buttons, which win where the two meet. */}
+          <For each={labelHits()}>
+            {(hit) => (
+              <button
+                type="button"
+                class="lb"
+                data-hint-toggle=""
+                aria-label={`Rule ${hit.label}`}
+                {...hinted(hit.label)}
+                ref={(el) => {
+                  el.style.left = `${hit.x}px`;
+                  el.style.top = `${hit.y}px`;
+                  el.style.width = `${hit.w}px`;
+                  el.style.height = `${hit.h}px`;
+                }}
+              />
+            )}
+          </For>
           <For each={hits()}>
             {(hit) => (
               <button
@@ -1599,7 +1671,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
                         <button
                           type="button"
                           class="rule"
-                          data-rule={ui.learn ? rule.rule : undefined}
+                          {...hinted(rule.rule)}
                           onClick={() => void choose(rule)}
                         >
                           <span class="rn">{rule.rule}</span>
@@ -1608,6 +1680,17 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
                           </span>
                           <kbd>{i() + 1}</kbd>
                         </button>
+                        <Show when={titled(rule.rule)}>
+                          <button
+                            type="button"
+                            class="btn btn-s rule-info"
+                            data-hint-toggle=""
+                            aria-label={`About ${titled(rule.rule)}`}
+                            {...hinted(rule.rule)}
+                          >
+                            <Info aria-hidden="true" />
+                          </button>
+                        </Show>
                       </li>
                     )}
                   </For>

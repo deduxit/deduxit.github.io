@@ -170,19 +170,3 @@ export function written(key: string): DocumentFragment {
     (template?.content.cloneNode(true) as DocumentFragment | undefined) ?? new DocumentFragment()
   );
 }
-
-/**
- * The rule deduxit names `name`, with the name it was asked by: on two sides (an intuitionistic
- * proof) its two-sided schema where the reference has one, else the one-sided rule by its name
- * or one of its two-sided ones.
- */
-export function ruleNamed(
-  rules: readonly Rule[],
-  name: string,
-  twoSides = false,
-): { readonly rule: Rule; readonly as: string } | undefined {
-  const rule =
-    (twoSides ? rules.find((r) => r.oneSided !== undefined && r.name === name) : undefined) ??
-    rules.find((r) => r.twoSided !== undefined && (r.name === name || r.twoSided.includes(name)));
-  return rule && { rule, as: name };
-}

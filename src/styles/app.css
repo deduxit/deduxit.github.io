@@ -2171,3 +2171,50 @@ fieldset {
 .cut-field .field {
   width: 100%;
 }
+
+/* A rule label's hint (RuleHint.tsx): a tip the pointer may rest on, with the rule's schema. */
+.rule-tip {
+  pointer-events: auto;
+  flex-direction: column;
+  align-items: start;
+}
+.rule-tip-h {
+  margin: 0;
+  font-weight: var(--font-weight-semibold);
+}
+.rules li {
+  display: flex;
+  gap: var(--spacing-1);
+}
+.rules li .rule {
+  flex: 1;
+}
+/* A rule label's button over the drawing: seen on hover and on focus only. */
+.lb {
+  position: absolute;
+  pointer-events: auto;
+  background: transparent;
+  border: var(--line) solid transparent;
+  border-radius: var(--radius-control);
+  padding: 0;
+  cursor: help;
+}
+.lb:hover,
+.lb:focus-visible {
+  background: var(--color-accent-wash);
+  border-color: var(--color-line);
+}
+/* A rule's name in running text, which opens its hint. */
+.rule-name {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--size-control-small);
+  min-width: var(--size-control-small);
+  padding: 0 var(--spacing-0-5);
+  background: transparent;
+  border: 0;
+  border-bottom: var(--line) dotted currentColor;
+  color: inherit;
+  cursor: help;
+}

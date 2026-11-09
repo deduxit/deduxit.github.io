@@ -487,11 +487,21 @@ the page reads.
 - **Learn's hover explanations** (D47) are on only with Learn on: a formula's button gets
   `data-tip`, its last connective's name and reading (`readingOf`, a leading `∀` or `∃` taken
   as the formula's, since a quantifier reaches as far right as it can; `READINGS` in
-  `words.ts`, which `lessons.test.ts` holds to the reference table's reading column), and a
-  rule of the popover `data-rule`, whose tip in `App.tsx` draws the rule's schema
-  (`Schema`) from the `rules` collection (`ruleNamed`): in an intuitionistic proof its
-  two-sided schema, elsewhere the one-sided rule, a two-sided name by the one-sided rule it
-  names. A verdict's reason is the note's and the status's tip, as before.
+  `words.ts`, which `lessons.test.ts` holds to the reference table's reading column). A
+  verdict's reason is the note's and the status's tip, as before.
+- **Every rule label has a hint, Learn on or off** (`RuleHint.tsx`, the author's request of
+  2026-11-09): the full name, the schema (`Schema`) and one sentence, from `hintsFor` in
+  `src/lib/rules.ts`: the reference's rules (`rules/`) for the one-sided calculus and ILL, its
+  own tables for classical linear logic drawn two-sided (the drawing's names; a classical
+  session's steps keep the one-sided ones), Mix, affine `wk`, Lambek, LK and LJ (G3's forms).
+  `rules.test.ts` holds every label deduxit draws to a hint: a new rule of deduxit gets its
+  entry there and in the test. A label is hinted by `hinted(label)` (`data-rule-hint` and an
+  `aria-describedby` to a hidden sentence per rule, `rule-hint-<code points>`); a press opens
+  it only on an element with `data-hint-toggle` (the drawing's label buttons `.lb`, laid over
+  each label as the formulas' buttons are and under them, `RuleName` in Learn's text, the
+  popover's `About <rule>` buttons), since a press on a rule of the popover or a prediction
+  acts. Hover and the keyboard's focus open it anywhere; Escape closes the hint alone; the
+  pointer may rest on it (SC 1.4.13). It is no `data-tip`: tips follow no touch, the hint does.
 - **The reference's rules** are `rules/<nn>-<name>.md` (deduxit's name, the premises and the
   conclusion as the Handbook's Table 1.4 writes them, deduxit's two-sided names from its
   `ClassicalRule` table, the lesson), drawn by `Rules` into the reference's `<div
