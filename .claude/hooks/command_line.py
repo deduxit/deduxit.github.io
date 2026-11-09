@@ -1,4 +1,4 @@
-# linlog © Fabian Lukas Grubmüller 2026
+# deduxit © Fabian Lukas Grubmüller 2026
 # Licensed under the EUPL
 """The command lines of a Bash call, as the PreToolUse guards read them: the
 commands it runs, past separators, quotes, assignments, wrappers (`env`,

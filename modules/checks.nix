@@ -1,4 +1,4 @@
-# linlog © Fabian Lukas Grubmüller 2026
+# deduxit © Fabian Lukas Grubmüller 2026
 # Licensed under the EUPL
 
 # What `nix flake check' covers beyond the `treefmt' check treefmt-nix adds
@@ -181,7 +181,7 @@
       licenceHeaders = pkgs.writeText "check-licence-headers.py" ''
         import pathlib, sys
 
-        FIRST = "linlog © Fabian Lukas Grubmüller 2026"
+        FIRST = "deduxit © Fabian Lukas Grubmüller 2026"
         SECOND = "Licensed under the EUPL"
         COMMENT = {".nix": "#", ".sh": "#", ".py": "#", ".yml": "#", ".yaml": "#",
                    ".ts": "//", ".tsx": "//", ".astro": "//", ".css": "/*"}

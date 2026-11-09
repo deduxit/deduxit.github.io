@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# linlog © Fabian Lukas Grubmüller 2026
+# deduxit © Fabian Lukas Grubmüller 2026
 # Licensed under the EUPL
 #
 # PostToolUse(Write|Edit): run the flake's formatter (`nix fmt`, i.e. treefmt

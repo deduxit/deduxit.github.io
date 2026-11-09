@@ -1,4 +1,4 @@
-// linlog © Fabian Lukas Grubmüller 2026
+// deduxit © Fabian Lukas Grubmüller 2026
 // Licensed under the EUPL
 
 // Ordinary logic on the page: a tab's calculus popover lists the suites, and the Ordinary one
