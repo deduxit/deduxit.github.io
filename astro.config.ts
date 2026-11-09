@@ -31,7 +31,7 @@ const here = (path: string) => fileURLToPath(new URL(path, import.meta.url));
 const linked = (path: string) => (existsSync(here(path)) ? [realpathSync(here(path))] : []);
 
 export default defineConfig({
-  site: "https://sequentium.github.io",
+  site: "https://deduxit.github.io",
   output: "static",
   build: {
     format: "directory",

@@ -571,13 +571,13 @@ the page reads.
   the plugin alone never sees Astro's pages. The build fills `FILES` (every file of the
   site, the page as `/`) and `VERSION` (a hash of their contents) into `/sw.js`.
 - **Its scope is the origin, its reach is the site's own files**: a worker at `/sw.js`
-  cannot be scoped narrower than `/`, where the page is, and `/sequentium/` (linlog's rustdoc and,
-  under `/sequentium/manual/`, its manual, another Pages site on the origin) lies under it. So the fetch handler answers only the
+  cannot be scoped narrower than `/`, where the page is, and `/deduxit/` (linlog's rustdoc and,
+  under `/deduxit/manual/`, its manual, another Pages site on the origin) lies under it. So the fetch handler answers only the
   paths in `FILES` and navigations to `/`, and returns without `respondWith` for anything
-  else; under `/sequentium` it returns first, and the Static Routing API (`addRoutes`, where
+  else; under `/deduxit` it returns first, and the Static Routing API (`addRoutes`, where
   the browser has it) sends those requests to the network before the worker wakes.
   Never cache by pattern, never add a fallback page for other navigations, never cache
-  a path under `/sequentium`.
+  a path under `/deduxit`.
 - **Every file is fetched past the HTTP cache when the worker installs** (`cache:
   "reload"`): Pages lets a browser keep a file ten minutes, and a new worker installed
   right after a deployment would otherwise cache the old page beside the new files
@@ -613,7 +613,7 @@ the page reads.
   the site serves to `logo/`, beside that notice, and every logo SVG to outlined text.
   Figtree's OFL 1.1 asks nothing for an outlined logo (its condition 5 exempts a document
   created with the font) and no font file goes with the SVGs; the notice names it anyway.
-- **`tests/serve.ts` serves `tests/linlog-docs/` at `/sequentium/`**, as Pages serves the
+- **`tests/serve.ts` serves `tests/linlog-docs/` at `/deduxit/`**, as Pages serves the
   rustdoc beside the site, so the tests see the worker leave it alone.
 
 ## Styling

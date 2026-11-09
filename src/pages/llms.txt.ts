@@ -3,7 +3,7 @@
 
 // The page's llms.txt (llmstxt.org): for AI models, what the page is and
 // where linlog's own guide for them is, which linlog's rustdoc site on this
-// origin serves at /sequentium/llms.txt. The text is written content, in
+// origin serves at /deduxit/llms.txt. The text is written content, in
 // src/content/llms.txt.
 import text from "../content/llms.txt?raw";
 

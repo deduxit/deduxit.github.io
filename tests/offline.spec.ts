@@ -2,7 +2,7 @@
 // Licensed under the EUPL
 
 // Offline and installable: the service worker caches the site's own files
-// and leaves linlog's documentation at /sequentium/, another site on the same
+// and leaves linlog's documentation at /deduxit/, another site on the same
 // origin, alone; the manifest meets Chromium's install criteria.
 
 import type { Page } from "@playwright/test";
@@ -53,7 +53,7 @@ test("the service worker fetches what it caches past the HTTP cache", async ({ p
   expect(cached).not.toBe(loaded?.headers()["x-github-request-id"]);
 });
 
-test("the service worker leaves linlog's documentation at /sequentium/ alone", async ({
+test("the service worker leaves linlog's documentation at /deduxit/ alone", async ({
   page,
   context,
 }) => {
@@ -66,15 +66,15 @@ test("the service worker leaves linlog's documentation at /sequentium/ alone", a
     return urls;
   });
   expect(cached.length).toBeGreaterThan(10);
-  expect(cached.filter((url) => new URL(url).pathname.startsWith("/sequentium"))).toEqual([]);
-  const docs = await page.goto("/sequentium/");
+  expect(cached.filter((url) => new URL(url).pathname.startsWith("/deduxit"))).toEqual([]);
+  const docs = await page.goto("/deduxit/");
   expect(docs?.status()).toBe(200);
   expect(docs?.fromServiceWorker()).toBe(false);
   await expect(page.getByRole("heading", { name: "linlog's documentation" })).toBeVisible();
   // With no network an address of the documentation the browser has not
   // kept is served from nowhere (no worker's fallback), while the prover is.
   await context.setOffline(true);
-  await expect(page.goto("/sequentium/?unseen")).rejects.toThrow();
+  await expect(page.goto("/deduxit/?unseen")).rejects.toThrow();
   const other = await context.newPage();
   const prover = await other.goto("/");
   expect(prover?.fromServiceWorker()).toBe(true);

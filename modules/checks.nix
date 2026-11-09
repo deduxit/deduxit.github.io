@@ -42,7 +42,7 @@
 #               sequent that `proof' accepts, no unprovable one with a session
 #               (modules/_checks/problems.py)
 #   pages-paths the site as Pages publishes it: a 404.html at its root, and
-#               nothing at /sequentium or under it, where the Pages site of
+#               nothing at /deduxit or under it, where the Pages site of
 #               linlog's repository (the rustdoc and the manual) lives on
 #               the same address
 #   licence-headers
@@ -158,14 +158,14 @@
         problems = []
         if not (site / "404.html").is_file():
             problems.append("no 404.html at the site's root, which Pages serves for a missing path")
-        # Paths are matched as Pages matches them, case and all: /sequentium is
+        # Paths are matched as Pages matches them, case and all: /deduxit is
         # the project site of linlog's repository, which a file of this one must never shadow.
-        taken = sorted(str(p.relative_to(site)) for p in site.iterdir() if p.name.split(".")[0] == "sequentium")
+        taken = sorted(str(p.relative_to(site)) for p in site.iterdir() if p.name.split(".")[0] == "deduxit")
         if taken:
-            problems.append("the site has paths at /sequentium, the Pages site of linlog's repository: " + ", ".join(taken))
+            problems.append("the site has paths at /deduxit, the Pages site of linlog's repository: " + ", ".join(taken))
         if problems:
             sys.exit("\n".join(problems))
-        print("404.html is at the root, and nothing is at /sequentium")
+        print("404.html is at the root, and nothing is at /deduxit")
       '';
 
       licenceHeaders = pkgs.writeText "check-licence-headers.py" ''

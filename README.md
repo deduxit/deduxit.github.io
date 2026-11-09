@@ -1,6 +1,6 @@
 # linlog in the browser
 
-The web front end of [linlog](https://github.com/sequentium/sequentium), a prover for
+The web front end of [linlog](https://github.com/deduxit/deduxit), a prover for
 linear logic and, through its translations, ordinary propositional logic: type a sequent
 and prove it by clicking, step by step, or let the search close a goal; see the derivation
 and, for MLL, the proof net drawn. The prover runs in the
@@ -104,9 +104,9 @@ of this one. The written content is Markdown under `src/content/`.
 
 ## Hosting
 
-GitHub Pages serves the site at https://sequentium.github.io/: every push to `main`
+GitHub Pages serves the site at https://deduxit.github.io/: every push to `main`
 whose checks pass is deployed by the CI workflow. linlog's API documentation at
-https://sequentium.github.io/sequentium/ is linlog's own Pages site, which nothing here
+https://deduxit.github.io/deduxit/ is linlog's own Pages site, which nothing here
 touches, the service worker included. The Content-Security-Policy is a `<meta>` element,
 since Pages sets no header.
 

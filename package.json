@@ -1,9 +1,9 @@
 {
-  "name": "sequentium-site",
+  "name": "deduxit-site",
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "linlog in the browser, served at sequentium.github.io",
+  "description": "linlog in the browser, served at deduxit.github.io",
   "license": "EUPL-1.2",
   "engines": {
     "node": ">=24"

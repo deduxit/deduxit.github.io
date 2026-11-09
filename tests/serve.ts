@@ -9,7 +9,7 @@
 // max-age=600`), and an id for each response, as Pages's
 // `x-github-request-id`, by which a test tells a fetch from the network
 // from one the browser kept. No header beyond those, since Pages sets none
-// the site could choose. Under /sequentium/ it serves
+// the site could choose. Under /deduxit/ it serves
 // tests/linlog-docs/, a stand-in for linlog's own Pages site (the rustdoc),
 // which Pages serves on the same origin.
 // Usage: node tests/serve.ts DIR PORT
@@ -52,8 +52,8 @@ let responses = 0;
 createServer((request, response) => {
   const url = new URL(request.url ?? "/", "http://localhost");
   const pathname = decodeURIComponent(url.pathname);
-  const [root, rest] = pathname.startsWith("/sequentium/")
-    ? [docs, pathname.slice("/sequentium/".length)]
+  const [root, rest] = pathname.startsWith("/deduxit/")
+    ? [docs, pathname.slice("/deduxit/".length)]
     : [dir, pathname];
   const path = normalize(join(root, rest));
   const found = path.startsWith(normalize(root)) ? file(path) : undefined;
