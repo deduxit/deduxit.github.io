@@ -4,8 +4,8 @@
 /**
  * The ordinary suite as the page reads it: deduxit's `ordinary_…` calls prove a sequent of
  * classical, intuitionistic or minimal propositional logic step by step in LK or LJ, and draw
- * the derivation itself, never its linear image. Their documents (deduxit's `plan/web/README.md`,
- * the rows `ordinary_…`) are read here into the shapes the stage, the dock and the bands already
+ * the derivation itself, never its linear image. Their documents (the bindings' doc comments
+ * on the calls `ordinary_…`) are read here into the shapes the stage, the dock and the bands already
  * show: a goal's formulas numbered left of ⊢ first, then right of it, as the drawing's
  * `i<n>-<p>` ids number them; a step's formula by its side and its position there.
  */
@@ -133,7 +133,7 @@ export function sequentText(session: OrdinarySession): string {
 }
 
 /**
- * Undo on a branch (the author's D13): the session without the step that opened `goal` and
+ * Undo on a branch: the session without the step that opened `goal` and
  * every step since in that step's premises, or without its last step where `goal` is left
  * out (a finished proof). A step is an entry of the history, the goal it expanded, and its
  * inferences are that goal's subtree: its own (a structural run below its rule, or a search's
@@ -299,7 +299,7 @@ export function ordinaryVerdict(outcome: OrdinaryOutcome): Said & { tone: Tone }
   if (outcome.verdict === "not_valid") {
     return {
       keyword: "Not valid",
-      sentence: `The sequent has no derivation in ${named(outcome.logic)}: deduxit decided it through its translation into linear logic, which proves exactly the translations of valid sequents, and the translated sequent has no proof.`,
+      sentence: `The sequent has no derivation in ${named(outcome.logic)}. deduxit decided this by translating it into linear logic, where a translation has a proof exactly when the sequent is valid, and this one has none.`,
       tone: "bad",
     };
   }
@@ -315,7 +315,7 @@ export function ordinaryVerdict(outcome: OrdinaryOutcome): Said & { tone: Tone }
   };
   return {
     keyword: "Unknown: gave up",
-    sentence: `The search gave up because ${why[reason?.kind ?? ""] ?? "it reached a bound"}. That says nothing about validity.`,
+    sentence: `The search gave up because ${why[reason?.kind ?? ""] ?? "it reached a bound"}. That says nothing about validity: try a larger budget.`,
     tone: "warn",
   };
 }
@@ -338,7 +338,7 @@ export function ordinaryRefusal(
     case "rule":
       return {
         keyword: `${rule} refused: another connective`,
-        sentence: `${rule} does not act on ${at()} ${d["side"] === "left" ? "left" : "right"} of ⊢.`,
+        sentence: `${rule} does not act on ${at()} ${d["side"] === "left" ? "left" : "right"} of ⊢. Choose one of the rules the list offers.`,
       };
     case "logic":
       return {
@@ -348,7 +348,7 @@ export function ordinaryRefusal(
     case "no_partner":
       return {
         keyword: "ax refused: no partner",
-        sentence: `The axiom needs ${at()} on both sides of ⊢.`,
+        sentence: `The axiom needs ${at()} on both sides of ⊢. Choose another rule.`,
       };
     case "size":
       return {

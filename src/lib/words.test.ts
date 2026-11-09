@@ -105,10 +105,10 @@ describe("the hint ladder's first rung", () => {
   });
   it("says that the invertible rules are done when the page applies them", () => {
     expect(rungs(tensor, formulas, false, true)[0]).toBe(
-      "The invertible rules are applied already; on this goal a split of the context comes next.",
+      "The invertible rules are applied already; on this goal a split of the goal's formulas comes next.",
     );
     expect(rungs(tensor, formulas, false, false)[0]).toBe(
-      "Work on this goal: a split of the context comes next.",
+      "Work on this goal: a split of the goal's formulas comes next.",
     );
   });
 });

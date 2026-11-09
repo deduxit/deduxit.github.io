@@ -49,55 +49,55 @@ export function refusal(failed: Failure, formulas: readonly GoalFormula[], rule:
     case "not_alone":
       return {
         keyword: `${rule} refused: not alone`,
-        sentence: `${rule} needs ${at} alone in the goal${rule === "ax" ? " with its dual" : ""}; other formulas are still there.`,
+        sentence: `${rule} needs ${at} alone in the goal${rule === "ax" ? " with its dual" : ""}, and other formulas are still there. Apply their rules first.`,
       };
     case "no_dual":
       return {
         keyword: `${rule} refused: no dual partner`,
-        sentence: `ax needs ${at} and its dual alone in the goal, and the other formula is not its dual.`,
+        sentence: `ax needs ${at} and its dual alone in the goal, and the other formula is not its dual. Choose another rule, or go back to an earlier step.`,
       };
     case "not_quest":
       return {
         keyword: `${rule} refused: ${at} is not a ? formula`,
-        sentence: `Promotion needs every other formula of the goal under ?, and ${at} is not.`,
+        sentence: `Promotion needs every other formula of the goal under ?, and ${at} is not. Act on ${at} first.`,
       };
     case "mode":
       return {
         keyword: `${rule} refused: not in this calculus`,
-        sentence: `${rule} is not a rule of this calculus: weakening a formula that is not under ? needs affine weakening, and Mix needs Mix.`,
+        sentence: `${rule} is not a rule of this logic: dropping a formula that is not under ? needs affine weakening, and mix needs Mix. Both are switches of the Logic mark beside the sequent.`,
       };
     case "succedents":
       return {
         keyword: `${rule} refused: ${String(details["count"])} formulas right of ⊢`,
-        sentence: `In intuitionistic logic a premise has one formula right of ⊢; this split would leave ${String(details["count"])}.`,
+        sentence: `In intuitionistic logic a premise has one formula right of ⊢, and this split would leave ${String(details["count"])}. Choose another split.`,
       };
     case "output":
       return {
         keyword: `${rule} refused: right of ⊢`,
-        sentence: `In intuitionistic logic the formula right of ⊢ cannot be weakened.`,
+        sentence: `In intuitionistic logic the formula right of ⊢ cannot be dropped. Choose another rule.`,
       };
     case "empty_premise":
       return {
         keyword: `${rule} refused: an empty premise`,
         sentence:
-          "This split leaves a premise with no formula, and no rule closes the empty sequent.",
+          "This split leaves a premise with no formula, and no rule closes an empty goal. Give each premise at least one formula.",
       };
     case "rule":
       return {
         keyword: `${rule} refused: another connective`,
-        sentence: `${rule} does not act on ${at}.`,
+        sentence: `${rule} does not act on ${at}. Choose one of the rules the list offers.`,
       };
     case "eigenvariable": {
       const name = String(details["name"] ?? "");
       return {
         keyword: `${rule} refused: the eigenvariable condition`,
-        sentence: `The eigenvariable ${name} cannot stand here: either no ∀R or ∃L step below this goal made it, or it was made after the open witness it would fill, inside that witness's own step.`,
+        sentence: `The eigenvariable ${name} cannot stand here. Either no ∀R or ∃L step below this goal made it, or it was made after the open witness it would fill. Choose another term.`,
       };
     }
     case "witness":
       return {
         keyword: `${rule} refused: no such term`,
-        sentence: `The witness must be a term of the sequent's constants and function symbols and of the eigenvariables made below this goal: ${String(details["reason"] ?? "")}.`,
+        sentence: `A witness is a term built from the sequent's constants and function symbols and the eigenvariables made below this goal: ${String(details["reason"] ?? "")}.`,
       };
     case "no_witness":
       return {
@@ -107,7 +107,7 @@ export function refusal(failed: Failure, formulas: readonly GoalFormula[], rule:
     case "cut_symbol":
       return {
         keyword: `${rule} refused: ${String(details["name"] ?? "")} is not in the sequent`,
-        sentence: `With quantifiers, a cut formula is written with the sequent's own predicates and function symbols, at their arities, and the eigenvariables made below this goal.`,
+        sentence: `With quantifiers, write the cut formula with the sequent's own predicates and function symbols, each with as many arguments as there, and the eigenvariables made below this goal.`,
       };
     default:
       return { keyword: `${rule} refused`, sentence: failed.message };
@@ -216,7 +216,7 @@ export function fillRefusal(failed: Failure, tab: string): Said {
     case "invalid_proof":
       return {
         keyword: "Not filled: not a proof in this calculus",
-        sentence: `deduxit's checker refused the proof of ${tab} here: ${failed.message}. It holds in its own tab's calculus, which allows a rule this one does not.`,
+        sentence: `deduxit's checker refused the proof of ${tab} here: ${failed.message}. The proof holds in its own tab's logic, which allows a rule this one does not.`,
       };
     case "sequent_mismatch":
       return {
@@ -276,7 +276,7 @@ export function verdict(outcome: Outcome, checked: boolean | null): Said & { ton
       saturated: {
         keyword: `Unprovable${mark}: saturation`,
         sentence:
-          "The inverse method derived, from the axioms upward, every sequent that can stand in a proof of this goal until nothing new came, and the goal is not among them; deduxit's own checker confirmed that the set is closed under the rules.",
+          "The inverse method built, from the axioms up, every sequent that could appear in a proof of this goal, until nothing new came. The goal is not among them, and deduxit's checker confirmed the set.",
       },
       exhausted: {
         keyword: "Unprovable: search exhausted",
@@ -300,7 +300,7 @@ export function verdict(outcome: Outcome, checked: boolean | null): Said & { ton
   };
   return {
     keyword: "Unknown: gave up",
-    sentence: `The search gave up because ${why[reason?.kind ?? ""] ?? "it reached a bound"}${outcome.engine ? ` (engine ${outcome.engine})` : ""}. That says nothing about provability.`,
+    sentence: `The search gave up because ${why[reason?.kind ?? ""] ?? "it reached a bound"}${outcome.engine ? ` (engine ${outcome.engine})` : ""}. That says nothing about whether a proof exists: try a larger budget.`,
     tone: "warn",
   };
 }
@@ -313,7 +313,7 @@ export function ruleKind(rule: string, invertible: boolean): string {
   if (rule === "ax") return "the axiom";
   if (["1", "1R"].includes(rule)) return "the unit 1";
   if (invertible) return "an invertible rule";
-  if (["⊗", "mix", "⊗R", "⊸L"].includes(rule)) return "a split of the context";
+  if (["⊗", "mix", "⊗R", "⊸L"].includes(rule)) return "a split of the goal's formulas";
   if (["∃", "∃R", "∀L"].includes(rule)) return "a choice of witness";
   if (rule.startsWith("⊕") || rule.startsWith("&L")) return "a choice of one side";
   if (rule.startsWith("?") || rule.startsWith("!")) return "an exponential rule";
@@ -345,7 +345,7 @@ export function rungs(
     steps.length > 1
       ? `Apply ${steps.map((s) => s.rule).join(", then ")}, starting on ${at}.`
       : `Apply ${first.rule} to ${at}${left.length ? `, with ${left.join(", ")} going left` : first.left ? ", with nothing else going left" : ""}.`,
-    "Applied. Why was this the step to take?",
+    "Applied. Can you say why this was the step to take?",
   ];
 }
 

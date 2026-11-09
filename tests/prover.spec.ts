@@ -122,7 +122,7 @@ test("the hint ladder climbs four rungs, and the last applies the step", async (
   await hint.click();
   await expect(page.locator(".dock .hint")).toContainText("Apply ⅋ to A⊥ ⅋ B⊥");
   await hint.click();
-  await expect(page.locator(".dock .hint")).toContainText("Why was this the step to take?");
+  await expect(page.locator(".dock .hint")).toContainText("Can you say why this was the step to take?");
   // The page applied ⅋: its formula is gone, its premise's are the goal, and it is a step.
   await expect(page.getByRole("button", { name: /^A⊥, formula 1 of goal 2/ })).toBeVisible();
   await expect(page.getByRole("button", { name: /^A⊥ ⅋ B⊥/ })).toHaveCount(0);

@@ -39,7 +39,7 @@ test("the switch's tip says what an invertible rule is and why it loses no proof
   await invertible(page);
   await page.locator("label.sw", { hasText: SWITCH }).hover();
   await expect(page.getByRole("tooltip")).toContainText(
-    "A rule is invertible when its premises are provable whenever its conclusion is",
+    "An invertible rule never loses a proof: when its goal has a proof, so do its premises.",
   );
   await expect(page.getByRole("tooltip")).toContainText("never loses a proof");
 });
@@ -80,6 +80,6 @@ test("with the switch on, the hint ladder's first rung says the invertible rules
   await start(page, "A * B |- B * A", false);
   await page.getByRole("button", { name: "Hint" }).click();
   await expect(page.locator(".dock .hint")).toContainText(
-    "The invertible rules are applied already; on this goal a split of the context comes next.",
+    "The invertible rules are applied already; on this goal a split of the goal's formulas comes next.",
   );
 });

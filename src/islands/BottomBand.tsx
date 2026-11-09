@@ -481,12 +481,12 @@ function ExportMenu(props: {
     { label: "PDF", detail: "The drawing, as a PDF/A document", act: () => rendered("pdf") },
     {
       label: "LaTeX",
-      detail: "The derivation for ebproof",
+      detail: "The derivation for LaTeX; it needs the packages ebproof and cmll",
       act: text("latex", "tex", "text/x-tex"),
     },
     {
       label: "Typst",
-      detail: "The derivation for curryst",
+      detail: "The derivation for Typst, drawn with the package curryst",
       act: text("typst", "typ", "text/plain"),
     },
     {
@@ -506,13 +506,14 @@ function ExportMenu(props: {
     },
     {
       label: "Rocq",
-      detail: "The finished proof's certificate for Rocq",
+      detail:
+        "A certificate of the finished proof for Rocq; it needs NanoYalla, or rocq-deduxit beyond classical logic",
       act: text("rocq", "v", "text/plain"),
       off: () => (complete() ? null : "The certificate is of a finished proof"),
     },
     {
       label: "Not derivable",
-      detail: "The Rocq certificate that a refuted goal has no proof",
+      detail: "A Rocq certificate that a refuted goal has no proof; it needs rocq-deduxit",
       act: async () =>
         download(
           `${name()}-refutation.v`,
@@ -709,7 +710,7 @@ function ImportPanel(props: { prover: Prover; ui: Ui }) {
           />
         </label>
         <label class="lbl col">
-          <span>Paste a session or a sequent's JSON, as deduxit writes them</span>
+          <span>Paste a sequent, or a session or sequent in deduxit's JSON</span>
           <textarea
             value={text()}
             onInput={(event) => setText(event.currentTarget.value)}
@@ -741,7 +742,7 @@ function ImportPanel(props: { prover: Prover; ui: Ui }) {
 
 /** What an invertible rule is and why applying one never loses a proof: the switch's tip. */
 export const INVERTIBLE_TIP =
-  "A rule is invertible when its premises are provable whenever its conclusion is: ⅋, ⊥, & and ⊤ always, ! when every other formula is a ?, and 1, ⊗ and the axiom when their formulas are the whole goal. So applying one never loses a proof, since every goal it leaves is provable if the goal before it was.";
+  "An invertible rule never loses a proof: when its goal has a proof, so do its premises. ⅋, ⊥, & and ⊤ are always invertible; ! is when every other formula is under ?; 1, ⊗ and the axiom are when their formulas are the whole goal.";
 
 /**
  * A row of Settings' net drawing: a field of the net's look (`styles.svg.net_look`) and its
@@ -809,9 +810,10 @@ function SettingsPanel(props: {
           />
         </label>
         <p class="sub">
-          Units of work a search may do, about{" "}
-          {Math.round(props.prover.settings().budget / 68e6) || "under one"} second
-          {props.prover.settings().budget >= 1.36e8 ? "s" : ""} here.
+          Units of work a search may do.{" "}
+          {Math.round(props.prover.settings().budget / 68e6) >= 1
+            ? `About ${Math.round(props.prover.settings().budget / 68e6)} second${props.prover.settings().budget >= 1.36e8 ? "s" : ""} here.`
+            : "Less than a second here."}
         </p>
         <label class="lbl col">
           <span>Elimination steps</span>
@@ -827,7 +829,7 @@ function SettingsPanel(props: {
             }}
           />
         </label>
-        <p class="sub">The most steps of cut elimination "To the end" takes.</p>
+        <p class="sub">"To the end" stops after this many steps of cut elimination.</p>
         <p class="kw-label">First-order search</p>
         <label class="lbl col">
           <span>Witness depth</span>
