@@ -787,7 +787,11 @@ export function createProver(say: (text: string) => void = () => undefined) {
       return true;
     }
     const said = closed.refused
-      ? { keyword: "Proved, not grafted", sentence: closed.refused.message, tone: "warn" as Tone }
+      ? {
+          keyword: "Proved, but not added to the derivation",
+          sentence: closed.refused.message,
+          tone: "warn" as Tone,
+        }
       : ordinaryVerdict(closed.outcome);
     update(p.id, (q) => {
       q.note = { path, said, tone: said.tone, outcome, budget };
@@ -1708,7 +1712,11 @@ export function createProver(say: (text: string) => void = () => undefined) {
         return;
       }
       const said = closed.refused
-        ? { keyword: "Proved, not grafted", sentence: closed.refused.message, tone: "warn" as Tone }
+        ? {
+            keyword: "Proved, but not added to the derivation",
+            sentence: closed.refused.message,
+            tone: "warn" as Tone,
+          }
         : verdict(closed.outcome, closed.refutation_checked);
       update(p.id, (q) => {
         q.note = { path, said, tone: said.tone, outcome: closed.outcome, budget };

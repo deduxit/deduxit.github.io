@@ -9,4 +9,4 @@ fragment: "MALL"
 lesson: 3
 order: 133
 ---
-`&` gives both its premises the whole context, so the one `A` serves `B` in one premise and `C` in the other, each premise choosing the implication it needs.
+`&` gives both its premises all the other formulas, so the one `A` serves `B` in one premise and `C` in the other, each premise choosing the implication it needs.

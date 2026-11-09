@@ -11,4 +11,4 @@ order: 17
 source: "Wikipedia, “Linear logic”, read 2026-10-23, Remarkable formulas, Other implications"
 url: "https://en.wikipedia.org/wiki/Linear_logic"
 ---
-`&` copies the context into both premises: in each, the hypothesis `A & B` gives the side that premise needs.
+`&` copies the other formulas into both premises: in each, the hypothesis `A & B` gives the side that premise needs.

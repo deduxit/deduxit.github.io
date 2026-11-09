@@ -938,8 +938,8 @@ function SettingsPanel(props: {
             options={[
               [
                 DEDUXIT_LOOK,
-                "deduxit",
-                "deduxit's own: switched edges dashed, a ! with doors a row up, one ? node",
+                "Default",
+                "The page's own: edges into ⅋ and ? dashed, a ! with doors a row up, one ? node",
               ],
               [
                 TEXTBOOK_LOOK,

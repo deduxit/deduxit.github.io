@@ -639,7 +639,8 @@ function LessonView(props: {
             when={finished()}
             fallback={
               <p class="sub">
-                Choose a formula on the stage for its rules. Hint (H) helps, one rung at a time.
+                Choose a formula on the stage for its rules. Hint (H) helps, a little more with each
+                press.
               </p>
             }
           >

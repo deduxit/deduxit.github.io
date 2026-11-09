@@ -44,7 +44,7 @@ hinge:
       misconception: "`&` puts its parts side by side, as `⅋` does."
       why: "`&` gives two premises, `B` in one and `C` in the other, never both in one."
 ---
-`&` gives both premises the whole context, the same formulas copied rather than split,
+`&` gives both premises the whole context (the goal's other formulas), copied rather than split,
 and never loses a proof. `⊕` chooses one side, `⊕₁` the left and `⊕₂` the right, and
 the choice can be the wrong one. Read as a hypothesis, `A & B` is one resource you take
 either part of, and `A ⊕ B` is two cases you must answer.

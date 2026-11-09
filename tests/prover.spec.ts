@@ -609,7 +609,7 @@ test("Settings' net look draws the net as the textbooks do, by the preset or fie
   const settings = page.getByRole("dialog", { name: "Settings" });
   const pressed = (name: string) => settings.getByRole("button", { name, exact: true });
   await page.getByRole("button", { name: "Settings" }).click();
-  for (const name of ["deduxit", "Dashed", "A row up", "One node"]) {
+  for (const name of ["Default", "Dashed", "A row up", "One node"]) {
     await expect(pressed(name)).toHaveAttribute("aria-pressed", "true");
   }
   await pressed("Textbook").click();
@@ -631,7 +631,7 @@ test("Settings' net look draws the net as the textbooks do, by the preset or fie
   await page.getByRole("button", { name: "Settings" }).click();
   await pressed("Dashed").click();
   await expect(pressed("Textbook")).toHaveAttribute("aria-pressed", "false");
-  await expect(pressed("deduxit")).toHaveAttribute("aria-pressed", "false");
+  await expect(pressed("Default")).toHaveAttribute("aria-pressed", "false");
   await page.keyboard.press("Escape");
   await expect(dashed).toHaveCount(1);
   await expect(weakening).toHaveCount(1);

@@ -11,4 +11,4 @@ order: 15
 source: "The LLHandbook project, Handbook of Linear Logic, draft of 6 March 2026, §1.3.3.2, p. 17"
 url: "https://ll-handbook.pages.math.cnrs.fr/book/ll-handbook-public.pdf"
 ---
-`&` gives both premises the whole context; in each, `⊕` chooses the side that premise can prove.
+`&` gives both premises all the other formulas; in each, `⊕` chooses the side that premise can prove.

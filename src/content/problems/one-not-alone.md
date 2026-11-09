@@ -9,4 +9,4 @@ fragment: "MLL with units"
 lesson: 4
 order: 21
 ---
-`1` needs an empty context, and nothing takes `A` and `A⊥` away from it.
+`1` must stand alone in its goal, and nothing takes `A` and `A⊥` away from it.

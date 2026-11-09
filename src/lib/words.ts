@@ -343,8 +343,8 @@ export function rungs(
       : `Work on this goal: ${kind} comes next.`,
     `Look at ${at}.`,
     steps.length > 1
-      ? `Apply ${steps.map((s) => s.rule).join(", then ")}, starting on ${at}.`
-      : `Apply ${first.rule} to ${at}${left.length ? `, with ${left.join(", ")} going left` : first.left ? ", with nothing else going left" : ""}.`,
+      ? `Apply ${steps.map((s) => s.rule).join(", then ")}, starting on ${at}. Press Hint again to apply it.`
+      : `Apply ${first.rule} to ${at}${left.length ? `, with ${left.join(", ")} going left` : first.left ? ", with nothing else going left" : ""}. Press Hint again to apply it.`,
     "Applied. Can you say why this was the step to take?",
   ];
 }
