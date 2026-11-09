@@ -710,17 +710,15 @@ button.wordmark {
 .drawing svg g[stroke] {
   stroke: var(--color-ink);
 }
+/* The colours that mean something in a net, which deduxit writes as its
+   defaults: ⅋'s edges and the essential net's input side in one blue (the two
+   never share a drawing, and their tokens are equal), dominator lines and
+   witness. */
 .drawing svg g[stroke="#0072b2"],
-.drawing svg g[stroke="#0072b2"] path {
+.drawing svg g[stroke="#0072b2"] :is(path, circle) {
   stroke: var(--color-net-par);
 }
-/* The colours that mean something in a net, which deduxit writes as its
-   defaults: the essential net's input side, dominator lines and witness. */
-.drawing svg g[stroke="#009e73"],
-.drawing svg g[stroke="#009e73"] :is(path, circle) {
-  stroke: var(--color-net-input);
-}
-.drawing svg text[fill="#009e73"] {
+.drawing svg text[fill="#0072b2"] {
   fill: var(--color-net-input);
 }
 .drawing svg g[stroke="#cc79a7"],

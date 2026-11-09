@@ -197,8 +197,8 @@ the page reads.
 - Colours come from CSS over the SVG's attributes (`.drawing svg text { fill: … }`), so a
   theme change needs no redraw; the exports keep deduxit's own colours. The colours that
   mean something in a net are exempt from the ink, matched by the value deduxit writes
-  for its default `Style` (`#0072b2` the `⅋` edges, `#009e73` the essential net's input
-  side, `#cc79a7` its dominator lines, `#d55e00` a witness's edges) and repainted with
+  for its default `Style` (`#0072b2` the `⅋` edges and the essential net's input side,
+  `#cc79a7` its dominator lines, `#d55e00` a witness's edges) and repainted with
   `--color-net-*` at 4.5:1 on the field: a change of deduxit's defaults fails the
   essential net's colour test rather than turning them to ink. The page's net colours are
   hues of Okabe and Ito's palette (blue for `⅋` and for the input side, which never share

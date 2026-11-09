@@ -664,8 +664,8 @@ test("the essential net draws its input side in the Okabe–Ito palette's blue, 
   await expect(page.locator(".pt-mark")).toContainText("ILL");
   await page.getByRole("button", { name: "Close goal" }).click();
   await page.getByRole("tab", { name: "Net" }).click();
-  const input = page.locator('.drawing svg text[fill="#009e73"]').first();
-  const edge = page.locator('.drawing svg g[stroke="#009e73"] path').first();
+  const input = page.locator('.drawing svg text[fill="#0072b2"]').first();
+  const edge = page.locator('.drawing svg g[stroke="#0072b2"] path').first();
   // The hypothesis A ⊗ B, its edges and its literals, is the input side: --color-net-input, never the ink.
   for (const [colorScheme, colour] of [
     ["light", "rgb(4, 83, 131)"],
