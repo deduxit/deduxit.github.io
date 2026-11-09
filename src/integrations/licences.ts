@@ -11,9 +11,9 @@
  *   into the pages themselves, where no bundle sees it. Vite lists modules,
  *   not assets, so the fonts are below.
  * - `/licenses/THIRD-PARTY-NOTICES.txt`: the notices of the Rust crates
- *   inside linlog's WebAssembly module, as linlog's flake collected them
+ *   inside deduxit's WebAssembly module, as deduxit's flake collected them
  *   into the package `deduxit-web`.
- * - `/licenses/LICENSE.txt`: the EUPL-1.2, the licence of linlog and of
+ * - `/licenses/LICENSE.txt`: the EUPL-1.2, the licence of deduxit and of
  *   this site's code.
  * - `/fonts/<Family>-OFL.txt`: each font's licence beside its files, which
  *   astro.config.ts puts under /fonts/; `<Family>-LICENSE.txt` for a font

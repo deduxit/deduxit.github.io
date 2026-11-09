@@ -7,7 +7,7 @@
  * what holds the work: the link in the URL's fragment, written as the proof
  * changes and read when the page opens; autosave of every open proof, with
  * the restore bar on the next visit; the one hover rule for tips; the
- * keyboard; the hint ladder; light dismiss; and linlog's math fonts, whose
+ * keyboard; the hint ladder; light dismiss; and deduxit's math fonts, whose
  * bytes the PNG and PDF exports render with, Euler Math also the drawings'.
  */
 
@@ -106,7 +106,7 @@ export default function App(props: {
   let starting = true;
   onMount(async () => {
     void font().catch(() => undefined);
-    // The worker starts with the first call: this one, so that linlog's
+    // The worker starts with the first call: this one, so that deduxit's
     // module loads after the first paint, before the visitor's first step.
     void prover.api.about().catch(() => undefined);
     prover.begin();

@@ -9,7 +9,7 @@
 // contents, so that a new deployment is a new worker.
 //
 // Its scope is the whole origin, since the page it serves is at / and a
-// scope is a path prefix; but linlog's documentation at /deduxit/ and the
+// scope is a path prefix; but deduxit's documentation at /deduxit/ and the
 // Rocq library's at /rocq-deduxit/ are other sites on the same origin, and
 // nothing of them passes through here. The worker answers only requests for
 // the site's own files (FILES) and navigations to the prover's page; every
@@ -31,11 +31,13 @@ const FILES = [];
 const LATER = [];
 const VERSION = "";
 
+// The prover's old name, kept: activation deletes only this prefix's caches,
+// so a new prefix would leave the old ones behind for good.
 const PREFIX = "linlog-site-";
 const CACHE = PREFIX + VERSION;
 const OWN = new Set([...FILES, ...LATER]);
 
-/** The project sites on this origin, linlog's and the Rocq library's, which this worker never touches. */
+/** The project sites on this origin, deduxit's and the Rocq library's, which this worker never touches. */
 const PROJECTS = ["/deduxit", "/rocq-deduxit"];
 const isDocs = (path) => PROJECTS.some((root) => path === root || path.startsWith(`${root}/`));
 

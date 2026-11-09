@@ -1,7 +1,7 @@
 ---
 title: Reference
 ---
-The connectives, as you type them and as linlog prints them. One-sided, every
+The connectives, as you type them and as deduxit prints them. One-sided, every
 formula is on the right of `⊢` and `A⊥` is the dual of `A`; two-sided
 (intuitionistic, or classical with the Two-sided switch), the hypotheses are on the left.
 
@@ -44,8 +44,8 @@ These are the rules of the one-sided calculus as the LLHandbook project's <a
 href="https://ll-handbook.pages.math.cnrs.fr/book/ll-handbook-public.pdf">Handbook
 of linear logic</a> states them (draft of 6 March 2026, section 1.3.5, Table 1.4,
 p. 22), with its cut and its first-order quantifiers, there `(∀₁)` and `(∃₁)`. There the
-axiom takes any formula; section 1.3.2 (p. 14) shows that atoms suffice, and linlog's
-axiom takes an atom. `A[t/x]` is `A` with the term `t` in place of `x`. The two-sided names are linlog's names for
+axiom takes any formula; section 1.3.2 (p. 14) shows that atoms suffice, and deduxit's
+axiom takes an atom. `A[t/x]` is `A` with the term `t` in place of `x`. The two-sided names are deduxit's names for
 the same rule in a two-sided derivation: the principal formula on the right, or its
 dual on the left.
 
@@ -62,13 +62,13 @@ Learn on, a rule in an intuitionistic proof's popover shows its two-sided schema
 These are the rules of intuitionistic linear logic as the <a
 href="https://ll-handbook.pages.math.cnrs.fr/book/ll-handbook-public.pdf">Handbook
 of linear logic</a> states them (section 1.7.2.1, Table 1.5, p. 48), with the cut and
-the first-order quantifiers and without the exchange, in linlog's names: there `(wL)`,
-`(cL)`, `(∀₁L)` and the like, here `!w`, `!c`, `∀L`. As above, linlog's axiom takes an
+the first-order quantifiers and without the exchange, in deduxit's names: there `(wL)`,
+`(cL)`, `(∀₁L)` and the like, here `!w`, `!c`, `∀L`. As above, deduxit's axiom takes an
 atom.
 
 ## The engines
 
-Every search on this page is linlog's: it picks an engine by the sequent's
+Every search on this page is deduxit's: it picks an engine by the sequent's
 fragment and mode (Settings can force one), and the page names the engine
 beside what it did. Each engine and where it comes from:
 
@@ -101,7 +101,7 @@ sequent is provable exactly when its essential net is correct: Richard Moot,
 <a href="https://arxiv.org/abs/0805.2303">Graph algorithms for improving
 type-logical proof search</a>, arXiv:0805.2303, 2008, section 2.3.</dd>
 <dt id="engine-planar">Planar nets of the ordered modes</dt>
-<dd>linlog's cyclic mode and Lambek calculus keep the order of the formulas,
+<dd>deduxit's cyclic mode and Lambek calculus keep the order of the formulas,
 and their nets are linked without crossings. François Lamarche and Christian
 Retoré, <a href="https://www.lirmm.fr/~retore/ARTICLES/LaReRoma96.pdf">Proof
 nets for the Lambek calculus: an overview</a>, Proofs and Linguistic
@@ -122,7 +122,7 @@ decidability theorems for infinite-state systems</a>, LICS 1996,
 <dt id="engine-inverse">Inverse method</dt>
 <dd>Searches forward: derives sequents from the axioms upward, whole focused
 phases at a time, until it reaches the goal or nothing new comes; then the
-set it derived, which linlog checks, is the refutation. Kaustuv Chaudhuri and
+set it derived, which deduxit checks, is the refutation. Kaustuv Chaudhuri and
 Frank Pfenning, <a href="https://doi.org/10.1007/11538363_15">Focusing the
 inverse method for linear logic</a>, CSL 2005, LNCS 3634, 200–215.</dd>
 <dt id="engine-additive">Additive path</dt>

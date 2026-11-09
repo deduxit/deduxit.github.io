@@ -151,7 +151,7 @@ async function walk(page: Page, least: number) {
   await page.getByRole("region", { name: "Check" }).getByRole("radio").nth(1).check();
   await measure("lesson's check");
   await page.getByRole("button", { name: "All lessons" }).click();
-  // Lesson 7's attempt, its question, a problem asked of linlog and the search that gives up.
+  // Lesson 7's attempt, its question, a problem asked of deduxit and the search that gives up.
   await page.getByRole("button", { name: "Lesson 7: When there is no proof" }).click();
   await page.getByRole("button", { name: "Play the attempt" }).click();
   await measure("lesson's attempt");
@@ -159,12 +159,12 @@ async function walk(page: Page, least: number) {
     await page.getByRole("button", { name: "Next step of the attempt" }).click();
   await page.getByRole("radio", { name: "Step 2, ⊕₁" }).check();
   await measure("lesson's wrong step");
-  await page.getByRole("button", { name: "Ask linlog about A false case" }).click();
+  await page.getByRole("button", { name: "Ask deduxit about A false case" }).click();
   await page.getByRole("button", { name: "Search it with a budget of 20 units" }).click();
   await expect(page.getByRole("button", { name: "Try 40 units" })).toBeVisible();
   await measure("lesson's unknown");
   await page.getByRole("button", { name: "All lessons" }).click();
-  // Lesson 9's cut eliminated on the stage, and lesson 10's step that linlog refuses.
+  // Lesson 9's cut eliminated on the stage, and lesson 10's step that deduxit refuses.
   await page.getByRole("button", { name: "Lesson 9: Cut and its elimination" }).click();
   await page.getByRole("button", { name: "Show the finished proof" }).click();
   await page.getByRole("button", { name: "Eliminate the cuts" }).click();
@@ -178,7 +178,7 @@ async function walk(page: Page, least: number) {
     await page.getByRole("button", { name: "Next step of the attempt" }).click();
   await page.getByRole("button", { name: "Try the last step" }).click();
   await expect(
-    page.getByRole("region", { name: "A step linlog refuses" }).getByRole("status"),
+    page.getByRole("region", { name: "A step deduxit refuses" }).getByRole("status"),
   ).toBeVisible();
   await measure("lesson's refusal");
   await page.getByRole("button", { name: "All lessons" }).click();

@@ -89,7 +89,7 @@ export function createUi() {
     lesson: number | null;
     /** The reason of the step a lesson played last, while Learn is on. */
     reason: Reason | null;
-    /** The open lesson's reasons for the cases of a cut elimination's steps, by linlog's name of the case. */
+    /** The open lesson's reasons for the cases of a cut elimination's steps, by deduxit's name of the case. */
     cases: Readonly<Record<string, string>> | null;
   }>({
     selected: null,

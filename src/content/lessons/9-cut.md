@@ -83,7 +83,7 @@ beside the rest. One-sided, the lemma is `A` in one premise and its dual `A⊥` 
 other. On the stage, a goal's Cut asks for the lemma and for the hypotheses that prove
 it.
 
-linlog's search never cuts, and needs none: every proof with cuts has one without
+deduxit's search never cuts, and needs none: every proof with cuts has one without
 (cut elimination), so a cut never proves what has no proof. It can make a proof
 shorter, though rarely without `!`, since each formula is used once. A lemma under `!`
 is proved once and copied for each use, where the cut-free proof derives it again

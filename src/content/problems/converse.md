@@ -9,4 +9,4 @@ fragment: "IMLL"
 lesson: 6
 order: 34
 ---
-An implication does not run backward: `A` is wanted and never given, and linlog's count of the atoms says so.
+An implication does not run backward: `A` is wanted and never given, and deduxit's count of the atoms says so.

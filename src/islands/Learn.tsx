@@ -10,8 +10,8 @@
  * practice (problems of the store, provable and not mixed), a
  * self-explanation prompt and a hinge question whose answer offers the next
  * lesson or the faded proof again; some lessons add a dead end, an attempt
- * that goes wrong, a search that gives up, problems asked of linlog, the
- * worked proof's cut eliminated, or an attempt whose last step linlog
+ * that goes wrong, a search that gives up, problems asked of deduxit, the
+ * worked proof's cut eliminated, or an attempt whose last step deduxit
  * refuses. A lesson not yet written has its practice alone. The reference: the connectives, the rules drawn as schemas, the
  * engines. The texts are the page's written content, cloned from its
  * templates, with their licence.
@@ -348,7 +348,7 @@ function LessonView(props: {
   /** What was said of the last step played: the rule and the guess before it. */
   const [said, setSaid] = createSignal<{ rule: string; guess: string | null } | null>(null);
   const [detoured, setDetoured] = createSignal(false);
-  /** linlog's quick verdict on the dead end, once it is played: whether it could still close. */
+  /** deduxit's quick verdict on the dead end, once it is played: whether it could still close. */
   const [deadEnd, setDeadEnd] = createSignal<boolean | null>(null);
   const [compared, setCompared] = createSignal(false);
   const [chosen, setChosen] = createSignal<number | null>(null);
@@ -403,7 +403,7 @@ function LessonView(props: {
 
   /**
    * Plays the lesson's legal split that leads nowhere on the stage, its dead premises drawn,
-   * with linlog's verdict on it; the next prediction takes it back (the tab no longer holds
+   * with deduxit's verdict on it; the next prediction takes it back (the tab no longer holds
    * the lesson's steps, so `reveal` replays them).
    */
   async function detour() {
@@ -761,7 +761,7 @@ function LessonView(props: {
 /**
  * An attempt at the worked proof's sequent that goes wrong (an erroneous example): its steps
  * played on the stage one at a time, each with the attempt's own reason beside it, then "which
- * step went wrong?", answered as the hinge question is, and linlog asked about the goal the wrong
+ * step went wrong?", answered as the hinge question is, and deduxit asked about the goal the wrong
  * step left. It plays on the lesson's tab, which the worked proof then takes back.
  */
 function Attempt(props: {
@@ -891,12 +891,12 @@ function Attempt(props: {
                             when={asked()}
                             fallback={
                               <button type="button" class="btn" onClick={() => void ask()}>
-                                Ask linlog about the goal step {wrong + 1} left
+                                Ask deduxit about the goal step {wrong + 1} left
                               </button>
                             }
                           >
                             <p class="sub">
-                              linlog's answer is beside that goal on the stage. The worked proof
+                              deduxit's answer is beside that goal on the stage. The worked proof
                               below takes the right step.
                             </p>
                           </Show>
@@ -936,7 +936,7 @@ function Attempt(props: {
 }
 
 /**
- * Problems of the lesson shown on the stage: each opened and asked of linlog, so that its verdict
+ * Problems of the lesson shown on the stage: each opened and asked of deduxit, so that its verdict
  * and the reason stand beside it (`ask`), or its proof replayed and its net drawn (`net`).
  */
 function Gallery(props: {
@@ -991,7 +991,7 @@ function Gallery(props: {
                   onClick={() => void show(item.example)}
                 >
                   {props.gallery.act === "ask"
-                    ? `Ask linlog about ${item.example.title}`
+                    ? `Ask deduxit about ${item.example.title}`
                     : `Draw the net of ${item.example.title}`}
                 </button>
               </p>
@@ -1111,8 +1111,8 @@ function Eliminate(props: {
 
 /**
  * An attempt at a sequent with no proof, played on the stage one step at a time from its
- * unfinished session, each step's reason beside it; then its last step, which linlog refuses at
- * the goal, why it does, and linlog's verdict on the sequent.
+ * unfinished session, each step's reason beside it; then its last step, which deduxit refuses at
+ * the goal, why it does, and deduxit's verdict on the sequent.
  */
 function Refusal(props: {
   refusal: NonNullable<Lesson["refusal"]>;
@@ -1165,7 +1165,7 @@ function Refusal(props: {
     setPlayed(n + 1);
   }
 
-  /** The refused step, on the goal the attempt left open: linlog's refusal is the goal's note. */
+  /** The refused step, on the goal the attempt left open: deduxit's refusal is the goal's note. */
   async function tryIt() {
     if (props.prover.busy()) return;
     if (!onTab() || (props.prover.current()?.redo.length ?? 0) > 0) {
@@ -1187,7 +1187,7 @@ function Refusal(props: {
 
   return (
     <section class="part" aria-labelledby="part-refusal">
-      <h3 id="part-refusal">A step linlog refuses</h3>
+      <h3 id="part-refusal">A step deduxit refuses</h3>
       <p class="m ex-seq">{displayed(example.sequent)}</p>
       <p>
         <Words text={props.refusal.text} />
@@ -1209,7 +1209,7 @@ function Refusal(props: {
                 <Words text={props.refusal.refused.reason} />
               </p>
               <p class="sub">
-                Will linlog accept it? Decide, and say why to yourself, before you try it.
+                Will deduxit accept it? Decide, and say why to yourself, before you try it.
               </p>
               <Show
                 when={tried()}
@@ -1229,7 +1229,7 @@ function Refusal(props: {
                     disabled={props.prover.busy()}
                     onClick={() => void ask()}
                   >
-                    Ask linlog about {problem?.title ?? "the sequent"}
+                    Ask deduxit about {problem?.title ?? "the sequent"}
                   </button>
                 </div>
               </Show>

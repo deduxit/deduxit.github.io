@@ -27,7 +27,7 @@ export interface Example {
   readonly verdict: "provable" | "unprovable";
   /** The lesson of the progression whose practice it is, from 1. */
   readonly lesson: number;
-  /** Its proof, linlog's session document as text, for a provable one. */
+  /** Its proof, deduxit's session document as text, for a provable one. */
   readonly session: string | null;
 }
 
@@ -52,7 +52,7 @@ export interface Problem {
   readonly mode: Mode;
   readonly level: Level;
   readonly categories: readonly string[];
-  /** The fragment linlog detects. */
+  /** The fragment deduxit detects. */
   readonly fragment: string;
   /** The work that states it, with the place, and where to read it. */
   readonly source: { readonly text: string; readonly url: string } | null;
@@ -112,7 +112,7 @@ export interface Lesson {
     readonly with: number;
     readonly without: number;
   }[];
-  /** An attempt at a problem with no proof whose last step linlog refuses, with its session as text. */
+  /** An attempt at a problem with no proof whose last step deduxit refuses, with its session as text. */
   readonly refusal: {
     readonly problem: string;
     readonly text: string;
@@ -128,7 +128,7 @@ export interface Lesson {
     readonly budget: number;
     readonly text: string;
   } | null;
-  /** Problems of the lesson to ask linlog about or to draw the net of. */
+  /** Problems of the lesson to ask deduxit about or to draw the net of. */
   readonly gallery: {
     readonly title: string;
     readonly act: "ask" | "net";
@@ -142,7 +142,7 @@ export interface Lesson {
  */
 export interface Rule {
   readonly id: string;
-  /** As linlog names it on the stage. */
+  /** As deduxit names it on the stage. */
   readonly name: string;
   readonly title: string;
   readonly lesson: number;
@@ -172,7 +172,7 @@ export function written(key: string): DocumentFragment {
 }
 
 /**
- * The rule linlog names `name`, with the name it was asked by: on two sides (an intuitionistic
+ * The rule deduxit names `name`, with the name it was asked by: on two sides (an intuitionistic
  * proof) its two-sided schema where the reference has one, else the one-sided rule by its name
  * or one of its two-sided ones.
  */

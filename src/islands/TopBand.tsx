@@ -431,7 +431,7 @@ function StatusDetails(props: { proof: Proof; prover: Prover; close: () => void 
                   </Show>
                 }
               >
-                <span class="kw ok" data-tip="Every step was checked by linlog as it was applied">
+                <span class="kw ok" data-tip="Every step was checked by deduxit as it was applied">
                   Proved, checked
                 </span>
               </Show>

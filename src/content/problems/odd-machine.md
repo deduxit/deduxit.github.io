@@ -9,4 +9,4 @@ fragment: "IMELL"
 lesson: 7
 order: 46
 ---
-Each use of `a ⊸ a ⊗ a ⊗ a` takes one `a` and gives three, two more, so the number of `a` stays odd and never reaches two. linlog's search tries every way and finds none.
+Each use of `a ⊸ a ⊗ a ⊗ a` takes one `a` and gives three, two more, so the number of `a` stays odd and never reaches two. deduxit's search tries every way and finds none.

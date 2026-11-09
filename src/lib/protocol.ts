@@ -3,10 +3,10 @@
 
 /**
  * The page's side and the worker's side of the request-id protocol over
- * which the page calls linlog's module in a module worker.
+ * which the page calls deduxit's module in a module worker.
  *
  * A request is `{id, call, args}`; the worker answers `{id, ok, value}` or
- * `{id, ok: false, error}`, the error being what the call threw (linlog's
+ * `{id, ok: false, error}`, the error being what the call threw (deduxit's
  * error JSON as a string). Answers may come in any order and are matched by
  * id. The module reads no clock and its calls cannot be interrupted, so the
  * one way to stop a call is to terminate the worker: `cancel` does, rejects

@@ -379,7 +379,7 @@ button.wordmark {
   align-items: center;
 }
 
-/* The formulas in the font Settings chooses (the drawing asks linlog for the same). */
+/* The formulas in the font Settings chooses (the drawing asks deduxit for the same). */
 :root[data-math-font="stix-two"] {
   --font-math: var(--font-math-stix-two);
 }
@@ -714,7 +714,7 @@ button.wordmark {
 .drawing svg g[stroke="#0072b2"] path {
   stroke: var(--color-net-par);
 }
-/* The colours that mean something in a net, which linlog writes as its
+/* The colours that mean something in a net, which deduxit writes as its
    defaults: the essential net's input side, dominator lines and witness. */
 .drawing svg g[stroke="#009e73"],
 .drawing svg g[stroke="#009e73"] :is(path, circle) {

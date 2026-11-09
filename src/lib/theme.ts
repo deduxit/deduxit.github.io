@@ -11,7 +11,7 @@
 /** The visitor's choice: the system's scheme, or one pinned. */
 export type Theme = "system" | "light" | "dark";
 
-/** The storage key of the pinned scheme. */
+/** The storage key of the pinned scheme, under the prover's old name: a new key would lose it. */
 export const THEME_KEY = "linlog-theme";
 
 /** The choice a stored value names, the system's for anything else. */

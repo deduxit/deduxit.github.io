@@ -10,7 +10,7 @@
 // `x-github-request-id`, by which a test tells a fetch from the network
 // from one the browser kept. No header beyond those, since Pages sets none
 // the site could choose. Under /deduxit/ it serves
-// tests/linlog-docs/, a stand-in for linlog's own Pages site (the rustdoc),
+// tests/deduxit-docs/, a stand-in for deduxit's own Pages site (the rustdoc),
 // and under /rocq-deduxit/ tests/rocq-docs/, one for the Rocq library's,
 // which Pages serves on the same origin.
 // Usage: node tests/serve.ts DIR PORT
@@ -22,7 +22,7 @@ import { fileURLToPath } from "node:url";
 const [dir = "dist", port = "8790"] = process.argv.slice(2);
 /** The project sites Pages serves on the same origin, each by its stand-in. */
 const PROJECTS: readonly (readonly [string, string])[] = [
-  ["/deduxit/", fileURLToPath(new URL("./linlog-docs/", import.meta.url))],
+  ["/deduxit/", fileURLToPath(new URL("./deduxit-docs/", import.meta.url))],
   ["/rocq-deduxit/", fileURLToPath(new URL("./rocq-docs/", import.meta.url))],
 ];
 

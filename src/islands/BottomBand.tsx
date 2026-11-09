@@ -56,7 +56,7 @@ import {
   DEFAULT_TERMS,
   DEFAULT_WITNESS_DEPTH,
   exportFont,
-  LINLOG_LOOK,
+  DEDUXIT_LOOK,
   lookJson,
   type NetLook,
   type Prover,
@@ -399,7 +399,7 @@ function ExportMenu(props: {
       },
       ...viewJson(props.prover.settings(), proof()?.calculus),
     });
-  const name = () => "linlog-proof";
+  const name = () => "deduxit-proof";
   /** The proof's ordinary session, where it is one: its exports are the ordinary calls'. */
   const ordinarySession = () => {
     const s = proof()?.session;
@@ -496,7 +496,7 @@ function ExportMenu(props: {
     },
     {
       label: "Session",
-      detail: "The proof as linlog's session document (JSON), to import again",
+      detail: "The proof as deduxit's session document (JSON), to import again",
       act: async () =>
         download(
           `${name()}.json`,
@@ -525,7 +525,7 @@ function ExportMenu(props: {
         const kind = outcome()?.refutation?.kind;
         if (!outcome()) return "Close a goal the search refutes first";
         if (kind === "saturated")
-          return "A refutation by saturation has no Rocq certificate: linlog's own checker verified its set";
+          return "A refutation by saturation has no Rocq certificate: deduxit's own checker verified its set";
         if (!kind || kind === "exhausted") return "An exhausted search leaves no certificate";
         return null;
       },
@@ -709,7 +709,7 @@ function ImportPanel(props: { prover: Prover; ui: Ui }) {
           />
         </label>
         <label class="lbl col">
-          <span>Paste a session or a sequent's JSON, as linlog writes them</span>
+          <span>Paste a session or a sequent's JSON, as deduxit writes them</span>
           <textarea
             value={text()}
             onInput={(event) => setText(event.currentTarget.value)}
@@ -935,9 +935,9 @@ function SettingsPanel(props: {
             label="Look"
             options={[
               [
-                LINLOG_LOOK,
-                "linlog",
-                "linlog's own: switched edges dashed, a ! with doors a row up, one ? node",
+                DEDUXIT_LOOK,
+                "deduxit",
+                "deduxit's own: switched edges dashed, a ! with doors a row up, one ? node",
               ],
               [
                 TEXTBOOK_LOOK,
@@ -1028,7 +1028,7 @@ function SettingsPanel(props: {
 function EngineChoice(props: { prover: Prover }) {
   const proof = () => props.prover.current();
   const engine = () => props.prover.settings().engine;
-  // An ordinary proof is searched through linlog's translation, the engine linlog's choice.
+  // An ordinary proof is searched through deduxit's translation, the engine deduxit's choice.
   const linearSession = () => {
     const s = proof()?.session;
     return s && !isOrdinary(s) ? s : null;
@@ -1042,7 +1042,7 @@ function EngineChoice(props: { prover: Prover }) {
       <div class="choices" role="radiogroup" aria-label="Engine">
         <label
           class="seg-b"
-          data-tip="linlog chooses the engine by the sequent's fragment and mode"
+          data-tip="deduxit chooses the engine by the sequent's fragment and mode"
         >
           <input
             type="radio"
@@ -1079,7 +1079,7 @@ function EngineChoice(props: { prover: Prover }) {
       </Show>
       <Show when={proof()?.calculus.suite === "ordinary"}>
         <p class="sub">
-          An ordinary proof's searches run on linlog's translation into linear logic, where linlog
+          An ordinary proof's searches run on deduxit's translation into linear logic, where deduxit
           chooses the engine: the engine set here is for linear proofs.
         </p>
       </Show>
@@ -1192,7 +1192,7 @@ function StepsPanel(props: { prover: Prover }) {
 
 /** The licences of what the page sends, each served with it. */
 const LICENCES: readonly (readonly [string, string, string])[] = [
-  ["The page's code and linlog", "EUPL-1.2", "/licenses/LICENSE.txt"],
+  ["The page's code and deduxit", "EUPL-1.2", "/licenses/LICENSE.txt"],
   ["The written content", "CC BY 4.0", "https://creativecommons.org/licenses/by/4.0/"],
   ["deduxit's mark", "CC BY 4.0", "/logo/LICENSE.txt"],
   ["Euler Math, the formulas' font by default", "SIL OFL 1.1", "/fonts/Euler-Math-OFL.txt"],
@@ -1207,7 +1207,7 @@ const LICENCES: readonly (readonly [string, string, string])[] = [
   ["Figtree, the text's font", "SIL OFL 1.1", "/fonts/Figtree-OFL.txt"],
   ["Space Mono, the field's font", "SIL OFL 1.1", "/fonts/SpaceMono-OFL.txt"],
   ["The JavaScript's packages, Lucide's icons among them", "notices", "/licenses/bundle.txt"],
-  ["The Rust crates inside linlog's module", "notices", "/licenses/THIRD-PARTY-NOTICES.txt"],
+  ["The Rust crates inside deduxit's module", "notices", "/licenses/THIRD-PARTY-NOTICES.txt"],
 ];
 
 function AboutPane(props: { prover: Prover }) {
@@ -1221,8 +1221,8 @@ function AboutPane(props: { prover: Prover }) {
       </p>
       <Written name="texts/about" />
       <p class="sub">
-        linlog {about()?.deduxit ?? ""}, reading session documents up to level {about()?.level ?? ""}
-        .
+        deduxit {about()?.deduxit ?? ""}, reading session documents up to level{" "}
+        {about()?.level ?? ""}.
       </p>
       <p class="kw-label h">Licences</p>
       <ul class="licences">

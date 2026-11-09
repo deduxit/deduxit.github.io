@@ -3,22 +3,22 @@
 
 /**
  * The suites a tab proves in: each a family of logics with its own sequent syntax, rules and
- * calls of linlog's module, proved by a method (the sequent calculus, the only one today), in
+ * calls of deduxit's module, proved by a method (the sequent calculus, the only one today), in
  * one of its calculi, named by the suite's parameter. A tab's choice is a `Calculus`: its
- * suite, its method and the suite's parameter, as linlog's `about` names them (`mode` for the
+ * suite, its method and the suite's parameter, as deduxit's `about` names them (`mode` for the
  * linear suite, `logic` for the ordinary one); `suites.test.ts` holds the registry to `about`.
  */
 
 import { MODES, type Mode } from "./deduxit";
 import { modeWords } from "./words";
 
-/** The suites the page offers, by linlog's names. */
+/** The suites the page offers, by deduxit's names. */
 export type SuiteKey = "linear" | "ordinary";
 
 /** How a suite's proofs are built: the sequent calculus, a tree grown from the goal upward. */
 export type Method = "sequent";
 
-/** A logic of the ordinary suite, as linlog names it. */
+/** A logic of the ordinary suite, as deduxit names it. */
 export type Logic = "classical" | "intuitionistic" | "minimal";
 
 /** Every ordinary logic, in the order its segmented control shows them. */
@@ -32,18 +32,18 @@ export type Calculus =
 /** A suite as the page offers it. */
 export interface Suite {
   readonly key: SuiteKey;
-  /** Its name on the calculus's segmented control, linlog's. */
+  /** Its name on the calculus's segmented control, deduxit's. */
   readonly name: string;
   /** What its segment's tip says it is. */
   readonly tip: string;
   readonly methods: readonly Method[];
   /** The parameter that names a calculus of the suite, as `about` names it. */
   readonly parameter: "mode" | "logic";
-  /** The values the page reads, a part of linlog's (the calculus's switches offer some of them). */
+  /** The values the page reads, a part of deduxit's (the calculus's switches offer some of them). */
   readonly values: readonly string[];
   /** The calculus a new tab of the suite starts in. */
   readonly start: Calculus;
-  /** The prefix of the suite's calls in linlog's module, as `about` gives it. */
+  /** The prefix of the suite's calls in deduxit's module, as `about` gives it. */
   readonly calls: string;
   /** Its call that reads a finished proof back as a λ-term, as `about` names it. */
   readonly term: string;

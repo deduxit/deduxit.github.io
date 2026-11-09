@@ -57,7 +57,10 @@ export interface Shelf {
   readonly active: string | null;
 }
 
-/** The storage keys of the visits' proofs: this prefix and the visit's id. */
+/**
+ * The storage keys of the visits' proofs: this prefix and the visit's id. This key and the
+ * next keep the prover's old name, linlog: new keys would lose every visitor's saved proofs.
+ */
 export const SHELF_PREFIX = "linlog-proofs:";
 /** The storage key of earlier visits' proofs, until the visitor restores or discards them. */
 export const PREVIOUS_KEY = "linlog-proofs-previous";

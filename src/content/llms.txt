@@ -1,16 +1,16 @@
-# linlog in the browser
+# deduxit in the browser
 
-> This page is linlog's prover for linear logic and, through its translations, ordinary propositional logic (LK and LJ) in a web browser, made for people: type a sequent, prove it step by step by clicking, or let linlog's search close a goal, and see the derivation and the proof net drawn. The prover runs in the browser as WebAssembly; the page is static and offers no API to call.
+> This page is deduxit's prover for linear logic and, through its translations, ordinary propositional logic (LK and LJ) in a web browser, made for people: type a sequent, prove it step by step by clicking, or let deduxit's search close a goal, and see the derivation and the proof net drawn. The prover runs in the browser as WebAssembly; the page is static and offers no API to call.
 
-A model that is to decide, check, prove step by step or export sequents does so with linlog's command, `linlog`, or its Rust library, not through this page: the guide below says how, with every command, flag, format and JSON form. This text is under CC BY 4.0, as all of the page's written content.
+A model that is to decide, check, prove step by step or export sequents does so with deduxit's command, `deduxit`, or its Rust library, not through this page: the guide below says how, with every command, flag, format and JSON form. This text is under CC BY 4.0, as all of the page's written content.
 
 ## Docs
 
-- [linlog's guide for AI models](https://deduxit.github.io/deduxit/llms.txt): the command and the library in brief, the body of an Agent Skill
+- [deduxit's guide for AI models](https://deduxit.github.io/deduxit/llms.txt): the command and the library in brief, the body of an Agent Skill
 - [The full reference](https://deduxit.github.io/deduxit/llms-full.txt): every command, flag, format, exit status and JSON form, with examples
-- [The library's API](https://deduxit.github.io/deduxit/linlog/): the Rust crate's documentation
+- [The library's API](https://deduxit.github.io/deduxit/deduxit/): the Rust crate's documentation
 
 ## Optional
 
-- [linlog on GitHub](https://github.com/deduxit/deduxit): the source, README, and the Agent Skill in `skills/linlog/` to copy into an agent's skills
+- [deduxit on GitHub](https://github.com/deduxit/deduxit): the source, README, and the Agent Skill in `skills/deduxit/` to copy into an agent's skills
 - [Privacy](https://deduxit.github.io/privacy/): what the page keeps in the browser and what GitHub logs

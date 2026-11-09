@@ -22,7 +22,7 @@ explain:
   prompt: "The translation wrote `A → B` as `!(!A ⊸ B)`. Why does it need both `!`?"
   answer: "The outer `!` lets the hypothesis be used as often as ordinary logic allows, any number of times or not at all. The inner `!A` lets the implication use its argument as often too, so `⊸L` had to give it `!A`, not just `A`, and `!R` proved that from the hypothesis `!A`."
 hinge:
-  question: "linlog proves the classical image of Peirce's law, `((A → B) → A) → A`, and refutes its intuitionistic image. Why?"
+  question: "deduxit proves the classical image of Peirce's law, `((A → B) → A) → A`, and refutes its intuitionistic image. Why?"
   options:
     - text: "The law holds classically but not intuitionistically, and each image is provable exactly when the formula holds in its logic"
       why: "Each translation keeps exactly what its logic proves: Peirce's law is classical and not intuitionistic, and so are its images."
@@ -34,7 +34,7 @@ hinge:
       why: "The translations are made so that no valid formula is lost: `!`, and in the classical translation `&` and weakening, give back the copies and the drops that ordinary logic allows."
     - text: "The search gave up on the intuitionistic image"
       misconception: "When no proof is found, the search gave up."
-      why: "The search on the intuitionistic image was exhaustive: linlog answers Unprovable, not Unknown."
+      why: "The search on the intuitionistic image was exhaustive: deduxit answers Unprovable, not Unknown."
 ---
 Ordinary propositional logic, with `→`, `∧`, `∨` and `¬`, is decided by translating it
 into linear logic and proving the image. Girard's call-by-name translation takes
@@ -43,7 +43,7 @@ every hypothesis goes under `!`, because an ordinary hypothesis may be used any 
 of times or not at all. Classical logic goes into affine linear logic, `∧` as `&` and
 `∨` as `⅋`, where weakening drops what is not needed.
 
-This lesson proves the images, as `linlog seq print --logic intuitionistic` and `--logic
+This lesson proves the images, as `deduxit seq print --logic intuitionistic` and `--logic
 classical` print them: modus ponens, `A → B, A ⊢ B`, becomes `!(!A ⊸ B), !A ⊢ B`. The
 ordinary sequents themselves are proved in a tab of their own: its calculus mark's Ordinary
 proves them in LK and LJ, and the sequent field's examples start there.

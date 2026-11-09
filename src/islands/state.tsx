@@ -4,7 +4,7 @@
 /**
  * The prover's state and every action on it: the open proofs (each its
  * session document, mode, redo stack and the note at a goal), the settings,
- * and the calls to linlog through the worker. The components read the store
+ * and the calls to deduxit through the worker. The components read the store
  * and call these actions; nothing else changes it.
  */
 
@@ -129,7 +129,7 @@ export interface Elim {
   undrawn: number | null;
   /** Which step's drawing the stage shows, from 1, or null for the proof or net reached. */
   shown: number | null;
-  /** What linlog refused, said at the elimination. */
+  /** What deduxit refused, said at the elimination. */
   problem: Said | null;
 }
 
@@ -161,7 +161,7 @@ export interface Proof {
   note: Note | null;
   /** The whole sequent's verdict, when a search on its root or every goal said one. */
   verdict: (Said & { tone: Tone; outcome?: Outcome }) | null;
-  /** The fragment of the text being typed, as linlog detects it, before it is started. */
+  /** The fragment of the text being typed, as deduxit detects it, before it is started. */
   typed: { classical: string; intuitionistic: string } | null;
   /** A line on the stage that is no goal's: a proof the link could not restore. */
   banner: Said | null;
@@ -181,18 +181,18 @@ export interface Settings {
   showKeys: boolean;
   /** How a net is drawn, `styles.svg.net`: every formula written, or compact. */
   net: NetDrawing;
-  /** How a net looks, `styles.svg.net_look`: linlog's own look, the textbooks', or a mix. */
+  /** How a net looks, `styles.svg.net_look`: deduxit's own look, the textbooks', or a mix. */
   netLook: NetLook;
   /**
-   * The engine every search is forced to, `search.engine`; null for linlog's own choice. Never
-   * stored: a forced engine refuses what it does not take, so every visit starts on linlog's.
+   * The engine every search is forced to, `search.engine`; null for deduxit's own choice. Never
+   * stored: a forced engine refuses what it does not take, so every visit starts on deduxit's.
    */
   engine: string | null;
   /** The math font the stage's drawing, its formulas and the tabs' sequents are set in. */
   stageFont: MathFont;
   /** The math font the SVG, PNG and PDF exports are set in, `styles.svg.font`; null for the stage's. */
   font: MathFont | null;
-  /** Whether linlog applies every invertible rule by itself after each step, `interactive.invertible`. */
+  /** Whether deduxit applies every invertible rule by itself after each step, `interactive.invertible`. */
   invertible: boolean;
   /** Whether a classical derivation is drawn two-sided, as its sequent was written, `view.classical`. */
   twoSided: boolean;
@@ -209,7 +209,7 @@ export interface Settings {
 }
 
 /**
- * The view of the settings as linlog reads it: a classical linear derivation two-sided when
+ * The view of the settings as deduxit reads it: a classical linear derivation two-sided when
  * asked; an ordinary one with its structural rules drawn when asked.
  */
 export const viewJson = (settings: Settings, calculus?: Calculus) => {
@@ -227,11 +227,11 @@ export const viewJson = (settings: Settings, calculus?: Calculus) => {
 /** The math font the exports are set in: the one chosen for them, else the stage's. */
 export const exportFont = (settings: Settings): MathFont => settings.font ?? settings.stageFont;
 
-/** linlog's two drawings of a net: every formula occurrence written, or only the literals and the conclusions. */
+/** deduxit's two drawings of a net: every formula occurrence written, or only the literals and the conclusions. */
 export type NetDrawing = "formulas" | "compact";
 
 /**
- * How a net looks, linlog's `svg::NetLook`: the edges into a ⅋ or ? dashed or plain; a ! with
+ * How a net looks, deduxit's `svg::NetLook`: the edges into a ⅋ or ? dashed or plain; a ! with
  * auxiliary doors a row up or with every conclusion at the bottom; a ? one node or its rules'
  * nodes ?d, ?c and ?w.
  */
@@ -241,24 +241,24 @@ export interface NetLook {
   readonly whyNot: "node" | "rules";
 }
 
-/** linlog's own look, its default. */
-export const LINLOG_LOOK: NetLook = { premises: "dashed", conclusions: "raised", whyNot: "node" };
+/** deduxit's own look, its default. */
+export const DEDUXIT_LOOK: NetLook = { premises: "dashed", conclusions: "raised", whyNot: "node" };
 
-/** The look the textbooks share, linlog's preset `textbook`. */
+/** The look the textbooks share, deduxit's preset `textbook`. */
 export const TEXTBOOK_LOOK: NetLook = { premises: "plain", conclusions: "bottom", whyNot: "rules" };
 
 /** Whether two looks are the same. */
 export const sameLook = (a: NetLook, b: NetLook) =>
   a.premises === b.premises && a.conclusions === b.conclusions && a.whyNot === b.whyNot;
 
-/** A look as linlog's settings write it, `styles.svg.net_look`. */
+/** A look as deduxit's settings write it, `styles.svg.net_look`. */
 export const lookJson = (look: NetLook) => ({
   premises: look.premises,
   conclusions: look.conclusions,
   why_not: look.whyNot,
 });
 
-/** A stored look, each field linlog's default where it is not one of its values. */
+/** A stored look, each field deduxit's default where it is not one of its values. */
 const storedLook = (stored: unknown): NetLook => {
   const look = (typeof stored === "object" && stored !== null ? stored : {}) as Partial<NetLook>;
   return {
@@ -268,20 +268,21 @@ const storedLook = (stored: unknown): NetLook => {
   };
 };
 
-/** The tab's default work budget: linlog's tab default, about a second of search. */
+/** The tab's default work budget: deduxit's tab default, about a second of search. */
 export const DEFAULT_BUDGET = 2 ** 26;
-/** The most steps of an elimination to the end by default: linlog's, `cut::Options::DEFAULT_STEPS`. */
+/** The most steps of an elimination to the end by default: deduxit's, `cut::Options::DEFAULT_STEPS`. */
 export const DEFAULT_CUT_STEPS = 10_000;
-/** The witness depth by default: linlog's, `Options::DEFAULT_WITNESS_DEPTH`. */
+/** The witness depth by default: deduxit's, `Options::DEFAULT_WITNESS_DEPTH`. */
 export const DEFAULT_WITNESS_DEPTH = 64;
-/** The instances by default: linlog's, `Options::DEFAULT_INSTANCES`. */
+/** The instances by default: deduxit's, `Options::DEFAULT_INSTANCES`. */
 export const DEFAULT_INSTANCES = 2 ** 16;
-/** The terms by default: linlog's tab, `tab::TERMS`, as many as its occurrences. */
+/** The terms by default: deduxit's tab, `tab::TERMS`, as many as its occurrences. */
 export const DEFAULT_TERMS = 1_000_000;
 
 /** A stored count, the default where it is none. */
 const count = (stored: unknown, fallback: number) =>
   typeof stored === "number" && Number.isInteger(stored) && stored > 0 ? stored : fallback;
+/** The storage key of the settings, under the prover's old name: a new key would lose them. */
 const SETTINGS_KEY = "linlog-settings";
 
 const storage = (): Store | undefined => {
@@ -320,7 +321,7 @@ function loadSettings(): Settings {
       budget: DEFAULT_BUDGET,
       showKeys: false,
       net: "formulas",
-      netLook: LINLOG_LOOK,
+      netLook: DEDUXIT_LOOK,
       engine: null,
       stageFont: "euler",
       font: null,
@@ -373,7 +374,7 @@ const keyOf = (formulas: readonly GoalFormula[]) =>
 
 /**
  * A goal's sequent as the sequent field reads it: two-sided where the formulas have sides, each
- * formula as linlog writes it, which in intuitionistic mode is as the reading writes it in its
+ * formula as deduxit writes it, which in intuitionistic mode is as the reading writes it in its
  * position (a hypothesis `A ⊸ B`), in the syntax the strict reading takes; an ordinary goal's
  * formulas as the ordinary parser reads them.
  */
@@ -407,7 +408,7 @@ const documentOf = (reached: Reached) => {
   return document === undefined ? "" : JSON.stringify(document);
 };
 
-/** What linlog refused in an elimination, in the page's words. */
+/** What deduxit refused in an elimination, in the page's words. */
 const eliminationProblem = (failed: Failure): Said => ({
   keyword: failed.code === "no_cut" ? "No cut there" : "Not taken",
   sentence: `${failed.message.charAt(0).toUpperCase()}${failed.message.slice(1)}.`,
@@ -458,7 +459,7 @@ export function createProver(say: (text: string) => void = () => undefined) {
     };
 
   /**
-   * The settings as linlog reads them: the tab's defaults with the budget, the engine forced,
+   * The settings as deduxit reads them: the tab's defaults with the budget, the engine forced,
    * the invertible rules applied by themselves when they are on, the derivation's sides, and
    * the first-order bounds where they are not the tab's.
    */
@@ -479,7 +480,7 @@ export function createProver(say: (text: string) => void = () => undefined) {
   /**
    * The settings of an ordinary call: the budget, the terms where they are not the tab's, and
    * the structural rules drawn when asked. A forced engine and the invertible rules are the
-   * linear suite's: the ordinary search runs on linlog's translation with its own choice.
+   * linear suite's: the ordinary search runs on deduxit's translation with its own choice.
    */
   const ordinaryJson = (budget = settings().budget, structural = settings().structural) => {
     const s = { ...settings(), structural };
@@ -606,7 +607,7 @@ export function createProver(say: (text: string) => void = () => undefined) {
     saveShelf(storage(), visit, shelf);
   }
 
-  /** Why a text was not started, with the place to mark where linlog gives one. */
+  /** Why a text was not started, with the place to mark where deduxit gives one. */
   const problemAt = (failed: Failure) => {
     const span = failed.details?.["span_utf16"] as { start: number; end: number } | undefined;
     return { ...inputProblem(failed), ...(span ? { span } : {}) };
@@ -1028,7 +1029,7 @@ export function createProver(say: (text: string) => void = () => undefined) {
     }),
 
     /**
-     * Opens a document (a sequent or a session as linlog writes them, of either suite) as a new
+     * Opens a document (a sequent or a session as deduxit writes them, of either suite) as a new
      * proof, a sequent typed in `calculus` or the last chosen; says which it got.
      */
     async open(text: string, calculus?: Calculus): Promise<{ kind: string } | { problem: Said }> {
@@ -1434,7 +1435,7 @@ export function createProver(say: (text: string) => void = () => undefined) {
           });
           return;
         }
-        // linlog's reader checks the session again, every inference and the order of the steps.
+        // deduxit's reader checks the session again, every inference and the order of the steps.
         const view = await attempt(() => api.ordinary.view(back.session, ordinaryJson()));
         if (!view.ok) {
           if (view.failed)
@@ -1505,7 +1506,7 @@ export function createProver(say: (text: string) => void = () => undefined) {
       if (!p?.session) return;
       const o = ordinaryOf(p);
       if (o) {
-        // linlog's undo takes back the session's last step, so going back is undoing to there.
+        // deduxit's undo takes back the session's last step, so going back is undoing to there.
         let session = o.session;
         const before: { session: OrdinarySession; engines: Record<string, string> }[] = [];
         let reopened: number | null = null;
@@ -1616,7 +1617,7 @@ export function createProver(say: (text: string) => void = () => undefined) {
     async fillable(goal: number): Promise<{ id: string; tab: string }[]> {
       const p = current();
       const g = p?.view?.goals.find((x) => x.goal === goal);
-      // A fill is linlog's linear call: an ordinary goal is filled by none.
+      // A fill is deduxit's linear call: an ordinary goal is filled by none.
       if (!p || !g || p.calculus.suite !== "linear") return [];
       const want = keyOf(g.formulas);
       const found: { id: string; tab: string }[] = [];
@@ -1630,7 +1631,7 @@ export function createProver(say: (text: string) => void = () => undefined) {
 
     /**
      * Fills a goal with the finished proof of another tab of the same formulas, as one step
-     * named with that tab; linlog checks it in this proof's calculus, and a refusal is said at
+     * named with that tab; deduxit checks it in this proof's calculus, and a refusal is said at
      * the goal.
      */
     fill: guard(async (goal: number, from: string) => {
@@ -1799,7 +1800,7 @@ export function createProver(say: (text: string) => void = () => undefined) {
     },
 
     /**
-     * The engines for a proof's sequent: the one linlog picks, and for each
+     * The engines for a proof's sequent: the one deduxit picks, and for each
      * engine whether it takes the sequent or the refusal a search forced to it
      * answers before it starts (each asked with a budget of one unit, so that
      * none searches).

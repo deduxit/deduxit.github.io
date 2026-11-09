@@ -2,9 +2,9 @@
 // Licensed under the EUPL
 
 /**
- * The ordinary suite as the page reads it: linlog's `ordinary_…` calls prove a sequent of
+ * The ordinary suite as the page reads it: deduxit's `ordinary_…` calls prove a sequent of
  * classical, intuitionistic or minimal propositional logic step by step in LK or LJ, and draw
- * the derivation itself, never its linear image. Their documents (linlog's `plan/web/README.md`,
+ * the derivation itself, never its linear image. Their documents (deduxit's `plan/web/README.md`,
  * the rows `ordinary_…`) are read here into the shapes the stage, the dock and the bands already
  * show: a goal's formulas numbered left of ⊢ first, then right of it, as the drawing's
  * `i<n>-<p>` ids number them; a step's formula by its side and its position there.
@@ -24,7 +24,7 @@ export interface OrdinaryInference {
   readonly premises?: readonly number[];
 }
 
-/** An ordinary session, linlog's `ordinary::Interactive` at wire level 8. */
+/** An ordinary session, deduxit's `ordinary::Interactive` at wire level 8. */
 export interface OrdinarySession {
   readonly version: number;
   readonly logic: Logic;
@@ -137,9 +137,9 @@ export function sequentText(session: OrdinarySession): string {
  * every step since in that step's premises, or without its last step where `goal` is left
  * out (a finished proof). A step is an entry of the history, the goal it expanded, and its
  * inferences are that goal's subtree: its own (a structural run below its rule, or a search's
- * derivation) and every later step's above them. linlog appends a step's inferences after the
+ * derivation) and every later step's above them. deduxit appends a step's inferences after the
  * goal's, so taking the subtree out and numbering the rest anew in their order leaves the session
- * the other steps would have made; linlog's reader checks it again on the next call. Undefined
+ * the other steps would have made; deduxit's reader checks it again on the next call. Undefined
  * where the branch has no step.
  */
 export function retract(
@@ -175,7 +175,7 @@ export function retract(
 
 /**
  * Each step of an ordinary session, in the order taken: the goal it expanded and its rule, the
- * rule above the structural run linlog makes below a step (the contractions of a shared rule,
+ * rule above the structural run deduxit makes below a step (the contractions of a shared rule,
  * the weakenings of an axiom with a context).
  */
 export function stepsOf(doc: OrdinarySession): { goal: number; rule: string }[] {
@@ -292,14 +292,14 @@ export function ordinaryVerdict(outcome: OrdinaryOutcome): Said & { tone: Tone }
   if (outcome.verdict === "valid") {
     return {
       keyword: "Valid",
-      sentence: `The search found a derivation, and linlog's checker accepted it in ${named(outcome.logic)}.`,
+      sentence: `The search found a derivation, and deduxit's checker accepted it in ${named(outcome.logic)}.`,
       tone: "ok",
     };
   }
   if (outcome.verdict === "not_valid") {
     return {
       keyword: "Not valid",
-      sentence: `The sequent has no derivation in ${named(outcome.logic)}: linlog decided it through its translation into linear logic, which proves exactly the translations of valid sequents, and the translated sequent has no proof.`,
+      sentence: `The sequent has no derivation in ${named(outcome.logic)}: deduxit decided it through its translation into linear logic, which proves exactly the translations of valid sequents, and the translated sequent has no proof.`,
       tone: "bad",
     };
   }

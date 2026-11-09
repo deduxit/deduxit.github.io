@@ -2,7 +2,7 @@
 // Licensed under the EUPL
 
 // Practice, a place of its own: one test per behaviour, against the built
-// site with linlog's real module.
+// site with deduxit's real module.
 
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";

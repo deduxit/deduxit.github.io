@@ -2,7 +2,7 @@
 // Licensed under the EUPL
 
 /**
- * linlog's engines as the page names them: the name an outcome gives
+ * deduxit's engines as the page names them: the name an outcome gives
  * (`engine`, and `classical` for the classical refuter, whose refutation an
  * outcome names by its kind), a short name for beside the work, what the
  * engine does in a line, and its source in the literature, which Learn's
@@ -22,7 +22,7 @@ export interface Engine {
   readonly source: string;
 }
 
-/** Every engine the page may name, in linlog's order, the classical refuter last. */
+/** Every engine the page may name, in deduxit's order, the classical refuter last. */
 export const ENGINES: Readonly<Record<string, Engine>> = {
   focus: {
     name: "focused search",
@@ -66,7 +66,7 @@ export const ENGINES: Readonly<Record<string, Engine>> = {
   },
 };
 
-/** linlog's engines in its own order, by the names `search.engine` takes. */
+/** deduxit's engines in its own order, by the names `search.engine` takes. */
 export const ENGINE_ORDER = [
   "focus",
   "net",

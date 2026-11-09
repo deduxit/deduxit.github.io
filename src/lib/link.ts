@@ -9,7 +9,7 @@
  * names the calculus (a linear mode, an ordinary logic), the sequent in the
  * parser's own Unicode syntax (readable in the address bar), and while a
  * proof is under way or finished, the
- * session itself: linlog's session document, a promised wire form with its
+ * session itself: deduxit's session document, a promised wire form with its
  * own level and its own sequent terms, so that no goal number or formula
  * position of one library version is ever stored. The document goes
  * deflate-raw (`CompressionStream`) and then base64url. Past `LINK_LIMIT`
@@ -18,7 +18,7 @@
  * suites, reads as the linear suite in that mode.
  * Reading a link unpacks at most `UNPACKED_LIMIT` bytes: a crafted link can
  * hold a document that inflates a thousandfold, in the visitor's own tab,
- * before linlog's limits ever read it.
+ * before deduxit's limits ever read it.
  */
 
 /** This format's version mark. */
@@ -40,7 +40,7 @@ export const UNPACKED_LIMIT = 512 * 1024;
 /** What a link holds. */
 export interface LinkContent {
   readonly sequent: string;
-  /** The suite, as linlog names it: `linear` for a link of the first version. */
+  /** The suite, as deduxit names it: `linear` for a link of the first version. */
   readonly suite: string;
   /** The suite's parameter: a linear mode, an ordinary logic. */
   readonly parameter: string;

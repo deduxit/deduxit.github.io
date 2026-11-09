@@ -10,7 +10,7 @@ paths:
   roots everything the checks need.
 - **Two caches, for two kinds of path.** The public Cachix cache `linlog-prover` is the
   organization's and must receive only its projects' own outputs, never third-party files:
-  so the run reads it (linlog's CI pushes `deduxit-web` there, and this CI never builds
+  so the run reads it (deduxit's CI pushes `deduxit-web` there, and this CI never builds
   Rust) and pushes to it only the built site (`nix build .#default | cachix push`, a
   closure of itself alone), only from `main` and only while the secret
   `CACHIX_AUTH_TOKEN` exists. node_modules, Chromium, the formatters and the checks'
@@ -37,7 +37,7 @@ paths:
   start with a dot), and the `deploy` job, the only one with `pages: write` and
   `id-token: write`, publishes it (`deploy-pages`) in the `github-pages` environment. The
   repository's Pages source is "GitHub Actions": no Jekyll build, no `.nojekyll`.
-- **`/deduxit` is the Pages site of linlog's repository** (its rustdoc and manual), and
+- **`/deduxit` is the Pages site of deduxit's repository** (its rustdoc and manual), and
   **`/rocq-deduxit` the Rocq library's**, project sites on the same address: nothing here may
   publish a path at either (the `pages-paths` check), and the service worker leaves them
   alone (`.claude/rules/web.md`). The library's old project site, `/rocq-linlog/`, is answered

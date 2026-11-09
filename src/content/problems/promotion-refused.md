@@ -9,4 +9,4 @@ fragment: "IMELL"
 lesson: 9
 order: 201
 ---
-No proof. The lemma `!B` would need `!R`, which takes only hypotheses under `!`, and `A ⊸ B` is not; without it, `A ⊸ B` gives one `B` and the goal needs two, which linlog's count of `B` shows.
+No proof. The lemma `!B` would need `!R`, which takes only hypotheses under `!`, and `A ⊸ B` is not; without it, `A ⊸ B` gives one `B` and the goal needs two, which deduxit's count of `B` shows.

@@ -21,7 +21,7 @@ explain:
   answer: "`b` is the eigenvariable `∃L` made below this goal, so the goal may name it. Before `∃L` there was no `b`: left open, the witness would have to become `b` later, and an open witness never takes an eigenvariable made after it, the eigenvariable condition. Eigenvariables first, witnesses after."
 refusal:
   problem: "forall-swap"
-  text: "The other way round: from `∀x. ∃y. r(x, y)`, prove `∃y. ∀x. r(x, y)`. Here is an attempt, each step with its author's reason, and then its last step, which linlog refuses."
+  text: "The other way round: from `∀x. ∃y. r(x, y)`, prove `∃y. ∀x. r(x, y)`. Here is an attempt, each step with its author's reason, and then its last step, which deduxit refuses."
   steps:
     - rule: "∃R"
       reason: "A witness for `y` is needed, and no term fits yet: leave it open as `$1`, for the axiom to fill."
@@ -35,7 +35,7 @@ refusal:
     rule: "ax"
     position: 0
     reason: "Close `r(a, b) ⊢ r(a, $1)` by the axiom, filling `$1` with `b`."
-  why: "linlog refuses the axiom: `$1` was opened before `b` was made, and an open witness never takes an eigenvariable made after it. The `y` of the goal would depend on the `x` chosen, which `∃y. ∀x` forbids. No other order helps: linlog's search on the sequent is exhaustive."
+  why: "deduxit refuses the axiom: `$1` was opened before `b` was made, and an open witness never takes an eigenvariable made after it. The `y` of the goal would depend on the `x` chosen, which `∃y. ∀x` forbids. No other order helps: deduxit's search on the sequent is exhaustive."
 hinge:
   question: "Which of these has a proof?"
   options:

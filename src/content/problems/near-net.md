@@ -9,4 +9,4 @@ fragment: "IMLL"
 lesson: 8
 order: 184
 ---
-The goal wants `C ⊗ A`, and the one `A` given goes to make `C`: linlog's count of the atoms says no net links them all.
+The goal wants `C ⊗ A`, and the one `A` given goes to make `C`: deduxit's count of the atoms says no net links them all.

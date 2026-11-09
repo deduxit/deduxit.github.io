@@ -4,17 +4,17 @@
 /**
  * The written content, under CC BY 4.0, in src/content/:
  *   problems  problems/<id>.md, the one store of problems Practice and Learn
- *             draw from: a sequent, its mode, linlog's verdict, its level of
+ *             draw from: a sequent, its mode, deduxit's verdict, its level of
  *             difficulty, the categories it is found under and the fragment
- *             linlog detects; a provable one has its proof beside it as
- *             problems/<id>.session.json, linlog's session document as
- *             `linlog interact` saved it. A problem with a `lesson` is that
+ *             deduxit detects; a provable one has its proof beside it as
+ *             problems/<id>.session.json, deduxit's session document as
+ *             `deduxit interact` saved it. A problem with a `lesson` is that
  *             lesson's practice in Learn, in its `order` (provable and not
  *             mixed); every unprovable problem is Learn's, and Practice
  *             offers the provable ones. One from the literature names its
  *             `source` and `url`. src/content/problems.test.ts holds every
- *             entry to linlog's verdict and every session to its sequent,
- *             and the flake's `problems` check holds them to linlog's command.
+ *             entry to deduxit's verdict and every session to its sequent,
+ *             and the flake's `problems` check holds them to deduxit's command.
  *   tour      tour/<n>-<name>.md, the tour's stops in order: what each stop
  *             shows (`target`) and the real step it performs on the stage
  *             (`act`).
@@ -30,19 +30,19 @@
  *             that shows one, a legal split that leads nowhere, an attempt
  *             with a wrong step to find (its unfinished session beside the
  *             lesson as lessons/<n>-<name>.attempt.json), a search run with a
- *             small budget, problems of the store to ask linlog about or to
+ *             small budget, problems of the store to ask deduxit about or to
  *             draw the net of, the worked proof's cut eliminated on the
  *             stage with a reason per case, problems proved with a cut with
  *             their inferences with it and without, and an attempt whose
- *             last step linlog refuses (its unfinished session beside the
+ *             last step deduxit refuses (its unfinished session beside the
  *             lesson as lessons/<n>-<name>.refusal.json).
  *   examples  examples.json, the sequent field's menu of examples for the
  *             suites Practice does not serve (ordinary logic): each a sequent
- *             in its suite's syntax, the logic it opens in, linlog's verdict
+ *             in its suite's syntax, the logic it opens in, deduxit's verdict
  *             in every logic of the suite, and a line on what it shows.
- *             src/content/examples.test.ts holds every verdict to linlog.
+ *             src/content/examples.test.ts holds every verdict to deduxit.
  *   rules     rules/<nn>-<name>.md, the rules the reference draws as schemas
- *             and the stage's popover shows on hover: linlog's name, the
+ *             and the stage's popover shows on hover: deduxit's name, the
  *             premises over the conclusion, the lesson that teaches it, what
  *             it does, and for a one-sided rule its two-sided names, for a
  *             two-sided rule of intuitionistic linear logic the one-sided rule
@@ -54,7 +54,7 @@ import { defineCollection } from "astro:content";
 import { file, glob } from "astro/loaders";
 import { z } from "astro/zod";
 
-/** The modes linlog's `start` takes. */
+/** The modes deduxit's `start` takes. */
 export const MODES = [
   "classical",
   "affine",
@@ -96,7 +96,7 @@ const problems = defineCollection({
       verdict: z.enum(["provable", "unprovable"]),
       level: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]),
       categories: z.array(z.enum(CATEGORIES)).min(1),
-      /** The fragment linlog detects, as `seq fragment` names it in the mode. */
+      /** The fragment deduxit detects, as `seq fragment` names it in the mode. */
       fragment: z.string(),
       /** The lesson of the progression whose practice it is, from 1, and its place there. */
       lesson: z.number().int().min(1).optional(),
@@ -141,7 +141,7 @@ const lessons = defineCollection({
     title: words,
     /** The store problem whose session is the worked proof. */
     worked: z.string(),
-    /** The rules the student predicts among, as linlog names them. */
+    /** The rules the student predicts among, as deduxit names them. */
     choices: z.array(z.string()).min(2),
     /** One per step of the worked proof's session, in its order. */
     steps: z.array(z.object({ rule: z.string(), reason: words })).min(1),
@@ -200,7 +200,7 @@ const lessons = defineCollection({
       .optional(),
     /**
      * The worked proof's cuts eliminated on the stage, on the derivation and on the net: what to
-     * do, and a reason for each case of a step, by linlog's name of the case.
+     * do, and a reason for each case of a step, by deduxit's name of the case.
      */
     eliminate: z.object({ text: words, cases: z.record(z.string(), words) }).optional(),
     /**
@@ -220,7 +220,7 @@ const lessons = defineCollection({
     /**
      * An attempt at a store problem of the lesson that has no proof, played from the unfinished
      * session beside the lesson (lessons/<n>-<name>.refusal.json), a reason per step, and then
-     * the step `refused` at its last open goal, which linlog refuses; `why` says why.
+     * the step `refused` at its last open goal, which deduxit refuses; `why` says why.
      */
     refusal: z
       .object({
@@ -231,7 +231,7 @@ const lessons = defineCollection({
         why: words,
       })
       .optional(),
-    /** Problems of the lesson to ask linlog about (`ask`) or to draw the net of (`net`), each with a line. */
+    /** Problems of the lesson to ask deduxit about (`ask`) or to draw the net of (`net`), each with a line. */
     gallery: z
       .object({
         title: words,
@@ -246,13 +246,13 @@ const rules = defineCollection({
   loader: glob({ pattern: "*.md", base: "./src/content/rules" }),
   schema: z
     .object({
-      /** As linlog names the rule on the stage. */
+      /** As deduxit names the rule on the stage. */
       name: z.string(),
       title: words,
       lesson: z.number().int().min(1),
       premises: z.array(z.string()),
       conclusion: z.string(),
-      /** A one-sided rule: its two-sided names, as linlog's two-sided drawings write them. */
+      /** A one-sided rule: its two-sided names, as deduxit's two-sided drawings write them. */
       twoSided: z.array(z.string()).min(1).optional(),
       /** A two-sided rule of intuitionistic linear logic: the one-sided rule it is, by its name. */
       oneSided: z.string().optional(),
@@ -275,7 +275,7 @@ const examples = defineCollection({
     sequent: z.string(),
     /** The logic the example opens in. */
     logic: z.enum(["classical", "intuitionistic", "minimal"]),
-    /** linlog's verdict in each logic. */
+    /** deduxit's verdict in each logic. */
     verdicts: z.object({
       classical: ordinaryVerdict,
       intuitionistic: ordinaryVerdict,

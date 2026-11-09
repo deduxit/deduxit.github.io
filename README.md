@@ -3,38 +3,38 @@
 > **dēdūxit** [deːˈduːk.sɪt] *Latin, verb*: "it has derived", the perfect of *dēdūcō*, to lead down, derive.
 
 deduxit's prover in the browser at https://deduxit.github.io/: the web front end of
-[linlog](https://github.com/deduxit/deduxit), a prover for
+[deduxit](https://github.com/deduxit/deduxit), a prover for
 linear logic and, through its translations, ordinary propositional logic: type a sequent
 and prove it by clicking, step by step, or let the search close a goal; see the derivation
 and, for MLL, the proof net drawn. The prover runs in the
-page, as linlog's library compiled to WebAssembly: nothing is installed and nothing is
+page, as deduxit's library compiled to WebAssembly: nothing is installed and nothing is
 sent to a server.
 
 ## What the page does
 
 - A sequent typed in the field (ASCII such as `A * B |- B * A`, or the signs `⊗ ⅋ ⊸ ⊕ ⊢`),
   proved in classical linear logic or, by the switches its tab's calculus mark opens,
-  intuitionistic, with Mix or affine weakening; the fragment linlog detects is shown beside
+  intuitionistic, with Mix or affine weakening; the fragment deduxit detects is shown beside
   it.
 - Ordinary propositional logic, the calculus mark's other suite: a sequent of classical,
   intuitionistic or minimal logic (`a -> b, a |- b`, or the signs `→ ∧ ∨ ¬ ↔ ⊢`) proved step
   by step in Gentzen's LK or LJ and drawn as an LK or LJ derivation, never as its linear
   image, the weakenings and contractions shown on request; the search closes a goal through
-  linlog's translation and the derivation it reads back is grafted, or the goal is not valid
+  deduxit's translation and the derivation it reads back is grafted, or the goal is not valid
   or unknown; undo on a branch, the hints, the exports (SVG, PNG, PDF, LaTeX, Typst, text,
   the session, the Rocq certificate over `Prop`), the link and the saved proofs as for a
   linear proof; and fifteen examples in the sequent field's menu, from modus ponens to
   Peirce's law. Learn and Practice stay with linear logic.
-- The derivation drawn as linlog draws it, under a camera that zooms and pans: a pinch of
+- The derivation drawn as deduxit draws it, under a camera that zooms and pans: a pinch of
   two fingers, a trackpad's pinch or ctrl with the wheel zooms the drawing about where it
   happens, one finger or the mouse pans it, and outside the drawing the browser's own zoom
-  is left alone; a click on a formula of an open goal lists the rules linlog gives for it; a split asks which formulas
+  is left alone; a click on a formula of an open goal lists the rules deduxit gives for it; a split asks which formulas
   go left and says whether it can still close; a refused step says why, at the goal.
 - A goal opened in a new tab as a proof of its own, and filled back from it (or from any tab
   whose finished proof has its formulas) as one step, named with that tab's sequent and
   checked again in the goal's calculus.
 - Undo on the active goal's branch, redo, and a list of every step to go back to; a goal
-  closed by linlog's search, or every goal at once, within a work budget; the verdicts
+  closed by deduxit's search, or every goal at once, within a work budget; the verdicts
   three-valued (proved and checked, unprovable with the reason and a checked refutation,
   the inverse method's saturated set among them, or unknown when the search gave up), and
   a four-rung hint ladder from the search. Every search names the engine that did its
@@ -61,15 +61,15 @@ sent to a server.
   (Euler Math, STIX Two Math, Garamond-Math, Asana Math or New Computer Modern Math), by
   default the stage's, which Settings chooses among the same five; the proof in the link's fragment; every open proof saved
   in the browser and offered back on the next visit; import of a session or a sequent as
-  linlog writes them; everything by keyboard (`?` lists the keys); a menu, sheet or popover
+  deduxit writes them; everything by keyboard (`?` lists the keys); a menu, sheet or popover
   closed by Escape or by a press outside it; light and dark, every colour that carries a
   meaning told apart under simulated colour-vision deficiencies and shown with a word, a
   sign or a shape beside it. On a phone every control is at least 44 by 44 pixels, and the
   rarer actions are under More. Each tab keeps its own calculus.
-- One store of problems (`src/content/problems/`, 452 of them), each decided by linlog's
+- One store of problems (`src/content/problems/`, 452 of them), each decided by deduxit's
   command, which a flake check runs over them all: its sequent, calculus, verdict, a level
   of difficulty from easy to very hard, the categories it is found under and its fragment,
-  and for a provable one a session that linlog's `proof` accepts. Most are generated from a
+  and for a provable one a session that deduxit's `proof` accepts. Most are generated from a
   chosen proof shape and kept at the level they aimed at; others are the classic sequents
   of the literature, each with its source.
 - Practice, a place of its own reached from the bottom band at every width: the store's
@@ -101,15 +101,15 @@ Everything comes from the Nix flake (flake-parts, `modules/`): `nix develop` (or
 for the dev shell, whose `menu` lists the commands; `nix build` for the site in `result/`;
 `nix flake check` for every check (the site's build, Vitest, `astro check`, Biome,
 Playwright in Chromium, the Content-Security-Policy's hashes, the licences served, the
-formatting, the licence headers, and the store of problems against linlog's command). The site is Astro with one Solid island, TypeScript
-and Tailwind; linlog's WebAssembly bindings come from linlog's own flake, a pinned input
+formatting, the licence headers, and the store of problems against deduxit's command). The site is Astro with one Solid island, TypeScript
+and Tailwind; deduxit's WebAssembly bindings come from deduxit's own flake, a pinned input
 of this one. The written content is Markdown under `src/content/`.
 
 ## Hosting
 
 GitHub Pages serves the site at https://deduxit.github.io/: every push to `main`
-whose checks pass is deployed by the CI workflow. linlog's API documentation at
-https://deduxit.github.io/deduxit/ is linlog's own Pages site, and the Rocq library's at
+whose checks pass is deployed by the CI workflow. deduxit's API documentation at
+https://deduxit.github.io/deduxit/ is deduxit's own Pages site, and the Rocq library's at
 https://deduxit.github.io/rocq-deduxit/ is its own; nothing here touches them, the service
 worker included. The library's old address, `/rocq-linlog/`, forwards to its new one. The Content-Security-Policy is a `<meta>` element,
 since Pages sets no header.
@@ -124,8 +124,8 @@ licensed under CC BY 4.0 too (`src/logo/LICENSE.txt`); the name deduxit and its 
 identify this project, and may not be used to suggest its endorsement of anything else.
 Its word is Gentium ExtraBold outlined, so no font file goes with it.
 The fonts are under the SIL Open Font License 1.1: Euler Math, STIX Two Math,
-Garamond-Math and Asana Math (from linlog), Figtree and Space Mono (from Fontsource); New
-Computer Modern Math (from linlog) is under the GUST Font License, which is the LaTeX
+Garamond-Math and Asana Math (from deduxit), Figtree and Space Mono (from Fontsource); New
+Computer Modern Math (from deduxit) is under the GUST Font License, which is the LaTeX
 Project Public License 1.3c. Each is served beside its licence under `/fonts/`. The site
 serves the notices of the npm packages in its bundle (`/licenses/bundle.txt`) and of the
-Rust crates in linlog's module (`/licenses/THIRD-PARTY-NOTICES.txt`).
+Rust crates in deduxit's module (`/licenses/THIRD-PARTY-NOTICES.txt`).

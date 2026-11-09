@@ -11,10 +11,9 @@ deduxit's mark © Fabian Lukas Grubmüller 2026, licensed under the Creative
 Commons Attribution 4.0 International licence (CC BY 4.0):
 https://creativecommons.org/licenses/by/4.0/
 
-The name "deduxit" and its mark identify the deduxit project
-(https://github.com/deduxit/deduxit), whose prover is linlog. They may not
-be used in a way that suggests that the project or its author endorses
-anything else.
+The name "deduxit" and its mark identify the deduxit project and its
+prover (https://github.com/deduxit/deduxit). They may not be used in a way
+that suggests that the project or its author endorses anything else.
 
 The word is set in Gentium ExtraBold (Gentium 7.000, © 2003–2025 SIL
 Global) and outlined, so no font file goes with these files. Gentium is

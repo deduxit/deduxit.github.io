@@ -6,7 +6,7 @@
 # script, style or stylesheet (a <meta> policy covers only what follows it);
 # the policy allows each executable inline <script> and each inline <style>
 # of the page by its SHA-256, recomputed here apart from Astro, which wrote
-# them; script-src has 'wasm-unsafe-eval' for linlog's module and nothing
+# them; script-src has 'wasm-unsafe-eval' for deduxit's module and nothing
 # that would allow inline code or eval wholesale; and no data: URL is used,
 # which default-src 'none' blocks.
 # Usage: python3 csp.py SITE
@@ -172,7 +172,7 @@ for path in pages:
         "script-src", found.get("default-src", [])
     ):
         problems.append(
-            f"{name}: script-src lacks 'wasm-unsafe-eval', which linlog's module needs"
+            f"{name}: script-src lacks 'wasm-unsafe-eval', which deduxit's module needs"
         )
     counts[0] += len(page.scripts)
     counts[1] += len(page.styles)

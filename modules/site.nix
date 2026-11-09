@@ -3,7 +3,7 @@
 
 # The site as static files: `nix build' runs `astro build' in the sandbox
 # (node-modules.nix's npmTask) and puts the output at result/ -- plain HTML,
-# CSS, JavaScript, the fonts and linlog's WebAssembly module, every page at
+# CSS, JavaScript, the fonts and deduxit's WebAssembly module, every page at
 # <route>/index.html. This is what the e2e check serves, and what the
 # deployment will publish.
 {

@@ -69,7 +69,7 @@ const GROUPS: Readonly<Record<string, readonly string[]>> = {
   net: [...BANDS, "ink", "net-par"],
   // An essential net, under the bands: its input side and its dominator lines.
   essential: [...BANDS, "ink", "net-input", "net-dominator"],
-  // Every colour linlog may draw in one net, a witness's among them.
+  // Every colour deduxit may draw in one net, a witness's among them.
   "net drawing": ["ink", "net-par", "net-highlight"],
   "essential drawing": ["ink", "net-input", "net-dominator", "net-highlight"],
 };

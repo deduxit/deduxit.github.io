@@ -6,21 +6,21 @@ Maintainer notes (stripped before Claude sees this file).
 - What goes where (this file, path-scoped rules, hooks) is .claude/rules/claude-infra.md.
 -->
 
-linlog's web front end, to be served at https://deduxit.github.io/: a student types a
+deduxit's web front end, to be served at https://deduxit.github.io/: a student types a
 sequent of linear logic, or of ordinary logic in a tab whose calculus is the ordinary suite
 (LK and LJ), and proves it by clicking, or lets the search close a goal, and sees the
 derivation and, for MLL, the net drawn as the command draws them. Nothing is
-installed and nothing is sent to a server: the prover runs in the page, as linlog's
+installed and nothing is sent to a server: the prover runs in the page, as deduxit's
 WebAssembly module in a module worker.
 
 The prover itself is the repository `deduxit/deduxit` (locally
 `~/Projects/own/linlog`): its crate `deduxit-web` is the module and its JavaScript glue,
-built by linlog's flake as the package `deduxit-web`, which this flake takes through its
+built by deduxit's flake as the package `deduxit-web`, which this flake takes through its
 pinned input `deduxit` and builds no Rust itself. A change the page needs from the library
-or the bindings is a change of linlog, made there (in a jj workspace of its own), and
-reaches this repository by moving the input. linlog's `plan/web/README.md` is the front
+or the bindings is a change of deduxit, made there (in a jj workspace of its own), and
+reaches this repository by moving the input. deduxit's `plan/web/README.md` is the front
 end's plan and `plan/web/design.md` its design (D1 to D60, fixed with the author); the
-visual reference is linlog's `plan/web/mockup/`. This repository follows the author's two
+visual reference is deduxit's `plan/web/mockup/`. This repository follows the author's two
 sites (`~/Projects/own/website/docs/stack-spec.md`, `~/Projects/own/website-learn`), from
 which its flake, its tooling and its Claude Code setup are taken.
 
@@ -84,14 +84,14 @@ and `src/` are the site:
   content rendered into templates; `404.astro` the page Pages serves for a missing path;
   `privacy.astro` the privacy notice, every statement citing its source; `llms.txt.ts`
   the site's `/llms.txt` for AI models (llmstxt.org), its text `src/content/llms.txt`: what
-  the page is and the links to linlog's guide for models, which linlog's rustdoc site
+  the page is and the links to deduxit's guide for models, which deduxit's rustdoc site
   serves at `/deduxit/llms.txt` and `/deduxit/llms-full.txt`.
 - `src/content/`: the written content (CC BY 4.0), Markdown in content collections
   (`src/content.config.ts`): the store of problems with their sessions, Learn's lessons and
   the rules' schemas, the tour, and the texts (About, Practice's and Learn's openings).
 - `src/integrations/licences.ts`: the licences written into the build.
 - `src/islands/`: the prover, one Solid island (`App.tsx` and its parts).
-- `src/worker/deduxit.worker.ts`: the module worker that loads linlog's module and answers
+- `src/worker/deduxit.worker.ts`: the module worker that loads deduxit's module and answers
   the page's requests.
 - `src/lib/`: the client's logic in plain TypeScript, each with its Vitest tests beside it:
   the worker protocol, the step tree and its replay, the link's codec, the stored proofs,
@@ -122,7 +122,7 @@ its comment syntax:
 frontmatter). The written content (explanations, tutorials, worked examples, exercises) is
 CC BY 4.0, as README says, and so is the mark (`src/logo/LICENSE.txt`). No third-party
 file is committed: fonts come from npm through
-the lock or from linlog's input, never copied in.
+the lock or from deduxit's input, never copied in.
 
 ## When compacting
 

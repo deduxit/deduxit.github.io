@@ -16,7 +16,7 @@
  * - `/sw.js`: the service worker (src/offline/sw.js) with the list of every
  *   file of the site and a hash of their contents filled in.
  *
- * Nothing is written at /deduxit or /rocq-deduxit, linlog's and the Rocq
+ * Nothing is written at /deduxit or /rocq-deduxit, deduxit's and the Rocq
  * library's own Pages sites on the same origin (the `pages-paths` check), and
  * the worker leaves those paths alone.
  */
@@ -90,7 +90,7 @@ export function offline(): AstroIntegration {
           hash.update(path).update(await readFile(new URL(path, dir)));
         }
         const urls = paths.map((path) => (path === "index.html" ? "/" : `/${path}`));
-        // linlog's math fonts but Euler Math: fetched when a visitor chooses one.
+        // deduxit's math fonts but Euler Math: fetched when a visitor chooses one.
         const later = urls.filter((url) =>
           /^\/fonts\/(STIXTwoMath-Regular|Garamond-Math|Asana-Math|NewCMMath-Book)\.[^/]*\.otf$/.test(
             url,

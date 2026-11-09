@@ -100,7 +100,7 @@ Each habit → the Solid way, and why.
   camera's transform, a popover's place) go through the CSSOM in an effect or a handler:
   `el.style.setProperty(...)`, `el.style.transform = ...`. State goes into `data-*` and
   `aria-*` attributes, for CSS to draw and tests to read.
-- **linlog's SVG goes in with `innerHTML`** into a host element: it is the library's own
+- **deduxit's SVG goes in with `innerHTML`** into a host element: it is the library's own
   output, and the drawing stays a picture (`role="img"`); the clickable formulas are HTML
   buttons over it (WCAG: an interactive SVG must not sit inside `role="img"`).
 - **Animation** is `element.animate()` or a CSS transition, after checking

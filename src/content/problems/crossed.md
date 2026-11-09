@@ -9,4 +9,4 @@ fragment: "MLL"
 lesson: 2
 order: 123
 ---
-`A` feeds `A ⊸ B`, but `D` is offered where `C` is wanted: `C` and `D` find no duals to meet, as linlog's count of the atoms says.
+`A` feeds `A ⊸ B`, but `D` is offered where `C` is wanted: `C` and `D` find no duals to meet, as deduxit's count of the atoms says.

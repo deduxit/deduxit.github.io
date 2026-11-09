@@ -2,7 +2,7 @@
 // Licensed under the EUPL
 
 // Learn's frame and its places, the examples, the tour and About: one test
-// per interaction, against the built site with linlog's real module.
+// per interaction, against the built site with deduxit's real module.
 
 import { expect, test } from "./fixtures";
 import { goto } from "./prover";
@@ -89,7 +89,7 @@ test("About says what the page is, and every licence it lists is served", async 
   await page.getByRole("button", { name: "About" }).click();
   const about = page.getByRole("dialog", { name: "About" });
   await expect(about).toContainText("nothing you type is sent anywhere");
-  await expect(about).toContainText(/linlog \d+\.\d+\.\d+, reading session documents/);
+  await expect(about).toContainText(/deduxit \d+\.\d+\.\d+, reading session documents/);
   await expect(about).toContainText(
     "GitHub, which serves this site, logs every visitor's IP address",
   );
@@ -97,7 +97,7 @@ test("About says what the page is, and every licence it lists is served", async 
   await expect(about).toContainText(
     'dēdūxit [deːˈduːk.sɪt] Latin, verb: "it has derived", the perfect of dēdūcō, to lead down, derive.',
   );
-  // linlog's manual, which linlog's own Pages site serves beside its API.
+  // deduxit's manual, which deduxit's own Pages site serves beside its API.
   await expect(about.getByRole("link", { name: "manual" })).toHaveAttribute(
     "href",
     "/deduxit/manual/",
@@ -123,7 +123,7 @@ test("About says what the page is, and every licence it lists is served", async 
   }
 });
 
-test("llms.txt tells AI models what the page is and where linlog's guide is, and About links it", async ({
+test("llms.txt tells AI models what the page is and where deduxit's guide is, and About links it", async ({
   page,
   request,
 }) => {

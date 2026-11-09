@@ -2,7 +2,7 @@
 // Licensed under the EUPL
 
 /**
- * The stage: linlog's drawing of the proof (the derivation, or the finished
+ * The stage: deduxit's drawing of the proof (the derivation, or the finished
  * proof's net) on the dotted field, under a camera that zooms and pans; a
  * button over every formula of an open goal (the drawing stays a picture,
  * WCAG's rule for an interactive SVG); and at the active goal everything
@@ -133,10 +133,10 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
   let popover: HTMLDivElement | undefined;
   const [hits, setHits] = createSignal<Hit[]>([]);
   const [cutHits, setCutHits] = createSignal<CutHit[]>([]);
-  /** The cut chooser's formula as typed, and what linlog said of it. */
+  /** The cut chooser's formula as typed, and what deduxit said of it. */
   const [cutText, setCutText] = createSignal("");
   const [cutSaid, setCutSaid] = createSignal<Said | null>(null);
-  /** The witness chooser's term as typed, and what linlog said of it. */
+  /** The witness chooser's term as typed, and what deduxit said of it. */
   const [witnessText, setWitnessText] = createSignal("");
   const [witnessSaid, setWitnessSaid] = createSignal<Said | null>(null);
   const [camera, setCamera] = createSignal<Camera>({ x: 0, y: 0, k: 1 });
@@ -146,7 +146,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
   const [problem, setProblem] = createSignal<string | null>(null);
   const [glide, setGlide] = createSignal(false);
   let sequence = 0;
-  /** A rule's digit typed while the popover was still asking linlog. */
+  /** A rule's digit typed while the popover was still asking deduxit. */
   let typedEarly: number | undefined;
   let shownProof: string | undefined;
   /** What the stage drew last: the tree, or the net in one of its drawings. */
@@ -952,7 +952,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
 
   /**
    * Takes the quantifier step the witness chooser holds, with the term typed or, `open`, its
-   * witness left for an axiom or the search to fill; what linlog refused stays said in it.
+   * witness left for an axiom or the search to fill; what deduxit refused stays said in it.
    */
   async function applyWitness(open: boolean) {
     const w = ui.witnessing;
@@ -982,7 +982,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
     queueMicrotask(() => popover?.querySelector<HTMLInputElement>("input")?.focus());
   }
 
-  /** Makes the cut the chooser holds; what linlog refused stays said in it. */
+  /** Makes the cut the chooser holds; what deduxit refused stays said in it. */
   async function applyCut() {
     const cutting = ui.cutting;
     if (!cutting || cutText().trim() === "") return;
@@ -1581,7 +1581,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
               })()}
             </span>
           </p>
-          <Show when={ui.offered} fallback={<p class="sub">Asking linlog</p>}>
+          <Show when={ui.offered} fallback={<p class="sub">Asking deduxit</p>}>
             {(offered) => (
               <Show
                 when={offered().length > 0}
@@ -1805,7 +1805,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
                   class={`kw flat ${split().passes ? "acc" : "warn"}`}
                   data-tip={
                     split().passes
-                      ? "Both premises can still be proved, as far as linlog's quick test sees."
+                      ? "Both premises can still be proved, as far as deduxit's quick test sees."
                       : "One premise cannot be proved however the rest goes: this split leads nowhere."
                   }
                 >

@@ -9,4 +9,4 @@ fragment: "IMLL1"
 lesson: 10
 order: 210
 ---
-No proof: the `y` of the hypothesis depends on `x`, the `y` of the goal may not. In every order, the witness of `∃R` would have to be the eigenvariable `∃L` makes later, which the eigenvariable condition refuses; linlog's search is exhaustive.
+No proof: the `y` of the hypothesis depends on `x`, the `y` of the goal may not. In every order, the witness of `∃R` would have to be the eigenvariable `∃L` makes later, which the eigenvariable condition refuses; deduxit's search is exhaustive.

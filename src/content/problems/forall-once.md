@@ -9,4 +9,4 @@ fragment: "IMLL1"
 lesson: 10
 order: 208
 ---
-No proof: `∀L` takes one instance, `p(a)` or `p(b)`, and uses the hypothesis up. The goal needs two, so `p` occurs once too often on the right, as linlog's count says. Under `!` the hypothesis could be copied first.
+No proof: `∀L` takes one instance, `p(a)` or `p(b)`, and uses the hypothesis up. The goal needs two, so `p` occurs once too often on the right, as deduxit's count says. Under `!` the hypothesis could be copied first.

@@ -6,7 +6,7 @@ paths:
 
 # The Claude Code setup in this repo
 
-Taken from linlog's own (`~/Projects/own/linlog/.claude/`, whose `rules/claude-infra.md`
+Taken from deduxit's own (`~/Projects/own/linlog/.claude/`, whose `rules/claude-infra.md`
 says why each piece is as it is) and the author's learning sites'.
 
 | mechanism | loaded | for |
@@ -43,6 +43,6 @@ says why each piece is as it is) and the author's learning sites'.
   lock files are denied; `jj git push` and every `gh` command ask.
 - **Attribution**: `attribution.sessionUrl` is `false` (the author, 2026-11-03, for
   privacy), so no commit gets a `Claude-Session:` link to its claude.ai session, as in
-  linlog. 33 commits from before carry one, kept as pushed. `Co-Authored-By` stays.
+  deduxit. 33 commits from before carry one, kept as pushed. `Co-Authored-By` stays.
 - **Keep it current**: when the repo changes shape, amend `.claude/` and CLAUDE.md in the
   same change.

@@ -134,7 +134,7 @@ export function notTaken(failed: Failure): Said {
   };
 }
 
-/** Why a finished proof has no λ-term, by linlog's reason; a bound's refusal in its own words. */
+/** Why a finished proof has no λ-term, by deduxit's reason; a bound's refusal in its own words. */
 export function noTerm(failed: Failure): string {
   const reasons: Record<string, string> = {
     classical:
@@ -179,13 +179,13 @@ export function inputProblem(failed: Failure): Said {
     const engine = typeof details["engine"] === "string" ? details["engine"] : "";
     return {
       keyword: `The ${engineName(engine)} does not take this goal`,
-      sentence: `${failed.message.charAt(0).toUpperCase()}${failed.message.slice(1)}. Settings forces this engine; Automatic lets linlog choose.`,
+      sentence: `${failed.message.charAt(0).toUpperCase()}${failed.message.slice(1)}. Settings forces this engine; Automatic lets deduxit choose.`,
     };
   }
   if (failed.code === "unsupported_version") {
     return {
       keyword: `Level ${String(details["found"])} unknown`,
-      sentence: `This was written by a newer linlog (wire level ${String(details["found"])}); this page reads levels up to ${String(details["supported"])}. Export it from that version as a sequent instead.`,
+      sentence: `This was written by a newer deduxit (wire level ${String(details["found"])}); this page reads levels up to ${String(details["supported"])}. Export it from that version as a sequent instead.`,
     };
   }
   return { keyword: "Not read", sentence: failed.message };
@@ -216,7 +216,7 @@ export function fillRefusal(failed: Failure, tab: string): Said {
     case "invalid_proof":
       return {
         keyword: "Not filled: not a proof in this calculus",
-        sentence: `linlog's checker refused the proof of ${tab} here: ${failed.message}. It holds in its own tab's calculus, which allows a rule this one does not.`,
+        sentence: `deduxit's checker refused the proof of ${tab} here: ${failed.message}. It holds in its own tab's calculus, which allows a rule this one does not.`,
       };
     case "sequent_mismatch":
       return {
@@ -243,7 +243,7 @@ export function verdict(outcome: Outcome, checked: boolean | null): Said & { ton
   if (outcome.verdict === "proved") {
     return {
       keyword: outcome.checked ? "Proved, checked" : "Proved",
-      sentence: `The search found a proof${outcome.checked ? ", and linlog's checker accepted it" : ""}.`,
+      sentence: `The search found a proof${outcome.checked ? ", and deduxit's checker accepted it" : ""}.`,
       tone: outcome.checked ? "ok" : "plain",
     };
   }
@@ -276,7 +276,7 @@ export function verdict(outcome: Outcome, checked: boolean | null): Said & { ton
       saturated: {
         keyword: `Unprovable${mark}: saturation`,
         sentence:
-          "The inverse method derived, from the axioms upward, every sequent that can stand in a proof of this goal until nothing new came, and the goal is not among them; linlog's own checker confirmed that the set is closed under the rules.",
+          "The inverse method derived, from the axioms upward, every sequent that can stand in a proof of this goal until nothing new came, and the goal is not among them; deduxit's own checker confirmed that the set is closed under the rules.",
       },
       exhausted: {
         keyword: "Unprovable: search exhausted",
@@ -307,7 +307,7 @@ export function verdict(outcome: Outcome, checked: boolean | null): Said & { ton
 
 /**
  * The connective's kind a rule is for, the hint ladder's first rung; whether the rule is
- * invertible in the goal's mode is linlog's to say (the hint's `invertible`).
+ * invertible in the goal's mode is deduxit's to say (the hint's `invertible`).
  */
 export function ruleKind(rule: string, invertible: boolean): string {
   if (rule === "ax") return "the axiom";
@@ -367,7 +367,7 @@ export function pretty(input: string): string {
  * units, `par` and the quantifiers as theirs (`forall x.` as `∀x.`), and a negation,
  * `~A` or `A^`, as `A⊥`, the dual
  * of a group or of an exponential formula parenthesised (`(A ⊗ B)⊥`,
- * `(!A)⊥`). For the eye only: linlog's parser does not read `A⊥`.
+ * `(!A)⊥`). For the eye only: deduxit's parser does not read `A⊥`.
  */
 export function displayed(input: string): string {
   let text = pretty(input)

@@ -12,15 +12,15 @@ paths:
 # The site's code
 
 Versions are newer than most training data: Astro 7.3, Vite 8, TypeScript 6, Tailwind 4.3,
-Solid 1.9, Vitest 5, Playwright 1.63, Biome 2.5 (package-lock.json and linlog's nixpkgs,
+Solid 1.9, Vitest 5, Playwright 1.63, Biome 2.5 (package-lock.json and deduxit's nixpkgs,
 2026-10-19). Check an API in `node_modules/<pkg>/**/*.d.ts` before using it from memory.
-linlog's own calls are in `.cache/deduxit-web/deduxit_web.d.ts`, and their documents in
-linlog's `plan/web/README.md` ("The bindings' API"); `src/lib/deduxit.ts` types the parts
+deduxit's own calls are in `.cache/deduxit-web/deduxit_web.d.ts`, and their documents in
+deduxit's `plan/web/README.md` ("The bindings' API"); `src/lib/deduxit.ts` types the parts
 the page reads.
 
 ## The worker and the protocol (`src/lib/protocol.ts`, `src/worker/deduxit.worker.ts`)
 
-- **linlog's module runs in one module worker**, created as `new Worker(new URL(…,
+- **deduxit's module runs in one module worker**, created as `new Worker(new URL(…,
   import.meta.url), { type: "module" })` in `src/lib/api.ts` (Vite bundles it from that
   pattern alone). The module reads no clock and a call cannot be interrupted, so the one
   cancel is `terminate()` and a fresh worker (`Client.cancel`): every pending call
@@ -30,7 +30,7 @@ the page reads.
   otherwise be restarted in a loop; the island makes one call on mount, so the module
   loads after the first paint.
 - **Requests carry ids**; answers may come in any order. A call rejects with what it
-  threw: linlog's error JSON as a string, which `failure()` reads. The page branches on
+  threw: deduxit's error JSON as a string, which `failure()` reads. The page branches on
   `code`, `kind` and `details.kind` and words the message itself (`src/lib/words.ts`);
   never show `message` raw where a wording exists.
 - **A replay is one request** (`replay`, `play` in the worker, over `src/lib/steps.ts`), so
@@ -39,30 +39,30 @@ the page reads.
 ## The suites (`src/lib/suites.ts`, `src/lib/ordinary.ts`)
 
 - **A tab's calculus is a `Calculus`: a suite, a method and the suite's parameter**, as
-  linlog's `about` names them (`{suite: "linear", method: "sequent", mode}`,
+  deduxit's `about` names them (`{suite: "linear", method: "sequent", mode}`,
   `{suite: "ordinary", method: "sequent", logic}`); `SUITES` is the registry (name, tip,
   methods, parameter, the values the page offers, the calculus a new tab starts in, the prefix
   of the suite's calls, its `term` call), `suites.test.ts` holds it to `about()`'s `suites`
-  (names, prefixes, term calls, parameters, the page's values a part of linlog's, the start linlog's default). A new suite
+  (names, prefixes, term calls, parameters, the page's values a part of deduxit's, the start deduxit's default). A new suite
   is an entry there, a variant of `Calculus`, its calls in `api.ts` and the worker's table,
   and a branch where a call is made; the calculus popover lists the registry. Each suite has
   one method today; a second method is a field of the link (`k`) and of the shelf's calculus.
-- **The ordinary suite** (linlog's `ordinary_…` calls, LK and LJ for classical,
+- **The ordinary suite** (deduxit's `ordinary_…` calls, LK and LJ for classical,
   intuitionistic and minimal logic) is shown through the shapes the linear stage reads:
   `asView` makes its view a `View` whose goals number their formulas left of ⊢ first, as the
   drawing's `i<n>-<p>` ids do; `ordinaryStep` turns a place back into a side and position, and
   a hint's later steps carry their `side` (each acts on the goal the one before opened). A
-  rule of two premises is applied shared (G3's form, linlog's default): the page offers no
+  rule of two premises is applied shared (G3's form, deduxit's default): the page offers no
   split in an ordinary proof. No net, no cut, no fill, no engine choice, no invertible rules;
   the drawing and the exports are the ordinary calls', never the linear image.
 - **Undo on a branch in an ordinary proof cuts the step's subtree out of the session
-  document** (`retract`): it depends on linlog's layout of an ordinary session at wire level 8,
+  document** (`retract`): it depends on deduxit's layout of an ordinary session at wire level 8,
   each history entry the goal a step expanded and a step's inferences that goal's subtree,
   appended as one block after it. The page shows or stores a retracted document only after
-  `ordinary_view` (linlog's reader, which replays every inference and the history's order)
+  `ordinary_view` (deduxit's reader, which replays every inference and the history's order)
   accepted it; a refusal leaves the session as it was and says so. A change of that layout in
-  linlog must change `retract`, and `ordinary.test.ts`'s property against the real module
-  (the reader accepts every retraction, which equals linlog's undo for the last step) is
+  deduxit must change `retract`, and `ordinary.test.ts`'s property against the real module
+  (the reader accepts every retraction, which equals deduxit's undo for the last step) is
   what catches it. Redo restores the session before each undo with its grafts' engines
   (`Proof.later`); undo keeps only the engines of grafts the session still holds
   (`keptGrafts`), so a step taken by hand where a graft was is never drawn as the search's.
@@ -78,16 +78,16 @@ the page reads.
   (`Suite.term`: `term`, `ordinary_term`), keyed on the session document so that a changed proof
   is read again; the judgement shows only while the term read is the current proof's
   (`term.loading`: Solid's resource keeps its last value while it reads again), and "copied"
-  only while the judgement copied is the one shown. linlog answers a proof without a term with
+  only while the judgement copied is the one shown. deduxit answers a proof without a term with
   `{"error": …}`, not a throw; the item is then off and words its `details.reason` (`noTerm` in
   `words.ts`). A new suite with terms is its `term` in the registry, nothing in the menu.
 - **The linear suite's calls never get an ordinary session**: fill (`fillable`, `fill`), the
   invertible rules (`setInvertible`), the engine choice and the cut are kept to linear proofs.
-- **The registry reads every linear mode linlog's `about` lists** (the switches build six; a
+- **The registry reads every linear mode deduxit's `about` lists** (the switches build six; a
   session pasted in cyclic linear logic or the Lambek calculus opens and is stored as one), and
   `parseShelf` leaves out a proof it cannot read alone, never the whole shelf.
 - **The sequent field's examples** are `src/content/examples.json` (the menu beside the field
-  of a tab of a suite Practice does not serve), each with linlog's verdict in every logic,
+  of a tab of a suite Practice does not serve), each with deduxit's verdict in every logic,
   held by `src/content/examples.test.ts`; the file's order is the menu's.
 
 ## The step tree (`src/lib/steps.ts`)
@@ -97,7 +97,7 @@ the page reads.
   order). A link, a file or the browser's storage gives the same tree as a proof made on
   the page.
 - **Goals are named by path** (the premise taken at each inference), never by number:
-  linlog numbers inferences in the order they are made, so a replay that leaves a step out
+  deduxit numbers inferences in the order they are made, so a replay that leaves a step out
   renumbers every later one. Everything stored across a replay (the active goal, a note,
   the hint ladder's key, the redo stack) is a path.
 - **Undo per branch** retracts the step that opened the active goal and every step since
@@ -106,7 +106,7 @@ the page reads.
   replays by `close` again (deterministic: one thread, bounded by work), and a graft that
   no longer closes leaves its goal open and says so. The search's inferences are drawn
   apart (`searchMade`, the class `search` on the drawing's `g#i<n>`, whose rule label is
-  the next sibling text: linlog's SVG writes it right after the conclusion). A graft the
+  the next sibling text: deduxit's SVG writes it right after the conclusion). A graft the
   search no longer closes within the settings (it closed under a larger budget, "Try N
   units") replays from its own inferences as steps (the action's `graft`), so an undo
   elsewhere never reopens it; only its marking as the search's is lost.
@@ -122,13 +122,13 @@ the page reads.
   session as the steps they were, and applied again after each replayed step they would
   close the goals the recorded ones expand.
 - **Every replayed step must make the premises it made** (the action's `made`); one that
-  does not is taken back with linlog's `undo` and its goal reported, never kept as a
+  does not is taken back with deduxit's `undo` and its goal reported, never kept as a
   different proof.
 - **`stepOf` rebuilds a step from its inference**: the principal's position; for two
   premises that split the context, the positions in the left premise, found by aligning
   the goal with both premises (`leftOf`): a contraction gives copies one occurrence, so a
   context formula may carry the principal's subformula's occurrence and no count tells
-  them apart. Premises that hold the context twice over (`&`) take no split, which linlog
+  them apart. Premises that hold the context twice over (`&`) take no split, which deduxit
   refuses. The fast-check property in `steps.test.ts` replays random proof
   attempts against the real module; extend its sequents when a rule is added.
 
@@ -136,7 +136,7 @@ the page reads.
   holds a cut's occurrence, not its text, so `actions` and `retract` take the view's `cuts`
   (each cut's inference and formula in the mode's syntax) and give a cut `{formula, left,
   made}`, `left` found by `leftOf` with one formula of each premise's own (the cut formula
-  and its dual). linlog's `start` on the session's sequent leaves its cut formulas out, so
+  and its dual). deduxit's `start` on the session's sequent leaves its cut formulas out, so
   the replayed cut makes the same occurrences. Learn's worked proofs pass their stored
   session's view too (below).
 
@@ -170,7 +170,7 @@ the page reads.
 
 ## The drawing and the stage (`src/islands/Stage.tsx`)
 
-- linlog's SVG goes in by `innerHTML`; it stays a picture (`role="img"`, its `<desc>`),
+- deduxit's SVG goes in by `innerHTML`; it stays a picture (`role="img"`, its `<desc>`),
   and every formula of an open goal gets an HTML button over it, placed from the
   element `#i<n>-<p>`'s box (`view.inferences[n]` is the goal `i<n>` draws). The drawing
   is asked with `styles.svg.font_size` 30, so a formula is a 24-pixel target at 100 %.
@@ -195,11 +195,11 @@ the page reads.
   the violet logo was paired with every colour of meaning and exempt only beside the equal
   accent).
 - Colours come from CSS over the SVG's attributes (`.drawing svg text { fill: … }`), so a
-  theme change needs no redraw; the exports keep linlog's own colours. The colours that
-  mean something in a net are exempt from the ink, matched by the value linlog writes
+  theme change needs no redraw; the exports keep deduxit's own colours. The colours that
+  mean something in a net are exempt from the ink, matched by the value deduxit writes
   for its default `Style` (`#0072b2` the `⅋` edges, `#009e73` the essential net's input
   side, `#cc79a7` its dominator lines, `#d55e00` a witness's edges) and repainted with
-  `--color-net-*` at 4.5:1 on the field: a change of linlog's defaults fails the
+  `--color-net-*` at 4.5:1 on the field: a change of deduxit's defaults fails the
   essential net's colour test rather than turning them to ink. The page's net colours are
   hues of Okabe and Ito's palette (blue for `⅋` and for the input side, which never share
   a drawing, reddish purple, vermilion), each darkened or lightened for contrast; `⅋` is also dashed, a dominator line
@@ -210,10 +210,10 @@ the page reads.
   occurrence written, or `compact`), in the view and the net's exports alike. The stage
   fits the drawing afresh whenever what it draws changes (another proof, the tree or the
   net, the net's drawing), since the net with its formulas is far larger than the tree.
-- **The net's look** is `Settings.netLook` (`styles.svg.net_look`, linlog's `NetLook`, sent
+- **The net's look** is `Settings.netLook` (`styles.svg.net_look`, deduxit's `NetLook`, sent
   as its three fields by `lookJson`), stored with the other settings, each field read back as
-  linlog's default where the stored value is not one of its own (`storedLook`). Settings' "Net
-  drawing" shows it as a row "Look" (linlog, Textbook: `LINLOG_LOOK`, `TEXTBOOK_LOOK`, each
+  deduxit's default where the stored value is not one of its own (`storedLook`). Settings' "Net
+  drawing" shows it as a row "Look" (deduxit, Textbook: `DEDUXIT_LOOK`, `TEXTBOOK_LOOK`, each
   pressed only while all three fields are its own) and a row per field (`LookRow`), each
   button with its tip and a line under them for a touch. The stage and the exports draw with
   it, and the stage refits when it changes (a look can add rows).
@@ -221,7 +221,7 @@ the page reads.
   formulas are what it is clicked on); on a stage under 640 px both popovers are a sheet
   at its bottom. The witness chooser (`ui.witnessing`, a rule offered with `witness`) is
   the cut chooser's twin: the term typed in the formulas' font, Apply, Leave open (`$1`),
-  and linlog's refusal said in it (`witnessed` in the state returns it); it takes the
+  and deduxit's refusal said in it (`witnessed` in the state returns it); it takes the
   selection's place, so digits typed in it pick no rule, and another formula picked closes it
   for that formula's rules.
 - **Zoom is the stage's on the stage and the browser's everywhere else.** The stage keeps
@@ -251,25 +251,25 @@ the page reads.
   it, placed under the goal's row as the split chooser is; a parse error or a refusal stays
   said in it (`cutProblem`), never as the goal's note.
 - **Cut elimination** is each proof's `elim.tree` and `elim.net`, never stored, cleared by any
-  change of the session (`show`): the proof or net reached (linlog's `cuts`/`net_cuts`
+  change of the session (`show`): the proof or net reached (deduxit's `cuts`/`net_cuts`
   answer, its document sent back with each call), the steps taken with the drawing each
   was taken on, and the way back. Undo keeps the state before a step; a step of "To the end"
   is taken again on undo by `eliminate` from the run's start with `cut.steps` one fewer and
   `cut.drawn_bytes` 0 (the strategy is deterministic and nothing else of a run is kept).
   The stage draws the reached proof or net (or with "Before" the drawing a step was taken
-  on, its cut marked by the classes `reduced` and `acted` on linlog's ids, a net's marks
-  linlog's own), with a `.cb` button over every cut, the strategy's next outlined
+  on, its cut marked by the classes `reduced` and `acted` on deduxit's ids, a net's marks
+  deduxit's own), with a `.cb` button over every cut, the strategy's next outlined
   (`next-cut`). A net's elimination draws as `draw_net` does: an intuitionistic net with
   cut links under its reading. Settings' "Elimination steps" is `cut.steps`.
 
 ## The state (`src/islands/state.tsx`)
 
 - **A goal's formula is shown as it reads** (`shown` in `src/lib/words.ts`): in
-  intuitionistic mode linlog's `reading` (a hypothesis `A ⊸ B`), which its `text` is too, else
+  intuitionistic mode deduxit's `reading` (a hypothesis `A ⊸ B`), which its `text` is too, else
   the one-sided `text` in signs. The formulas' buttons are named so (`A ⊸ B, formula 2 of
   goal 1`), and the rules popover and the split chooser's lists write them so; a step still
   names a formula by its position.
-- **An intuitionistic sequent is typed in ILL's syntax**: linlog reads intuitionistic text
+- **An intuitionistic sequent is typed in ILL's syntax**: deduxit reads intuitionistic text
   strictly (a `~`, `^`, `par`, `|`, `?` or `bot` refused with a hint), so the page reads the
   field, a preview and an opened document with `read_as` in the proof's mode (`api.readAs`),
   never `read`, whose reading has no mode. A goal opened in a new tab is written from its
@@ -277,7 +277,7 @@ the page reads.
   one-sided formula: there is none to write. `problems.test.ts` holds every intuitionistic
   problem to the strict reading and its print.
 - **A tab shows its sequent as typed, in signs** (`displayed` in `src/lib/words.ts`, in
-  Euler Math): `A⊥` for `~A` and `A^`, which linlog's parser does not read, so the link
+  Euler Math): `A⊥` for `~A` and `A^`, which deduxit's parser does not read, so the link
   keeps `pretty`'s text, which it does; `forall x.` and `exists x.` as `∀x.` and `∃x.`.
 
 - **Light dismiss** (`App.tsx`, one capture `pointerdown` on the document): a press outside
@@ -292,23 +292,23 @@ the page reads.
   its menu before its click opens it again. On a phone some sheets (About) cover the whole
   stage, so outside is the bands; `tests/dismiss.spec.ts` presses there then.
 - **The first-order bounds** are Settings' "Witness depth", "Instances" and "Terms"
-  (`search.witness_depth`, `search.instances`, `limits.terms`), linlog's tab defaults (64,
+  (`search.witness_depth`, `search.instances`, `limits.terms`), deduxit's tab defaults (64,
   2¹⁶, a million) and sent only where changed, so every other call's settings read as
   before; a search they stop says so (`verdict`'s `witness_depth`, `instances`).
 - **The invertible rules' switch** is Settings' "Apply invertible rules by themselves",
   after Budget (the proving behaviours), off by default, stored with the other settings;
   `json()` adds `interactive.invertible` while it is on, so `start` and `apply` apply them.
   Turning it on applies them at once to every open goal of every proof (`setInvertible`,
-  linlog's `invert_all`). Its tip (`INVERTIBLE_TIP`) says what an invertible rule is and why
+  deduxit's `invert_all`). Its tip (`INVERTIBLE_TIP`) says what an invertible rule is and why
   applying one loses no proof; tips never follow a touch, so the line under it says what the
-  page does. The hint ladder's first rung reads linlog's judgement of the hinted rule
+  page does. The hint ladder's first rung reads deduxit's judgement of the hinted rule
   (`Hint.invertible`), not a list of names, and with the switch on says that the invertible
   rules are done.
 - **The Two-sided switch** is on the calculus's popover in classical mode alone
   (`Calculus.tsx`), a setting of the tab (`Settings.twoSided`, off by default, stored with
   the others), not of the proof: it changes no session and restarts nothing. While it is on,
   `viewJson` adds `view.classical: "two"` to `json()`, the stage's `drawSettings` and the
-  exports' settings, and linlog draws the derivation two-sided as the sequent was typed
+  exports' settings, and deduxit draws the derivation two-sided as the sequent was typed
   (`~L`/`~R` where a negation was typed); a session keeps how its sequent was typed from
   `start`, so turning the switch on redraws any proof at any point.
 - **One action that changes a proof at a time** (`guard`): each reads the session, waits on
@@ -322,7 +322,7 @@ the page reads.
   the fragment (a link of the first version, `#v=1&m=<mode>&…`, reads as the linear suite;
   `link.test.ts` holds both),
   the session deflate-raw and base64url, dropped past 2000 characters (the export menu
-  says so). A link whose session linlog refuses loads the sequent and the mode, with
+  says so). A link whose session deduxit refuses loads the sequent and the mode, with
   "Proof not restored"; one past `UNPACKED_LIMIT` (512 KiB, read through a capped
   inflate) says so, and one whose sequent does not parse puts it in the field with the
   parse error marked, as if typed. The sequent is the field's text with the ASCII connectives as their signs (`pretty`, which `words.test.ts` holds to read as the same sequent).
@@ -333,6 +333,15 @@ the page reads.
   bar, the copy of a proof saved last winning, and work begun before the visitor answers
   overwrites nothing. A proof open already (a link's) is taken out of the bar (`prune`). Settings are `linlog-settings`,
   the theme `linlog-theme` (read before the first paint by `Base.astro`).
+- **The browser's keys keep the prover's old name, linlog**, since its rename to deduxit
+  (2026-11-09): `linlog-settings`, `linlog-theme`, `linlog-practice`, `linlog-proofs:<visit>`,
+  `linlog-proofs-previous` and the service worker's caches `linlog-site-<version>`. A new
+  key would lose every visitor's saved settings, proofs and progress, and a new cache prefix
+  would strand the old caches, since activation deletes only its own prefix's. Never rename
+  one without reading the old key and moving what it holds; the privacy page lists them as
+  they are. What else keeps the old name: the Cachix cache `linlog-prover`, this repository
+  and its directory (`linlog-prover.github.io`), the prover's local checkout
+  (`~/Projects/own/linlog`) and the Rocq library's old address `/rocq-linlog/`, forwarded.
 
 ## The Content-Security-Policy
 
@@ -343,7 +352,7 @@ the page reads.
   is the body's first element, its text `PREPAINT` (`src/lib/theme.ts`), whose hash the
   config adds, since Astro hashes no `is:inline` script.
 - **What a `<meta>` policy cannot do**: `frame-ancestors`, `report-uri` and `sandbox` are
-  ignored there, so the page can be framed; the worker that runs linlog's module gets no
+  ignored there, so the page can be framed; the worker that runs deduxit's module gets no
   policy at all (a worker's comes from its own response's headers).
 - **The check reads a policy as a browser does**: the first copy of a directive wins, and
   `script-src-elem`/`style-src-elem` govern the elements where present (`governing`).
@@ -362,20 +371,20 @@ the page reads.
   `/licenses/THIRD-PARTY-NOTICES.txt` the Rust crates' (deduxit-web's), `LICENSE.txt` the
   EUPL. The upload to Pages drops dot-files, so nothing is under `.vite/`.
 - **Fonts live under `/fonts/`** beside `<Family>-OFL.txt`: `assetFileNames` sends them
-  there, but only for what the server build emits (the stylesheet's fonts, and linlog's
+  there, but only for what the server build emits (the stylesheet's fonts, and deduxit's
   five math fonts because `index.astro` imports their URLs and passes them to the island
   as `fonts`); Astro's client build names its own assets, so a font imported from the
   island would land in `/_astro/` and fail the build. A new family is a line of `FONTS`
-  and of the check (`families` and the served licences compared with linlog's). A licence
+  and of the check (`families` and the served licences compared with deduxit's). A licence
   that is not the OFL is served as `<Family>-LICENSE.txt` (`ofl: false`): New Computer
-  Modern Math's, the GUST Font License's, with the LPPL's clause 6 notice linlog wrote.
+  Modern Math's, the GUST Font License's, with the LPPL's clause 6 notice deduxit wrote.
 - **The formulas' font** is `Settings.stageFont` (a `MathFont` name, Settings' "Font of the
-  formulas", default Euler Math): the stage's drawing asks linlog for it
+  formulas", default Euler Math): the stage's drawing asks deduxit for it
   (`styles.svg.font`, `drawSettings`), and `App.tsx` sets `:root[data-math-font]`, which
   `app.css` turns into `--font-math` (one token per font in `tokens.css`), so every formula
   of the page, the tabs' sequents too, follows. `font(name)` fetches a font's bytes once and
   adds them to the document under the family its file names (`MATH_FONTS[].family`, which
-  linlog's drawing asks for): Euler Math at the start, another font when it is chosen for
+  deduxit's drawing asks for): Euler Math at the start, another font when it is chosen for
   the stage or an export, never before. **The exports' font** is `Settings.font`, null for
   the stage's (`exportFont`); the export menu's `menuitemradio`s set it, the stage's font
   setting it back to null; `render` gets that font's file and no other.
@@ -387,8 +396,8 @@ the page reads.
 ## The written content (`src/content/`, CC BY 4.0)
 
 - **Markdown in content collections** (`src/content.config.ts`): `problems/` (the one store
-  Practice and Learn draw from: a sequent, its mode, linlog's verdict, a `level` 1 to 4, its
-  `categories`, the `fragment` linlog detects; `lesson`/`order` for a lesson's practice,
+  Practice and Learn draw from: a sequent, its mode, deduxit's verdict, a `level` 1 to 4, its
+  `categories`, the `fragment` deduxit detects; `lesson`/`order` for a lesson's practice,
   `source`/`url` for one from the literature; a provable one's proof beside it as
   `<id>.session.json`), `tour/` (the stops in order, each with the element it points at
   and the step it performs), `texts/` (About, Practice's opening and Learn's two openings),
@@ -406,10 +415,10 @@ the page reads.
   (each verdict and fragment by the module, each session to its sequent, mode and a
   finished proof, the categories to the sequent's connectives and mode, no sequent twice in
   one calculus, the lessons' mix) and the flake's `problems` check
-  (`modules/_checks/problems.py`), which runs linlog's command at the pinned input over the
+  (`modules/_checks/problems.py`), which runs deduxit's command at the pinned input over the
   whole store in one deterministic batch and `interact --state … proof` on each session: a
-  problem without that evidence, or whose verdict a later linlog changes, fails it. A
-  session is written by `linlog interact` from the steps linlog's own hints give (`apply`
+  problem without that evidence, or whose verdict a later deduxit changes, fails it. A
+  session is written by `deduxit interact` from the steps deduxit's own hints give (`apply`
   per step, then `save` and `proof`, exit 0), so that Watch plays it step by step; a lesson's
   problem proved with a cut keeps the cut in its session (`cut`, then the hints' steps). A
   session with cuts holds its cut formulas in its sequent (`cuts`), so both checks compare
@@ -420,7 +429,7 @@ the page reads.
   ½ × the bits it does, summed over the goals where no invertible rule applies (bits:
   log2 of the moves there over the moves after which the goal stays provable); levels Easy
   under 6, Moderate under 14, Hard under 30, Very hard from 30. The generators, the measure
-  and its validation by agents of two strengths live outside the repository (linlog's
+  and its validation by agents of two strengths live outside the repository (deduxit's
   `plan/reports/43-learn-lessons.md` says where); an unprovable problem keeps the level set
   by hand, and a variant built from a measured problem (an unused hypothesis for weakening, two
   proofs side by side under Mix) takes its source's score plus one step. A new problem is
@@ -445,21 +454,21 @@ the page reads.
   `lessons/<id>.attempt.json` on the lesson's tab, then "which step went wrong?" answered as
   the hinge is; the wrong step is the one without a misconception, and `lessons.test.ts` holds
   it to be the first after which an open goal has no proof), `gallery` (store problems of the
-  lesson asked of linlog, `ask`, the search on the root as Close runs it, or replayed with their
+  lesson asked of deduxit, `ask`, the search on the root as Close runs it, or replayed with their
   net drawn, `net`), `unknown` (a sequent outside the store searched with a budget too small,
   so the visitor watches Unknown and the retry's doublings decide it; the test holds the text's
   budget to the module's answers), `net` (the finished worked proof offers its net),
   `eliminate` (the finished worked proof's cut eliminated by the stage's own cluster, on the
   derivation and on the net, Learn's panel saying how far each has come; its `cases`, a reason
-  per case by linlog's snake-case name, go to `ui.cases` while the lesson is open and stand in
+  per case by deduxit's snake-case name, go to `ui.cases` while the lesson is open and stand in
   the cluster under the step's line, `.case-why`, with Learn on; the test holds every case
-  linlog takes on both views to a reason), `counts` (problems proved with a cut, their cut
+  deduxit takes on both views to a reason), `counts` (problems proved with a cut, their cut
   formula and inferences with it, the session's, and without, the `i<n>` ids of the drawing
   `eliminate` reaches; their practice card asks for the cut and, once the visitor's tab
   proves the problem, counts that proof's inferences beside both) and `refusal` (an
   unfinished session `lessons/<id>.refusal.json` of an unprovable store problem of the
   lesson, played by Redo with a reason per step, then the step `refused` on its one open goal,
-  whose refusal is the goal's note; the test holds that linlog refuses it). Every
+  whose refusal is the goal's note; the test holds that deduxit refuses it). Every
   lesson problem is decided within a hundredth of the page's budget (`lessons.test.ts`): the
   store keeps no verdict a budget could change, and a lesson problem near the budget is
   replaced, not marked. Formulas in a lesson's or a rule's text
@@ -481,18 +490,18 @@ the page reads.
   (`Schema`) from the `rules` collection (`ruleNamed`): in an intuitionistic proof its
   two-sided schema, elsewhere the one-sided rule, a two-sided name by the one-sided rule it
   names. A verdict's reason is the note's and the status's tip, as before.
-- **The reference's rules** are `rules/<nn>-<name>.md` (linlog's name, the premises and the
-  conclusion as the Handbook's Table 1.4 writes them, linlog's two-sided names from its
+- **The reference's rules** are `rules/<nn>-<name>.md` (deduxit's name, the premises and the
+  conclusion as the Handbook's Table 1.4 writes them, deduxit's two-sided names from its
   `ClassicalRule` table, the lesson), drawn by `Rules` into the reference's `<div
   data-rules>` through a portal, after the text is cloned (`Written`'s `ready`).
   The two-sided rules of intuitionistic linear logic (`rules/14-ill-*.md` to `32`, and
-  `36-ill-cut.md` to `40`, the Handbook's Table 1.5 in linlog's names) carry `oneSided`, the
+  `36-ill-cut.md` to `40`, the Handbook's Table 1.5 in deduxit's names) carry `oneSided`, the
   one-sided rule they are, in place of `twoSided`, and are drawn into `<div
   data-rules-two>`; `lessons.test.ts` holds each to a one-sided rule that lists its name. The
   cut and the quantifiers (`33-cut.md` to `35-exists.md`) are Table 1.4's `(cut)`, `(∀₁)` and
   `(∃₁)`; both cuts are named `cut`, and `ruleNamed` takes the two-sided one in an
   intuitionistic proof, as for every rule. A step's reason is placed beside the rule label, which
-  linlog draws as a text, or as a group where the name has a subscript (`⊕₁`).
+  deduxit draws as a text, or as a group where the name has a subscript (`⊕₁`).
 - **Learn's practice is a lesson's**: the problems with a `lesson`, under the tutorial's
   lesson, easiest first, provable and unprovable mixed, never three alike in a row
   (`problems.test.ts`); a card keeps its verdict and explanation under "Answer". Every
@@ -509,12 +518,12 @@ the page reads.
   lists it).
 - **A goal opens in a new tab** (`openGoal`, the dock's arrow): its formulas as the field
   reads them (`sequentText`, two-sided where they have sides, each formula as its reading,
-  linlog's `reading`, the dual of its one-sided `text` only where there is none), in the same
+  deduxit's `reading`, the dual of its one-sided `text` only where there is none), in the same
   calculus, the new
   proof's `origin` the tab and the goal's path (kept in the shelf). **A goal is filled from
   a tab** (`fill`, the dock's "Fill from <its sequent>") when that tab's proof is finished and its
   sequent has the goal's formulas in any order (`fillable`: `keyOf` of each, the other
-  tab's from a `start` of its sequent, cached by mode and sequent); linlog's `fill` carries
+  tab's from a `start` of its sequent, cached by mode and sequent); deduxit's `fill` carries
   the proof over and checks it in the goal's calculus, and a refusal is the goal's note
   (`fillRefusal`). The graft is named like a search's, `engines[path] = "tab:<sequent>"` (the
   drawing's label, the step list), and replays from its own inferences, never by the search
@@ -536,7 +545,7 @@ the page reads.
   original is paywalled being replaced by an open work that states it; change one only from
   the work itself.
 - **Settings' engine** is `search.engine` in every search's settings. Which engines take a
-  sequent is asked of linlog with the bindings as they are: `prove` forced to each engine
+  sequent is asked of deduxit with the bindings as they are: `prove` forced to each engine
   with a budget of one unit refuses before it searches (`engine_refused`, with `because`)
   where the engine does not take it, the same test a search does before it starts. A forced
   engine lasts for the visit: `setSettings` stores every setting but it, and the page starts
@@ -552,12 +561,12 @@ the page reads.
 - **The tour** (`Tour.tsx`) runs on `ui.tour`: each stop's `act` is performed once, on the
   way forward, through the state's own actions; the caption takes the focus, says each
   stop in the live region, and marks what it points at with `data-tour-spot`.
-- **About** is a menu of the bottom band: its text, linlog's version from `about`, every
+- **About** is a menu of the bottom band: its text, deduxit's version from `about`, every
   licence the site serves (linked, `tests/learn.spec.ts` fetches each) and the line that
   GitHub logs visitors' addresses, which links the privacy page. Its text links `/llms.txt`,
   the page described for AI models in the proposal's shape (an H1, a blockquote, then lists
-  of links; no heading among the details), which points to linlog's guide on the rustdoc
-  site rather than copying it, so that the guide stays one text, kept true by linlog's own
+  of links; no heading among the details), which points to deduxit's guide on the rustdoc
+  site rather than copying it, so that the guide stays one text, kept true by deduxit's own
   tests; `tests/learn.spec.ts` holds the link, the shape and the two guide links.
 - **The privacy page** (`src/pages/privacy.astro`, at `/privacy/`) is a page of its own,
   linked from About, from the bottom band's end (More's sheet on a phone) and from the 404
@@ -574,7 +583,7 @@ the page reads.
   the plugin alone never sees Astro's pages. The build fills `FILES` (every file of the
   site, the page as `/`) and `VERSION` (a hash of their contents) into `/sw.js`.
 - **Its scope is the origin, its reach is the site's own files**: a worker at `/sw.js`
-  cannot be scoped narrower than `/`, where the page is, and `/deduxit/` (linlog's rustdoc and,
+  cannot be scoped narrower than `/`, where the page is, and `/deduxit/` (deduxit's rustdoc and,
   under `/deduxit/manual/`, its manual, another Pages site on the origin) and `/rocq-deduxit/`
   (the Rocq library's documentation, a third) lie under it. So the fetch handler answers only the
   paths in `FILES` and navigations to `/`, and returns without `respondWith` for anything
@@ -608,7 +617,7 @@ the page reads.
   linked at `.cache/deduxit-logo`; never draw or edit one by hand. They match the workshop's
   rasters pixel for pixel. The square's ink lies inside the maskable safe circle, so the
   maskable icons are the square to the edge, unscaled. The build copies `src/logo/` and the
-  site's rasters to `/logo/` (`offline.ts`), where linlog's README and rustdoc fetch them by
+  site's rasters to `/logo/` (`offline.ts`), where deduxit's README and rustdoc fetch them by
   URL: keep the paths `/logo/wordmark-*.svg`, `/logo/square-dark.svg` and
   `/logo/favicon-32.png` stable.
 - **On the page the word mark is inline** (`Logo.tsx`, the 404 page's `set:html`, both from
@@ -629,7 +638,7 @@ the page reads.
   Gentium's OFL 1.1 asks nothing for an outlined logo (its condition 5 exempts a document
   created with the font, and outlines are no modified font, which the Reserved Font Names
   would bind); no font file goes with the SVGs; the notice names it anyway.
-- **`tests/serve.ts` serves `tests/linlog-docs/` at `/deduxit/` and `tests/rocq-docs/` at
+- **`tests/serve.ts` serves `tests/deduxit-docs/` at `/deduxit/` and `tests/rocq-docs/` at
   `/rocq-deduxit/`**, as Pages serves the rustdoc and the Rocq library's documentation beside
   the site, so the tests see the worker leave them alone and `/rocq-linlog/` forward.
 
@@ -682,7 +691,7 @@ the page reads.
 
 ## Tests
 
-- **Vitest** for the logic, beside it as `*.test.ts`; `src/lib/testing.ts` loads linlog's
+- **Vitest** for the logic, beside it as `*.test.ts`; `src/lib/testing.ts` loads deduxit's
   real module in Node for the step tree's tests.
 - **Playwright**, one test per interaction of the island (`tests/prover.spec.ts`, and
   `tests/phone.spec.ts` at a phone's width), against the built site served as Pages

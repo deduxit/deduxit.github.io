@@ -9,4 +9,4 @@ fragment: "MALL"
 lesson: 11
 order: 194
 ---
-The image of Peirce's law, `((A → B) → A) → A`, under the translation of classical logic into affine MALL, as `linlog seq print --logic classical` prints it. `&` gives two goals; in the first, `B` is left over and weakening drops it. Without weakening, in classical mode, the image has no proof.
+The image of Peirce's law, `((A → B) → A) → A`, under the translation of classical logic into affine MALL, as `deduxit seq print --logic classical` prints it. `&` gives two goals; in the first, `B` is left over and weakening drops it. Without weakening, in classical mode, the image has no proof.

@@ -9,4 +9,4 @@ fragment: "MLL"
 lesson: 8
 order: 48
 ---
-Its only linking closes a cycle through the `⅋`, which the switching criterion refuses; linlog's count equation refutes it before any linking.
+Its only linking closes a cycle through the `⅋`, which the switching criterion refuses; deduxit's count equation refutes it before any linking.

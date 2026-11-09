@@ -2,10 +2,10 @@
 // Licensed under the EUPL
 
 // Learn's written lessons, one test per interaction, against the built site
-// with linlog's real module: the worked proof played with a prediction and a
+// with deduxit's real module: the worked proof played with a prediction and a
 // reason per step, the dead end, the self-explanation prompt, the faded proof,
 // the hinge question, the attempt whose wrong step the visitor finds, a
-// problem asked of linlog, a search that gives up at a small budget, the nets
+// problem asked of deduxit, a search that gives up at a small budget, the nets
 // a lesson draws, a cut played and eliminated on the derivation and on the net,
 // a practice problem's inferences with a cut and without, witnesses and the
 // step the eigenvariable condition refuses, and the hover explanations and
@@ -177,7 +177,7 @@ test("in an intuitionistic proof, a rule of the popover shows its two-sided sche
   await expect(tip).toContainText("The split is ⊗'s");
 });
 
-test("the attempt plays its steps, the visitor finds the wrong one, and linlog answers on the goal it left", async ({
+test("the attempt plays its steps, the visitor finds the wrong one, and deduxit answers on the goal it left", async ({
   page,
 }) => {
   const frame = await lesson(page, 7, "When there is no proof");
@@ -194,7 +194,7 @@ test("the attempt plays its steps, the visitor finds the wrong one, and linlog a
   );
   await attempt.getByRole("radio", { name: "Step 2, ⊕₁" }).check();
   await expect(attempt.getByRole("status")).toContainText("Right");
-  await attempt.getByRole("button", { name: "Ask linlog about the goal step 2 left" }).click();
+  await attempt.getByRole("button", { name: "Ask deduxit about the goal step 2 left" }).click();
   await expect(page.locator(".dock .kw.bad")).toHaveText("Unprovable, checked: atom balance");
   // The worked proof takes the tab back and plays the right step.
   await frame.getByRole("button", { name: "Start the worked proof" }).click();
@@ -204,9 +204,9 @@ test("the attempt plays its steps, the visitor finds the wrong one, and linlog a
   await expect(page.getByRole("button", { name: /^B⊥, formula 1 of goal 3/ })).toBeVisible();
 });
 
-test("a problem asked of linlog opens with its verdict and reason beside it", async ({ page }) => {
+test("a problem asked of deduxit opens with its verdict and reason beside it", async ({ page }) => {
   const frame = await lesson(page, 7, "When there is no proof");
-  await frame.getByRole("button", { name: "Ask linlog about A false case" }).click();
+  await frame.getByRole("button", { name: "Ask deduxit about A false case" }).click();
   await expect(page.locator(".dock .kw.bad")).toHaveText(
     "Unprovable, checked: a classical countermodel",
   );
@@ -312,7 +312,7 @@ test("a quantifier lesson plays its witnesses, and the eigenvariable condition r
   await expect(frame.getByText("Proved", { exact: true })).toBeVisible();
   // The witnesses replayed as the session took them, not left open.
   await expect(page.locator(".drawing svg")).toContainText("r(a, b) ⊢ r(a, b)");
-  const part = frame.getByRole("region", { name: "A step linlog refuses" });
+  const part = frame.getByRole("region", { name: "A step deduxit refuses" });
   await part.getByRole("button", { name: "Play the attempt" }).click();
   for (let step = 0; step < 4; step++)
     await part.getByRole("button", { name: "Next step of the attempt" }).click();
@@ -322,7 +322,7 @@ test("a quantifier lesson plays its witnesses, and the eigenvariable condition r
   await part.getByRole("button", { name: "Try the last step" }).click();
   await expect(page.locator(".dock")).toContainText("ax refused: the eigenvariable condition");
   await expect(part.getByRole("status")).toContainText("Refused");
-  await part.getByRole("button", { name: /^Ask linlog about/ }).click();
+  await part.getByRole("button", { name: /^Ask deduxit about/ }).click();
   await expect(page.locator(".dock .kw.bad")).toContainText("Unprovable");
 });
 
