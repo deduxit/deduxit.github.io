@@ -2,7 +2,7 @@
 lesson: 1
 title: "Reading a sequent"
 worked: "identity"
-choices: ["ax", "⅋", "⊗", "no rule"]
+choices: ["ax", "no rule"]
 steps:
   - rule: "ax"
     reason: "The goal holds the atom `A` and its dual `A⊥`, and nothing else: the axiom closes it."
@@ -24,15 +24,12 @@ hinge:
     - text: "`⊢ A⊥, A, B`"
       problem: "extra"
       misconception: "A formula nobody uses can be left over, as in classical logic."
-      why: "`B` would be left over: only `⊤`, which closes a goal it is in, or `?w`, which drops a formula under `?`, can dispose of a formula, and the goal has neither."
+      why: "`B` would be left over, and the axiom leaves nothing over. Later lessons meet the few rules that can drop a formula."
     - text: "`⊢ A⊥, B`"
       problem: "strangers"
       misconception: "Any atom closes with any negated atom."
       why: "The axiom needs the dual of the same atom: `B` goes with `B⊥`, not with `A⊥`."
 ---
-A sequent `⊢ Γ` asks for a proof of the formulas `Γ` together, separated by commas.
-`A⊥` is the dual of `A`, its negation. Typed in classical mode, `Γ |- Δ` moves each
-hypothesis to the right as its dual: `A |- A` is `⊢ A⊥, A`. The dual of a compound
-formula follows De Morgan's laws, `(A ⊗ B)⊥ = A⊥ ⅋ B⊥`, and `A⊥⊥` is `A` again.
-
-The axiom closes a goal that holds an atom and its dual, and nothing else.
+A goal such as `⊢ A⊥, A` asks for a proof of its formulas together. `A⊥` is the
+dual of `A`, its negation. The axiom, `ax`, closes a goal that holds an atom and its
+dual, and nothing else.

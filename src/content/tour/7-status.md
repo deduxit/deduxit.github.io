@@ -3,5 +3,6 @@ title: The verdict
 target: status
 act: none
 ---
-The dot on the tab is the verdict: green for a proof that deduxit checked, red
-for no proof, amber when the search gave up. Its details are a click away.
+The mark on the tab is the verdict: a check in green for a proof that deduxit
+checked, a cross in red for no proof, a question mark in amber when the search gave
+up. Click it for the details.

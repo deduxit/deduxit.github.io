@@ -53,14 +53,16 @@ hinge:
       misconception: "A net read the other way up is a net, so the converse of weak distributivity holds too."
       why: "Its only linking leaves a cycle under some switching: weak distributivity holds one way only."
 ---
-A proof net draws a proof without the order of its rules. Each formula is the tree of
-its connectives, a link per connective, and each axiom becomes a link between an atom
-and its dual. Two derivations that differ only in the order of independent rules have
-one net.
+A proof net draws a proof without the order of its rules. Each formula is drawn as the
+tree of its connectives, a link per connective, and each axiom as a link between an
+atom and its dual. Two derivations that differ only in the order of independent rules
+have the same net.
 
-Not every way of linking the atoms is a proof. Danos and Regnier's switching condition
-says which are: at each `⅋`, keep one of its two premises and drop the other edge; for
-every such choice the graph must be connected and without a cycle. A finished MLL or
-MELL proof has its net in the stage's Net tab, where each promotion `!` draws a box; in
-intuitionistic mode the net is Lamarche's essential net, directed from the hypotheses
-to the goal. The page draws nets of finished proofs; it does not edit them.
+Not every way of linking the atoms is a proof. Danos and Regnier's test, the switching
+condition, says which are: at each `⅋`, keep one of its two edges and remove the
+other. For every such choice, the graph left must be connected and have no cycle.
+
+The stage's Net tab draws the net of a finished proof in MLL, the multiplicatives, or
+in MELL, the multiplicatives with `!` and `?`; each promotion `!` draws a box. In
+intuitionistic mode it draws Lamarche's essential net, directed from the hypotheses to
+the goal. You cannot edit a net on the page.

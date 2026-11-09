@@ -36,4 +36,8 @@ hinge:
 `⅋` puts its two parts side by side in the same goal, and never loses a proof: apply it
 first. `⊗` splits the goal into two premises, its left part with some of the other
 formulas and its right part with the rest, each formula in exactly one premise. The
-split is where a proof is won or lost. `A -o B` is typed for `A⊥ ⅋ B`.
+split is where a proof is won or lost.
+
+`A |- A` is typed for `⊢ A⊥, A`: in classical mode each formula left of `⊢` moves to
+the right as its dual. The dual of a compound formula follows De Morgan's laws,
+`(A ⊗ B)⊥ = A⊥ ⅋ B⊥`, and `A⊥⊥` is `A` again.

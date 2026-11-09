@@ -35,8 +35,8 @@ hinge:
 ---
 In intuitionistic mode, chosen with the calculus's switch on the tab, a sequent has its
 hypotheses on the left of `⊢` and exactly one formula on the right: `A ⊸ B, B ⊸ C ⊢
-A ⊸ C` reads "from `A ⊸ B` and `B ⊸ C`, `A ⊸ C`". It is typed with `-o` for `⊸` and
-has no `⊥`, `⅋` or `?`.
+A ⊸ C` reads "from `A ⊸ B` and `B ⊸ C`, `A ⊸ C`". It is typed with `-o` for `⊸`, which is
+`A⊥ ⅋ B` read one-sided, and has no `⊥`, `⅋` or `?`.
 
 The rules come in pairs: a right rule proves the goal, a left rule uses a hypothesis,
 and the stage names them so (`⊸R`, `⊸L`, `⊗L`, `⊗R`, …). Each is a one-sided rule read
