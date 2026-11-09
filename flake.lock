@@ -15,10 +15,36 @@
         "type": "github"
       }
     },
+    "deduxit": {
+      "inputs": {
+        "crane": "crane",
+        "devshell": "devshell",
+        "flake-parts": "flake-parts",
+        "import-tree": "import-tree",
+        "nanoyalla": "nanoyalla",
+        "nixpkgs": "nixpkgs",
+        "rocq-deduxit": "rocq-deduxit",
+        "rust-overlay": "rust-overlay",
+        "treefmt-nix": "treefmt-nix"
+      },
+      "locked": {
+        "lastModified": 1794211994,
+        "narHash": "sha256-IbfYXBPJNpiYNx0TfjBfwKbv1ZKylK3JVdz75HvKQuQ=",
+        "owner": "deduxit",
+        "repo": "deduxit",
+        "rev": "ac9b8f06dd15250b9c56ee49b922b5e5325af473",
+        "type": "github"
+      },
+      "original": {
+        "owner": "deduxit",
+        "repo": "deduxit",
+        "type": "github"
+      }
+    },
     "devshell": {
       "inputs": {
         "nixpkgs": [
-          "linlog",
+          "deduxit",
           "nixpkgs"
         ]
       },
@@ -39,7 +65,7 @@
     "flake-parts": {
       "inputs": {
         "nixpkgs-lib": [
-          "linlog",
+          "deduxit",
           "nixpkgs"
         ]
       },
@@ -69,32 +95,6 @@
       "original": {
         "owner": "denful",
         "repo": "import-tree",
-        "type": "github"
-      }
-    },
-    "linlog": {
-      "inputs": {
-        "crane": "crane",
-        "devshell": "devshell",
-        "flake-parts": "flake-parts",
-        "import-tree": "import-tree",
-        "nanoyalla": "nanoyalla",
-        "nixpkgs": "nixpkgs",
-        "rocq-linlog": "rocq-linlog",
-        "rust-overlay": "rust-overlay",
-        "treefmt-nix": "treefmt-nix"
-      },
-      "locked": {
-        "lastModified": 1794184816,
-        "narHash": "sha256-KYFVHLpIrPyA8V1ZIAsgi8CP3B9uy02QIh5g5FjST58=",
-        "owner": "deduxit",
-        "repo": "deduxit",
-        "rev": "b5bab11d5a56f59c4a2b3ccb5d9b7fd023f6e4d5",
-        "type": "github"
-      },
-      "original": {
-        "owner": "deduxit",
-        "repo": "deduxit",
         "type": "github"
       }
     },
@@ -128,65 +128,65 @@
         "url": "https://channels.nixos.org/nixpkgs-unstable/nixexprs.tar.zst"
       }
     },
-    "rocq-linlog": {
+    "rocq-deduxit": {
       "inputs": {
         "flake-parts": [
-          "linlog",
+          "deduxit",
           "flake-parts"
         ],
         "import-tree": [
-          "linlog",
+          "deduxit",
           "import-tree"
         ],
         "nanoyalla": [
-          "linlog",
+          "deduxit",
           "nanoyalla"
         ],
         "nixpkgs": [
-          "linlog",
+          "deduxit",
           "nixpkgs"
         ],
         "treefmt-nix": [
-          "linlog",
+          "deduxit",
           "treefmt-nix"
         ],
         "yalla": "yalla"
       },
       "locked": {
-        "lastModified": 1794182746,
-        "narHash": "sha256-Bfg/oI1t5qpjrJZ4lrcQnQ+wnbyFShBSXmbmNIS6LG0=",
+        "lastModified": 1794209148,
+        "narHash": "sha256-JCMX81tDgTv40tY2qdole2TiAZuHfseXkpRGut6zcEc=",
         "owner": "deduxit",
-        "repo": "rocq-linlog",
-        "rev": "ea6602c4b050b30beb260a788e7b8a6877145e52",
+        "repo": "rocq-deduxit",
+        "rev": "678dbaab580bf1625fe5394fbf559642b67bdeb8",
         "type": "github"
       },
       "original": {
         "owner": "deduxit",
-        "repo": "rocq-linlog",
+        "repo": "rocq-deduxit",
         "type": "github"
       }
     },
     "root": {
       "inputs": {
+        "deduxit": "deduxit",
         "devshell": [
-          "linlog",
+          "deduxit",
           "devshell"
         ],
         "flake-parts": [
-          "linlog",
+          "deduxit",
           "flake-parts"
         ],
         "import-tree": [
-          "linlog",
+          "deduxit",
           "import-tree"
         ],
-        "linlog": "linlog",
         "nixpkgs": [
-          "linlog",
+          "deduxit",
           "nixpkgs"
         ],
         "treefmt-nix": [
-          "linlog",
+          "deduxit",
           "treefmt-nix"
         ]
       }
@@ -194,7 +194,7 @@
     "rust-overlay": {
       "inputs": {
         "nixpkgs": [
-          "linlog",
+          "deduxit",
           "nixpkgs"
         ]
       },
@@ -215,7 +215,7 @@
     "treefmt-nix": {
       "inputs": {
         "nixpkgs": [
-          "linlog",
+          "deduxit",
           "nixpkgs"
         ]
       },
