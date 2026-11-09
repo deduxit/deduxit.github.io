@@ -341,7 +341,9 @@ the page reads.
   one without reading the old key and moving what it holds; the privacy page lists them as
   they are. What else keeps the old name: the Cachix cache `linlog-prover`, this repository
   and its directory (`linlog-prover.github.io`), the prover's local checkout
-  (`~/Projects/own/linlog`) and the Rocq library's old address `/rocq-linlog/`, forwarded.
+  (`~/Projects/own/linlog`) and the Rocq library's old address `/rocq-linlog/`, forwarded:
+  the path itself by its page, any page under it by the 404 page's script to the same name
+  under `/rocq-deduxit/`, where the library's documentation forwards 0.2.0's `Linlog.X.html`.
 
 ## The Content-Security-Policy
 
@@ -626,7 +628,7 @@ the page reads.
   "deduxit". The band's mark is 30 pixels high (`--size-wordmark`) and hidden on a phone.
 - **The band's mark is a button carrying the dictionary line** (`BandMark`): **dēdūxit**
   [deːˈduːk.sɪt] *Latin, verb*: "it has derived", the perfect of *dēdūcō*, to lead down,
-  derive (approved by the author, 2026-11-09; keep it word for word). A card under the mark
+  derive. (Approved by the author, 2026-11-09; keep it word for word.) A card under the mark
   shows it on hover, on the keyboard's focus and on a click or a tap (kept until the focus
   leaves); it is the button's `aria-describedby`, the pointer may rest on it, and Escape
   dismisses it (SC 1.4.13). The drawing's `<title>` is removed there, so the browser's own
