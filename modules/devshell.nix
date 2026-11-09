@@ -16,8 +16,7 @@
 # the directory itself stays writable for Vite's and Astro's caches -- and
 # deduxit's bindings and fonts at .cache/deduxit-web and .cache/deduxit-fonts
 # (deduxit.nix), each held by a garbage collector's root so that a collection
-# cannot pull it from under the links. The scheme is the author's learning
-# sites' (website-learn's modules/devshell.nix).
+# cannot pull it from under the links.
 #
 # Nix reads the flake source through the git index, and only a jj command
 # writes it, so `check' snapshots the working copy first: a file created a

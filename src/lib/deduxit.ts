@@ -5,7 +5,7 @@
  * The documents deduxit's bindings take and give, as the page reads them.
  * Every call of the bindings takes JSON text and returns JSON text, an SVG
  * document or bytes; the shapes here are the parts of those documents the
- * page relies on (deduxit's `plan/web/README.md`, "The bindings' API").
+ * page relies on (the bindings' types, `deduxit_web.d.ts`, and their doc comments).
  */
 
 /**

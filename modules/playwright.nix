@@ -4,8 +4,7 @@
 # Playwright's browsers come from nixpkgs (`playwright-driver'): its own
 # download does not run on NixOS. One set, defined here, for the dev shell
 # (`e2e') and the e2e check alike: Chromium and its headless shell, the build
-# headless Playwright launches. Taken from the author's learning sites
-# (website-learn's modules/playwright.nix).
+# headless Playwright launches.
 #
 # The npm @playwright/test version must equal nixpkgs' playwright-driver
 # version, or Playwright looks for a browser revision that is not there and

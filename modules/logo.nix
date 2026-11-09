@@ -10,8 +10,8 @@
 #            (the manifest's), og.png (1200 by 630, the link preview's
 #            image), which the build copies to /logo/ beside the SVGs
 #            (src/integrations/offline.ts);
-#   github/  avatar.png (512) and social-preview.png (1280 by 640), which only
-#            the author can set, in GitHub's web interface.
+#   github/  avatar.png (512) and social-preview.png (1280 by 640), which the
+#            repository's owner sets in GitHub's web interface.
 #
 # `nix build .#logo' builds it; the dev shell and every npm task link it at
 # .cache/deduxit-logo (devshell.nix, node-modules.nix).
@@ -39,7 +39,7 @@
               } $out
             '';
         defaultText = lib.literalMD "the rasters `modules/_logo/derive.py` draws from `src/logo/`";
-        description = "The mark's rasters, drawn from its SVGs: `site/` for the site, `github/` for the author.";
+        description = "The mark's rasters, drawn from its SVGs: `site/` for the site, `github/` for GitHub's settings.";
       };
 
       config.packages.logo = config.logoFiles;

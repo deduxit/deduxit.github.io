@@ -3,7 +3,7 @@
 
 # Every raster of the mark, drawn from its SVGs (src/logo/, the one source)
 # with resvg: what the site serves under site/, and under github/ what only
-# the author can upload to GitHub. The square icons are the dark square form,
+# the repository's owner uploads to GitHub by hand. The square icons are the dark square form,
 # which reads on a light and on a dark background alike; the banners are the
 # light word mark centred on the light square's field.
 # Usage: python3 derive.py LOGO_DIR OUT

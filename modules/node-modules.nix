@@ -2,8 +2,7 @@
 # Licensed under the EUPL
 
 # node_modules, built by nix from package-lock.json, and the machinery every
-# other module uses to run an npm script against it. Taken from the author's
-# learning sites (website-learn's modules/node-modules.nix), with this site's
+# other module uses to run an npm script against it, with this site's
 # `fileSets'.
 #
 # npm resolves; nix installs. `npm install <pkg>' only rewrites package.json
