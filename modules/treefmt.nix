@@ -29,6 +29,8 @@
 
           biome = {
             enable = true;
+            # biome.nix says why it is not pkgs.biome.
+            package = config.biome;
             formatCommand = "format";
             # The module's schema validation of its own settings, which
             # these options leave unused.

@@ -39,7 +39,7 @@
           pkgs.jujutsu
           pkgs.python3
           config.nodejs
-          pkgs.biome
+          config.biome
           # Claude Code's typescript-lsp plugin runs this from the PATH Claude
           # Code started with; it takes TypeScript from ./node_modules.
           pkgs.typescript-language-server

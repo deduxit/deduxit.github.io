@@ -34,6 +34,13 @@ never through `specialArgs`. The scheme is the author's learning sites'
 - **Every derivation reads only its files** (`lib.fileset`): `fileSets.site` is what
   `astro build` reads; a check adds its own. A new file that the build or a check reads
   must be in one, or the sandbox does not see it while the dev shell still works.
+- **Biome is `config.biome` (`biome.nix`), nixpkgs' own built without its test suite**,
+  and the formatter, `lint` and the dev shell all take it from there, never `pkgs.biome`.
+  The locked nixpkgs (`4fe25e12`, 2026-11-09) is a channel release with no cache.nixos.org
+  build of Biome, and the tests' fat-LTO links (8 to 10 GB each) got CI's check job killed
+  (exit 143, runs 34 to 36 and 38). Drop the override at the first `flake.lock` update
+  whose nixpkgs has Biome on cache.nixos.org (`nix path-info --store
+  https://cache.nixos.org --inputs-from . nixpkgs#biome` prints a path).
 - **The age gate** (`min-release-age=14` in `.npmrc`) holds for security fixes too, and is
   bypassed only with the author's agreement. `solid-js` is 1.9.17, the version the author's
   sites run, taken past the gate for its seroval fix. `@playwright/test` 1.64.1 was taken
