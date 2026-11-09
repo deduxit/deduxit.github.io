@@ -2,108 +2,66 @@
 
 > **dēdūxit** [deːˈduːk.sɪt] *Latin, verb*: "it has derived", the perfect of *dēdūcō*, to lead down, derive.
 
-deduxit's prover in the browser at https://deduxit.github.io/: the web front end of
-[deduxit](https://github.com/deduxit/deduxit), a prover for
-linear logic and, through its translations, ordinary propositional logic: type a sequent
-and prove it by clicking, step by step, or let the search close a goal; see the derivation
-and, for MLL, the proof net drawn. The prover runs in the
-page, as deduxit's library compiled to WebAssembly: nothing is installed and nothing is
-sent to a server.
+A web page for proving sequents of linear logic, and of ordinary propositional logic, by
+clicking: https://deduxit.github.io/. It is the web front end of
+[deduxit](https://github.com/deduxit/deduxit). The prover runs in the page, as deduxit's
+library compiled to WebAssembly: nothing to install, and nothing you type leaves your
+browser.
 
-## What the page does
+## Using the page
 
-- A sequent typed in the field (ASCII such as `A * B |- B * A`, or the signs `⊗ ⅋ ⊸ ⊕ ⊢`),
-  proved in classical linear logic or, by the switches its tab's calculus mark opens,
-  intuitionistic, with Mix or affine weakening; the fragment deduxit detects is shown beside
-  it.
-- Ordinary propositional logic, the calculus mark's other suite: a sequent of classical,
-  intuitionistic or minimal logic (`a -> b, a |- b`, or the signs `→ ∧ ∨ ¬ ↔ ⊢`) proved step
-  by step in Gentzen's LK or LJ and drawn as an LK or LJ derivation, never as its linear
-  image, the weakenings and contractions shown on request; the search closes a goal through
-  deduxit's translation and the derivation it reads back is grafted, or the goal is not valid
-  or unknown; undo on a branch, the hints, the exports (SVG, PNG, PDF, LaTeX, Typst, text,
-  the session, the Rocq certificate over `Prop`), the link and the saved proofs as for a
-  linear proof; and fifteen examples in the sequent field's menu, from modus ponens to
-  Peirce's law. Learn and Practice stay with linear logic.
-- The derivation drawn as deduxit draws it, under a camera that zooms and pans: a pinch of
-  two fingers, a trackpad's pinch or ctrl with the wheel zooms the drawing about where it
-  happens, one finger or the mouse pans it, and outside the drawing the browser's own zoom
-  is left alone; a click on a formula of an open goal lists the rules deduxit gives for it; a split asks which formulas
-  go left and says whether it can still close; a refused step says why, at the goal.
-- A goal opened in a new tab as a proof of its own, and filled back from it (or from any tab
-  whose finished proof has its formulas) as one step, named with that tab's sequent and
-  checked again in the goal's calculus.
-- Undo on the active goal's branch, redo, and a list of every step to go back to; a goal
-  closed by deduxit's search, or every goal at once, within a work budget; the verdicts
-  three-valued (proved and checked, unprovable with the reason and a checked refutation,
-  the inverse method's saturated set among them, or unknown when the search gave up), and
-  a four-rung hint ladder from the search. Every search names the engine that did its
-  work beside that work, with the engine's source in the literature on hover and in
-  Learn's reference; Settings can force an engine for the visit, offering those that take
-  the sequent.
-- The cut rule: the cut formula typed in the tab's syntax, the goal's formulas chosen for the
-  premise that proves it, both premises opened as goals.
-- First-order linear logic: quantifiers and predicates over terms in the sequent
-  (`forall x. p(x) |- exists y. p(f(y))`); ∀R and ∃L make an eigenvariable, ∃R and ∀L ask
-  for a witness, typed as a term or left open as `$1` for an axiom or the search to fill;
-  the eigenvariable condition, a witness that does not read and a cut formula outside the
-  sequent's symbols refused in words; the derivation drawn with every instance; a cut on a
-  formula of the sequent's symbols and of the eigenvariables below the goal; an undo on one
-  branch replaying the others with their eigenvariables lettered anew and each witness
-  checked; and the first-order bounds (witness depth, instances, terms) in Settings.
-- Cut elimination on a finished proof with cuts, on its derivation and on its net: the next
-  step of the strategy or a cut picked on the drawing, each step named by its case with its
-  cut marked on the drawing it was taken on, every step undoable, and "To the end" within
-  Settings' bound on steps, saying when a bound stopped it.
-- The finished proof's net (MLL) or essential net (IMLL); every export (SVG, PNG, PDF,
-  LaTeX, Typst, text, the session as JSON, the Rocq certificate, and the certificate that
-  a refuted goal has no proof), the drawings set in a math font chosen in the export menu
-  (Euler Math, STIX Two Math, Garamond-Math, Asana Math or New Computer Modern Math), by
-  default the stage's, which Settings chooses among the same five; the proof in the link's fragment; every open proof saved
-  in the browser and offered back on the next visit; import of a session or a sequent as
-  deduxit writes them; everything by keyboard (`?` lists the keys); a menu, sheet or popover
-  closed by Escape or by a press outside it; light and dark, every colour that carries a
-  meaning told apart under simulated colour-vision deficiencies and shown with a word, a
-  sign or a shape beside it. On a phone every control is at least 44 by 44 pixels, and the
-  rarer actions are under More. Each tab keeps its own calculus.
-- One store of problems (`src/content/problems/`, 452 of them), each decided by deduxit's
-  command, which a flake check runs over them all: its sequent, calculus, verdict, a level
-  of difficulty from easy to very hard, the categories it is found under and its fragment,
-  and for a provable one a session that deduxit's `proof` accepts. Most are generated from a
-  chosen proof shape and kept at the level they aimed at; others are the classic sequents
-  of the literature, each with its source.
-- Practice, a place of its own reached from the bottom band at every width: the store's
-  407 provable problems, filtered by their connectives, their logic, their source and
-  their difficulty, or one at random within the filters, each opened as a proof on a new
-  tab; the problems proved are marked, also on the next visit.
-- Learn, a frame around the page with the tutorial and the reference. The tutorial's eleven
-  lessons (reading a sequent, the multiplicatives, the additives, the units, the
-  exponentials, two sides, when there is no proof, proof nets, cut and its elimination, the
-  quantifiers, ordinary logic through the translations) each play a worked proof on the stage one inference at a time, the next rule
-  predicted before each step and its reason shown beside it; then the same proof with its
-  last steps left to the student; practice drawn from the store (provable and unprovable
-  mixed, each opened as a proof, its answer kept until asked, and a provable one's proof
-  watched step by step); a prompt to explain the densest step, with a model answer; and a
-  check whose wrong answers each name a misconception and offer the faded proof again. The
-  reference holds the connectives, every rule the
-  lessons use drawn as a schema with its two-sided names, and the engines with their
-  literature; with Learn on, a rule in the stage's popover shows its schema on hover and a
-  formula its connective's reading. A tour of the page proves a sequent as it goes; About
-  has every licence the site serves.
-- After one visit the page works with no network, and it can be installed as an app.
-  No cookies, no tracking: GitHub, which serves the site, logs visitors' IP addresses, and
-  the privacy page (`/privacy/`) says what that means and what the browser keeps, citing
-  the law and the documents it rests on.
+1. Type a sequent in the field, such as `A * B |- B * A` (`*` is ⊗, `|` is ⅋, `-o` is
+   ⊸, `|-` is ⊢), and press Enter.
+2. Click a formula of an open goal. The popover lists the rules deduxit allows on it;
+   point at a rule, focus it or tap its ⓘ to see its schema and what it does.
+3. Pick a rule. A split asks which formulas go to the left premise, and says whether it
+   can still close. A refused step says why, at the goal.
+4. Stuck? Hint gives the next step a little at a time. Close goal or Close all lets the
+   search finish, within the budget in Settings.
+
+The mark beside the sequent chooses the logic: classical or intuitionistic linear logic,
+with Mix or affine weakening, or ordinary logic in LK or LJ. Learn has eleven lessons and
+a reference; Practice has 407 problems with a proof, filtered by kind and difficulty; the
+tour shows the page itself.
+
+## What it does
+
+- Proofs: undo on the goal you work on, redo, and a list of every step to go back to;
+  a goal opened in a tab of its own and filled back in; the cut rule; quantifiers, with
+  eigenvariables and witnesses; cut elimination on the derivation and on the net.
+- Verdicts: proved and checked by deduxit's checker; unprovable, with the reason and,
+  where there is one, a checked certificate; or unknown, when the search gave up. Every
+  search names the engine that did its work.
+- Drawings: the derivation as deduxit draws it, one-sided or two-sided; the proof net
+  of a finished MLL or MELL proof, and the essential net in intuitionistic logic; every
+  rule label with its hint.
+- Exports: SVG, PNG, PDF, LaTeX (ebproof), Typst (curryst), text, the session as JSON,
+  a Rocq certificate of the proof, and a Rocq certificate that a refuted goal has no proof.
+  The drawings take one of five math fonts.
+- Keeping work: the proof in the link; every open proof saved in the browser and
+  offered back on the next visit; import of a session or a sequent.
+- Access: everything by keyboard (`?` lists the keys); light and dark themes; every
+  colour that carries a meaning also has a word, a sign or a shape; on a phone every
+  control is at least 44 by 44 pixels.
+- Offline: after one visit the page works without a network and can be installed as
+  an app. No cookies and no tracking; the privacy page (`/privacy/`) says what GitHub logs
+  and what the browser keeps.
+
+Every one of the 452 problems in `src/content/problems/` is decided by deduxit's command,
+which a flake check runs over them all; a provable one comes with a proof deduxit accepts.
 
 ## Building
 
-Everything comes from the Nix flake (flake-parts, `modules/`): `nix develop` (or direnv)
-for the dev shell, whose `menu` lists the commands; `nix build` for the site in `result/`;
-`nix flake check` for every check (the site's build, Vitest, `astro check`, Biome,
-Playwright in Chromium, the Content-Security-Policy's hashes, the licences served, the
-formatting, the licence headers, and the store of problems against deduxit's command). The site is Astro with one Solid island, TypeScript
-and Tailwind; deduxit's WebAssembly bindings come from deduxit's own flake, a pinned input
-of this one. The written content is Markdown under `src/content/`.
+Everything comes from the Nix flake (flake-parts, `modules/`):
+- `nix develop` (or direnv) opens the dev shell; its `menu` lists the commands;
+- `nix build` builds the site into `result/`;
+- `nix flake check` runs every check: the site's build, Vitest, `astro check`, Biome,
+  Playwright in Chromium, the Content-Security-Policy's hashes, the licences served, the
+  formatting, the licence headers, and the problems against deduxit's command.
+
+The site is Astro with one Solid island, in TypeScript with Tailwind. deduxit's
+WebAssembly bindings come from deduxit's own flake, a pinned input of this one. The
+written content is Markdown under `src/content/`.
 
 ## Hosting
 
