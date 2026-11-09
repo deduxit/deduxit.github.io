@@ -43,14 +43,14 @@ const ONE_SIDED: readonly RuleHint[] = [
     "Mix",
     ["⊢ Γ", "⊢ Δ"],
     "⊢ Γ, Δ",
-    "Splits the goal's formulas between two premises, each proved on its own. A rule only with Mix on.",
+    "Splits the goal's formulas between two premises, each proved on its own, a rule only with Mix on.",
   ),
   rule(
     "wk",
     "weakening, affine",
     ["⊢ Γ"],
     "⊢ Γ, A",
-    "Drops any formula `A`. A rule only in affine mode.",
+    "Drops any formula `A`, a rule only in affine mode.",
   ),
 ];
 
@@ -61,7 +61,7 @@ const INTUITIONISTIC: readonly RuleHint[] = [
     "weakening, affine",
     ["Γ ⊢ C"],
     "Γ, A ⊢ C",
-    "Drops a hypothesis `A` that is not needed. A rule only in affine mode.",
+    "Drops a hypothesis `A` that is not needed, a rule only in affine mode.",
   ),
 ];
 
@@ -79,7 +79,7 @@ const CLASSICAL_TWO_SIDED: readonly RuleHint[] = [
     "tensor, left",
     ["Γ, A, B ⊢ Δ"],
     "Γ, A ⊗ B ⊢ Δ",
-    "Uses a hypothesis `A ⊗ B` as its two parts side by side. It never loses a proof.",
+    "Uses a hypothesis `A ⊗ B` as its two parts side by side, and never loses a proof.",
   ),
   rule(
     "⊗R",
@@ -100,7 +100,7 @@ const CLASSICAL_TWO_SIDED: readonly RuleHint[] = [
     "par, right",
     ["Γ ⊢ A, B, Δ"],
     "Γ ⊢ A ⅋ B, Δ",
-    "Puts `A` and `B` side by side on the right. It never loses a proof.",
+    "Puts `A` and `B` side by side on the right, and never loses a proof.",
   ),
   rule(
     "⊸L",
@@ -114,7 +114,7 @@ const CLASSICAL_TWO_SIDED: readonly RuleHint[] = [
     "linear implication, right",
     ["Γ, A ⊢ B, Δ"],
     "Γ ⊢ A ⊸ B, Δ",
-    "Proves `A ⊸ B` by taking `A` as a hypothesis and proving `B`. It never loses a proof.",
+    "Proves `A ⊸ B` by taking `A` as a hypothesis and proving `B`, and never loses a proof.",
   ),
   rule("1L", "one, left", ["Γ ⊢ Δ"], "Γ, 1 ⊢ Δ", "A hypothesis `1` gives nothing and disappears."),
   rule("1R", "one, right", [], "⊢ 1", "Proves `1` from nothing, with nothing else in the goal."),
@@ -145,14 +145,14 @@ const CLASSICAL_TWO_SIDED: readonly RuleHint[] = [
     "with, right",
     ["Γ ⊢ A, Δ", "Γ ⊢ B, Δ"],
     "Γ ⊢ A & B, Δ",
-    "Proves `A & B` twice, `A` and `B` each with all the other formulas. It never loses a proof.",
+    "Proves `A & B` twice, `A` and `B` each with all the other formulas, and never loses a proof.",
   ),
   rule(
     "⊕L",
     "plus, left",
     ["Γ, A ⊢ Δ", "Γ, B ⊢ Δ"],
     "Γ, A ⊕ B ⊢ Δ",
-    "Uses a hypothesis `A ⊕ B` by cases, each with all the other formulas. It never loses a proof.",
+    "Uses a hypothesis `A ⊕ B` by cases, each with all the other formulas, and never loses a proof.",
   ),
   rule(
     "⊕R₁",
@@ -247,14 +247,14 @@ const CLASSICAL_TWO_SIDED: readonly RuleHint[] = [
     "Mix",
     ["Γ ⊢ Δ", "Γ′ ⊢ Δ′"],
     "Γ, Γ′ ⊢ Δ, Δ′",
-    "Splits the goal's formulas between two premises, each proved on its own. A rule only with Mix on.",
+    "Splits the goal's formulas between two premises, each proved on its own, a rule only with Mix on.",
   ),
   rule(
     "wk",
     "weakening, affine",
     ["Γ ⊢ Δ"],
     "Γ, A ⊢ Δ",
-    "Drops any formula, on either side. A rule only in affine mode.",
+    "Drops any formula, on either side, a rule only in affine mode.",
   ),
   rule(
     "cut",
@@ -392,9 +392,9 @@ const LK: readonly RuleHint[] = [
   rule(
     "→L",
     "implication, left",
-    ["Γ ⊢ A, Δ", "Γ, B ⊢ Δ"],
-    "Γ, A → B ⊢ Δ",
-    "Uses a hypothesis `A → B`: prove `A`, then go on with `B` as a hypothesis.",
+    ["Γ ⊢ A, Δ", "Γ′, B ⊢ Δ′"],
+    "Γ, Γ′, A → B ⊢ Δ, Δ′",
+    "Uses a hypothesis `A → B`: prove `A`, then go on with `B` as a hypothesis; a formula may go to either premise or to both.",
   ),
   rule(
     "→R",
@@ -514,9 +514,9 @@ const LJ: readonly RuleHint[] = [
   rule(
     "→L",
     "implication, left",
-    ["Γ ⊢ A", "Γ, B ⊢ C"],
-    "Γ, A → B ⊢ C",
-    "Uses a hypothesis `A → B`: prove `A`, then go on with `B` as a hypothesis.",
+    ["Γ ⊢ A", "Δ, B ⊢ C"],
+    "Γ, Δ, A → B ⊢ C",
+    "Uses a hypothesis `A → B`: prove `A`, then go on with `B` as a hypothesis; a hypothesis may go to either premise or to both.",
   ),
   rule(
     "→R",
@@ -528,9 +528,9 @@ const LJ: readonly RuleHint[] = [
   rule(
     "¬L",
     "not, left",
-    ["Γ ⊢ A", "Γ, ⊥ ⊢ C"],
-    "Γ, ¬A ⊢ C",
-    "Uses a hypothesis `¬A`, read as `A → ⊥`: prove `A`, then go on with `⊥`.",
+    ["Γ ⊢ A", "Δ, ⊥ ⊢ C"],
+    "Γ, Δ, ¬A ⊢ C",
+    "Uses a hypothesis `¬A`, read as `A → ⊥`: prove `A`, then go on with `⊥`; a hypothesis may go to either premise or to both.",
   ),
   rule(
     "¬R",
@@ -572,7 +572,7 @@ const LJ: readonly RuleHint[] = [
     "false, left",
     [],
     "Γ, ⊥ ⊢ C",
-    "A hypothesis `⊥` proves any goal. Not a rule of minimal logic.",
+    "A hypothesis `⊥` proves any goal, in every logic but minimal logic.",
   ),
   rule("⊤L", "true, left", ["Γ ⊢ C"], "Γ, ⊤ ⊢ C", "Drops a hypothesis `⊤`, which says nothing."),
   rule("⊤R", "true, right", [], "Γ ⊢ ⊤", "Proves `⊤` from any hypotheses."),

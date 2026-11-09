@@ -22,7 +22,7 @@ test("a rule of the popover shows its hint on hover, with Learn off", async ({ p
   await expect(
     hint(page).getByRole("img", { name: "⅋: from ⊢ Γ, A, B to ⊢ Γ, A ⅋ B" }),
   ).toBeVisible();
-  await expect(hint(page)).toContainText("It never loses a proof");
+  await expect(hint(page)).toContainText("never loses a proof");
 });
 
 test("the keyboard's focus opens a rule's hint, and Escape closes it alone", async ({ page }) => {
@@ -80,7 +80,7 @@ test("an ordinary tab's labels show LJ's rules", async ({ page }) => {
   await page.getByRole("button", { name: "Rule →L", exact: true }).hover();
   await expect(hint(page)).toContainText("→L: implication, left");
   await expect(
-    hint(page).getByRole("img", { name: "→L: from Γ ⊢ A and Γ, B ⊢ C to Γ, A → B ⊢ C" }),
+    hint(page).getByRole("img", { name: "→L: from Γ ⊢ A and Δ, B ⊢ C to Γ, Δ, A → B ⊢ C" }),
   ).toBeVisible();
 });
 

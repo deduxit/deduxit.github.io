@@ -464,7 +464,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
         label instanceof SVGGElement
           ? text.replace(/\d+$/, (d) => Array.from(d, (c) => "₀₁₂₃₄₅₆₇₈₉"[Number(c)]).join(""))
           : text;
-      if (!name || !hinted(name)["data-rule-hint"]) continue;
+      if (!name || !hinted(name, true)["data-rule-hint"]) continue;
       const r = label.getBoundingClientRect();
       const w = Math.max(r.width / k, least);
       const h = Math.max(r.height / k, least);
@@ -1180,7 +1180,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
                 class="lb"
                 data-hint-toggle=""
                 aria-label={`Rule ${hit.label}`}
-                {...hinted(hit.label)}
+                {...hinted(hit.label, true)}
                 ref={(el) => {
                   el.style.left = `${hit.x}px`;
                   el.style.top = `${hit.y}px`;

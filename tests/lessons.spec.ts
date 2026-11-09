@@ -174,7 +174,7 @@ test("in an intuitionistic proof, a rule of the popover shows its two-sided sche
   await expect(
     tip.getByRole("img", { name: "⊸L: from Γ ⊢ A and Δ, B ⊢ C to Γ, Δ, A ⊸ B ⊢ C" }),
   ).toBeVisible();
-  await expect(tip).toContainText("It splits the hypotheses as ⊗ splits a goal");
+  await expect(tip).toContainText("it splits the hypotheses as ⊗ splits a goal");
 });
 
 test("the attempt plays its steps, the visitor finds the wrong one, and deduxit answers on the goal it left", async ({

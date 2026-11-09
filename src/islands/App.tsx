@@ -507,6 +507,10 @@ export default function App(props: {
       <RuleHints
         hints={(() => {
           const calculus = prover.current()?.calculus;
+          return calculus ? hintsFor(props.rules, calculus, false) : [];
+        })()}
+        drawn={(() => {
+          const calculus = prover.current()?.calculus;
           return calculus ? hintsFor(props.rules, calculus, prover.settings().twoSided) : [];
         })()}
       />

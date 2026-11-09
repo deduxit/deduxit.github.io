@@ -13,19 +13,35 @@ import { hintId, hintNamed, type RuleHint } from "../lib/rules";
 import { Schema } from "./Learn";
 import { Words } from "./ui";
 
-/** The hints of the active proof's calculus: set by `RuleHints`, read by every label. */
+/**
+ * The hints of the active proof's calculus, set by `RuleHints`: by the names its steps take (the
+ * popover, Learn) and by the names its drawing writes, which differ where a classical proof is
+ * drawn two-sided (`?c` on the right there, on a `?` formula of either side in a step).
+ */
 const [hints, setHints] = createSignal<readonly RuleHint[]>([]);
+const [drawnHints, setDrawnHints] = createSignal<readonly RuleHint[]>([]);
 
-/** A rule label's name, as a hint looks it up: a run of one rule (`?w*`) is that rule's. */
-const named = (label: string) => hintNamed(hints(), label.replace(/\*$/, ""));
+/** A rule label's hint, as a step or the drawing names it: a run of one rule (`?w*`) is that rule's. */
+const named = (label: string, drawn = false) =>
+  hintNamed(drawn ? drawnHints() : hints(), label.replace(/\*$/, ""));
 
 /**
  * The attributes that give an element its rule's hint: the label it names, and the hint's words
  * as its description. Nothing where the calculus has no such rule.
  */
-export function hinted(label: string): { "data-rule-hint"?: string; "aria-describedby"?: string } {
-  const hint = named(label);
-  return hint ? { "data-rule-hint": label, "aria-describedby": hintId(hint.name) } : {};
+export function hinted(
+  label: string,
+  drawn = false,
+): { "data-rule-hint"?: string; "data-drawn"?: string; "aria-describedby"?: string } {
+  const hint = named(label, drawn);
+  if (!hint) return {};
+  return drawn
+    ? {
+        "data-rule-hint": label,
+        "data-drawn": "",
+        "aria-describedby": `drawn-${hintId(hint.name)}`,
+      }
+    : { "data-rule-hint": label, "aria-describedby": hintId(hint.name) };
 }
 
 /** The full name of the rule a label names ("tensor, right"), or nothing where none is known. */
@@ -47,8 +63,9 @@ export function RuleName(props: { label: string }) {
 }
 
 /** The card, the descriptions and the listeners; once, in the island. */
-export function RuleHints(props: { hints: readonly RuleHint[] }) {
+export function RuleHints(props: { hints: readonly RuleHint[]; drawn: readonly RuleHint[] }) {
   createEffect(() => setHints(props.hints));
+  createEffect(() => setDrawnHints(props.drawn));
   const [open, setOpen] = createSignal<{
     hint: RuleHint;
     at: Element;
@@ -62,7 +79,7 @@ export function RuleHints(props: { hints: readonly RuleHint[] }) {
     const of = (event: Event) =>
       (event.target as Element | null)?.closest?.("[data-rule-hint]") ?? null;
     const show = (at: Element, pinned: boolean) => {
-      const hint = named(at.getAttribute("data-rule-hint") ?? "");
+      const hint = named(at.getAttribute("data-rule-hint") ?? "", at.hasAttribute("data-drawn"));
       if (hint) setOpen({ hint, at, pinned });
     };
     const over = (event: PointerEvent) => {
@@ -141,18 +158,29 @@ export function RuleHints(props: { hints: readonly RuleHint[] }) {
     onCleanup(() => gone.disconnect());
   });
 
-  // Under the label, inside the window; above it where there is no room below.
+  // Under the label, inside the window; above it where there is no room below. A rule of the
+  // popover has its hint beside the popover (right, else left, else above it), so that the hint
+  // never covers the rules listed under the one pointed at.
   createEffect(() => {
     const now = open();
     if (!now || !card) return;
-    const r = now.at.getBoundingClientRect();
     const gap = 6;
-    const x = Math.max(8, Math.min(r.left, window.innerWidth - card.offsetWidth - 8));
-    const below = r.bottom + gap;
-    const y =
-      below + card.offsetHeight > window.innerHeight - 8
-        ? Math.max(8, r.top - gap - card.offsetHeight)
-        : below;
+    const [w, h] = [card.offsetWidth, card.offsetHeight];
+    const [width, height] = [window.innerWidth, window.innerHeight];
+    const clampX = (x: number) => Math.max(8, Math.min(x, width - w - 8));
+    const clampY = (y: number) => Math.max(8, Math.min(y, height - h - 8));
+    const r = now.at.getBoundingClientRect();
+    const pop = now.at.closest(".pop")?.getBoundingClientRect();
+    let x: number;
+    let y: number;
+    if (pop && pop.right + gap + w <= width - 8) [x, y] = [pop.right + gap, clampY(r.top)];
+    else if (pop && pop.left - gap - w >= 8) [x, y] = [pop.left - gap - w, clampY(r.top)];
+    else if (pop) [x, y] = [clampX(pop.left), Math.max(8, pop.top - gap - h)];
+    else {
+      x = clampX(r.left);
+      const below = r.bottom + gap;
+      y = below + h > height - 8 ? Math.max(8, r.top - gap - h) : below;
+    }
     card.style.left = `${x}px`;
     card.style.top = `${y}px`;
   });
@@ -161,6 +189,9 @@ export function RuleHints(props: { hints: readonly RuleHint[] }) {
     <>
       <div hidden>
         <For each={props.hints}>{(h) => <span id={hintId(h.name)}>{spoken(h)}</span>}</For>
+        <For each={props.drawn}>
+          {(h) => <span id={`drawn-${hintId(h.name)}`}>{spoken(h)}</span>}
+        </For>
       </div>
       <Show when={open()}>
         {(now) => (

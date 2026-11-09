@@ -58,8 +58,8 @@ describe("every rule label has a hint", () => {
       expect(hint, label).toBeDefined();
       expect(hint?.title, label).not.toBe("");
       expect(hint?.conclusion, label).toContain("⊢");
-      // One plain sentence: a capital, one full stop at the end.
-      expect(hint?.says, label).toMatch(/^[`A-Z][\s\S]*\.$/);
+      // One plain sentence: a capital, and a full stop that ends it and nothing before.
+      expect(hint?.says.replace(/`[^`]*`/g, "F"), label).toMatch(/^[FA-Z][^.]*\.$/);
     }
   });
 });
