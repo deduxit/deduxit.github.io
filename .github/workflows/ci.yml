@@ -30,7 +30,10 @@ jobs:
   check:
     name: nix flake check
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    # Room for a formatter or tool that cache.nixos.org has not built for the
+    # locked nixpkgs (biome took over an hour here): only a passing run saves
+    # the store below, so the build has to fit once.
+    timeout-minutes: 180
     # Saving a cache needs no permission; deleting the old ones does, and is
     # left to `prune-caches` below.
     permissions:

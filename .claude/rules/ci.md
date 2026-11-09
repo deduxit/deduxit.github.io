@@ -20,6 +20,12 @@ paths:
   when it changed, only on `main`; `prune-caches` deletes the older ones). Never give the
   `cachix-action` step an auth token or a `pushFilter`: it would push everything the run
   built or fetched.
+- **The check job's `timeout-minutes` is 180**, not the hour a cached run needs: a
+  nixpkgs channel release can lack a cache.nixos.org build of a tool the checks use
+  (`biome` 2.6.5 at `4fe25e12`, 2026-11-09, which took runs 34 to 36 past 60 minutes and
+  stopped every deploy), and the Actions cache saves the store only after a passing run,
+  so the first run after such a lock move must build it within the limit. Cachix is no
+  way out (third-party files, above).
 - **Actions are pinned to full commit SHAs**, with the version in a trailing comment. A
   new SHA is looked up fresh, never remembered (`gh api repos/<owner>/<repo>/releases/latest`,
   then `.../git/ref/tags/<tag>`, following an annotated tag once more), and every `gh`
