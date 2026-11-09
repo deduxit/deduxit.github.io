@@ -124,6 +124,14 @@ CC BY 4.0, as README says, and so is the mark (`src/logo/LICENSE.txt`). No third
 file is committed: fonts come from npm through
 the lock or from deduxit's input, never copied in.
 
+## Writing
+
+Every text a person reads (the page's labels, messages and hints, the written content,
+README, comments) follows `.claude/rules/writing.md`, the author's standing instruction of
+2026-11-09, a copy of deduxit's: concise, plain language; self-contained; written for the
+student, teacher or logician using the page; free of the patterns that make text hard to
+read. It has no `paths:`, so it loads in every session.
+
 ## When compacting
 
 Keep: what `@` holds and whether it is described; the brief the session works from and

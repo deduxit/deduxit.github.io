@@ -13,6 +13,7 @@ says why each piece is as it is) and the author's learning sites'.
 |---|---|---|
 | `CLAUDE.md` | every session | what the repo is, hard rules, commands, layout |
 | `.claude/rules/*.md` with `paths:` | when a matching file is read, written or edited | the conventions of one area |
+| `.claude/rules/writing.md` (no `paths:`) | every session | how every text a person reads is written |
 | `.claude/settings.json` + `.claude/hooks/` | on the tool call | what must happen or must not, whatever Claude decides |
 
 - **The hooks**: `block-git.py` and `block-jj-new-message.py` (PreToolUse on Bash) refuse
