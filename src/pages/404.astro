@@ -23,4 +23,14 @@ import wordmark from "../logo/wordmark-band.svg?raw";
       <li><a href="/privacy/">Privacy</a>: what the site keeps of you, and what GitHub logs.</li>
     </ul>
   </main>
+  <script>
+    // The Rocq library's old pages, /rocq-linlog/X: its documentation is at
+    // /rocq-deduxit/ now, where a page Linlog.X.html forwards each module of
+    // 0.2.0 to its new name. /rocq-linlog/ itself has a page of its own.
+    const old = "/rocq-linlog/";
+    if (location.pathname.startsWith(old)) {
+      const rest = location.pathname.slice(old.length);
+      location.replace(`/rocq-deduxit/${rest}${location.search}${location.hash}`);
+    }
+  </script>
 </Base>

@@ -26,6 +26,11 @@ test("a path that holds no page answers 404 with the site's own page", async ({ 
   await expect(page.getByRole("textbox", { name: "Sequent" })).toBeVisible();
 });
 
+test("a page under the Rocq library's old path forwards to its new path", async ({ page }) => {
+  await page.goto("/rocq-linlog/Linlog.Calculus.html#ll");
+  await page.waitForURL("**/rocq-deduxit/Linlog.Calculus.html#ll");
+});
+
 test("the policy is in force: inline code the build did not hash is refused", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("textbox", { name: "Sequent" })).toBeVisible();
