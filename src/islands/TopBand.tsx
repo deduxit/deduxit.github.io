@@ -206,7 +206,7 @@ function ProofTab(props: { proof: Proof; prover: Prover; ui: Ui; samples: readon
   };
   const { ui, setUi } = props.ui;
   const markWords = () =>
-    `Calculus: ${calculusWords(props.proof.calculus)}${fragment() ? `; fragment ${fragment()}` : ""}`;
+    `Logic: ${calculusWords(props.proof.calculus)}${fragment() ? `; fragment ${fragment()}` : ""}`;
   // The mark's switches, opened by a key, closed with the focus lost (Escape): back to the mark.
   createEffect(
     on(
@@ -444,7 +444,7 @@ function StatusDetails(props: { proof: Proof; prover: Prover; close: () => void 
                 <dt>Fragment</dt>
                 <dd>{view().fragment}</dd>
               </Show>
-              <dt>Calculus</dt>
+              <dt>Logic</dt>
               <dd>{calculusWords(props.proof.calculus)}</dd>
               <dt>Steps</dt>
               <dd>{view().steps}</dd>

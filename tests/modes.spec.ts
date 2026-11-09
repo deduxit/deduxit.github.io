@@ -180,7 +180,7 @@ test("the status popover writes the calculus in the switches' words", async ({ p
     .getByRole("button", { name: /^Status/ })
     .click();
   const status = page.getByRole("dialog", { name: "Status" });
-  await expect(status.locator("dt", { hasText: "Calculus" }).locator("+ dd")).toHaveText(
+  await expect(status.locator("dt", { hasText: "Logic" }).locator("+ dd")).toHaveText(
     "Intuitionistic, affine",
   );
   await expect(status).not.toContainText("intuitionistic-affine");

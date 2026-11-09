@@ -77,7 +77,7 @@ async function dismissals(page: Page, touch: boolean) {
   const tab = page.locator(".ptab[aria-current=true]");
   await tab.getByRole("button", { name: /^Status/ }).click();
   await closes(page.getByRole("dialog", { name: "Status" }));
-  await tab.getByRole("button", { name: /^Calculus/ }).click();
+  await tab.getByRole("button", { name: /^Logic/ }).click();
   await closes(page.getByRole("dialog", { name: "Logic" }));
   await page.getByRole("button", { name: /^A⊥ ⅋ B⊥, formula/ }).click();
   const rules = page.getByRole("dialog", { name: "Rules" });
@@ -91,7 +91,7 @@ async function dismissals(page: Page, touch: boolean) {
   // The restart warning: a press outside keeps the proof, as Escape does.
   // The switches are the tab's mark's alone; the warning is inside its popover, and a press
   // outside closes both.
-  await tab.getByRole("button", { name: /^Calculus/ }).click();
+  await tab.getByRole("button", { name: /^Logic/ }).click();
   await page.getByRole("button", { name: "Intuitionistic", exact: true }).click();
   const warning = page.getByRole("alertdialog", { name: "Restart the proof" });
   await expect(warning).toBeVisible();

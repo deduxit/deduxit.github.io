@@ -1213,6 +1213,11 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
             </button>
             .
           </p>
+          <p class="sub">
+            {proof()?.calculus.suite === "ordinary"
+              ? "For example A /\\ B |- B /\\ A: /\\ is ∧, \\/ is ∨, -> is →, ~ is ¬, |- is ⊢."
+              : "For example A * B |- B * A: * is ⊗, | is ⅋, -o is ⊸, |- is ⊢."}
+          </p>
         </div>
       </Show>
 

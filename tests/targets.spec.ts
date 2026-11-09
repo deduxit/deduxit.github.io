@@ -111,11 +111,11 @@ async function walk(page: Page, least: number) {
   await tab.getByRole("button", { name: /^Status/ }).click();
   await measure("status");
   await page.keyboard.press("Escape");
-  await tab.getByRole("button", { name: /^Calculus/ }).click();
+  await tab.getByRole("button", { name: /^Logic/ }).click();
   await measure("calculus mark");
   await page.keyboard.press("Escape");
   // The switches are the tab's mark's alone.
-  await tab.getByRole("button", { name: /^Calculus/ }).click();
+  await tab.getByRole("button", { name: /^Logic/ }).click();
   await page.getByRole("button", { name: "Intuitionistic", exact: true }).click();
   await expect(page.getByRole("alertdialog", { name: "Restart the proof" })).toBeVisible();
   await measure("restart warning");
@@ -202,7 +202,7 @@ async function ordinary(page: Page, least: number): Promise<string[]> {
   await goto(page);
   await page
     .locator(".ptab[aria-current=true]")
-    .getByRole("button", { name: /^Calculus/ })
+    .getByRole("button", { name: /^Logic/ })
     .click();
   await page
     .getByRole("dialog", { name: "Logic" })
