@@ -4,7 +4,18 @@
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import type { Offered, Played, SessionDoc } from "./deduxit";
-import { actions, goalAt, paths, play, replay, retract, searchMade } from "./steps";
+import {
+  actions,
+  type Decided,
+  goalAt,
+  type Path,
+  paths,
+  play,
+  replay,
+  retract,
+  searchMade,
+  wayBack,
+} from "./steps";
 import { deduxit } from "./testing";
 
 const S = "";
@@ -395,5 +406,37 @@ describe("the step tree", () => {
       expect(again.failed).toEqual([]);
       same(again.session, open.session);
     });
+  });
+});
+
+describe("the way back from a goal with no proof", () => {
+  /** Walks back from the goal at [0, 1, 0], each goal below decided by `said` at its depth. */
+  async function walk(said: readonly [Decided, Decided | null, Decided]) {
+    const asked: Path[] = [];
+    const found = await wayBack([0, 1, 0], async (below) => {
+      asked.push(below);
+      return said[below.length] as Decided | null;
+    });
+    return { found, asked };
+  }
+
+  it("asks the goals below nearest first and stops at the first with a proof", async () => {
+    expect(await walk(["unknown", "unknown", "proved"])).toEqual({
+      found: { to: [0, 1] },
+      asked: [[0, 1]],
+    });
+    expect((await walk(["proved", "unknown", "unprovable"])).found).toEqual({ to: [] });
+  });
+
+  it("finds none when the sequent itself has no proof, or no goal has one within the budget", async () => {
+    expect((await walk(["unprovable", "unknown", "unprovable"])).found).toEqual({
+      to: null,
+      why: "unprovable",
+    });
+    expect((await walk(["unknown", "unprovable", "unprovable"])).found).toEqual({
+      to: null,
+      why: "unknown",
+    });
+    expect((await walk(["proved", null, "unprovable"])).found).toBeNull();
   });
 });

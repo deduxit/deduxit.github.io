@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import { MODES } from "./deduxit";
 import {
   displayed,
+  lost,
   modeWords,
   openGoal,
   pretty,
@@ -13,6 +14,7 @@ import {
   SHORT,
   short,
   verdict,
+  wentBack,
 } from "./words";
 import { deduxit } from "./testing";
 
@@ -57,6 +59,16 @@ describe("a verdict", () => {
     // The long reason shows its first sentence, the rest on request.
     expect(said.sentence).toMatch(/^The inverse method built every sequent/);
     expect(said.more).toMatch(/checker confirmed the set\.$/);
+  });
+});
+
+describe("a goal lost by an earlier step", () => {
+  it("offers Go back while the sequent may have a proof, and says no step lost one when it has none", () => {
+    expect(lost(false)).toMatch(/an earlier step lost it\. Go back takes you/);
+    expect(lost(true)).not.toMatch(/Go back/);
+    expect(wentBack("proved").tone).toBe("ok");
+    expect(wentBack("unprovable").sentence).toBe(lost(true));
+    expect(wentBack("unknown").sentence).toMatch(/within the budget/);
   });
 });
 

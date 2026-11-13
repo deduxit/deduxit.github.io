@@ -106,6 +106,34 @@ export function within(path: Path, under: Path): boolean {
   return under.length <= path.length && under.every((index, i) => path[i] === index);
 }
 
+/** What a search said of a goal: a proof found, none possible, or none found within the budget. */
+export type Decided = "proved" | "unprovable" | "unknown";
+
+/** Where a goal with no proof leads back to: the nearest goal on its branch that has one, or why none. */
+export type WayBack =
+  | { readonly to: Path }
+  | { readonly to: null; readonly why: "unprovable" | "unknown" };
+
+/**
+ * Finds the nearest goal below `path` on its branch that still has a proof, asking `decide`
+ * of each from the one right below it down to the sequent itself and stopping at the first
+ * proved. With none proved, the sequent itself has no proof, or a goal on the way was left
+ * undecided within the budget. Null where `decide` was stopped (it resolved null).
+ */
+export async function wayBack(
+  path: Path,
+  decide: (below: Path) => Promise<Decided | null>,
+): Promise<WayBack | null> {
+  for (let length = path.length - 1; length >= 0; length--) {
+    const below = path.slice(0, length);
+    const decided = await decide(below);
+    if (decided === null) return null;
+    if (decided === "proved") return { to: below };
+    if (decided === "unprovable" && length === 0) return { to: null, why: "unprovable" };
+  }
+  return { to: null, why: "unknown" };
+}
+
 /** The inferences under one, itself included. */
 export function subtree(doc: Tree, root: number): number[] {
   const found: number[] = [];

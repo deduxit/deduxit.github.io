@@ -243,3 +243,22 @@ test("an ordinary goal is never offered a fill from a linear tab", async ({ page
   await expect(page.getByRole("button", { name: "Open this goal in a new tab" })).toBeVisible();
   await expect(page.getByRole("button", { name: /^Fill from/ })).toHaveCount(0);
 });
+
+test("an ordinary goal an earlier step lost goes back to the last goal still valid", async ({
+  page,
+}) => {
+  await ordinary(page, "intuitionistic", "a |- b \\/ a");
+  // Proving b from a cannot work: the step lost the derivation.
+  await rule(page, /^b ∨ a, formula/, "∨R₁");
+  await page.getByRole("button", { name: "Close goal" }).click();
+  const note = page.locator(".dock .note");
+  await expect(note.locator(".kw.bad")).toHaveText("Not valid");
+  await expect(note).toContainText("an earlier step lost it");
+  await note.getByRole("button", { name: "Go back" }).click();
+  await expect(note.locator(".kw.ok")).toHaveText("Back at a goal with a proof");
+  await rule(page, /^b ∨ a, formula/, "∨R₂");
+  await rule(page, /^a, formula 2/, "ax");
+  await expect(
+    page.getByRole("status").filter({ hasText: "Proved: every goal is closed" }),
+  ).toBeVisible();
+});

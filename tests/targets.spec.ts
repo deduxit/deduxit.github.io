@@ -52,7 +52,7 @@ async function tooSmall(page: Page, least: number): Promise<string[]> {
  * a hint, a proof closed and its net, every menu, the status and the
  * calculus, the restart warning, Practice and its filters, Learn's two
  * places and a lesson's parts, the tour, a field's parse error, the
- * restore bar and a long reason.
+ * restore bar, a goal an earlier step lost and a long reason.
  */
 async function walk(page: Page, least: number) {
   const found: string[] = [];
@@ -190,6 +190,12 @@ async function walk(page: Page, least: number) {
   await page.reload();
   await expect(page.getByRole("region", { name: "Restore" })).toBeVisible();
   await measure("restore");
+  // A goal an earlier step lost, with Go back.
+  await start(page, "A * B |- A", false);
+  await rule(page, /^A⊥ ⅋ B⊥, formula/, "⅋");
+  await page.getByRole("button", { name: "Close goal" }).click();
+  await expect(page.getByRole("button", { name: "Go back" })).toBeVisible();
+  await measure("lost goal");
   // A long reason with its "more".
   await start(page, "!(a -o a * a * a), !(a -o a), a |- a * (a + 0)", false);
   await calculus(page, ["Intuitionistic"]);

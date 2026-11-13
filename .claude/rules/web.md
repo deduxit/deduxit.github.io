@@ -275,6 +275,15 @@ the page reads.
 - **A refused step offers "Other rules", never Undo** (`Note.position`, the refused step's
   formula): the refusal changed nothing, so Undo there would take back a good step. It opens
   the same formula's rules popover (`openRules`).
+- **Go back** (`prover.goBack`, `wayBack` in `steps.ts`) is offered beside the verdict of a goal
+  the search refuted that is not the sequent itself, unless the sequent's own verdict (kept in
+  `Proof.verdict`) is that it has none. It asks each goal below, nearest first, whether it
+  still has a proof: a replay without the steps above it (`retract` with that goal's child,
+  no invertible skipping; in an ordinary proof `retract` of `ordinary.ts` and the reader's
+  check), then one search within the budget, the kept root verdict in place of the sequent's
+  search. The first goal with a proof is shown open, the steps taken back are one entry of
+  `redo` (or `later`), and its note says so; none found, the note says whether the sequent
+  has no proof or the budget decided nothing. A search Go back makes is never grafted.
 - **The empty stage offers "Start lesson 1" and "Take the tour" as buttons** with Learn off and
   no tour running, beside the syntax line; neither starts by itself (the empty state of
   NN/g's guidelines). Their names contain "tour" and "lesson", so a test that finds the band's

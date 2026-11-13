@@ -56,10 +56,12 @@ import {
 import {
   type Action,
   actions as actionsOf,
+  type Decided,
   goalAt,
   paths,
   type Path,
   retract,
+  wayBack,
   within,
 } from "../lib/steps";
 import {
@@ -82,6 +84,7 @@ import {
   short,
   type Tone,
   verdict,
+  wentBack,
 } from "../lib/words";
 
 /** A note at a goal: a refusal, or what a search answered there. */
@@ -502,6 +505,13 @@ export function createProver(say: (text: string) => void = () => undefined) {
         return at !== undefined && session.inferences[at]?.rule !== undefined;
       }),
     );
+  /** A search's verdict, of either suite, as the way back reads it. */
+  const decidedOf = (verdict: string): Decided =>
+    verdict === "proved" || verdict === "valid"
+      ? "proved"
+      : verdict === "unprovable" || verdict === "not_valid"
+        ? "unprovable"
+        : "unknown";
   /** A proof's ordinary session, with its logic, where it is one. */
   const ordinaryOf = (p: Proof | undefined) =>
     p?.calculus.suite === "ordinary" && p.session && isOrdinary(p.session)
@@ -1505,6 +1515,99 @@ export function createProver(say: (text: string) => void = () => undefined) {
       update(p.id, (q) => q.redo.push([...back.removed]));
       show(p.id, result.value, reopened);
       if (result.value.failed.length) actions.lost(p.id, result.value.failed);
+      save();
+    }),
+
+    /**
+     * From a goal the search refuted, goes back on its branch to the nearest goal below it that
+     * still has a proof: each goal below, nearest first, reopened by a replay without the steps
+     * above it and searched within the budget (the sequent's own verdict where one is kept).
+     * The steps taken back are one undo, which redo takes again. Without such a goal, the note
+     * says why.
+     */
+    goBack: guard(async (goal: number) => {
+      const p = current();
+      const doc = p?.session;
+      if (!p || !doc) return;
+      const path = pathOf(p, goal);
+      if (path.length === 0) return;
+      const budget = settings().budget;
+      const kept = p.verdict?.outcome ? decidedOf(p.verdict.outcome.verdict) : "unknown";
+      const o = ordinaryOf(p);
+      /** Why the walk ended early: a call refused (said at the goal), or null for a stop. */
+      // Set in the walk's callbacks, which the compiler's narrowing does not follow.
+      let failed = null as Failure | null;
+      /** Shows the session found, its goal open. */
+      let commit = null as (() => void) | null;
+      const decide = async (below: Path, searched: () => Promise<Decided | null>) =>
+        below.length === 0 && kept !== "unknown" ? kept : searched();
+      const found = await wayBack(path, async (below) => {
+        const child = goalAt(doc, path.slice(0, below.length + 1));
+        if (o) {
+          const back = retractOrdinary(o.session, child);
+          if (!back) return null;
+          const view = await attempt(() => api.ordinary.view(back.session, ordinaryJson()));
+          if (!view.ok) {
+            failed = view.failed;
+            return null;
+          }
+          const decided = await decide(below, async () => {
+            const closed = await attempt(() =>
+              api.ordinary.close(back.session, back.reopened, ordinaryJson(budget)),
+            );
+            if (!closed.ok) failed = closed.failed;
+            return closed.ok ? decidedOf(closed.value.outcome.verdict) : null;
+          });
+          commit = () => {
+            update(p.id, (q) => {
+              q.later.push({ session: o.session, engines: { ...q.engines } });
+              q.engines = keptGrafts(back.session, q.engines);
+            });
+            show(p.id, { session: back.session, view: asView(view.value) }, back.reopened);
+          };
+          return decided;
+        }
+        const retracted = retract(doc as SessionDoc, child, undefined, p.view?.cuts, p.view);
+        if (!retracted) return null;
+        const replayed = await attempt(() =>
+          api.replay(doc as SessionDoc, actionsFor(p, retracted.kept), replaying()),
+        );
+        if (!replayed.ok) {
+          failed = replayed.failed;
+          return null;
+        }
+        const at = goalAt(replayed.value.session, below) ?? 0;
+        const decided = await decide(below, async () => {
+          const closed = await attempt(() => api.close(replayed.value.session, at, json(budget)));
+          if (!closed.ok) failed = closed.failed;
+          return closed.ok ? decidedOf(closed.value.outcome.verdict) : null;
+        });
+        commit = () => {
+          update(p.id, (q) => q.redo.push(actionsFor(p, retracted.removed)));
+          show(p.id, replayed.value, at);
+          if (replayed.value.failed.length) actions.lost(p.id, replayed.value.failed);
+        };
+        return decided;
+      });
+      const noted = (at: Path, said: Said & { tone: Tone }) => {
+        update(p.id, (q) => (q.note = { path: at, said, tone: said.tone }));
+        say(`${said.keyword}. ${said.sentence}`);
+      };
+      if (found === null) {
+        noted(
+          path,
+          failed
+            ? { ...inputProblem(failed), tone: "bad" }
+            : { keyword: "Stopped", sentence: "The search was stopped.", tone: "warn" },
+        );
+        return;
+      }
+      if (found.to === null) {
+        noted(path, wentBack(found.why));
+        return;
+      }
+      commit?.();
+      noted(found.to, wentBack("proved"));
       save();
     }),
 

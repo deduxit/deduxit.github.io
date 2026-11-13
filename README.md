@@ -18,7 +18,8 @@ browser.
    can still close. A refused step says why, at the goal; Other rules shows the
    formula's rules again.
 4. Stuck? Hint gives the next step a little at a time. Close goal or Close all lets the
-   search finish, within the budget in Settings.
+   search finish, within the budget in Settings. When the search finds that a goal an
+   earlier step made has no proof, Go back returns to the last goal that still has one.
 
 The mark beside the sequent ("Linear (LL) ▾") chooses the logic: classical or
 intuitionistic linear logic, with Mix or affine weakening, or ordinary logic in LK or LJ.

@@ -114,6 +114,8 @@ test("an unprovable goal's close says why, checked; a search that gives up offer
   await page.getByRole("button", { name: "Close goal" }).click();
   await expect(page.locator(".dock .kw.bad")).toHaveText("Unprovable, checked: atom balance");
   await expect(page.locator(".dock .note")).toContainText("do not pair off");
+  // The sequent itself has no proof: there is no step to go back over.
+  await expect(page.getByRole("button", { name: "Go back" })).toHaveCount(0);
   await page.getByRole("button", { name: "Settings" }).click();
   await page.getByRole("spinbutton", { name: "Budget" }).fill("1");
   await page.getByRole("spinbutton", { name: "Budget" }).press("Enter");
@@ -122,6 +124,38 @@ test("an unprovable goal's close says why, checked; a search that gives up offer
   await page.getByRole("button", { name: "Close goal" }).click();
   await expect(page.locator(".dock .kw.warn")).toHaveText("Unknown: gave up");
   await expect(page.getByRole("button", { name: "Try 2 units" })).toBeVisible();
+});
+
+test("a goal an earlier step lost offers Go back, to the last goal that still has a proof", async ({
+  page,
+}) => {
+  await start(page, "A * B |- B * A");
+  await rule(page, /^A⊥ ⅋ B⊥/, "⅋");
+  await rule(page, /^B ⊗ A/, "⊗");
+  // A⊥ goes left with B: neither premise has a proof any more.
+  await page.getByRole("button", { name: /^A⊥, formula 1/ }).click();
+  const split = page.getByRole("dialog", { name: "Split" });
+  await expect(split.getByText("Cannot close")).toBeVisible();
+  await split.getByRole("button", { name: "Apply" }).click();
+  await page.getByRole("button", { name: "Close goal" }).click();
+  const note = page.locator(".dock .note");
+  await expect(note.locator(".kw.bad")).toContainText("Unprovable");
+  await expect(note).toContainText("The sequent may still have one: an earlier step lost it.");
+  await note.getByRole("button", { name: "Go back" }).click();
+  // The split is undone: its goal is open again, and the search found it a proof.
+  await expect(page.getByRole("button", { name: /^B ⊗ A, formula 3 of goal 2/ })).toBeVisible();
+  await expect(note.locator(".kw.ok")).toHaveText("Back at a goal with a proof");
+  await expect(page.locator(".dock .gn")).toHaveText("Open goal 1 of 1", { useInnerText: true });
+  // Redo takes the split again.
+  await page.getByRole("button", { name: "Redo", exact: true }).click();
+  await expect(page.getByRole("button", { name: /^B ⊗ A/ })).toHaveCount(0);
+  // From a goal of a sequent with no proof, Go back finds none and says so.
+  await start(page, "A * B |- A", false);
+  await rule(page, /^A⊥ ⅋ B⊥/, "⅋");
+  await page.getByRole("button", { name: "Close goal" }).click();
+  await note.getByRole("button", { name: "Go back" }).click();
+  await expect(note.locator(".kw.bad")).toHaveText("No step to go back to");
+  await expect(note).toContainText("The sequent itself has no proof");
 });
 
 test("the hint ladder climbs four rungs, and the last applies the step", async ({ page }) => {

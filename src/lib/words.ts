@@ -307,6 +307,40 @@ export function verdict(outcome: Outcome, checked: boolean | null): Said & { ton
   };
 }
 
+/**
+ * What the note of a goal with no proof adds when the goal is not the sequent itself: an
+ * earlier step lost the proof, and Go back finds the way; or, the sequent itself known to
+ * have none, that no step lost one.
+ */
+export function lost(sequentUnprovable: boolean): string {
+  return sequentUnprovable
+    ? "The sequent itself has no proof, so no step lost one."
+    : "This goal has no proof. The sequent may still have one: an earlier step lost it. Go back takes you to the last step that could still be proved.";
+}
+
+/** What Go back found: a goal below with a proof, the sequent with none, or no goal decided in the budget. */
+export function wentBack(found: "proved" | "unprovable" | "unknown"): Said & { tone: Tone } {
+  if (found === "proved")
+    return {
+      keyword: "Back at a goal with a proof",
+      sentence:
+        "The search found a proof of this goal within the budget. The steps taken on it are undone; Redo takes them again.",
+      tone: "ok",
+    };
+  if (found === "unprovable")
+    return {
+      keyword: "No step to go back to",
+      sentence: "The sequent itself has no proof, so no step lost one.",
+      tone: "bad",
+    };
+  return {
+    keyword: "No way back found",
+    sentence:
+      "No goal below this one was shown to have a proof within the budget. Try a larger budget in Settings, or Undo.",
+    tone: "warn",
+  };
+}
+
 /** The goal bar's words: the active goal's place among the open goals, from 1. */
 export function openGoal(place: number, count: number): string {
   return `Open goal ${place} of ${count}`;

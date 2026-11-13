@@ -45,7 +45,7 @@ import {
 import { isOrdinary } from "../lib/ordinary";
 import { goalAt, paths, searchMade, subtree } from "../lib/steps";
 import { intuitionistic } from "../lib/suites";
-import { openGoal, readingOf, rungs, type Said, shown, stepLine } from "../lib/words";
+import { lost, openGoal, readingOf, rungs, type Said, shown, stepLine } from "../lib/words";
 import {
   type Elim,
   lookJson,
@@ -1158,6 +1158,16 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
   const goalNumber = (goal: number) => goal + 1;
 
   const verdictOf = () => note()?.outcome?.verdict;
+  /** Whether the note is the search's refutation of a goal that is not the sequent itself. */
+  const lostGoal = () => {
+    const verdict: string | undefined = verdictOf();
+    return (note()?.path.length ?? 0) > 0 && (verdict === "unprovable" || verdict === "not_valid");
+  };
+  /** Whether a search on the sequent itself found it has no proof. */
+  const sequentUnprovable = () => {
+    const verdict: string | undefined = proof()?.verdict?.outcome?.verdict;
+    return verdict === "unprovable" || verdict === "not_valid";
+  };
   /** The active goal's place among the open goals, from 1. */
   const openPlace = () => (view()?.goals.findIndex((g) => g.goal === active()) ?? 0) + 1;
 
@@ -1650,7 +1660,22 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
                     Other rules
                   </button>
                 </Show>
+                <Show when={lostGoal() && !sequentUnprovable()}>
+                  <button
+                    type="button"
+                    class="btn btn-s"
+                    onClick={() => {
+                      const goal = active();
+                      if (goal !== undefined) void props.prover.goBack(goal);
+                    }}
+                  >
+                    Go back
+                  </button>
+                </Show>
                 <Why said={n().said} />
+                <Show when={lostGoal()}>
+                  <p class="said-why">{lost(sequentUnprovable())}</p>
+                </Show>
               </div>
             )}
           </Show>
