@@ -52,11 +52,16 @@ test("a saturation refutation is shown checked, by the inverse method", async ({
   const note = page.locator(".dline");
   await expect(note.locator(".kw.bad")).toHaveText("Unprovable, checked: saturation");
   await expect(note.locator(".kw.engine")).toHaveText("Inverse method");
+  // The long reason: its first sentence in view, the rest behind "more".
+  await expect(note).toContainText("The inverse method built every sequent");
+  await expect(note).not.toContainText("checker confirmed the set");
+  await note.getByRole("button", { name: "more" }).click();
+  await expect(note).toContainText("checker confirmed the set");
   await expect(page.locator(".ptab[aria-current=true] .dot")).toHaveAttribute("data-tone", "bad");
   await page.locator("footer").getByRole("button", { name: "Export" }).click();
-  await expect(page.getByRole("menuitem", { name: /Not derivable/ })).toHaveAttribute(
-    "data-tip",
-    /no Rocq certificate/,
+  // Why the item is greyed is a line of the item itself.
+  await expect(page.getByRole("menuitem", { name: /Not derivable/ })).toContainText(
+    "no Rocq certificate",
   );
 });
 

@@ -8,7 +8,7 @@
 
 import { devices, type Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
-import { goto, rule, start } from "./prover";
+import { calculus, goto, rule, start } from "./prover";
 
 /** Every visible control too small for the floor, described. */
 async function tooSmall(page: Page, least: number): Promise<string[]> {
@@ -51,8 +51,8 @@ async function tooSmall(page: Page, least: number): Promise<string[]> {
  * empty page, a proof with the rule popover, the split chooser, a refusal,
  * a hint, a proof closed and its net, every menu, the status and the
  * calculus, the restart warning, Practice and its filters, Learn's two
- * places and a lesson's parts, the tour, a field's parse error, and the
- * restore bar.
+ * places and a lesson's parts, the tour, a field's parse error, the
+ * restore bar and a long reason.
  */
 async function walk(page: Page, least: number) {
   const found: string[] = [];
@@ -190,6 +190,12 @@ async function walk(page: Page, least: number) {
   await page.reload();
   await expect(page.getByRole("region", { name: "Restore" })).toBeVisible();
   await measure("restore");
+  // A long reason with its "more".
+  await start(page, "!(a -o a * a * a), !(a -o a), a |- a * (a + 0)", false);
+  await calculus(page, ["Intuitionistic"]);
+  await page.getByRole("button", { name: "Close goal" }).click();
+  await expect(page.locator(".dock .note").getByRole("button", { name: "more" })).toBeVisible();
+  await measure("long reason");
   return found;
 }
 

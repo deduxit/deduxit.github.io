@@ -59,7 +59,16 @@ test("each tab keeps its own calculus, across a reload", async ({ page }) => {
   await calculus(page, ["Mix"]);
   await start(page, "A, A -o B |- B", false);
   await calculus(page, ["Intuitionistic", "Affine"]);
-  const marks = () => page.locator(".ptab .pt-mark").allTextContents();
+  // Each tab's short mark and fragment (a wide screen also names the suite beside the mark).
+  const marks = () =>
+    page
+      .locator(".ptab .pt-mark")
+      .evaluateAll((all) =>
+        all.map(
+          (m) =>
+            `${m.querySelector(".mk .phone-only")?.textContent ?? ""}${m.querySelector(".frag")?.textContent ?? ""}`,
+        ),
+      );
   await expect.poll(marks).toEqual(["LLMLL", "LL+mixMLL", "ILL+affIMLL"]);
   // A change of one tab's calculus leaves the others alone.
   await page.locator(".ptab").nth(1).locator(".pt-go").click();

@@ -11,10 +11,11 @@
 import { engineName } from "./engines";
 import type { Failure, GoalFormula, Mode, Outcome, StepForm } from "./deduxit";
 
-/** A short keyword and the sentence behind it. */
+/** A short keyword, the sentence under it, and for a long reason the rest, shown on request. */
 export interface Said {
   readonly keyword: string;
   readonly sentence: string;
+  readonly more?: string;
 }
 
 /** A mode in the calculus's switches' own words: "Intuitionistic, affine", "Classical, Mix". */
@@ -276,7 +277,8 @@ export function verdict(outcome: Outcome, checked: boolean | null): Said & { ton
       saturated: {
         keyword: `Unprovable${mark}: saturation`,
         sentence:
-          "The inverse method built, from the axioms up, every sequent that could appear in a proof of this goal, until nothing new came. The goal is not among them, and deduxit's checker confirmed the set.",
+          "The inverse method built every sequent that could appear in a proof of this goal, and the goal is not among them.",
+        more: "It worked from the axioms up until nothing new came, and deduxit's checker confirmed the set.",
       },
       exhausted: {
         keyword: "Unprovable: search exhausted",
@@ -303,6 +305,11 @@ export function verdict(outcome: Outcome, checked: boolean | null): Said & { ton
     sentence: `The search gave up because ${why[reason?.kind ?? ""] ?? "it reached a bound"}${outcome.engine ? ` (engine ${outcome.engine})` : ""}. That says nothing about whether a proof exists: try a larger budget.`,
     tone: "warn",
   };
+}
+
+/** The goal bar's words: the active goal's place among the open goals, from 1. */
+export function openGoal(place: number, count: number): string {
+  return `Open goal ${place} of ${count}`;
 }
 
 /**

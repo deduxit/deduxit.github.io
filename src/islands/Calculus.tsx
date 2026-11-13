@@ -151,6 +151,10 @@ export function Calculus(props: { prover: Prover; ui: Ui }) {
           <span class="sw-t" aria-hidden="true" />
           Mix
         </label>
+        {/* Why the switch is greyed, in view: a tip follows no touch. */}
+        <Show when={intuitionistic()}>
+          <p class="said-why">Mix is a rule of classical linear logic.</p>
+        </Show>
         <label class="sw" data-tip="Affine weakening: any formula may be dropped">
           <input
             type="checkbox"

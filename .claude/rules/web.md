@@ -241,8 +241,11 @@ the page reads.
   holds the old one, whose `i<n>-<p>` ids the new view may match, at a zoom fitted to another
   drawing; buttons laid there were narrower than a control (the tour's first stop opens a new
   tab: a 39-pixel button in `targets.spec.ts`, now and then).
-- **On a phone the goal bar keeps one row**: the navigator says "Goal N" there, the count of
-  open goals being the tab's status (`phone.spec.ts` measures the row with Cut in it).
+- **The goal bar numbers the active goal among the open ones** ("Open goal 1 of 2",
+  `openGoal`), while the Steps list, the formulas' accessible names and the live region keep
+  deduxit's ids ("goal 3"): the bar answers "how many are left", the ids name a goal across
+  steps. On a phone the bar keeps one row, "Goal N" (the same place among the open ones), the
+  count being the tab's status (`phone.spec.ts` measures the row with Cut in it).
 - Solid's narrowed accessor in `<Show>{(x) => …}` goes stale once its condition is false:
   read it before the handler changes what the condition reads (the restart warning).
 
@@ -261,6 +264,21 @@ the page reads.
   deduxit's own), with a `.cb` button over every cut, the strategy's next outlined
   (`next-cut`). A net's elimination draws as `draw_net` does: an intuitionistic net with
   cut links under its reading. Settings' "Elimination steps" is `cut.steps`.
+
+- **Every reason is a line in view under its keyword, never a tip** (`Why` in `ui.tsx`, class
+  `said-why`): a goal's note (a refusal, a verdict), the split chooser's Passes and Cannot
+  close, the stage's banner, the field's parse error, the status's verdict, a greyed export
+  item (`.fn .off`), a greyed engine in Settings (`.why-not`) and the greyed Mix switch. Tips
+  follow no touch, and a reason is what the visitor needs to act. A `Said` with `more` keeps
+  its rest behind a "more" button (the saturation refutation's); the keyword is a `span.kw`,
+  no longer a button. Tests read the line (`toContainText` on `.dock .note`), not `data-tip`.
+- **A refused step offers "Other rules", never Undo** (`Note.position`, the refused step's
+  formula): the refusal changed nothing, so Undo there would take back a good step. It opens
+  the same formula's rules popover (`openRules`).
+- **The empty stage offers "Start lesson 1" and "Take the tour" as buttons** with Learn off and
+  no tour running, beside the syntax line; neither starts by itself (the empty state of
+  NN/g's guidelines). Their names contain "tour" and "lesson", so a test that finds the band's
+  Tour by name passes `exact: true`.
 
 ## The state (`src/islands/state.tsx`)
 
@@ -488,7 +506,7 @@ the page reads.
   `data-tip`, its last connective's name and reading (`readingOf`, a leading `∀` or `∃` taken
   as the formula's, since a quantifier reaches as far right as it can; `READINGS` in
   `words.ts`, which `lessons.test.ts` holds to the reference table's reading column). A
-  verdict's reason is the note's and the status's tip, as before.
+  verdict's reason is a line of the note and of the status (below, under the stage).
 - **Every rule label has a hint, Learn on or off** (`RuleHint.tsx`, the author's request of
   2026-11-09): the full name, the schema (`Schema`) and one sentence, from `hintsFor` in
   `src/lib/rules.ts`: the reference's rules (`rules/`) for the one-sided calculus and ILL, its
@@ -685,7 +703,9 @@ the page reads.
   to 43 pixels on a phone before a step re-applied the floor.
 - **A tab's calculus mark** stands apart from the sequent (`.pt-mark`: 12 pixels before it,
   8 between the calculus and the fragment); `tests/chip.spec.ts` measures the gaps on the
-  text itself and that the phone's tab and `+` fit the row.
+  label (`.mk`) and that the phone's tab and `+` fit the row. On a wide screen the label names
+  the suite with the mark and a ▾ follows (`markLabel`, "Linear (LL) ▾"), so that it reads as
+  the control it is; a phone keeps the short mark. Its accessible name stays "Logic: …".
 - **On a phone** the bottom band keeps undo, redo, close all, hint, Practice and Learn;
   `wide-only` actions move to More's sheet. Tips follow a mouse or a keyboard, never a
   touch (`App.tsx`).

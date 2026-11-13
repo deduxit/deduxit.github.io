@@ -89,6 +89,8 @@ export interface Note {
   readonly path: Path;
   readonly said: Said;
   readonly tone: Tone;
+  /** A refused step's formula, by its position in the goal: "Other rules" opens its rules again. */
+  readonly position?: number;
   /** A search's outcome, for its certificate or a retry with a larger budget. */
   readonly outcome?: Outcome;
   /** The budget the search had, for "Try with twice the budget". */
@@ -1230,7 +1232,8 @@ export function createProver(say: (text: string) => void = () => undefined) {
         if (!done.ok) {
           if (done.failed) {
             const said = ordinaryRefusal(done.failed, formulas, step.rule);
-            update(p.id, (q) => (q.note = { path: pathOf(p, goal), said, tone: "bad" }));
+            const path = pathOf(p, goal);
+            update(p.id, (q) => (q.note = { path, said, tone: "bad", position: step.position }));
           }
           return false;
         }
@@ -1248,7 +1251,8 @@ export function createProver(say: (text: string) => void = () => undefined) {
         if (result.failed) {
           const formulas = p.view?.goals.find((g) => g.goal === goal)?.formulas ?? [];
           const said = refusal(result.failed, formulas, step.rule);
-          update(p.id, (q) => (q.note = { path: pathOf(p, goal), said, tone: "bad" }));
+          const path = pathOf(p, goal);
+          update(p.id, (q) => (q.note = { path, said, tone: "bad", position: step.position }));
         }
         return false;
       }

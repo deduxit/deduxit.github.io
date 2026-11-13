@@ -72,7 +72,7 @@ test("the eigenvariable condition is refused in words", async ({ page }) => {
   await pick(page, "r(a, b)", "ax");
   const note = page.locator(".dock .kw.bad");
   await expect(note).toHaveText("ax refused: the eigenvariable condition");
-  await expect(note).toHaveAttribute("data-tip", /The eigenvariable b cannot stand here/);
+  await expect(page.locator(".dock .note")).toContainText("The eigenvariable b cannot stand here");
 });
 
 test("a cut at first order names an eigenvariable made below its goal", async ({ page }) => {
@@ -87,7 +87,7 @@ test("a cut at first order names an eigenvariable made below its goal", async ({
   await page.getByRole("button", { name: /^∀x\. p\(x\), formula/ }).click();
   await chooser.getByRole("button", { name: "Cut", exact: true }).click();
   await expect(chooser).toBeHidden();
-  await expect(page.locator(".gn")).toContainText("2 open");
+  await expect(page.locator(".gn")).toContainText("of 2");
   await page.getByRole("button", { name: "Close all" }).first().click();
   await expect(
     page.getByRole("status").filter({ hasText: "Proved: every goal is closed" }),
@@ -146,5 +146,5 @@ test("the first-order bounds are settings, and a search says which one stopped i
   await page.getByRole("button", { name: "Close goal" }).click();
   const note = page.locator(".dock .kw.warn");
   await expect(note).toHaveText("Unknown: gave up");
-  await expect(note).toHaveAttribute("data-tip", /Settings' witness depth/);
+  await expect(page.locator(".dock .note")).toContainText("Settings' witness depth");
 });

@@ -132,6 +132,11 @@ export function markOf(c: Calculus): string {
   return names[c.mode];
 }
 
+/** The tab's mark on a wide screen: the suite's name with the calculus's short mark, "Linear (LL)". */
+export function markLabel(c: Calculus): string {
+  return `${suite(c.suite).name} (${markOf(c)})`;
+}
+
 /** The calculus in the switches' words, for the status and the mark's name. */
 export function calculusWords(c: Calculus): string {
   if (c.suite === "ordinary")

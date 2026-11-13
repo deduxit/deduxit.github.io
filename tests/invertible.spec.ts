@@ -64,11 +64,11 @@ test("with the switch on, undo takes back a step with the invertible steps after
   // (on the page loaded again, the switch kept on).
   await start(page, "A * B |- B * A");
   await page.locator("footer").getByRole("button", { name: "Undo", exact: true }).click();
-  await expect(
-    page.getByRole("button", {
-      name: "Nothing to undo on this branch: Every step on this branch is an invertible rule the page applied by itself.",
-    }),
-  ).toBeVisible();
+  const note = page.locator(".dock .note");
+  await expect(note.locator(".kw")).toHaveText("Nothing to undo on this branch");
+  await expect(note).toContainText(
+    "Every step on this branch is an invertible rule the page applied by itself.",
+  );
 });
 
 test("with the switch on, the hint ladder's first rung says the invertible rules are done", async ({

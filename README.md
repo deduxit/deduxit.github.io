@@ -15,14 +15,16 @@ browser.
 2. Click a formula of an open goal. The popover lists the rules deduxit allows on it;
    point at a rule, focus it or tap its ⓘ to see its schema and what it does.
 3. Pick a rule. A split asks which formulas go to the left premise, and says whether it
-   can still close. A refused step says why, at the goal.
+   can still close. A refused step says why, at the goal; Other rules shows the
+   formula's rules again.
 4. Stuck? Hint gives the next step a little at a time. Close goal or Close all lets the
    search finish, within the budget in Settings.
 
-The mark beside the sequent chooses the logic: classical or intuitionistic linear logic,
-with Mix or affine weakening, or ordinary logic in LK or LJ. Learn has eleven lessons and
-a reference; Practice has 407 problems with a proof, filtered by kind and difficulty; the
-tour shows the page itself.
+The mark beside the sequent ("Linear (LL) ▾") chooses the logic: classical or
+intuitionistic linear logic, with Mix or affine weakening, or ordinary logic in LK or LJ.
+Learn has eleven lessons and a reference; Practice has 407 problems with a proof, filtered
+by kind and difficulty; the tour shows the page itself. The empty page offers lesson 1 and
+the tour.
 
 ## What it does
 

@@ -27,12 +27,12 @@ import { Dynamic } from "solid-js/web";
 import { effective, parseTheme, THEME_KEY, type Theme, toggled } from "../lib/theme";
 import { prettyOrdinary } from "../lib/ordinary";
 import type { Sample } from "../lib/content";
-import { calculusWords, markOf, ordinary } from "../lib/suites";
+import { calculusWords, markLabel, markOf, ordinary } from "../lib/suites";
 import { displayed } from "../lib/words";
 import { Calculus } from "./Calculus";
 import { BandMark } from "./Logo";
 import type { Proof, Prover } from "./state";
-import { token, type Ui } from "./ui";
+import { token, type Ui, Why } from "./ui";
 
 /**
  * Places a popover of the active tab under it, `inset` from its left and inside the window. The
@@ -168,9 +168,8 @@ export function TopBand(props: {
                 )}
               </Show>
             </p>
-            <span class="kw bad" data-tip={problem().sentence}>
-              {problem().keyword}
-            </span>
+            <span class="kw bad">{problem().keyword}</span>
+            <Why said={problem()} />
           </div>
         )}
       </Show>
@@ -329,10 +328,17 @@ function ProofTab(props: { proof: Proof; prover: Prover; ui: Ui; samples: readon
             );
         }}
       >
-        {mark(props.proof)}
+        {/* The suite named on a wide screen; a phone keeps the short mark. */}
+        <span class="mk">
+          <span class="wide-only">{markLabel(props.proof.calculus)}</span>
+          <span class="phone-only">{mark(props.proof)}</span>
+        </span>
         <Show when={fragment() !== mark(props.proof) && fragment()}>
           {(f) => <span class="frag">{f()}</span>}
         </Show>
+        <span class="wide-only caret-down" aria-hidden="true">
+          ▾
+        </span>
       </button>
       <button
         type="button"
@@ -423,21 +429,18 @@ function StatusDetails(props: { proof: Proof; prover: Prover; close: () => void 
                       </span>
                     }
                   >
-                    {(verdict) => (
-                      <span class={`kw ${verdict().tone}`} data-tip={verdict().sentence}>
-                        {verdict().keyword}
-                      </span>
-                    )}
+                    {(verdict) => <span class={`kw ${verdict().tone}`}>{verdict().keyword}</span>}
                   </Show>
                 }
               >
-                <span class="kw ok" data-tip="Every step was checked by deduxit as it was applied">
-                  Proved, checked
-                </span>
+                <span class="kw ok">Proved, checked</span>
               </Show>
             </p>
-            <Show when={props.proof.verdict}>
-              {(verdict) => <p class="sub">{verdict().sentence}</p>}
+            <Show when={!view().complete && props.proof.verdict}>
+              {(verdict) => <Why said={verdict()} class="sub" />}
+            </Show>
+            <Show when={view().complete}>
+              <p class="sub">Every step was checked by deduxit as it was applied.</p>
             </Show>
             <dl class="facts">
               <Show when={props.proof.calculus.suite === "linear"}>

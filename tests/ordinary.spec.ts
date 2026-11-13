@@ -83,7 +83,7 @@ test("an ordinary goal's close says not valid, and the field's menu opens the ex
   await menu.getByRole("button", { name: /^Excluded middle, in LJ/ }).click();
   await expect(page.locator(".ptab[aria-current=true] .pt-go")).toHaveText("⊢ a ∨ ¬a");
   await page.getByRole("button", { name: "Close goal" }).click();
-  await expect(page.locator(".dock").getByRole("button", { name: /^Not valid/ })).toBeVisible();
+  await expect(page.locator(".dock .kw.bad")).toHaveText("Not valid");
   // The same sequent in LK: valid, the derivation found grafted and finished.
   await page.getByRole("button", { name: "New proof" }).click();
   await page.getByRole("button", { name: "Examples" }).click();

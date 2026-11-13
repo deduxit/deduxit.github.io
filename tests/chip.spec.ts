@@ -9,7 +9,7 @@ import { devices, type Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
 import { start } from "./prover";
 
-/** The gaps on the screen: the sequent's end to the mark's text, and the calculus to the fragment. */
+/** The gaps on the screen: the sequent's end to the mark's label, and the calculus to the fragment. */
 async function gaps(page: Page): Promise<{ sequent: number; parts: number }> {
   return page.locator(".ptab[aria-current=true]").evaluate((tab) => {
     const text = (element: Element | null) => {
@@ -20,7 +20,8 @@ async function gaps(page: Page): Promise<{ sequent: number; parts: number }> {
     };
     const sequent = text(tab.querySelector(".pt-go .m"));
     const mark = tab.querySelector(".pt-mark");
-    const calculus = text(mark);
+    // The calculus's label, "Linear (LL)" on a wide screen and "LL" on a phone.
+    const calculus = mark?.querySelector(".mk")?.getBoundingClientRect() ?? new DOMRect();
     const fragment = mark?.querySelector(".frag")?.getBoundingClientRect();
     return {
       sequent: calculus.left - sequent.right,
@@ -33,7 +34,10 @@ test("the calculus mark stands apart from the sequent, its calculus and fragment
   page,
 }) => {
   await start(page, "A * B |- B * A");
-  await expect(page.locator(".ptab[aria-current=true] .pt-mark")).toContainText("MLL");
+  const mark = page.locator(".ptab[aria-current=true] .pt-mark");
+  // A wide screen names the logic and shows that the mark opens a menu.
+  await expect(mark).toHaveText(/^Linear \(LL\)\s*MLL\s*▾$/, { useInnerText: true });
+  await expect(mark).toHaveAccessibleName(/^Logic: Classical; fragment MLL/);
   const { sequent, parts } = await gaps(page);
   expect(sequent).toBeGreaterThanOrEqual(16);
   expect(parts).toBeGreaterThanOrEqual(8);
@@ -46,6 +50,11 @@ test.describe("at a phone's width", () => {
 
   test("the mark stands apart, and the tab and the new proof's + fit the row", async ({ page }) => {
     await start(page, "A * B |- B * A");
+    // A phone keeps the short mark.
+    const mark = page.locator(".ptab[aria-current=true] .pt-mark");
+    await expect(mark.locator(".mk")).toHaveText("LL", { useInnerText: true });
+    await expect(mark.getByText("Linear (LL)")).toBeHidden();
+    await expect(mark.getByText("▾")).toBeHidden();
     const { sequent, parts } = await gaps(page);
     expect(sequent).toBeGreaterThanOrEqual(16);
     expect(parts).toBeGreaterThanOrEqual(8);

@@ -13,6 +13,8 @@
 import {
   ChevronLeft,
   ChevronRight,
+  Compass,
+  GraduationCap,
   Info,
   Maximize,
   SquareArrowOutUpRight,
@@ -43,7 +45,7 @@ import {
 import { isOrdinary } from "../lib/ordinary";
 import { goalAt, paths, searchMade, subtree } from "../lib/steps";
 import { intuitionistic } from "../lib/suites";
-import { readingOf, rungs, type Said, shown, stepLine } from "../lib/words";
+import { openGoal, readingOf, rungs, type Said, shown, stepLine } from "../lib/words";
 import {
   type Elim,
   lookJson,
@@ -56,7 +58,7 @@ import {
   viewJson,
 } from "./state";
 import { hinted, titled } from "./RuleHint";
-import { ladderKey, phone, token, type Ui, Words } from "./ui";
+import { ladderKey, phone, token, type Ui, Why, Words } from "./ui";
 
 /** A formula's button over the drawing, in the drawing's own pixels. */
 interface Hit {
@@ -932,16 +934,17 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
       checkSplit();
       return;
     }
-    props.prover.focus(hit.goal);
+    await openRules(hit.goal, hit.position);
+  }
+
+  /** Opens the rules popover of a goal's formula. */
+  async function openRules(goal: number, position: number) {
+    props.prover.focus(goal);
     props.prover.clearNote();
     // Another formula picked: the witness chooser gives way to its rules.
-    setUi({
-      selected: { goal: hit.goal, position: hit.position },
-      offered: null,
-      witnessing: null,
-    });
-    const offered = await props.prover.rules(hit.goal, hit.position);
-    if (ui.selected?.goal !== hit.goal || ui.selected.position !== hit.position) return;
+    setUi({ selected: { goal, position }, offered: null, witnessing: null });
+    const offered = await props.prover.rules(goal, position);
+    if (ui.selected?.goal !== goal || ui.selected.position !== position) return;
     setUi("offered", offered);
     // A digit typed before the rules arrived picks its rule now.
     const early = typedEarly;
@@ -1155,6 +1158,8 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
   const goalNumber = (goal: number) => goal + 1;
 
   const verdictOf = () => note()?.outcome?.verdict;
+  /** The active goal's place among the open goals, from 1. */
+  const openPlace = () => (view()?.goals.findIndex((g) => g.goal === active()) ?? 0) + 1;
 
   return (
     <section
@@ -1262,9 +1267,10 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
 
       <Show when={proof()?.banner}>
         {(banner) => (
-          <p class="banner kw warn" data-tip={banner().sentence}>
-            {banner().keyword}
-          </p>
+          <div class="cluster banner said-banner">
+            <span class="kw warn">{banner().keyword}</span>
+            <Why said={banner()} />
+          </div>
         )}
       </Show>
 
@@ -1290,6 +1296,30 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
               ? "For example A /\\ B |- B /\\ A: /\\ is ∧, \\/ is ∨, -> is →, ~ is ¬, |- is ⊢."
               : "For example A * B |- B * A: * is ⊗, | is ⅋, -o is ⊸, |- is ⊢."}
           </p>
+          {/* Help on offer, never started by itself. */}
+          <Show when={!ui.learn && ui.tour === null}>
+            <p class="row start">
+              <button
+                type="button"
+                class="btn"
+                onClick={() => setUi({ learn: "tutorial", lesson: 1, reason: null, menu: null })}
+              >
+                <GraduationCap aria-hidden="true" />
+                Start lesson 1
+              </button>
+              <button
+                type="button"
+                class="btn"
+                onClick={() => {
+                  setUi({ menu: null, tour: null });
+                  setUi("tour", 0);
+                }}
+              >
+                <Compass aria-hidden="true" />
+                Take the tour
+              </button>
+            </p>
+          </Show>
         </div>
       </Show>
 
@@ -1495,8 +1525,8 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
             </button>
             {/* On a phone the bar keeps one row: the count of open goals is the tab's status. */}
             <span class="gn">
-              Goal {goalNumber(active() ?? 0)}
-              <span class="wide-only"> · {openCount()} open</span>
+              <span class="wide-only">{openGoal(openPlace(), openCount())}</span>
+              <span class="phone-only">Goal {openPlace()}</span>
             </span>
             <button
               type="button"
@@ -1583,15 +1613,8 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
           </Show>
           <Show when={note()}>
             {(n) => (
-              <div class="cluster dline">
-                <button
-                  type="button"
-                  class={`kw ${n().tone}`}
-                  data-tip={n().said.sentence}
-                  aria-label={`${n().said.keyword}: ${n().said.sentence}`}
-                >
-                  {n().said.keyword}
-                </button>
+              <div class="cluster dline note">
+                <span class={`kw ${n().tone}`}>{n().said.keyword}</span>
                 <EngineChip outcome={n().outcome} ui={props.ui} />
                 <Show when={verdictOf() === "unknown"}>
                   <button
@@ -1612,11 +1635,22 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
                     units
                   </button>
                 </Show>
-                <Show when={n().tone === "bad" && !n().outcome}>
-                  <button type="button" class="btn btn-s" onClick={() => void props.prover.undo()}>
-                    Undo
+                {/* A refusal changed nothing: the way on is another rule of the same formula. */}
+                <Show when={n().position !== undefined}>
+                  <button
+                    type="button"
+                    class="btn btn-s"
+                    onClick={() => {
+                      const goal = active();
+                      const position = n().position;
+                      if (goal !== undefined && position !== undefined)
+                        void openRules(goal, position);
+                    }}
+                  >
+                    Other rules
                   </button>
                 </Show>
+                <Why said={n().said} />
               </div>
             )}
           </Show>
@@ -1889,14 +1923,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
                 when={split().passes !== null}
                 fallback={<span class="kw plain">Checking</span>}
               >
-                <span
-                  class={`kw flat ${split().passes ? "acc" : "warn"}`}
-                  data-tip={
-                    split().passes
-                      ? "Both premises can still be proved, as far as deduxit's quick test sees."
-                      : "One premise cannot be proved however the rest goes: this split leads nowhere."
-                  }
-                >
+                <span class={`kw flat ${split().passes ? "acc" : "warn"}`}>
                   {split().passes ? "Passes" : "Cannot close"}
                 </span>
               </Show>
@@ -1911,6 +1938,13 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
                 Cancel
               </button>
             </p>
+            <Show when={split().passes !== null}>
+              <p class="said-why">
+                {split().passes
+                  ? "Both premises can still be proved, as far as deduxit's quick test sees."
+                  : "One premise cannot be proved however the rest goes: this split leads nowhere."}
+              </p>
+            </Show>
           </div>
         )}
       </Show>

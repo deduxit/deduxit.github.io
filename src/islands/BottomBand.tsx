@@ -606,13 +606,16 @@ function ExportMenu(props: {
                 role="menuitem"
                 class="mi"
                 aria-disabled={item.off?.() ? "true" : undefined}
-                data-tip={item.off?.() ?? item.detail}
                 onClick={() => {
                   if (!item.off?.()) void run(item.act);
                 }}
               >
                 <span class="fmt">{item.label}</span>
-                <span class="fn">{item.detail}</span>
+                <span class="fn">
+                  {item.detail}
+                  {/* Why the item is off, in view: a tip follows no touch. */}
+                  <Show when={item.off?.()}>{(why) => <span class="off">{why()}.</span>}</Show>
+                </span>
               </button>
             </li>
           )}
@@ -657,7 +660,7 @@ function ExportMenu(props: {
             role="menuitem"
             class="mi term"
             aria-disabled={noJudgement() ? "true" : undefined}
-            data-tip={noJudgement() ?? "Copy the proof's program, its λ-term, as text"}
+            data-tip={noJudgement() ? undefined : "Copy the proof's program, its λ-term, as text"}
             onClick={() => void run(copyTerm)}
           >
             <span class="fmt">λ-term</span>
@@ -1062,10 +1065,7 @@ function EngineChoice(props: { prover: Prover }) {
         </label>
         <For each={listed()?.engines ?? []}>
           {(e) => (
-            <label
-              class="seg-b"
-              data-tip={e.refused ? notTaken(e.refused).sentence : engineTip(e.engine)}
-            >
+            <label class="seg-b" data-tip={e.refused ? undefined : engineTip(e.engine)}>
               <input
                 type="radio"
                 name="engine"
@@ -1075,6 +1075,9 @@ function EngineChoice(props: { prover: Prover }) {
               />
               <span>{engineLabel(e.engine)}</span>
               <span class="why">{e.refused ? notTaken(e.refused).keyword : ""}</span>
+              <Show when={e.refused}>
+                {(refused) => <span class="why-not">{notTaken(refused()).sentence}</span>}
+              </Show>
             </label>
           )}
         </For>

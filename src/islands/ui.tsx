@@ -9,10 +9,11 @@
  * elimination, and the tour's stop.
  */
 
-import { createSignal, For } from "solid-js";
+import { createSignal, For, Show } from "solid-js";
 import { createStore } from "solid-js/store";
 import type { Hint, Offered } from "../lib/deduxit";
 import type { Calculus } from "../lib/suites";
+import type { Said } from "../lib/words";
 
 /** A formula of a goal, by its position. */
 export interface Spot {
@@ -144,5 +145,34 @@ export function Words(props: { text: string }) {
     <For each={props.text.split("`")}>
       {(part, i) => (i() % 2 === 1 ? <span class="m">{part}</span> : part)}
     </For>
+  );
+}
+
+/**
+ * A reason's sentence, shown under its keyword: in view for every reader, a touch included,
+ * since a tip follows no touch. A long reason's rest stays behind "more".
+ */
+export function Why(props: { said: Said; class?: string }) {
+  // The rest shown, by its text: another reason in the same place starts closed.
+  const [shown, setShown] = createSignal<string | null>(null);
+  const open = () => props.said.more !== undefined && shown() === props.said.more;
+  // Each branch is one element: a fragment toggled inside another lost its nodes.
+  return (
+    <p class={props.class ? `said-why ${props.class}` : "said-why"}>
+      {props.said.sentence}
+      <Show when={open()}>
+        <span class="rest">{props.said.more}</span>
+      </Show>
+      <Show when={props.said.more !== undefined}>
+        <button
+          type="button"
+          class="linkish more"
+          aria-expanded={open()}
+          onClick={() => setShown(open() ? null : (props.said.more ?? null))}
+        >
+          {open() ? "less" : "more"}
+        </button>
+      </Show>
+    </p>
   );
 }

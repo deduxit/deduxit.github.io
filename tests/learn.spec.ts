@@ -59,10 +59,27 @@ test("a lesson's problem opens at once, and Watch plays its proof one step at a 
   await expect(page.getByRole("button", { name: "Redo", exact: true })).toBeDisabled();
 });
 
+test("the empty stage offers lesson 1 and the tour as buttons, and starts neither by itself", async ({
+  page,
+}) => {
+  await goto(page);
+  const empty = page.locator(".stage .empty");
+  await expect(empty).toContainText("* is ⊗");
+  await expect(page.getByRole("dialog", { name: "Tour" })).toHaveCount(0);
+  await expect(page.getByRole("complementary", { name: "Learn" })).toHaveCount(0);
+  await empty.getByRole("button", { name: "Start lesson 1" }).click();
+  await expect(page.getByRole("heading", { name: /Reading a sequent/ })).toBeVisible();
+  // With Learn on the stage offers nothing more; off again, the buttons are back.
+  await expect(empty.getByRole("button", { name: "Start lesson 1" })).toHaveCount(0);
+  await page.getByRole("button", { name: "Turn Learn off" }).click();
+  await empty.getByRole("button", { name: "Take the tour" }).click();
+  await expect(page.getByRole("dialog", { name: "Tour" })).toContainText("(1 of 8)");
+});
+
 test("the tour walks the page by keyboard and ends on a checked proof", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await goto(page);
-  await page.getByRole("button", { name: "Tour" }).click();
+  await page.getByRole("button", { name: "Tour", exact: true }).click();
   const tour = page.getByRole("dialog", { name: "Tour" });
   await expect(tour).toContainText("The sequent (1 of 8)");
   await expect(page.locator("[aria-live]")).toContainText("Tour, stop 1 of 8");

@@ -822,6 +822,14 @@ button.wordmark {
   padding: 0;
   min-width: 0;
 }
+/* The first visit's help, offered as buttons: pressable on a field that passes presses on. */
+.empty .start {
+  justify-content: center;
+  margin-top: var(--spacing-3);
+}
+.empty .btn {
+  pointer-events: auto;
+}
 .banner,
 .done {
   position: absolute;
@@ -832,8 +840,16 @@ button.wordmark {
 .done {
   cursor: default;
 }
+/* A line the stage says with its reason under it, as a goal's note does. */
+.said-banner {
+  display: grid;
+  justify-items: start;
+  gap: var(--spacing-1);
+  padding: var(--spacing-2);
+  max-width: min(var(--size-menu), calc(100vw - var(--spacing-6)));
+}
 /* Over the dotted field a keyword is laid on the panel, so no dot shows through. */
-.stage .banner,
+.stage .banner.kw,
 .stage .done {
   background-color: var(--color-panel);
   background-image: linear-gradient(var(--color-ok-wash), var(--color-ok-wash));
@@ -976,6 +992,22 @@ button.wordmark {
   padding: var(--spacing-1);
   flex-wrap: wrap;
   max-width: min(var(--size-menu), calc(100vw - var(--spacing-6)));
+}
+/* A reason under its keyword: in view, never a tip, a whole line of the cluster. */
+.said-why {
+  flex-basis: 100%;
+  margin: 0;
+  padding: 0 var(--spacing-1);
+  font: var(--font-weight-normal) var(--text-small) / var(--leading-snug) var(--font-text);
+  color: var(--color-ink);
+}
+.said-why .rest,
+.said-why .more {
+  margin-left: var(--spacing-1);
+}
+.said-why .more {
+  padding: 0 var(--spacing-1);
+  color: var(--color-accent);
 }
 .gn {
   font: var(--font-weight-semibold) var(--text-small) / var(--leading-none) var(--font-text);
@@ -1179,6 +1211,11 @@ button.wordmark {
   font: var(--font-weight-normal) var(--text-label) / var(--leading-snug) var(--font-text);
   color: var(--color-dim);
 }
+/* Why an export item is greyed, in view under what it does. */
+.fn .off {
+  display: block;
+  color: var(--color-ink);
+}
 .msep {
   height: var(--line);
   background: var(--color-edge);
@@ -1294,6 +1331,16 @@ button.wordmark {
 .choices .why {
   font-size: var(--text-label);
   color: var(--color-faint);
+  font-weight: var(--font-weight-normal);
+}
+/* A greyed engine's reason, in view under its name. */
+.choices .seg-b:has(.why-not) {
+  grid-template-areas: "name why" "not not";
+}
+.choices .why-not {
+  grid-area: not;
+  font-size: var(--text-label);
+  line-height: var(--leading-snug);
   font-weight: var(--font-weight-normal);
 }
 .keys,

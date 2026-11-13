@@ -2,7 +2,7 @@
 // Licensed under the EUPL
 
 import { describe, expect, it } from "vitest";
-import { calculusOf, linear, ordinary, parameterOf, SUITES } from "./suites";
+import { calculusOf, linear, markLabel, ordinary, parameterOf, SUITES } from "./suites";
 import { deduxit } from "./testing";
 
 describe("the suite registry", () => {
@@ -42,5 +42,13 @@ describe("the suite registry", () => {
     expect(calculusOf("ordinary", "sequent", "mix")).toBeUndefined();
     expect(calculusOf("ordinary", "tableau", "classical")).toBeUndefined();
     expect(calculusOf("modal", "sequent", "K")).toBeUndefined();
+  });
+});
+
+describe("the tab's mark on a wide screen", () => {
+  it("names the suite beside the calculus's short mark", () => {
+    expect(markLabel(linear("classical"))).toBe("Linear (LL)");
+    expect(markLabel(linear("intuitionistic-affine"))).toBe("Linear (ILL+aff)");
+    expect(markLabel(ordinary("intuitionistic"))).toBe("Ordinary (LJ)");
   });
 });

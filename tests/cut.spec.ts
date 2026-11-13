@@ -38,7 +38,7 @@ test("a cut is typed in the tab's syntax, its formulas chosen, and both premises
   await expect(chooser.locator(".prem").first()).toContainText("A ⊗ B⊥");
   await chooser.getByRole("button", { name: "Cut", exact: true }).click();
   await expect(chooser).toBeHidden();
-  await expect(page.locator(".gn")).toContainText("2 open");
+  await expect(page.locator(".gn")).toContainText("of 2");
   // The first premise proves the cut formula, the second uses its dual.
   await expect(page.getByRole("button", { name: /^A ⊗ B⊥, formula 1 of goal 2/ })).toBeVisible();
   await expect(page.getByRole("button", { name: /^A⊥ ⅋ B, formula 2 of goal 2/ })).toBeVisible();
@@ -47,7 +47,7 @@ test("a cut is typed in the tab's syntax, its formulas chosen, and both premises
   await start(page, "A, A -o B, B -o C |- C", false);
   await calculus(page, ["Intuitionistic"]);
   await cut(page, "B", [/^A, formula 1/, /^A ⊸ B, formula 2/]);
-  await expect(page.locator(".gn")).toContainText("2 open");
+  await expect(page.locator(".gn")).toContainText("of 2");
   await expect(page.locator(".drawing svg")).toContainText("cut");
 });
 

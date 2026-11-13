@@ -40,20 +40,32 @@ test("the split chooser sends formulas left and says whether the split can close
   const split = page.getByRole("dialog", { name: "Split" });
   await page.getByRole("button", { name: /^A⊥, formula 1/ }).click();
   await expect(split.getByText("Cannot close")).toBeVisible();
+  await expect(split).toContainText("this split leads nowhere");
   await page.getByRole("button", { name: /^A⊥, formula 1/ }).click();
   await page.getByRole("button", { name: /^B⊥, formula 2/ }).click();
   await expect(split.getByText("Passes")).toBeVisible();
   await split.getByRole("button", { name: "Apply" }).click();
-  await expect(page.locator(".dock .gn")).toHaveText("Goal 3 · 2 open");
+  // The bar numbers the goal among the open ones; the steps list keeps deduxit's ids.
+  await expect(page.locator(".dock .gn")).toHaveText("Open goal 1 of 2", { useInnerText: true });
+  await page.getByRole("button", { name: "Next goal" }).click();
+  await expect(page.locator(".dock .gn")).toHaveText("Open goal 2 of 2", { useInnerText: true });
+  await page.locator("footer").getByRole("button", { name: "Steps" }).click();
+  await expect(page.getByRole("dialog", { name: "Steps" })).toContainText("⊗ on goal 2");
 });
 
 test("a refused step says the library's reason at the goal", async ({ page }) => {
   await start(page, "|- A, B");
   await rule(page, /^A, formula 1/, "ax");
-  const refusal = page.locator(".dock .kw.bad");
-  await expect(refusal).toHaveText("ax refused: no dual partner");
-  await expect(refusal).toHaveAttribute("data-tip", /and its dual alone in the goal/);
+  const refusal = page.locator(".dock .note");
+  await expect(refusal.locator(".kw.bad")).toHaveText("ax refused: no dual partner");
+  // The reason is a line in view, which a touch sees too.
+  await expect(refusal).toContainText("and its dual alone in the goal");
   await expect(page.locator("[aria-live]")).toContainText("ax refused");
+  // The refusal changed nothing, so there is nothing to undo there: the way on is another rule.
+  await expect(refusal.getByRole("button", { name: "Undo" })).toHaveCount(0);
+  await refusal.getByRole("button", { name: "Other rules" }).click();
+  await expect(page.getByRole("dialog", { name: "Rules" })).toContainText("A");
+  await expect(refusal).toBeHidden();
 });
 
 test("undo takes back the last step on the active branch only, and redo puts it back", async ({
@@ -101,6 +113,7 @@ test("an unprovable goal's close says why, checked; a search that gives up offer
   await start(page, "A * B |- A");
   await page.getByRole("button", { name: "Close goal" }).click();
   await expect(page.locator(".dock .kw.bad")).toHaveText("Unprovable, checked: atom balance");
+  await expect(page.locator(".dock .note")).toContainText("do not pair off");
   await page.getByRole("button", { name: "Settings" }).click();
   await page.getByRole("spinbutton", { name: "Budget" }).fill("1");
   await page.getByRole("spinbutton", { name: "Budget" }).press("Enter");
@@ -343,10 +356,7 @@ test("a link whose session unpacks past the cap loads the sequent alone and says
   await page.goto(`/${hash}`);
   await page.reload();
   await expect(page.getByText("Proof not restored")).toBeVisible();
-  await expect(page.getByText("Proof not restored")).toHaveAttribute(
-    "data-tip",
-    /more than a link may hold/,
-  );
+  await expect(page.locator(".said-banner")).toContainText("more than a link may hold");
   await expect(page.getByRole("button", { name: /^A, formula/ })).toBeVisible();
 });
 

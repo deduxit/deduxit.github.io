@@ -3,7 +3,17 @@
 
 import { describe, expect, it } from "vitest";
 import { MODES } from "./deduxit";
-import { displayed, modeWords, pretty, readingOf, rungs, SHORT, short, verdict } from "./words";
+import {
+  displayed,
+  modeWords,
+  openGoal,
+  pretty,
+  readingOf,
+  rungs,
+  SHORT,
+  short,
+  verdict,
+} from "./words";
 import { deduxit } from "./testing";
 
 describe("the typed sequent's signs", () => {
@@ -42,10 +52,18 @@ describe("a verdict", () => {
     );
     expect(answer.outcome.refutation.kind).toBe("saturated");
     expect(answer.outcome.version).toBe(3);
-    expect(verdict(answer.outcome, answer.refutation_checked)).toMatchObject({
-      keyword: "Unprovable, checked: saturation",
-      tone: "bad",
-    });
+    const said = verdict(answer.outcome, answer.refutation_checked);
+    expect(said).toMatchObject({ keyword: "Unprovable, checked: saturation", tone: "bad" });
+    // The long reason shows its first sentence, the rest on request.
+    expect(said.sentence).toMatch(/^The inverse method built every sequent/);
+    expect(said.more).toMatch(/checker confirmed the set\.$/);
+  });
+});
+
+describe("the goal bar", () => {
+  it("numbers the active goal among the open ones", () => {
+    expect(openGoal(1, 1)).toBe("Open goal 1 of 1");
+    expect(openGoal(2, 3)).toBe("Open goal 2 of 3");
   });
 });
 
