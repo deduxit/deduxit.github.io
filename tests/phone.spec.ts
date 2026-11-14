@@ -116,3 +116,32 @@ test("a tap opens a rule's hint, and a tap elsewhere closes it", async ({ page }
   await page.getByRole("dialog", { name: "Rules" }).locator(".pop-h").tap();
   await expect(hint).toHaveCount(0);
 });
+
+test("with Learn open, a fitted goal's buttons lie over its formulas, and its dock clears the stage's controls", async ({
+  page,
+}) => {
+  // Lesson 7's search that gives up: a long sequent fitted small, its dock three rows high.
+  await page.goto("/");
+  await page.locator("footer").getByRole("button", { name: "Learn" }).click();
+  await page.getByRole("button", { name: "Lesson 7: When there is no proof" }).click();
+  await page.getByRole("button", { name: "Ask deduxit about A false case" }).click();
+  await page.getByRole("button", { name: "Search it with a budget of 20 units" }).click();
+  await expect(page.getByRole("button", { name: "Try 40 units" })).toBeVisible();
+  const placed = await page.evaluate(() => {
+    const off: string[] = [];
+    for (const button of document.querySelectorAll<HTMLElement>(".fb[data-active]")) {
+      const b = button.getBoundingClientRect();
+      // The goal is the drawing's one inference, i0.
+      const formula = document.getElementById(`i0-${button.dataset["position"]}`);
+      const f = formula?.getBoundingClientRect();
+      const x = f ? f.left + f.width / 2 : -1;
+      const y = f ? f.top + f.height / 2 : -1;
+      if (x < b.left || x > b.right || y < b.top || y > b.bottom)
+        off.push(button.getAttribute("aria-label") ?? "");
+    }
+    const dock = document.querySelector(".dock")?.getBoundingClientRect();
+    const controls = document.querySelector(".stage-ctl")?.getBoundingClientRect();
+    return { off, clear: !!dock && !!controls && dock.bottom <= controls.top };
+  });
+  expect(placed).toEqual({ off: [], clear: true });
+});

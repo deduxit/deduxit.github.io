@@ -414,35 +414,46 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
     }
     const origin = host.getBoundingClientRect();
     const k = camera().k;
+    const at = rendered();
     const least = token("--size-control-small") / k;
     const next = e.reached.next;
     const found: CutHit[] = [];
     for (const cut of e.reached.cuts) {
       const tree = "node" in cut;
       const ids = tree ? (cut as CutShown).inferences.map((n) => `i${n}`) : [(cut as LinkShown).id];
-      const at = tree ? (cut as CutShown).node : (cut as LinkShown).ends[0];
+      const node = tree ? (cut as CutShown).node : (cut as LinkShown).ends[0];
       const isNext = tree
-        ? next === at
-        : Array.isArray(next) && next[0] === at && next[1] === (cut as LinkShown).ends[1];
+        ? next === node
+        : Array.isArray(next) && next[0] === node && next[1] === (cut as LinkShown).ends[1];
       for (const id of ids) {
         const element = host.querySelector(`[id="${CSS.escape(id)}"]`);
         if (!element) continue;
         if (isNext) element.classList.add("next-cut");
         const r = element.getBoundingClientRect();
-        const w = Math.max(r.width / k, least);
-        const h = Math.max(r.height / k, least);
+        const w = Math.max(r.width / at, least);
+        const h = Math.max(r.height / at, least);
         found.push({
-          at,
+          at: node,
           formula: cut.formula,
           next: isNext,
-          x: (r.left - origin.left) / k + r.width / k / 2 - w / 2,
-          y: (r.top - origin.top) / k + r.height / k / 2 - h / 2,
+          x: (r.left - origin.left) / at + r.width / at / 2 - w / 2,
+          y: (r.top - origin.top) / at + r.height / at / 2 - h / 2,
           w,
           h,
         });
       }
     }
     setCutHits(found);
+  }
+
+  /**
+   * The scale the drawing is shown at on the screen now, by which a box measured on the screen
+   * turns into the drawing's own pixels. It can differ from the camera's: an effect that reads
+   * the camera may run before the world's transform follows it, and a glide is under way.
+   */
+  function rendered(): number {
+    const width = host.offsetWidth;
+    return width > 0 ? host.getBoundingClientRect().width / width : camera().k;
   }
 
   /**
@@ -453,8 +464,8 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
   function labelTargets(): LabelHit[] {
     if (ui.tab === "net" || !host.firstChild) return [];
     const origin = host.getBoundingClientRect();
-    const k = camera().k;
-    const least = token("--size-control-small") / k;
+    const at = rendered();
+    const least = token("--size-control-small") / camera().k;
     const found: LabelHit[] = [];
     for (const group of host.querySelectorAll("g[id]")) {
       if (!/^i\d+$/.test(group.id)) continue;
@@ -468,12 +479,12 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
           : text;
       if (!name || !hinted(name, true)["data-rule-hint"]) continue;
       const r = label.getBoundingClientRect();
-      const w = Math.max(r.width / k, least);
-      const h = Math.max(r.height / k, least);
+      const w = Math.max(r.width / at, least);
+      const h = Math.max(r.height / at, least);
       found.push({
         label: name,
-        x: (r.left - origin.left) / k + r.width / k / 2 - w / 2,
-        y: (r.top - origin.top) / k + r.height / k / 2 - h / 2,
+        x: (r.left - origin.left) / at + r.width / at / 2 - w / 2,
+        y: (r.top - origin.top) / at + r.height / at / 2 - h / 2,
         w,
         h,
       });
@@ -503,6 +514,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
     if (!v) return [];
     const origin = host.getBoundingClientRect();
     const k = camera().k;
+    const at = rendered();
     const least = token("--size-control-small") / k;
     const pad = token("--spacing-1") / k;
     const found: Hit[] = [];
@@ -516,10 +528,10 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
           {
             position,
             text: shown(formula),
-            left: (r.left - origin.left) / k,
-            right: (r.right - origin.left) / k,
-            top: (r.top - origin.top) / k,
-            height: r.height / k,
+            left: (r.left - origin.left) / at,
+            right: (r.right - origin.left) / at,
+            top: (r.top - origin.top) / at,
+            height: r.height / at,
           },
         ];
       });
@@ -586,9 +598,9 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
     const svg = host.querySelector("svg");
     if (!svg) return { w: 0, h: 0 };
     const left = host.getBoundingClientRect().left;
-    const k = camera().k;
+    const at = rendered();
     const labels = [...host.querySelectorAll("text.engine")].map(
-      (label) => (label.getBoundingClientRect().right - left) / k,
+      (label) => (label.getBoundingClientRect().right - left) / at,
     );
     return { w: Math.max(svg.width.baseVal.value, ...labels), h: svg.height.baseVal.value };
   };
@@ -707,7 +719,18 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
     const goalBottom = Math.max(r.bottom, ...buttons.map((b) => b.bottom));
     // Above the goal, or below it where the stage's top leaves no room.
     const above = goalTop - s.top - height - gap;
-    const top = above >= gap ? above : goalBottom - s.top + gap;
+    const below = goalBottom - s.top + gap;
+    // Below, the dock must end over the stage's controls, which would cover its buttons (a
+    // short stage: a phone with Learn open). Where it would not, the goal moves down until
+    // the dock fits above it, if the goal then still clears the controls.
+    const floorY =
+      (stage.querySelector(".stage-ctl")?.getBoundingClientRect().top ?? s.bottom) - gap;
+    const lift = gap - above;
+    if (above < gap && s.top + below + height > floorY && goalBottom + lift <= floorY) {
+      move({ ...camera(), y: camera().y + lift });
+      return;
+    }
+    const top = above >= gap ? above : below;
     dock.style.visibility = "visible";
     dock.style.left = `${left}px`;
     dock.style.top = `${top}px`;
