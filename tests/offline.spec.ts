@@ -53,6 +53,21 @@ test("the service worker fetches what it caches past the HTTP cache", async ({ p
   expect(cached).not.toBe(loaded?.headers()["x-github-request-id"]);
 });
 
+test("the service worker caches under deduxit-site-… and deletes an earlier release's linlog-site-… caches", async ({
+  page,
+}) => {
+  await controlled(page);
+  // An earlier release's cache, then a worker that installs and activates anew.
+  await page.evaluate(async () => {
+    await (await caches.open("linlog-site-earlier")).put("/old", new Response("old"));
+    await (await navigator.serviceWorker.getRegistration())?.unregister();
+  });
+  await controlled(page);
+  await expect
+    .poll(() => page.evaluate(() => caches.keys()))
+    .toEqual([expect.stringMatching(/^deduxit-site-./)]);
+});
+
 test("the service worker leaves deduxit's documentation at /deduxit/ alone", async ({
   page,
   context,

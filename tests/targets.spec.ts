@@ -246,7 +246,7 @@ async function fonts(page: Page, least: number): Promise<string[]> {
   const found: string[] = [];
   for (const font of ["stix-two", "garamond", "asana", "new-computer-modern"]) {
     await page.evaluate(
-      (f) => localStorage.setItem("linlog-settings", JSON.stringify({ stageFont: f })),
+      (f) => localStorage.setItem("deduxit-settings", JSON.stringify({ stageFont: f })),
       font,
     );
     await start(page, "A * B |- B * A");

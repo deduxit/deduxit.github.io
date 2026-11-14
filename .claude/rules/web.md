@@ -359,18 +359,22 @@ the page reads.
   parse error marked, as if typed. The sequent is the field's text with the ASCII connectives as their signs (`pretty`, which `words.test.ts` holds to read as the same sequent).
 - **Autosave** (`src/lib/shelf.ts`, version 2: each proof's `calculus`; a shelf of version 1,
   each proof with a linear `mode`, reads as the linear suite): every visit (tab) saves its open proofs under
-  `linlog-proofs:<visit>`, each with the time, so two tabs never overwrite each other; at a
-  visit's start the other visits' are gathered into `linlog-proofs-previous` for the restore
+  `deduxit-proofs:<visit>`, each with the time, so two tabs never overwrite each other; at a
+  visit's start the other visits' are gathered into `deduxit-proofs-previous` for the restore
   bar, the copy of a proof saved last winning, and work begun before the visitor answers
-  overwrites nothing. A proof open already (a link's) is taken out of the bar (`prune`). Settings are `linlog-settings`,
-  the theme `linlog-theme` (read before the first paint by `Base.astro`).
-- **The browser's keys keep the prover's old name, linlog**, since its rename to deduxit
-  (2026-11-09): `linlog-settings`, `linlog-theme`, `linlog-practice`, `linlog-proofs:<visit>`,
-  `linlog-proofs-previous` and the service worker's caches `linlog-site-<version>`. A new
-  key would lose every visitor's saved settings, proofs and progress, and a new cache prefix
-  would strand the old caches, since activation deletes only its own prefix's. Never rename
-  one without reading the old key and moving what it holds; the privacy page lists them as
-  they are. What else keeps the old name: the Cachix cache `linlog-prover`, this repository
+  overwrites nothing. A proof open already (a link's) is taken out of the bar (`prune`). Settings are `deduxit-settings`,
+  the theme `deduxit-theme` (read before the first paint by `Base.astro`).
+- **The browser's keys are `deduxit-*`, moved from `linlog-*`** (the prover's rename,
+  2026-11-09): `deduxit-settings`, `deduxit-theme`, `deduxit-practice`,
+  `deduxit-proofs:<visit>`, `deduxit-proofs-previous` and the service worker's caches
+  `deduxit-site-<version>`. For one release after the move, `migrate` (`src/lib/storage.ts`),
+  first in the island's body before anything reads storage, moves each `linlog-*` key's value
+  to its new key (a newer value there wins) and deletes the old key; `PREPAINT` reads
+  `deduxit-theme`, else `linlog-theme`, so the first paint after the move keeps a pinned
+  theme; the worker's activation deletes every `linlog-site-*` cache. Then remove the three
+  together. A key renamed again needs the same move; the privacy page lists the keys as they
+  are. `storage.test.ts` and `prover.spec.ts` load old keys, `offline.spec.ts` an old cache.
+  What else keeps the old name: the Cachix cache `linlog-prover`, this repository
   and its directory (`linlog-prover.github.io`), the prover's local checkout
   (`~/Projects/own/linlog`) and the Rocq library's old address `/rocq-linlog/`, forwarded:
   the path itself by its page, any page under it by the 404 page's script to the same name

@@ -283,7 +283,7 @@ test("Settings sets the formulas' font: the drawing laid out in it, every formul
   await page.keyboard.press("Escape");
   await expect(page.locator(".drawing svg")).toHaveAttribute("font-family", /'STIX Two Math'/);
   const stored = await page.evaluate(() =>
-    JSON.parse(localStorage.getItem("linlog-settings") ?? "{}"),
+    JSON.parse(localStorage.getItem("deduxit-settings") ?? "{}"),
   );
   expect([stored.stageFont, stored.font]).toEqual(["stix-two", "euler"]);
   await start(page, "A |- A");
@@ -706,6 +706,23 @@ test("the net's look is kept with the other settings for the next visit", async 
   }
 });
 
+test("an earlier release's settings and theme, under the old linlog-* keys, hold and move to deduxit-*", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    if (localStorage.getItem("deduxit-settings") !== null) return;
+    localStorage.setItem("linlog-settings", JSON.stringify({ budget: 7 }));
+    localStorage.setItem("linlog-theme", "dark");
+  });
+  await goto(page);
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  await page.getByRole("button", { name: "Settings" }).click();
+  await expect(page.getByRole("spinbutton", { name: "Budget" })).toHaveValue("7");
+  const keys = await page.evaluate(() => Object.keys(localStorage).sort());
+  expect(keys.filter((k) => k.startsWith("linlog-"))).toEqual([]);
+  expect(keys).toEqual(expect.arrayContaining(["deduxit-settings", "deduxit-theme"]));
+});
+
 test("the essential net draws its input side in the Okabe–Ito palette's blue, never green, in both themes", async ({
   page,
 }) => {
@@ -785,7 +802,7 @@ test("a goal opens in a new tab of its sequent, in the same calculus, which reme
   await expect(page.locator(".ptab[aria-current=true] .pt-mark")).toContainText("LL");
   await expect(page.getByRole("button", { name: /^B ⊗ A, formula/ })).toBeVisible();
   const origin = await page.evaluate(() => {
-    for (const key of Object.keys(localStorage).filter((k) => k.startsWith("linlog-proofs:"))) {
+    for (const key of Object.keys(localStorage).filter((k) => k.startsWith("deduxit-proofs:"))) {
       const shelf = JSON.parse(localStorage.getItem(key) ?? "{}");
       const proof = shelf.proofs?.find((p: { origin?: unknown }) => p.origin);
       if (proof) return { origin: proof.origin, from: shelf.proofs[0].id };

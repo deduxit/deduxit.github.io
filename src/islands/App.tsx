@@ -24,6 +24,7 @@ import { inputProblem, pretty } from "../lib/words";
 import type { Theme } from "../lib/theme";
 import type { Example, Lesson, Rule, Sample, Stop } from "../lib/content";
 import { hintsFor } from "../lib/rules";
+import { migrate } from "../lib/storage";
 import { BottomBand } from "./BottomBand";
 import { LearnFrame } from "./Learn";
 import { RuleHints } from "./RuleHint";
@@ -33,6 +34,15 @@ import { createProver } from "./state";
 import { TopBand } from "./TopBand";
 import { Tour } from "./Tour";
 import { createUi, ladderKey } from "./ui";
+
+/** The browser's storage, or undefined where it is refused. */
+const storage = () => {
+  try {
+    return window.localStorage;
+  } catch {
+    return undefined;
+  }
+};
 
 export default function App(props: {
   /** The math fonts' addresses: the page imports them, so each is served under /fonts/ beside its licence. */
@@ -48,6 +58,8 @@ export default function App(props: {
   /** The one-sided rules, as the reference draws them. */
   rules: readonly Rule[];
 }) {
+  // Before anything reads the browser's storage: an earlier release's keys move to their new names.
+  migrate(storage());
   const view = createUi();
   const { ui, setUi } = view;
   const prover = createProver((text) => setUi("live", text));

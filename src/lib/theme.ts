@@ -11,8 +11,10 @@
 /** The visitor's choice: the system's scheme, or one pinned. */
 export type Theme = "system" | "light" | "dark";
 
-/** The storage key of the pinned scheme, under the prover's old name: a new key would lose it. */
-export const THEME_KEY = "linlog-theme";
+/** The storage key of the pinned scheme. */
+export const THEME_KEY = "deduxit-theme";
+/** Its key before the rename, read before the first paint until the island has moved it (`storage.ts`). */
+const OLD_THEME_KEY = "linlog-theme";
 
 /** The choice a stored value names, the system's for anything else. */
 export function parseTheme(stored: string | null): Theme {
@@ -35,4 +37,4 @@ export function toggled(theme: Theme, systemDark: boolean): Theme {
  * at the start of every page's body (layouts/Base.astro), after the policy's
  * <meta>; astro.config.ts allows it by this very text's hash.
  */
-export const PREPAINT = `try{const t=localStorage.getItem(${JSON.stringify(THEME_KEY)});if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch{}`;
+export const PREPAINT = `try{const t=localStorage.getItem(${JSON.stringify(THEME_KEY)})??localStorage.getItem(${JSON.stringify(OLD_THEME_KEY)});if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch{}`;

@@ -103,7 +103,7 @@ test("a forced engine holds for the visit: the next visit starts on Automatic, e
   await settings.getByRole("button", { name: "Compact" }).click();
   await page.keyboard.press("Escape");
   const stored = () =>
-    page.evaluate(() => JSON.parse(localStorage.getItem("linlog-settings") ?? "{}"));
+    page.evaluate(() => JSON.parse(localStorage.getItem("deduxit-settings") ?? "{}"));
   expect(await stored()).toMatchObject({ net: "compact" });
   expect(await stored()).not.toHaveProperty("engine");
   await page.reload();

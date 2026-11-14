@@ -64,6 +64,7 @@ import {
   wayBack,
   within,
 } from "../lib/steps";
+import { SETTINGS_KEY } from "../lib/storage";
 import {
   type Calculus,
   linear,
@@ -287,8 +288,6 @@ export const DEFAULT_TERMS = 1_000_000;
 /** A stored count, the default where it is none. */
 const count = (stored: unknown, fallback: number) =>
   typeof stored === "number" && Number.isInteger(stored) && stored > 0 ? stored : fallback;
-/** The storage key of the settings, under the prover's old name: a new key would lose them. */
-const SETTINGS_KEY = "linlog-settings";
 
 const storage = (): Store | undefined => {
   try {

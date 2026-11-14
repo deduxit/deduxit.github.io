@@ -31,9 +31,10 @@ const FILES = [];
 const LATER = [];
 const VERSION = "";
 
-// The prover's old name, kept: activation deletes only this prefix's caches,
-// so a new prefix would leave the old ones behind for good.
-const PREFIX = "linlog-site-";
+// Activation deletes every cache of this prefix but its own, and those of the
+// prefix before the prover's rename, OLD_PREFIX, which no worker writes now.
+const PREFIX = "deduxit-site-";
+const OLD_PREFIX = "linlog-site-";
 const CACHE = PREFIX + VERSION;
 const OWN = new Set([...FILES, ...LATER]);
 
@@ -69,7 +70,9 @@ self.addEventListener("activate", (event) => {
       .then((keys) =>
         Promise.all(
           keys
-            .filter((key) => key.startsWith(PREFIX) && key !== CACHE)
+            .filter(
+              (key) => (key.startsWith(PREFIX) && key !== CACHE) || key.startsWith(OLD_PREFIX),
+            )
             .map((key) => caches.delete(key)),
         ),
       )

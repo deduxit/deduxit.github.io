@@ -106,11 +106,8 @@ export function offered(store: readonly Stored[]): Problem[] {
     .sort((a, b) => a.level - b.level || a.id.localeCompare(b.id));
 }
 
-/**
- * The browser's key for Practice: the filters and the problems proved. Under the prover's old
- * name, linlog: a new key would lose them.
- */
-export const PRACTICE_KEY = "linlog-practice";
+/** The browser's key for Practice: the filters and the problems proved. */
+export const PRACTICE_KEY = "deduxit-practice";
 
 /** What the browser keeps of Practice. */
 export interface Kept {

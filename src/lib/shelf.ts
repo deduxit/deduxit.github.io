@@ -58,12 +58,11 @@ export interface Shelf {
 }
 
 /**
- * The storage keys of the visits' proofs: this prefix and the visit's id. This key and the
- * next keep the prover's old name, linlog: new keys would lose every visitor's saved proofs.
+ * The storage keys of the visits' proofs: this prefix and the visit's id.
  */
-export const SHELF_PREFIX = "linlog-proofs:";
+export const SHELF_PREFIX = "deduxit-proofs:";
 /** The storage key of earlier visits' proofs, until the visitor restores or discards them. */
-export const PREVIOUS_KEY = "linlog-proofs-previous";
+export const PREVIOUS_KEY = "deduxit-proofs-previous";
 
 /** The part of `Storage` the shelf uses; absent where the browser gives none. */
 export type Store = Pick<Storage, "getItem" | "setItem" | "removeItem" | "key" | "length">;
