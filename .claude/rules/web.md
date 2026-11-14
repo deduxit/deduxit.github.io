@@ -775,9 +775,11 @@ the page reads.
   AA and axe's best practices on every page (the prover, privacy, 404, the Rocq library's old
   address with its refresh taken out) and in every state of `tests/states.ts`, in both schemes
   at a desktop's and a phone's width; a violation fails the test, with axe's reason in the
-  line. One exception is listed in the spec: a rule label's button over a drawing fitted to a
-  phone overlaps its neighbours (SC 2.5.8), its hint being in Learn's Reference as well (the
-  criterion's "equivalent" exception). What axe leaves "incomplete" is not asserted: contrast
+  line. One violation is filtered, with its reason in the spec: a rule label's button over a
+  drawing fitted to a phone overlaps its neighbours (SC 2.5.8). For a linear rule its hint is in
+  Learn's Reference as well (the criterion's "equivalent" exception); for LK's, LJ's, the
+  Lambek calculus's, Mix and weakening it is not, and it waits for a decision on how a drawing
+  fits a phone. What axe leaves "incomplete" is not asserted: contrast
   over a gradient (the stage's dotted field, and every keyword's wash, which
   `colours.test.ts` holds instead), under an overlapping element, or of symbols alone.
 - **A control's visible text is in its accessible name** (SC 2.5.3): axe compares words, joins

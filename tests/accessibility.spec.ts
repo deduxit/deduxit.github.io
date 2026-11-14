@@ -14,6 +14,7 @@ import { goto, proveCommuted, start } from "./prover";
 import {
   answers,
   cutting,
+  fonts,
   learning,
   menus,
   ordinary,
@@ -31,10 +32,12 @@ import {
 const TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22a", "wcag22aa", "best-practice"];
 
 /**
- * Whether a violation is the exception this audit lists: a rule label's button over a drawing
- * fitted to a phone overlaps its neighbours (SC 2.5.8). What it opens, the rule's hint, is
- * also in Learn's Reference, whose controls meet the criterion: SC 2.5.8's "equivalent"
- * exception. A screen reader hears the hint as the label's description.
+ * Whether a violation is the one this audit lists and leaves: a rule label's button over a
+ * drawing fitted to a phone overlaps its neighbours (SC 2.5.8). For a linear rule, the hint the
+ * label opens is also in Learn's Reference, whose controls meet the criterion: SC 2.5.8's
+ * "equivalent" exception. For a rule the Reference lacks (LK's and LJ's, the Lambek calculus's,
+ * Mix, weakening) it is a violation that waits for a decision on how a drawing fits a phone.
+ * A screen reader hears the hint as the label's description in every case.
  */
 const excepted = (rule: string, html: string) =>
   rule === "target-size" && /^<button[^>]* class="lb"/.test(html);
@@ -108,6 +111,12 @@ async function lessons(page: Page, visit: Visit) {
   await learning(page, visit);
 }
 
+/** The stage in each math font, from the empty page. */
+async function typeset(page: Page, visit: Visit) {
+  await goto(page);
+  await fonts(page, visit);
+}
+
 /** The walks, each a test of its own so that each stays within the time a test has. */
 const WALKS: readonly (readonly [string, (page: Page, visit: Visit) => Promise<void>])[] = [
   ["the other pages", pages],
@@ -121,6 +130,7 @@ const WALKS: readonly (readonly [string, (page: Page, visit: Visit) => Promise<v
   ["an ordinary tab", ordinary],
   ["the witness chooser", witnessing],
   ["the cut chooser and the elimination", cutting],
+  ["the stage in each math font", typeset],
 ];
 
 for (const colorScheme of ["light", "dark"] as const) {
