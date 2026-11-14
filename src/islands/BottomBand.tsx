@@ -627,10 +627,10 @@ function ExportMenu(props: {
   return (
     <div class="cluster menu export" role="menu" aria-label="Export">
       <p class="kw-label h">Export {net() && !ordinarySession() ? "the net" : "the derivation"}</p>
-      <ul class="mlist">
+      <ul class="mlist" role="none">
         <For each={items.filter((item) => !item.hidden?.())}>
           {(item) => (
-            <li>
+            <li role="none">
               <button
                 type="button"
                 role="menuitem"
@@ -681,8 +681,8 @@ function ExportMenu(props: {
         <li role="none">
           <fieldset class="share">
             <legend class="kw-label h">Share a link</legend>
-            <ul class="mlist">
-              <li>
+            <ul class="mlist" role="none">
+              <li role="none">
                 <button
                   type="button"
                   role="menuitem"
@@ -693,7 +693,7 @@ function ExportMenu(props: {
                   <span class="fn">A link to this proof as it stands</span>
                 </button>
               </li>
-              <li>
+              <li role="none">
                 <button
                   type="button"
                   role="menuitem"
@@ -710,7 +710,7 @@ function ExportMenu(props: {
           </fieldset>
         </li>
         <li class="msep" aria-hidden="true" />
-        <li>
+        <li role="none">
           <button
             type="button"
             role="menuitem"
