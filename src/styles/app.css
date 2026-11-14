@@ -1479,6 +1479,10 @@ button.wordmark {
   flex-direction: column;
   gap: var(--spacing-3);
 }
+/* A lesson's opening below its worked proof, where it has such a part. */
+.after-worked:empty {
+  display: none;
+}
 .written p {
   margin: 0 0 var(--spacing-2);
 }
@@ -1985,7 +1989,18 @@ fieldset {
   border: var(--line) dashed var(--color-warn);
   border-radius: var(--radius-control);
 }
-.explain {
+/* Lesson 1's rewrite of a two-sided sequent, shown with the Two-sided switch. */
+.rewrite {
+  display: grid;
+  gap: var(--spacing-1);
+  justify-items: start;
+  margin-bottom: var(--spacing-2);
+}
+.rewrite p {
+  margin: 0;
+}
+.explain,
+.rewrite {
   padding: var(--spacing-2);
   background: var(--color-panel);
   border: var(--line) solid var(--color-edge);

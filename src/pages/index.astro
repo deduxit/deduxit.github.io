@@ -92,6 +92,7 @@ const lessonData: Lesson[] = lessons.map((l) => {
     eliminate: l.data.eliminate ?? null,
     refusal: refusal && refused ? { ...refusal, session: refused } : null,
     unknown: l.data.unknown ?? null,
+    rewrite: l.data.rewrite ?? null,
     gallery: l.data.gallery ?? null,
   };
 });

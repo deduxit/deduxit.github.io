@@ -58,6 +58,8 @@ tree of its connectives, a link per connective, and each axiom as a link between
 atom and its dual. Two derivations that differ only in the order of independent rules
 have the same net.
 
+***
+
 Not every way of linking the atoms is a proof. Danos and Regnier's test, the switching
 condition, says which are: at each `⅋`, keep one of its two edges and remove the
 other. For every such choice, the graph left must be connected and have no cycle.

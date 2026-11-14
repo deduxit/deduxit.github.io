@@ -483,7 +483,9 @@ the page reads.
   the work. Practice filters by groups (`GROUPS`): any chosen within a group, every group at
   once, and the levels.
 - **A written lesson** (`lessons/<n>-<name>.md`, `LessonView` in `Learn.tsx`) is D56's
-  sequence: its opening (the body), the worked proof (`worked`, a store problem of the same
+  sequence: its opening (the body; where it holds more than the worked proof shows, the part
+  after its one thematic break `***` stands below the worked proof, `Written`'s `part`, which
+  `lessons.test.ts` holds to one break with text above it: lessons 7 to 10), the worked proof (`worked`, a store problem of the same
   lesson, played from its session: `steps` holds one rule and reason per entry of the
   session's history, in its order, and `lessons.test.ts` holds them equal, so a session
   rewritten in another order fails it), the predictions among `choices`, the faded proof
@@ -493,7 +495,10 @@ the page reads.
   option without a `misconception`; an option's `problem`, when named, is provable exactly
   when the option is right, and a wrong answer that names one offers "Try <its sequent>
   yourself", opened as a practice problem opens, before "Try the faded proof again"). Every sequent a lesson shows as a problem is a store problem
-  with that lesson, so the store's checks cover it. Optional parts: `attempt` (an erroneous
+  with that lesson, so the store's checks cover it. Optional parts: `rewrite` (lesson 1: one
+  sentence on how the worked sequent, typed two-sided, reads one-sided, with buttons that
+  turn the Two-sided switch on and off; the lesson turns it off again at its next step and
+  when it closes, if it turned it on), `attempt` (an erroneous
   example: steps with the attempt's own reasons, played by Redo from the unfinished session
   `lessons/<id>.attempt.json` on the lesson's tab, then "which step went wrong?" answered as
   the hinge is; the wrong step is the one without a misconception, and `lessons.test.ts` holds

@@ -37,6 +37,11 @@ export function Written(props: {
   name: string;
   class?: string;
   spot?: string | null;
+  /**
+   * A lesson's opening is split at its first thematic break (`***`): the part before it stands
+   * above the worked proof, the part after it, which holds more than the proof shows, below.
+   */
+  part?: "before" | "after";
   /** Called with the text's element once its content is in. */
   ready?: (host: HTMLElement) => void;
 }) {
@@ -58,7 +63,13 @@ export function Written(props: {
       ref={(el) => {
         host = el;
         queueMicrotask(() => {
-          el.replaceChildren(written(props.name));
+          const content = written(props.name);
+          const nodes = [...content.childNodes];
+          const at = nodes.findIndex((n) => n.nodeName === "HR");
+          if (props.part === undefined) el.replaceChildren(content);
+          else if (props.part === "before")
+            el.replaceChildren(...(at < 0 ? nodes : nodes.slice(0, at)));
+          else el.replaceChildren(...(at < 0 ? [] : nodes.slice(at + 1)));
           props.ready?.(el);
         });
       }}
@@ -357,6 +368,20 @@ function LessonView(props: {
   // The stage's elimination explains each step's case while this lesson is open.
   setUi("cases", props.lesson.eliminate?.cases ?? null);
   onCleanup(() => setUi("cases", null));
+  /** Whether the lesson turned the Two-sided switch on to show its rewrite. */
+  let sidesShown = false;
+  const twoSided = () => props.prover.settings().twoSided;
+  /** Turns the Two-sided switch on, or back off: the rewrite shown as typed, then one-sided. */
+  function sides(on: boolean) {
+    sidesShown = on;
+    props.prover.setSettings({ twoSided: on });
+  }
+  /** Turns the switch off again if the lesson turned it on: the lesson's reasons read one-sided. */
+  function oneSided() {
+    if (sidesShown && twoSided()) sides(false);
+    sidesShown = false;
+  }
+  onCleanup(oneSided);
 
   const onTab = () => props.prover.current()?.id === tab();
   const finished = () => onTab() && props.prover.current()?.view?.complete === true;
@@ -389,6 +414,7 @@ function LessonView(props: {
     const step = steps[at];
     // One action at a time: a press while one runs does nothing, as the prover's own do.
     if (!step || props.prover.busy()) return;
+    oneSided();
     const p = props.prover.current();
     // The visitor may have worked on the tab meanwhile: take it back to where the lesson is.
     if (!onTab() || p?.redo.length !== all.length - at) await start(at, true);
@@ -455,7 +481,7 @@ function LessonView(props: {
         </span>
         {props.lesson.title}
       </h2>
-      <Written name={`lessons/${props.lesson.id}`} />
+      <Written name={`lessons/${props.lesson.id}`} part="before" />
 
       <Show when={worked && props.lesson.attempt}>
         {(attempt) => (
@@ -482,6 +508,31 @@ function LessonView(props: {
             </button>
           }
         >
+          <Show when={props.lesson.rewrite}>
+            {(rewrite) => (
+              <div class="rewrite">
+                <p>
+                  <Words text={rewrite()} />
+                </p>
+                <Show
+                  when={twoSided()}
+                  fallback={
+                    <button type="button" class="btn btn-s outline" onClick={() => sides(true)}>
+                      Turn on Two-sided
+                    </button>
+                  }
+                >
+                  <p role="status">
+                    Two-sided is on: the stage shows the sequent as you typed it. Lessons 1 to 5 use
+                    the one-sided form; lesson 6 comes back to two sides.
+                  </p>
+                  <button type="button" class="btn btn-s outline" onClick={() => sides(false)}>
+                    Turn it off
+                  </button>
+                </Show>
+              </div>
+            )}
+          </Show>
           <Show when={said()}>
             {(s) => (
               <p class="said" role="status">
@@ -582,6 +633,8 @@ function LessonView(props: {
           </Show>
         </Show>
       </section>
+
+      <Written name={`lessons/${props.lesson.id}`} part="after" class="after-worked" />
 
       <Show when={props.lesson.eliminate}>
         {(eliminate) => (

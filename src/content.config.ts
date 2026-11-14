@@ -170,6 +170,11 @@ const lessons = defineCollection({
     /** Whether the finished worked proof offers its net. */
     net: z.boolean().default(false),
     /**
+     * One sentence on how the worked proof's sequent, typed two-sided, is written one-sided; the
+     * lesson then shows it with the Two-sided switch on, and off again.
+     */
+    rewrite: words.optional(),
+    /**
      * An attempt at the worked proof's sequent that goes wrong, played before it from the
      * unfinished session beside the lesson: a plausible reason per step, then "which step
      * went wrong?", the wrong step the one without a misconception.

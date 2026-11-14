@@ -252,6 +252,19 @@ describe("Learn's lessons", () => {
     expect(view.net).toBeNull();
   });
 
+  it("splits an opening at one thematic break at most, with text above it for the worked proof", () => {
+    for (const l of lessons) {
+      const text = readFileSync(new URL(`./lessons/${l.id}.md`, import.meta.url), "utf8");
+      const parts = text
+        .split("---\n")
+        .slice(2)
+        .join("---\n")
+        .split(/^\*\*\*$/m);
+      expect(parts.length, l.id).toBeLessThanOrEqual(2);
+      expect(parts[0]?.trim(), l.id).not.toBe("");
+    }
+  });
+
   it("decides every problem of the lessons well inside the page's budget", () => {
     for (const [id, p] of problems) {
       if (p.lesson === undefined) continue;

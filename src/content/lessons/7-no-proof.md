@@ -73,14 +73,18 @@ hinge:
       misconception: "A sequent has no proof when an attempt at it takes a wrong step."
       why: "A wrong step loses one attempt. Here the only step, `⅋`, never loses a proof, and `B⊥` has no `B` whatever comes after."
 ---
+An attempt that gets stuck proves nothing about the sequent: a wrong step loses one
+attempt, and another may succeed.
+
+***
+
 The search gives one of three answers, shown on the tab. Proved: it found a proof,
 "checked" when deduxit's checker accepted it. Unprovable: no proof exists, and deduxit
 says why. Unknown: the search stopped at a bound, its budget of work or of copies,
 before it decided. Unknown says nothing either way.
 
-An attempt that gets stuck proves nothing about the sequent: a wrong step loses one
-attempt, and another may succeed. "No proof" is a claim about every attempt, so it needs
-a reason that holds for all of them. The most common:
+"No proof" is a claim about every attempt, so it needs a reason that holds for all of
+them. The most common:
 - Atom balance: an atom and its dual do not pair off. Where no `⊤` and no `?` can drop
   a formula, every proof ends in axioms, each pairing an atom with its dual.
 - A classical countermodel: read as ordinary logic, the sequent is false, and every

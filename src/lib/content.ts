@@ -91,6 +91,8 @@ export interface Lesson {
   readonly hinge: { readonly question: string; readonly options: readonly Option[] };
   /** Whether the finished worked proof offers its net. */
   readonly net: boolean;
+  /** How the worked proof's two-sided sequent is written one-sided, shown with the Two-sided switch. */
+  readonly rewrite: string | null;
   /** An attempt that goes wrong, with its session as text; the wrong step has no misconception. */
   readonly attempt: {
     readonly text: string;

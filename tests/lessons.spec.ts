@@ -77,6 +77,46 @@ test("the self-explanation prompt follows its step, and a model answer comes on 
   await expect(frame.locator(".model")).toContainText("the axiom passes the hypothesis on");
 });
 
+test("lesson 1 shows the rewrite of A ⊢ A to ⊢ A⊥, A with the Two-sided switch on, then off", async ({
+  page,
+}) => {
+  const frame = await lesson(page, 1, "Reading a sequent");
+  await frame.getByRole("button", { name: "Start the worked proof" }).click();
+  await expect(frame.locator(".rewrite")).toContainText(
+    "You typed A ⊢ A, and the stage shows ⊢ A⊥, A",
+  );
+  await expect(page.getByRole("button", { name: /^A⊥, formula 1 of goal 1/ })).toBeVisible();
+  await frame.getByRole("button", { name: "Turn on Two-sided" }).click();
+  await expect(frame.locator(".rewrite").getByRole("status")).toContainText("Two-sided is on");
+  await expect(page.locator(".drawing svg title")).toHaveText("A ⊢ A");
+  await frame.getByRole("button", { name: "Turn it off" }).click();
+  await expect(page.locator(".drawing svg title")).toHaveText("⊢ A⊥, A");
+  await expect(page.getByRole("button", { name: /^A⊥, formula 1 of goal 1/ })).toBeVisible();
+  // Turned on again, the first step turns it off: the lesson's reasons read one-sided.
+  await frame.getByRole("button", { name: "Turn on Two-sided" }).click();
+  await frame.getByRole("button", { name: "Predict ax" }).click();
+  await expect(frame.getByRole("button", { name: "Turn on Two-sided" })).toBeVisible();
+});
+
+test("an opening's part that holds more than the worked proof shows stands below it", async ({
+  page,
+}) => {
+  const frame = await lesson(page, 9, "Cut and its elimination");
+  const worked = frame.getByRole("region", { name: "A worked proof" });
+  const above = frame.getByText("A cut proves a lemma once and uses it.");
+  const below = frame.getByText(/search never cuts, and needs none/);
+  await expect(below).toBeVisible();
+  const order = await worked.evaluate(
+    (section, [a, b]) => [
+      section.compareDocumentPosition(a as Node) & Node.DOCUMENT_POSITION_PRECEDING,
+      section.compareDocumentPosition(b as Node) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ],
+    [await above.elementHandle(), await below.elementHandle()],
+  );
+  // The opening's first part precedes the worked proof, the moved part follows it.
+  expect(order).toEqual([2, 4]);
+});
+
 test("the faded proof leaves the lesson's last steps to the visitor, and says when they finish it", async ({
   page,
 }) => {

@@ -66,6 +66,8 @@ eigenvariables made below it, and an open witness never takes one made after it:
 eigenvariable condition. So make the eigenvariables first; those steps never lose a
 proof.
 
+***
+
 `∀` is like `&` over every term, `∃` like `⊕` choosing one. And as everywhere in linear
 logic, a hypothesis `∀x. A` gives one instance, once; under `!` it gives as many as
 needed.
