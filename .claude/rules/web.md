@@ -550,6 +550,10 @@ the page reads.
   popover's `About <rule>` buttons), since a press on a rule of the popover or a prediction
   acts. Hover and the keyboard's focus open it anywhere; Escape closes the hint alone; the
   pointer may rest on it (SC 1.4.13). It is no `data-tip`: tips follow no touch, the hint does.
+  A drawing's label button is named "Rule ⊗, step 3": the inference `g#i<n>` is step n + 1,
+  the number deduxit's `<desc>` gives it (one writer for the linear and the ordinary
+  drawings), so a reader tabbing through the labels knows which inference each belongs to;
+  `hints.spec.ts` holds each name to its line of the description.
 - **The reference's rules** are `rules/<nn>-<name>.md` (deduxit's name, the premises and the
   conclusion as the Handbook's Table 1.4 writes them, deduxit's two-sided names from its
   `ClassicalRule` table, the lesson), drawn by `Rules` into the reference's `<div

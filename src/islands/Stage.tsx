@@ -85,6 +85,8 @@ interface Hit {
 /** A rule label's button over the drawing, in the drawing's own pixels, which opens its hint. */
 interface LabelHit {
   readonly label: string;
+  /** The inference's number in the drawing's description, which lists them from 1. */
+  readonly step: number;
   readonly x: number;
   readonly y: number;
   readonly w: number;
@@ -493,6 +495,8 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
       const h = Math.max(r.height / at, least);
       found.push({
         label: name,
+        // The description numbers the inference `i<n>` as n + 1.
+        step: Number(group.id.slice(1)) + 1,
         x: (r.left - origin.left) / at + r.width / at / 2 - w / 2,
         y: (r.top - origin.top) / at + r.height / at / 2 - h / 2,
         w,
@@ -1253,7 +1257,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
                 type="button"
                 class="lb"
                 data-hint-toggle=""
-                aria-label={`Rule ${hit.label}`}
+                aria-label={`Rule ${hit.label}, step ${String(hit.step)}`}
                 {...hinted(hit.label, true)}
                 ref={(el) => {
                   el.style.left = `${hit.x}px`;
