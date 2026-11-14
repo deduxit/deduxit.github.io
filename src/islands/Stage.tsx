@@ -45,7 +45,16 @@ import {
 import { isOrdinary } from "../lib/ordinary";
 import { goalAt, paths, searchMade, subtree } from "../lib/steps";
 import { intuitionistic } from "../lib/suites";
-import { lost, openGoal, readingOf, rungs, type Said, shown, stepLine } from "../lib/words";
+import {
+  formulaText,
+  lost,
+  openGoal,
+  readingOf,
+  rungs,
+  type Said,
+  shown,
+  stepLine,
+} from "../lib/words";
 import {
   type Elim,
   lookJson,
@@ -434,7 +443,8 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
         const h = Math.max(r.height / at, least);
         found.push({
           at: node,
-          formula: cut.formula,
+          // Its negated atoms as the drawing and the formulas' buttons write them, `A⊥`.
+          formula: formulaText(cut.formula),
           next: isNext,
           x: (r.left - origin.left) / at + r.width / at / 2 - w / 2,
           y: (r.top - origin.top) / at + r.height / at / 2 - h / 2,

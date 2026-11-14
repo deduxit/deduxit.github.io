@@ -59,7 +59,10 @@ test("a proof's cuts are eliminated step by step on the derivation, each step un
   await expect(panel).toContainText("1 cut in this proof");
   await panel.getByRole("button", { name: "Eliminate the cuts" }).click();
   await expect(panel.getByRole("status")).toHaveText("1 cut left");
-  const next = page.getByRole("button", { name: /^Reduce the cut of .*, the strategy's next$/ });
+  // Named with its negated atoms as the drawing writes them.
+  const next = page.getByRole("button", {
+    name: "Reduce the cut of A⊥ ⅋ B, the strategy's next",
+  });
   await expect(next).toBeVisible();
   await expect(page.locator(".drawing svg .next-cut").first()).toBeAttached();
 
