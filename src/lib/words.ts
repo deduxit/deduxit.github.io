@@ -239,6 +239,21 @@ const atom = (outcome: Outcome, index: unknown) => {
   return typeof index === "number" ? (atoms[index] ?? `atom ${index + 1}`) : "an atom";
 };
 
+/**
+ * Why an atom's literals cannot pair off: `least` and `most` bound how many more times the
+ * atom occurs than its dual, which is ahead where they are below zero.
+ */
+const balance = (name: string, least: unknown, most: unknown) => {
+  const [lo, hi] = [Number(least), Number(most)];
+  const [more, fewer] = hi < 0 ? [`${name}⊥`, name] : [name, `${name}⊥`];
+  const [a, b] = [Math.abs(lo), Math.abs(hi)].sort((x, y) => x - y);
+  const times =
+    a === b
+      ? `${String(a)} more time${a === 1 ? "" : "s"}`
+      : `${String(a)} to ${String(b)} more times`;
+  return `${name} and ${name}⊥ do not pair off: every derivation pairs each atom with its dual, and here ${more} occurs ${times} than ${fewer}.`;
+};
+
 /** A search's verdict, as the status light and a goal's note say it. */
 export function verdict(outcome: Outcome, checked: boolean | null): Said & { tone: Tone } {
   if (outcome.verdict === "proved") {
@@ -254,7 +269,7 @@ export function verdict(outcome: Outcome, checked: boolean | null): Said & { ton
     const reasons: Record<string, Said> = {
       unbalanced: {
         keyword: `Unprovable${mark}: atom balance`,
-        sentence: `${atom(outcome, r["atom"])} and its dual do not pair off: every derivation pairs each atom with its dual, and here ${atom(outcome, r["atom"])} is ahead by ${String(r["least"])}${r["least"] === r["most"] ? "" : ` to ${String(r["most"])}`}.`,
+        sentence: balance(atom(outcome, r["atom"]), r["least"], r["most"]),
       },
       one_sided: {
         keyword: `Unprovable${mark}: atom balance`,

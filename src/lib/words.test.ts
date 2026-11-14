@@ -62,6 +62,21 @@ describe("a verdict", () => {
   });
 });
 
+describe("an atom-balance refutation", () => {
+  const said = (text: string) => {
+    const answer = JSON.parse(deduxit.prove(text, "classical", ""));
+    expect(answer.outcome.refutation.kind, text).toBe("unbalanced");
+    return verdict(answer.outcome, answer.refutation_checked).sentence;
+  };
+
+  it("names the literal that is ahead, the dual too, and never a negative count", () => {
+    expect(said("|- A, A, ~A")).toMatch(/here A occurs 1 more time than A⊥\.$/);
+    expect(said("|- ~A, ~A, ~A, A")).toMatch(/here A⊥ occurs 2 more times than A\.$/);
+    expect(said("|- A + (A * A)")).toMatch(/here A occurs 1 to 2 more times than A⊥\.$/);
+    expect(said("|- ~A + (~A * ~A)")).toMatch(/here A⊥ occurs 1 to 2 more times than A\.$/);
+  });
+});
+
 describe("a goal lost by an earlier step", () => {
   it("offers Go back while the sequent may have a proof, and says no step lost one when it has none", () => {
     expect(lost(false)).toMatch(/an earlier step lost it\. Go back takes you/);
