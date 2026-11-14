@@ -23,10 +23,10 @@ says why each piece is as it is) and the author's learning sites'.
   which has their checks). Never copy them here. `settings.json` registers
   `claude-jj-worktree` for WorktreeCreate and WorktreeRemove, the one machine-wide hook a
   repository registers itself, so an isolated session or sub-agent works in a jj workspace
-  `../linlog-prover.github.io-wt-NAME`.
+  `../deduxit.github.io-wt-NAME`.
 - **The hook of its own**: `format.sh` (PostToolUse on Write and Edit) runs `nix fmt` on
   the one file written. It fails open: a missing tool or a malformed payload exits 0.
-- **Memory**: `autoMemoryDirectory` is `~/.claude/memory/linlog-prover.github.io`, which
+- **Memory**: `autoMemoryDirectory` is `~/.claude/memory/deduxit.github.io`, which
   both accounts share.
 - **Permissions**: git (reads too, which the machine's guard allows), `npm ci`, `npx`,
   `npm exec` and hand edits of `LICENSE` and both lock files are denied; `jj git push` and

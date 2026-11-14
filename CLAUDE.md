@@ -29,7 +29,7 @@ which its flake, its tooling and its Claude Code setup are taken.
 1. **Jujutsu, never git.** The repo is colocated with git only so that nix and GitHub work.
    Every git command, reading ones included, is refused: writes by the machine's
    `claude-jj-guard`, reads too by the `Bash(git *)` deny rule. An isolated agent or
-   session gets a jj workspace, `../linlog-prover.github.io-wt-NAME`, in place of a git
+   session gets a jj workspace, `../deduxit.github.io-wt-NAME`, in place of a git
    worktree (the machine's `claude-jj-worktree`, registered in `.claude/settings.json`);
    `claude-jj-worktree prune` removes the empty ones.
    jj writes commits unsigned (the machine's jj config): a global hook signs a session's
