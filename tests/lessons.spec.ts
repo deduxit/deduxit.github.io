@@ -94,7 +94,7 @@ test("the faded proof leaves the lesson's last steps to the visitor, and says wh
   await expect(yours.getByRole("status")).toContainText("Proved");
 });
 
-test("the hinge question names a wrong answer's misconception and offers the faded proof, the right one the next lesson", async ({
+test("the hinge question names a wrong answer's misconception and offers its sequent to try, then the faded proof; the right one the next lesson", async ({
   page,
 }) => {
   const frame = await lesson(page, 1, "Reading a sequent");
@@ -103,6 +103,10 @@ test("the hinge question names a wrong answer's misconception and offers the fad
   await expect(check.getByRole("status")).toContainText(
     "This answer comes from the idea that the axiom pairs a formula with itself.",
   );
+  // The sequent the wrong answer names comes first, to try on the stage.
+  await expect(check.getByRole("button").first()).toHaveText("Try ⊢ A, A yourself");
+  await check.getByRole("button", { name: "Try ⊢ A, A yourself" }).click();
+  await expect(page.locator(".ptab[aria-current=true] .pt-go .m")).toHaveText("⊢ A, A");
   await check.getByRole("button", { name: "Try the faded proof again" }).click();
   await expect(page.getByRole("button", { name: /^A⊥, formula 1 of goal 1/ })).toBeVisible();
   await check.getByRole("radio", { name: "⊢ A⊥, A", exact: true }).check();
@@ -293,11 +297,12 @@ test("a practice problem proved with a cut counts its inferences beside those wi
   const frame = await lesson(page, 9, "Cut and its elimination");
   const card = frame.locator(".exercise").filter({ hasText: "A short lemma, three uses" });
   await expect(card).toContainText("Prove it with a cut on !B.");
-  await card.getByLabel("The answer to A short lemma, three uses").click();
+  await card.getByRole("button", { name: "Has a proof" }).click();
   await card.getByRole("button", { name: "Watch A short lemma, three uses" }).click();
   for (let step = 0; step < 17; step++)
     await page.locator("footer").getByRole("button", { name: "Redo" }).click();
-  await expect(card.getByRole("status")).toHaveText(
+  // The answer's feedback is a status of its own beside the count.
+  await expect(card.getByRole("status").filter({ hasText: "Your proof has" })).toHaveText(
     "Proved Your proof has 17 inferences; with the cut on !B, 17; cut-free, 21.",
   );
 });

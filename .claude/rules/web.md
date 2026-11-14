@@ -491,7 +491,8 @@ the page reads.
   prompt after the step `explain.after`, an optional dead end (`detour`: a legal split shown
   in the split chooser, which `split_passes` must refuse), and the hinge question (one
   option without a `misconception`; an option's `problem`, when named, is provable exactly
-  when the option is right). Every sequent a lesson shows as a problem is a store problem
+  when the option is right, and a wrong answer that names one offers "Try <its sequent>
+  yourself", opened as a practice problem opens, before "Try the faded proof again"). Every sequent a lesson shows as a problem is a store problem
   with that lesson, so the store's checks cover it. Optional parts: `attempt` (an erroneous
   example: steps with the attempt's own reasons, played by Redo from the unfinished session
   `lessons/<id>.attempt.json` on the lesson's tab, then "which step went wrong?" answered as
@@ -557,7 +558,9 @@ the page reads.
   deduxit draws as a text, or as a group where the name has a subscript (`⊕₁`).
 - **Learn's practice is a lesson's**: the problems with a `lesson`, under the tutorial's
   lesson, easiest first, provable and unprovable mixed, never three alike in a row
-  (`problems.test.ts`); a card keeps its verdict and explanation under "Answer". Every
+  (`problems.test.ts`); a card asks "Has a proof" or "No proof" and answers at once
+  (Right or Not quite, the verdict, the explanation and Watch), the answer kept while the
+  lesson is open. Every
   lesson from the second has at least two provable problems at level 3 or above. Every
   unprovable problem has a lesson (the schema refuses one without): Practice never offers
   it.
@@ -567,7 +570,8 @@ the page reads.
   own, replacing only the page's empty tab. `createPractice` lives as long as the island:
   the tab a problem opened on marks it proved when it finishes the proof of the problem's
   sequent with no goal closed by the search (`engines` empty: Close and Close all are not
-  the visitor's proof), kept with the filters under `linlog-practice` (the privacy page
+  the visitor's proof; steps Hint applied are, as Practice's text says), kept with the
+  filters under `deduxit-practice` (the privacy page
   lists it).
 - **A goal opens in a new tab** (`openGoal`, the dock's arrow): its formulas as the field
   reads them (`sequentText`, two-sided where they have sides, each formula as its reading,
@@ -652,7 +656,7 @@ the page reads.
   response, by which `tests/offline.spec.ts` tells the two apart.
 - **No `skipWaiting`**: a new worker waits until no page of the old one is open, so a page
   and the files it loads later (the module, its worker, Euler Math) come from one
-  deployment; the old caches are deleted on activation, the `linlog-site-` ones only.
+  deployment; the old caches are deleted on activation: the `deduxit-site-` ones and every `linlog-site-` one, nothing else.
 - **The manifest and its icons** are written by the same integration, the icons taken
   from the logo's rasters (below); `tests/offline.spec.ts` asks Chromium's installability
   over CDP, and fetches every icon the page and the manifest name, at its size.

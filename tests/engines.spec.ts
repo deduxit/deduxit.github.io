@@ -131,7 +131,7 @@ test("Enter in the sequent field while a search runs waits for it, and is not lo
   await expect(page.locator(".ptab")).toHaveCount(2);
 });
 
-test("practice is grouped by lesson, writes negation as the drawings do, and keeps the answer until asked", async ({
+test("practice is grouped by lesson, writes negation as the drawings do, and answers the visitor's decision at once", async ({
   page,
 }) => {
   await goto(page);
@@ -144,9 +144,17 @@ test("practice is grouped by lesson, writes negation as the drawings do, and kee
   const card = frame.locator(".exercise").filter({ hasText: "Two strangers" });
   await expect(card.locator(".ex-seq")).toHaveText("⊢ A⊥, B");
   await expect(frame.locator(".ex-seq").filter({ hasText: "~" })).toHaveCount(0);
-  await expect(card.getByText("No proof")).toBeHidden();
-  await card.getByLabel("The answer to Two strangers").click();
-  await expect(card.getByText("No proof")).toBeVisible();
+  // The answer and its reason come once the visitor decides, right or not.
+  const decide = card.getByRole("group", { name: "Does Two strangers have a proof?" });
+  await expect(card.getByRole("status")).toHaveCount(0);
+  await decide.getByRole("button", { name: "Has a proof" }).click();
+  await expect(card.getByRole("status")).toContainText("Not quite It has no proof.");
+  await decide.getByRole("button", { name: "No proof" }).click();
+  await expect(decide.getByRole("button", { name: "No proof" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await expect(card.getByRole("status")).toContainText("Right It has no proof.");
   // The difficulty is the store's one scale, its level named beside its stair.
   await expect(card.locator(".diff")).toHaveText("Moderate");
 });

@@ -747,9 +747,24 @@ function LessonView(props: {
                     <p>
                       <Words text={o().why} />
                     </p>
-                    <button type="button" class="btn" onClick={() => void fade()}>
-                      Try the faded proof again
-                    </button>
+                    <p class="row">
+                      {/* The sequent the answer names, to find out by trying it. */}
+                      <Show when={props.examples.find((e) => e.id === o().problem)}>
+                        {(problem) => (
+                          <button
+                            type="button"
+                            class="btn btn-primary"
+                            disabled={props.prover.busy()}
+                            onClick={() => void props.prover.example(problem(), false)}
+                          >
+                            Try <span class="m">{displayed(problem().sequent)}</span> yourself
+                          </button>
+                        )}
+                      </Show>
+                      <button type="button" class="btn" onClick={() => void fade()}>
+                        Try the faded proof again
+                      </button>
+                    </p>
                   </>
                 )}
               </Show>
@@ -1295,6 +1310,9 @@ function Exercise(props: {
   count?: Lesson["counts"][number] | undefined;
 }) {
   const busy = () => props.prover.busy();
+  /** The visitor's answer to whether the problem has a proof, until they give one. */
+  const [answer, setAnswer] = createSignal<Example["verdict"] | null>(null);
+  const right = () => answer() === props.example.verdict;
   /** The inferences of the visitor's finished proof of this problem, on the tab shown. */
   const proved = () => {
     const p = props.prover.current();
@@ -1334,7 +1352,29 @@ function Exercise(props: {
           </>
         )}
       </Show>
-      <p class="row">
+      <div class="row">
+        <div
+          class="row decide"
+          role="group"
+          aria-label={`Does ${props.example.title} have a proof?`}
+        >
+          <button
+            type="button"
+            class="btn btn-s outline"
+            aria-pressed={answer() === "provable"}
+            onClick={() => setAnswer("provable")}
+          >
+            Has a proof
+          </button>
+          <button
+            type="button"
+            class="btn btn-s outline"
+            aria-pressed={answer() === "unprovable"}
+            onClick={() => setAnswer("unprovable")}
+          >
+            No proof
+          </button>
+        </div>
         <button
           type="button"
           class="btn btn-s outline"
@@ -1344,30 +1384,33 @@ function Exercise(props: {
         >
           Prove
         </button>
-      </p>
-      <details class="answer">
-        <summary aria-label={`The answer to ${props.example.title}`}>Answer</summary>
-        <p class={`kw ${props.example.verdict === "provable" ? "ok" : "bad"}`}>
-          {props.example.verdict === "provable" ? "Provable" : "No proof"}
-        </p>
-        <Written name={`problems/${props.example.id}`} class="sub" />
-        <Show when={props.example.session}>
-          <button
-            type="button"
-            class="btn btn-s outline"
-            disabled={busy()}
-            aria-label={`Watch ${props.example.title}`}
-            data-tip="Its proof from the start: Redo plays the next step"
-            onClick={async () => {
-              await props.prover.example(props.example, true);
-              props.ui.setUi("live", `${props.example.title}: press Redo to play the next step.`);
-            }}
-          >
-            <Play aria-hidden="true" />
-            Watch the proof
-          </button>
-        </Show>
-      </details>
+      </div>
+      {/* The answer's feedback: right or not, then why. */}
+      <Show when={answer()}>
+        <div class="answer" role="status">
+          <p>
+            <span class={`kw ${right() ? "ok" : "bad"}`}>{right() ? "Right" : "Not quite"}</span>{" "}
+            {props.example.verdict === "provable" ? "It has a proof." : "It has no proof."}
+          </p>
+          <Written name={`problems/${props.example.id}`} class="sub" />
+          <Show when={props.example.session}>
+            <button
+              type="button"
+              class="btn btn-s outline"
+              disabled={busy()}
+              aria-label={`Watch ${props.example.title}`}
+              data-tip="Its proof from the start: Redo plays the next step"
+              onClick={async () => {
+                await props.prover.example(props.example, true);
+                props.ui.setUi("live", `${props.example.title}: press Redo to play the next step.`);
+              }}
+            >
+              <Play aria-hidden="true" />
+              Watch the proof
+            </button>
+          </Show>
+        </div>
+      </Show>
     </li>
   );
 }
