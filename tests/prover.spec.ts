@@ -375,8 +375,11 @@ test("the link in the fragment restores the proof, or says it could not", async 
   browser,
 }) => {
   await start(page, "A * B |- B * A");
-  await rule(page, /^A⊥ ⅋ B⊥/, "⅋");
+  // The link is written after each change, the sequent's session first: wait for the step's.
   await expect(page).toHaveURL(/#v=2&u=linear&m=classical&s=.*&d=/);
+  const before = page.url();
+  await rule(page, /^A⊥ ⅋ B⊥/, "⅋");
+  await expect(page).not.toHaveURL(before);
   const url = page.url();
   const fresh = await browser.newPage();
   await fresh.goto(url);
