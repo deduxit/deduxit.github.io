@@ -530,8 +530,8 @@ function LessonView(props: {
                   }
                 >
                   <p role="status">
-                    Two-sided is on: the stage shows the sequent as you typed it. Lessons 1 to 5 use
-                    the one-sided form; lesson 6 comes back to two sides.
+                    Two-sided is on: the stage draws the sequent as it was typed. Lessons 1 to 5 use
+                    the one-sided form, and lesson 6 returns to two sides.
                   </p>
                   <button type="button" class="btn btn-s outline" onClick={() => sides(false)}>
                     Turn it off

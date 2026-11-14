@@ -80,8 +80,8 @@ attempt, and another may succeed.
 
 The search gives one of three answers, shown on the tab. Proved: it found a proof,
 "checked" when deduxit's checker accepted it. Unprovable: no proof exists, and deduxit
-says why. Unknown: the search stopped at a bound, its budget of work or of copies,
-before it decided. Unknown says nothing either way.
+says why. Unknown: the search reached its budget of work or of copies before it
+decided. Unknown says nothing either way.
 
 "No proof" is a claim about every attempt, so it needs a reason that holds for all of
 them. The most common:

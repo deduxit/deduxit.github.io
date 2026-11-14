@@ -129,7 +129,7 @@ test("a problem proved with steps Hint applied is marked proved, as Practice's t
   await goto(page);
   let practice = await openPractice(page);
   await expect(practice).toContainText(
-    "A problem counts as proved when you close every goal yourself; Hint may help.",
+    "A problem counts as proved when your steps close every goal. Steps that Hint applies count as yours",
   );
   await practice.getByRole("button", { name: /^Prove A & B ⊢ A,/ }).click();
   // The fourth press applies ⊕₁; the axiom is the visitor's.

@@ -38,6 +38,6 @@ first. `⊗` splits the goal into two premises, its left part with some of the o
 formulas and its right part with the rest, each formula in exactly one premise. The
 split is where a proof is won or lost.
 
-`A |- A` is typed for `⊢ A⊥, A`: in classical mode each formula left of `⊢` moves to
-the right as its dual. The dual of a compound formula follows De Morgan's laws,
-`(A ⊗ B)⊥ = A⊥ ⅋ B⊥`, and `A⊥⊥` is `A` again.
+The hypothesis `A ⊗ B` moves to the right as its dual, as in lesson 1. The dual of a
+compound formula follows De Morgan's laws: `(A ⊗ B)⊥` is `A⊥ ⅋ B⊥`. And `A⊥⊥` is `A`
+again.

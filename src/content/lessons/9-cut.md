@@ -85,9 +85,9 @@ it.
 
 ***
 
-deduxit's search never cuts, and needs none: every proof with cuts has one without
-(cut elimination), so a cut never proves what has no proof. It can make a proof
-shorter, though rarely without `!`, since each formula is used once. A lemma under `!`
-is proved once and copied for each use, where the cut-free proof derives it again
-every time. Eliminating the cut shows that price: the lemma's proof is copied once per
+deduxit's search never cuts, and needs none: every proof with cuts has one without,
+which cut elimination finds. So a cut never proves what has no proof. It can make a
+proof shorter, but rarely without `!`, since each formula is used once. A lemma under
+`!` is proved once and used many times, where the cut-free proof derives it again at
+each use. Eliminating the cut shows that price: the lemma's proof is copied once per
 use.

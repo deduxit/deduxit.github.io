@@ -498,20 +498,20 @@ function ExportMenu(props: {
     {
       label: "Whole document",
       detail:
-        "A LaTeX file that compiles on its own, cropped to the derivation; it needs ebproof, cmll and amssymb installed",
+        "A LaTeX file that compiles alone, cropped to the derivation. It needs ebproof, cmll and amssymb installed",
       act: text("latex", "tex", "text/x-tex", true),
       sub: true,
     },
     {
       label: "Typst",
       detail:
-        "The derivation, to paste into a Typst document: it uses the package curryst, or plain Typst when tall",
+        "The derivation, to paste into a Typst document. It uses the package curryst, or plain Typst when the derivation is tall",
       act: text("typst", "typ", "text/plain"),
     },
     {
       label: "Whole document",
       detail:
-        "A Typst file that compiles on its own, its page sized to the derivation; Typst downloads curryst by itself",
+        "A Typst file that compiles alone, on a page the size of the derivation. Typst downloads curryst itself",
       act: text("typst", "typ", "text/plain", true),
       sub: true,
     },
@@ -534,8 +534,8 @@ function ExportMenu(props: {
       label: "Rocq",
       get detail() {
         return ordinarySession()
-          ? "A Rocq file that checks the finished proof, over Prop: it needs no library"
-          : "A Rocq file that checks the finished proof, its import included: it needs NanoYalla for classical linear logic without Mix, weakening, cuts or quantifiers, rocq-deduxit for the rest";
+          ? "A Rocq file that checks the finished proof over Prop. It needs no library"
+          : "A Rocq file that checks the finished proof, its import first. It needs NanoYalla for classical linear logic without Mix, weakening, cuts or quantifiers, and rocq-deduxit for the rest";
       },
       act: text("rocq", "v", "text/plain"),
       off: () => (complete() ? null : "The certificate is of a finished proof"),
@@ -543,7 +543,7 @@ function ExportMenu(props: {
     {
       label: "Not derivable",
       detail:
-        "A Rocq file that checks that a refuted goal has no proof, its import included: it needs rocq-deduxit",
+        "A Rocq file that checks that a refuted goal has no proof, its import first. It needs rocq-deduxit",
       act: async () =>
         download(
           `${name()}-refutation.v`,
@@ -702,7 +702,7 @@ function ExportMenu(props: {
                 >
                   <span class="fmt">The sequent</span>
                   <span class="fn">
-                    A link to the sequent alone, with no step taken, as an exercise
+                    A link to the sequent alone, with no step taken: an exercise to send
                   </span>
                 </button>
               </li>

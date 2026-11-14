@@ -7,7 +7,7 @@ steps:
   - rule: "ax"
     reason: "The goal holds the atom `A` and its dual `A⊥`, and nothing else: the axiom closes it."
 faded: 0
-rewrite: "You typed `A ⊢ A`, and the stage shows `⊢ A⊥, A`: a hypothesis left of `⊢` moves to the right as its dual."
+rewrite: "The sequent is typed `A ⊢ A`, and the stage shows `⊢ A⊥, A`. The hypothesis `A`, left of `⊢`, moves to the right as its dual."
 explain:
   after: 0
   prompt: "Why does the axiom close `⊢ A⊥, A` and not `⊢ A, A`? Say what `A⊥` stands for here."

@@ -83,7 +83,7 @@ test("lesson 1 shows the rewrite of A ⊢ A to ⊢ A⊥, A with the Two-sided sw
   const frame = await lesson(page, 1, "Reading a sequent");
   await frame.getByRole("button", { name: "Start the worked proof" }).click();
   await expect(frame.locator(".rewrite")).toContainText(
-    "You typed A ⊢ A, and the stage shows ⊢ A⊥, A",
+    "The sequent is typed A ⊢ A, and the stage shows ⊢ A⊥, A.",
   );
   await expect(page.getByRole("button", { name: /^A⊥, formula 1 of goal 1/ })).toBeVisible();
   await frame.getByRole("button", { name: "Turn on Two-sided" }).click();

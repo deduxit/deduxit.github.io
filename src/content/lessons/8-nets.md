@@ -65,6 +65,6 @@ condition, says which are: at each `⅋`, keep one of its two edges and remove t
 other. For every such choice, the graph left must be connected and have no cycle.
 
 The stage's Net tab draws the net of a finished proof in MLL, the multiplicatives, or
-in MELL, the multiplicatives with `!` and `?`; each promotion `!` draws a box. In
-intuitionistic mode it draws Lamarche's essential net, directed from the hypotheses to
-the goal. You cannot edit a net on the page.
+in MELL, the multiplicatives with `!` and `?`. Each promotion, the rule that makes a
+`!`, draws a box around the net of its premise. In intuitionistic mode the tab draws
+Lamarche's essential net, directed from the hypotheses to the goal. You cannot edit a net on the page.

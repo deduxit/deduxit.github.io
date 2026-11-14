@@ -68,6 +68,6 @@ proof.
 
 ***
 
-`∀` is like `&` over every term, `∃` like `⊕` choosing one. And as everywhere in linear
-logic, a hypothesis `∀x. A` gives one instance, once; under `!` it gives as many as
-needed.
+`∀` behaves like `&` over every term, and `∃` like `⊕` that picks one. As everywhere in
+linear logic, a hypothesis `∀x. A` gives one instance, used once. Under `!` it gives as
+many instances as needed.
