@@ -261,4 +261,12 @@ test("an ordinary goal an earlier step lost goes back to the last goal still val
   await expect(
     page.getByRole("status").filter({ hasText: "Proved: every goal is closed" }),
   ).toBeVisible();
+  // ¬L's contraction below it is the step's own: Go back reopens the step's goal and says so.
+  await ordinary(page, "intuitionistic", "~a, c |- c");
+  await rule(page, /^¬a, formula/, "¬L");
+  await page.getByRole("button", { name: "Close goal" }).click();
+  await expect(note.locator(".kw.bad")).toHaveText("Not valid");
+  await note.getByRole("button", { name: "Go back" }).click();
+  await expect(note.locator(".kw.ok")).toHaveText("Back at a goal with a proof");
+  await expect(page.getByRole("button", { name: /^¬a, formula 1 of goal 1/ })).toBeVisible();
 });

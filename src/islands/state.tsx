@@ -1537,35 +1537,63 @@ export function createProver(say: (text: string) => void = () => undefined) {
       /** Why the walk ended early: a call refused (said at the goal), or null for a stop. */
       // Set in the walk's callbacks, which the compiler's narrowing does not follow.
       let failed = null as Failure | null;
-      /** Shows the session found, its goal open. */
-      let commit = null as (() => void) | null;
-      const decide = async (below: Path, searched: () => Promise<Decided | null>) =>
-        below.length === 0 && kept !== "unknown" ? kept : searched();
+      /**
+       * Each goal reopened so far, by its path: what the search said and how to show it. In an
+       * ordinary proof a goal inside a step's own run (the contractions below a rule) reopens
+       * as the step's goal, below it, so two goals of the walk may reopen the same one.
+       */
+      const reopened = new Map<
+        string,
+        { decided: Decided | null; at: Path; display: () => void }
+      >();
+      let last = null as { at: Path; display: () => void } | null;
+      const ask = async (
+        at: Path,
+        display: () => void,
+        searched: () => Promise<Decided | null>,
+      ): Promise<Decided | null> => {
+        const key = pathKey(at);
+        const known = reopened.get(key);
+        const decided = known
+          ? known.decided
+          : at.length === 0 && kept !== "unknown"
+            ? kept
+            : await searched();
+        if (!known) reopened.set(key, { decided, at, display });
+        last = known ?? { at, display };
+        return decided;
+      };
       const found = await wayBack(path, async (below) => {
         const child = goalAt(doc, path.slice(0, below.length + 1));
         if (o) {
           const back = retractOrdinary(o.session, child);
           if (!back) return null;
+          const at = paths(back.session).get(back.reopened) ?? [];
+          if (reopened.has(pathKey(at)))
+            return ask(
+              at,
+              () => undefined,
+              async () => null,
+            );
           const view = await attempt(() => api.ordinary.view(back.session, ordinaryJson()));
           if (!view.ok) {
             failed = view.failed;
             return null;
           }
-          const decided = await decide(below, async () => {
-            const closed = await attempt(() =>
-              api.ordinary.close(back.session, back.reopened, ordinaryJson(budget)),
-            );
-            if (!closed.ok) failed = closed.failed;
-            return closed.ok ? decidedOf(closed.value.outcome.verdict) : null;
-          });
-          commit = () => {
+          const display = () => {
             update(p.id, (q) => {
               q.later.push({ session: o.session, engines: { ...q.engines } });
               q.engines = keptGrafts(back.session, q.engines);
             });
             show(p.id, { session: back.session, view: asView(view.value) }, back.reopened);
           };
-          return decided;
+          return ask(at, display, async () => {
+            const closed = await attempt(() =>
+              api.ordinary.close(back.session, back.reopened, ordinaryJson(budget)),
+            );
+            if (!closed.ok) failed = closed.failed;
+            return closed.ok ? decidedOf(closed.value.outcome.verdict) : null;
+          });
         }
         const retracted = retract(doc as SessionDoc, child, undefined, p.view?.cuts, p.view);
         if (!retracted) return null;
@@ -1576,18 +1604,17 @@ export function createProver(say: (text: string) => void = () => undefined) {
           failed = replayed.failed;
           return null;
         }
-        const at = goalAt(replayed.value.session, below) ?? 0;
-        const decided = await decide(below, async () => {
-          const closed = await attempt(() => api.close(replayed.value.session, at, json(budget)));
+        const goal = goalAt(replayed.value.session, retracted.reopened) ?? 0;
+        const display = () => {
+          update(p.id, (q) => q.redo.push(actionsFor(p, retracted.removed)));
+          show(p.id, replayed.value, goal);
+          if (replayed.value.failed.length) actions.lost(p.id, replayed.value.failed);
+        };
+        return ask(retracted.reopened, display, async () => {
+          const closed = await attempt(() => api.close(replayed.value.session, goal, json(budget)));
           if (!closed.ok) failed = closed.failed;
           return closed.ok ? decidedOf(closed.value.outcome.verdict) : null;
         });
-        commit = () => {
-          update(p.id, (q) => q.redo.push(actionsFor(p, retracted.removed)));
-          show(p.id, replayed.value, at);
-          if (replayed.value.failed.length) actions.lost(p.id, replayed.value.failed);
-        };
-        return decided;
       });
       const noted = (at: Path, said: Said & { tone: Tone }) => {
         update(p.id, (q) => (q.note = { path: at, said, tone: said.tone }));
@@ -1606,8 +1633,11 @@ export function createProver(say: (text: string) => void = () => undefined) {
         noted(path, wentBack(found.why));
         return;
       }
-      commit?.();
-      noted(found.to, wentBack("proved"));
+      // The goal the walk stopped at was the last one asked.
+      const back = last as { at: Path; display: () => void } | null;
+      if (!back) return;
+      back.display();
+      noted(back.at, wentBack("proved"));
       save();
     }),
 
