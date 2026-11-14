@@ -1121,6 +1121,15 @@ button.wordmark {
   padding: var(--spacing-1);
   z-index: var(--layer-hud);
 }
+/* Why the Net tab is greyed, over the stage's controls once it was pressed. */
+.net-why {
+  position: absolute;
+  right: var(--spacing-3);
+  bottom: calc(var(--spacing-3) + var(--size-control) + var(--spacing-3));
+  max-width: min(var(--size-menu), calc(100vw - var(--spacing-6)));
+  padding: var(--spacing-1-5) var(--spacing-2);
+  z-index: var(--layer-hud);
+}
 .tabs {
   display: flex;
   gap: var(--spacing-0-5);

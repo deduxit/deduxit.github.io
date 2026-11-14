@@ -268,7 +268,8 @@ the page reads.
 - **Every reason is a line in view under its keyword, never a tip** (`Why` in `ui.tsx`, class
   `said-why`): a goal's note (a refusal, a verdict), the split chooser's Passes and Cannot
   close, the stage's banner, the field's parse error, the status's verdict, a greyed export
-  item (`.fn .off`), a greyed engine in Settings (`.why-not`) and the greyed Mix switch. Tips
+  item (`.fn .off`), a greyed engine in Settings (`.why-not`), the greyed Mix switch, and the
+  greyed Net tab once pressed (`.net-why`, until Tree is pressed). Tips
   follow no touch, and a reason is what the visitor needs to act. A `Said` with `more` keeps
   its rest behind a "more" button (the saturation refutation's); the keyword is a `span.kw`,
   no longer a button. Tests read the line (`toContainText` on `.dock .note`), not `data-tip`.
@@ -283,7 +284,10 @@ the page reads.
   check), then one search within the budget, the kept root verdict in place of the sequent's
   search. The first goal with a proof is shown open, the steps taken back are one entry of
   `redo` (or `later`), and its note says so; none found, the note says whether the sequent
-  has no proof or the budget decided nothing. A search Go back makes is never grafted.
+  has no proof or the budget decided nothing. A search Go back makes is never grafted. In an
+  ordinary proof a goal inside a step's own run (the contraction under `¬L`, say) reopens as
+  the step's goal, below it: the walk keeps each reopened goal's answer by its path, asks it
+  once, and the note goes to the goal reopened, never to the path the walk asked.
 - **The empty stage offers "Start lesson 1" and "Take the tour" as buttons** with Learn off and
   no tour running, beside the syntax line; neither starts by itself (the empty state of
   NN/g's guidelines). Their names contain "tour" and "lesson", so a test that finds the band's

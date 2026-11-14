@@ -186,7 +186,7 @@ export function Calculus(props: { prover: Prover; ui: Ui }) {
       <Show when={ui.pendingCalculus}>
         {(next) => (
           <div class="cluster mode-warn" role="alertdialog" aria-label="Restart the proof">
-            <p>Changing the calculus restarts this proof: its steps are lost.</p>
+            <p>Changing the logic restarts this proof: its steps are lost.</p>
             <p class="row">
               <button
                 type="button"

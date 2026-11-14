@@ -187,6 +187,10 @@ test("the finished MLL and MELL proofs' nets are drawn, and the net tab says why
 }) => {
   await start(page, "A & B |- A");
   await expect(page.getByRole("tab", { name: "Net" })).toHaveAttribute("data-tip", /exist for/);
+  // A press says why in a line (Playwright clicks no aria-disabled element: a key presses it).
+  await page.getByRole("tab", { name: "Net" }).focus();
+  await page.keyboard.press("Enter");
+  await expect(page.locator(".net-why")).toContainText("exist for");
   await start(page, "!A |- A", false);
   await page.getByRole("button", { name: "Close goal" }).click();
   await page.getByRole("tab", { name: "Net" }).click();

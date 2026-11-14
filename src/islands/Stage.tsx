@@ -1168,6 +1168,15 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
     const verdict: string | undefined = proof()?.verdict?.outcome?.verdict;
     return verdict === "unprovable" || verdict === "not_valid";
   };
+  /** Why the Net tab is greyed: no net for this proof, or the proof not finished yet. */
+  const noNet = () => {
+    const net = view()?.net;
+    return net
+      ? `No net: ${net.message.replace(/^not a proof net: /, "")}`
+      : "The net is drawn once the proof is finished";
+  };
+  /** The proof whose greyed Net tab was pressed, until Tree is pressed: its reason stays in view. */
+  const [netAsked, setNetAsked] = createSignal<string | null>(null);
   /** The active goal's place among the open goals, from 1. */
   const openPlace = () => (view()?.goals.findIndex((g) => g.goal === active()) ?? 0) + 1;
 
@@ -1974,6 +1983,12 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
         )}
       </Show>
 
+      {/* A press on the greyed Net tab says why, in view: a tip follows no touch. */}
+      <Show when={netAsked() === proof()?.id && !netReady()}>
+        <p class="cluster said-why net-why" role="status">
+          {noNet().replace(/\.?$/, ".")}
+        </p>
+      </Show>
       <div class="cluster stage-ctl">
         <div class="tabs" role="tablist" aria-label="View">
           <button
@@ -1983,7 +1998,10 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
             aria-selected={ui.tab === "tree"}
             data-tip="The derivation"
             data-key="V"
-            onClick={() => setUi("tab", "tree")}
+            onClick={() => {
+              setNetAsked(null);
+              setUi("tab", "tree");
+            }}
           >
             Tree
           </button>
@@ -1993,16 +2011,11 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
             class="tab"
             aria-selected={ui.tab === "net"}
             aria-disabled={!netReady()}
-            data-tip={
-              view()?.net
-                ? `No net: ${view()?.net?.message.replace(/^not a proof net: /, "")}`
-                : netReady()
-                  ? "The finished proof's net"
-                  : "The net is drawn once the proof is finished"
-            }
+            data-tip={netReady() ? "The finished proof's net" : noNet()}
             data-key="V"
             onClick={() => {
               if (netReady()) setUi("tab", "net");
+              else setNetAsked(proof()?.id ?? null);
             }}
           >
             Net
