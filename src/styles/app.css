@@ -1197,10 +1197,8 @@ button.wordmark {
   font-size: var(--text-small);
 }
 /* A second form of the export above it (a whole document), indented under it. */
-.mi.sub {
-  padding-left: var(--spacing-5);
-}
 .mi.sub .fmt {
+  padding-left: var(--spacing-2);
   font-weight: var(--font-weight-normal);
 }
 .mi.icon-row {
