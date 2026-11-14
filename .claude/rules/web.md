@@ -791,8 +791,9 @@ the page reads.
   line. One violation is filtered, with its reason in the spec (SC 2.5.8): a rule label's
   button over a drawing fitted to a phone that is under 24 pixels because its neighbours are
   nearer than that, or that lies partly under the stage's view controls or a sheet over the
-  stage. A label's button covered by another button of the drawing is never filtered: the
-  labels share the gaps (`spread`, below). For a linear rule its hint is in Learn's Reference
+  stage. A label's button that overlaps another button of the drawing is never filtered, the
+  overlap measured by the spec itself (axe names no covering element for a target under 24
+  pixels): the labels share the gaps (`spread`, below). For a linear rule its hint is in Learn's Reference
   as well (the criterion's "equivalent" exception); for LK's, LJ's, the Lambek calculus's, Mix
   and weakening it is not, and it waits for a decision on how a drawing fits a phone. What axe
   leaves "incomplete" is not asserted: contrast

@@ -31,36 +31,54 @@ import {
 /** The rule sets run: WCAG 2.0, 2.1 and 2.2 at A and AA, and axe's best practices. */
 const TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22a", "wcag22aa", "best-practice"];
 
-/** One element axe judged under one rule. */
-type NodeResult = Awaited<ReturnType<AxeBuilder["analyze"]>>["violations"][number]["nodes"][number];
-
-/** A button the stage lays over its drawing: a rule label's, a formula's or a cut's. */
-const DRAWN = /^<button[^>]* class="(lb|fb|cb)"/;
-
 /**
  * Whether a violation is one this audit lists and leaves (SC 2.5.8): a rule label's button
  * over a drawing fitted to a phone that is smaller than 24 pixels because its neighbours are
  * closer than that, or that lies partly under the stage's view controls or a sheet over the
  * stage, which the drawing pans beneath. Each label's button shares the gap with its
- * neighbours (`spread`), so one that a drawn button covers is never excepted. For a linear
- * rule, the hint the label opens is also in Learn's Reference, whose controls meet the
- * criterion: SC 2.5.8's "equivalent" exception. For a rule the Reference lacks (LK's and LJ's,
- * the Lambek calculus's, Mix, weakening) it is a violation that waits for a decision on how a
- * drawing fits a phone. A screen reader hears the hint as the label's description in every case.
+ * neighbours (`spread`), so one that overlaps another button of the drawing (`crowded`, the
+ * names of those, measured here: axe names no covering element for a target under 24 pixels)
+ * is never excepted. For a linear rule, the hint the label opens is also in Learn's Reference,
+ * whose controls meet the criterion: SC 2.5.8's "equivalent" exception. For a rule the
+ * Reference lacks (LK's and LJ's, the Lambek calculus's, Mix, weakening) it is a violation that
+ * waits for a decision on how a drawing fits a phone. A screen reader hears the hint as the
+ * label's description in every case.
  */
-const excepted = (rule: string, node: NodeResult) =>
+const excepted = (rule: string, html: string, crowded: readonly string[]) =>
   rule === "target-size" &&
-  /^<button[^>]* class="lb"/.test(node.html) &&
-  !node.any.some(
-    (check) => check.id === "target-size" && check.relatedNodes?.some((r) => DRAWN.test(r.html)),
-  );
+  /^<button[^>]* class="lb"/.test(html) &&
+  !crowded.some((name) => html.includes(`aria-label="${name}"`));
+
+/** The names of the rule labels' buttons that overlap another button over the drawing. */
+async function crowding(page: Page): Promise<string[]> {
+  return page.evaluate(() => {
+    const drawn = [...document.querySelectorAll<HTMLElement>(".hits button")].map((b) => ({
+      b,
+      r: b.getBoundingClientRect(),
+    }));
+    const across = (a: number, b: number, c: number, d: number) => Math.min(b, d) - Math.max(a, c);
+    return drawn
+      .filter(
+        ({ b, r }) =>
+          b.classList.contains("lb") &&
+          drawn.some(
+            (o) =>
+              o.b !== b &&
+              across(r.left, r.right, o.r.left, o.r.right) > 0.5 &&
+              across(r.top, r.bottom, o.r.top, o.r.bottom) > 0.5,
+          ),
+      )
+      .map(({ b }) => b.getAttribute("aria-label") ?? "");
+  });
+}
 
 /** axe's violations on the page as it stands, one line per rule and element, with axe's reason. */
 async function violations(page: Page, state: string): Promise<string[]> {
   const results = await new AxeBuilder({ page }).withTags(TAGS).analyze();
+  const crowded = await crowding(page);
   return results.violations.flatMap((rule) =>
     rule.nodes
-      .filter((node) => !excepted(rule.id, node))
+      .filter((node) => !excepted(rule.id, node.html, crowded))
       .map((node) => {
         const why = [...node.any, ...node.all, ...node.none].map((check) => check.message);
         return `${state}: ${rule.id} at ${node.target.join(" ")}: ${why.join("; ") || rule.help}`;
