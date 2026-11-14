@@ -1,7 +1,7 @@
 # Claude Code: personal, per-machine overrides
 .claude/settings.local.json
 CLAUDE.local.md
-# Claude Code's own git worktrees; .claude/hooks/jj-worktree.py makes jj
+# Claude Code's own git worktrees; the machine's claude-jj-worktree makes jj
 # workspaces beside the repository instead, but the path stays ignored
 .claude/worktrees/
 

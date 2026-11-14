@@ -1,10 +1,10 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "env": {
-    "ANTHROPIC_DEFAULT_SONNET_MODEL": "claude-sonnet-5-5",
     "CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS": "1",
     "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "128000"
   },
+  "autoMemoryDirectory": "~/.claude/memory/linlog-prover.github.io",
   "attribution": {
     "sessionUrl": false
   },
@@ -61,27 +61,6 @@
     ]
   },
   "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/block-git.py",
-            "args": [],
-            "statusMessage": "Checking for git",
-            "timeout": 10
-          },
-          {
-            "type": "command",
-            "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/block-jj-new-message.py",
-            "args": [],
-            "statusMessage": "Checking jj usage",
-            "timeout": 10
-          }
-        ]
-      }
-    ],
     "PostToolUse": [
       {
         "matcher": "Write|Edit",
@@ -96,27 +75,14 @@
         ]
       }
     ],
-    "SessionStart": [
-      {
-        "matcher": "startup|resume|clear|compact",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/session-jj-state.sh",
-            "args": [],
-            "statusMessage": "Reading the jj working copy",
-            "timeout": 10
-          }
-        ]
-      }
-    ],
     "WorktreeCreate": [
       {
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/jj-worktree.py",
+            "command": "claude-jj-worktree",
             "args": [],
+            "statusMessage": "Creating jj workspace",
             "timeout": 120
           }
         ]
@@ -127,8 +93,9 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/jj-worktree.py",
+            "command": "claude-jj-worktree",
             "args": [],
+            "statusMessage": "Removing jj workspace",
             "timeout": 120
           }
         ]
