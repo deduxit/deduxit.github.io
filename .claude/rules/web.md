@@ -809,5 +809,11 @@ the page reads.
   below it without running under them (a short stage: a phone with Learn open), the goal moves
   down until the dock fits above it, if the goal then still clears the controls
   (`phone.spec.ts`).
+- **The world's transform is a render effect** (`createRenderEffect` in `Stage.tsx`): Solid
+  1.x runs the effects of one change in the order of the signal's readers, and an effect that
+  ran is put last among them, so the dock's effect, which reads the goal's place on the
+  screen, came to run before the transform's and trailed the goal by a move during a drag. A
+  render effect runs before every effect. `phone.spec.ts` checks after each move of a drag
+  that the dock lies right above or below the goal.
 - In the dev shell, `e2e` drops the host's `LD_LIBRARY_PATH`, which breaks nixpkgs'
   Chromium; a scratch script that launches Chromium needs `env -u LD_LIBRARY_PATH` too.

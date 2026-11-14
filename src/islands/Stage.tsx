@@ -24,6 +24,7 @@ import {
 import {
   createEffect,
   createMemo,
+  createRenderEffect,
   createResource,
   createSignal,
   For,
@@ -718,9 +719,13 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
     );
   }
 
-  createEffect(() => {
+  // A render effect runs before every effect of the same change, so the dock, the buttons and
+  // the reasons, which read the drawing's place on the screen, read it moved. As an effect of
+  // its own it could run after them: Solid puts an effect that ran last among a signal's
+  // readers, and the dock trailed the goal by a move during a drag.
+  createRenderEffect(() => {
     const c = camera();
-    world.style.transform = `translate(${c.x}px, ${c.y}px) scale(${c.k})`;
+    if (world) world.style.transform = `translate(${c.x}px, ${c.y}px) scale(${c.k})`;
   });
 
   // The dock sits above the active goal; the popover beside the selected formula.

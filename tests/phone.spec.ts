@@ -149,9 +149,34 @@ test("with Learn open, a fitted goal's buttons lie over its formulas, and its do
   const top = () =>
     page.locator(".world").evaluate((w) => new DOMMatrix(getComputedStyle(w).transform).f);
   const before = await top();
+  // The dock follows the goal in the event that moved it, never a move behind: right above the
+  // goal with its formulas' buttons, or right below it.
+  const docked = () =>
+    page.evaluate(() => {
+      const probe = document.createElement("div");
+      probe.style.height = "var(--spacing-2)";
+      document.body.append(probe);
+      const gap = probe.getBoundingClientRect().height;
+      probe.remove();
+      const dock = document.querySelector(".dock")?.getBoundingClientRect();
+      const goal = [document.getElementById("i0"), ...document.querySelectorAll(".fb[data-active]")]
+        .filter((e) => e !== null)
+        .map((e) => e.getBoundingClientRect());
+      if (!dock || goal.length === 0) return "no dock or goal";
+      const above = Math.min(...goal.map((r) => r.top)) - dock.height - gap;
+      const below = Math.max(...goal.map((r) => r.bottom)) + gap;
+      return Math.abs(dock.top - above) < 1 || Math.abs(dock.top - below) < 1
+        ? "docked"
+        : `${String(Math.round(dock.top))} for ${String(Math.round(above))} or ${String(Math.round(below))}`;
+    });
+  const steps = [await docked()];
   await page.mouse.move(200, 300);
   await page.mouse.down();
-  for (let step = 1; step <= 5; step++) await page.mouse.move(200, 300 - 10 * step);
+  for (let step = 1; step <= 5; step++) {
+    await page.mouse.move(200, 300 - 10 * step);
+    steps.push(await docked());
+  }
   await page.mouse.up();
   expect(await top()).toBeLessThan(before - 40);
+  expect(steps).toEqual(Array(6).fill("docked"));
 });
