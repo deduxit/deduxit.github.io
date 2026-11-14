@@ -5,7 +5,7 @@ paths:
 
 # The island: Solid 1.9
 
-The prover is one Solid island (`solid-js` 1.9.17, `@astrojs/solid-js` 7.0.2), the only JSX
+The prover is one Solid island (`solid-js` 1.9.18, `@astrojs/solid-js` 7.1.2), the only JSX
 framework. This rule is the author's learning sites' (website-learn's
 `.claude/rules/islands.md`, written from docs.solidjs.com 1.x and Astro's
 framework-components docs, checked 2026-10-11), kept as it is but for what differs here:

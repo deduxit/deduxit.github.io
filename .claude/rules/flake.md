@@ -42,13 +42,14 @@ never through `specialArgs`. The scheme is the author's learning sites'
   whose nixpkgs has Biome on cache.nixos.org (`nix path-info --store
   https://cache.nixos.org --inputs-from . nixpkgs#biome` prints a path).
 - **The age gate** (`min-release-age=14` in `.npmrc`) holds for security fixes too, and is
-  bypassed only with the author's agreement. `solid-js` is 1.9.17, the version the author's
-  sites run, taken past the gate for its seroval fix. `@playwright/test` 1.64.1 was taken
+  bypassed only with the author's agreement. `solid-js` 1.9.17 was taken past the gate for
+  its seroval fix; 1.9.18, taken on 2026-11-14, passed it normally. `@playwright/test` 1.64.1 was taken
   past it on 2026-10-22, at eight days, with the author's agreement: deduxit's nixpkgs
   moved `playwright-driver` to it, and the two must be equal. Install such a version with
   `npm install --package-lock-only --min-release-age=0 PACKAGE@VERSION`, one package alone.
 - **Pins that are not "latest" on purpose**: `typescript` stays on 6 (until 7.1 ships an
   API `astro check` can use); `solid-js` stays on 1.x until the port to Solid 2.0;
+  `@types/node` stays on the major of the Node.js it runs on (24, `engines.node`);
   `@playwright/test` equals nixpkgs' `playwright-driver` (the `playwright-version` check
   fails, naming the fix, when a bump moves one).
 - **`lucide-solid` is checked when the build starts** (`src/integrations/lucide.ts`): the
