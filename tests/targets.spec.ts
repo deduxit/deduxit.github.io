@@ -212,6 +212,37 @@ async function reasons(page: Page, least: number): Promise<string[]> {
   return found;
 }
 
+/** Learn's answers: lesson 1's rewrite, a wrong check answer's sequent to try, a practice row answered. */
+async function answers(page: Page, least: number): Promise<string[]> {
+  const found: string[] = [];
+  const measure = async (state: string) => {
+    for (const small of await tooSmall(page, least)) found.push(`${state}: ${small}`);
+  };
+  await goto(page);
+  // Learn is in the band, or under More on a phone.
+  const learn = page.locator("footer").getByRole("button", { name: "Learn", exact: true });
+  if (await learn.isVisible()) await learn.click();
+  else {
+    await page.locator("footer").getByRole("button", { name: "More" }).click();
+    await page.getByRole("dialog", { name: "More" }).getByRole("button", { name: "Learn" }).click();
+  }
+  await page.getByRole("button", { name: "Lesson 1: Reading a sequent" }).click();
+  await page.getByRole("button", { name: "Start the worked proof" }).click();
+  await page.getByRole("button", { name: "Turn on Two-sided" }).click();
+  await expect(page.getByRole("button", { name: "Turn it off" })).toBeVisible();
+  // Measured once the stage has redrawn the sequent two-sided, and zoomed to it.
+  await expect(page.locator(".drawing svg title")).toHaveText("A ⊢ A");
+  await measure("lesson's rewrite");
+  await page.getByRole("region", { name: "Check" }).getByRole("radio", { name: "⊢ A, A" }).check();
+  await expect(page.getByRole("button", { name: "Try ⊢ A, A yourself" })).toBeVisible();
+  await measure("check's sequent to try");
+  const card = page.locator(".exercise").filter({ hasText: "A entails A" });
+  await card.getByRole("button", { name: "Has a proof" }).click();
+  await expect(card.getByRole("button", { name: "Watch A entails A" })).toBeVisible();
+  await measure("practice answered");
+  return found;
+}
+
 /** An ordinary tab: its calculus's switches, the field's examples, and a proof's rules. */
 async function ordinary(page: Page, least: number): Promise<string[]> {
   const found: string[] = [];
@@ -272,6 +303,12 @@ test("a goal's reasons and their controls are targets of 24 by 24 pixels at leas
   expect(await reasons(page, 24)).toEqual([]);
 });
 
+test("Learn's answers and lesson 1's rewrite are targets of 24 by 24 pixels at least, at a desktop's width", async ({
+  page,
+}) => {
+  expect(await answers(page, 24)).toEqual([]);
+});
+
 test("an ordinary tab's controls are targets of 24 by 24 pixels at least, at a desktop's width", async ({
   page,
 }) => {
@@ -288,6 +325,10 @@ test.describe("at a phone's width", () => {
 
   test("every control is a target of 44 by 44 pixels at least", async ({ page }) => {
     expect(await walk(page, 44)).toEqual([]);
+  });
+
+  test("Learn's answers and lesson 1's rewrite are 44 by 44 pixels at least", async ({ page }) => {
+    expect(await answers(page, 44)).toEqual([]);
   });
 
   test("a goal's reasons and their controls are 44 by 44 pixels at least", async ({ page }) => {
