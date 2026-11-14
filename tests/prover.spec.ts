@@ -204,7 +204,7 @@ test("the finished MLL and MELL proofs' nets are drawn, and the net tab says why
   await expect(page.locator(".drawing svg desc")).toContainText("proof net");
 });
 
-test("every export downloads, and the link is copied", async ({ page, context }) => {
+test("every export downloads, and both links are copied", async ({ page, context }) => {
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
   await proveCommuted(page);
   const contents: [string, Buffer][] = [];
@@ -213,7 +213,9 @@ test("every export downloads, and the link is copied", async ({ page, context })
     ["PNG", /\.png$/],
     ["PDF", /\.pdf$/],
     ["LaTeX", /\.tex$/],
+    ["Whole document A LaTeX", /\.tex$/],
     ["Typst", /\.typ$/],
+    ["Whole document A Typst", /\.typ$/],
     ["Text", /\.txt$/],
     ["Session", /\.json$/],
     ["Rocq", /\.v$/],
@@ -236,15 +238,35 @@ test("every export downloads, and the link is copied", async ({ page, context })
   expect(text("SVG")).toContain("<svg");
   expect(head("PNG").subarray(1, 4).toString("latin1")).toBe("PNG");
   expect(head("PDF").subarray(0, 5).toString("latin1")).toBe("%PDF-");
+  // LaTeX and Typst are fragments, each with a whole document beside it; Rocq has its import.
   expect(text("LaTeX")).toContain("\\begin{prooftree}");
+  expect(text("LaTeX")).not.toContain("\\documentclass");
+  expect(text("Whole document A LaTeX")).toMatch(
+    /^\\documentclass[\s\S]*\\usepackage\{ebproof\}[\s\S]*\\begin\{prooftree\}[\s\S]*\\end\{document\}$/,
+  );
   expect(text("Typst")).toContain("prooftree(");
+  expect(text("Typst")).not.toContain("#set page");
+  expect(text("Whole document A Typst")).toMatch(/^#import "@preview\/curryst[\s\S]*#set page\(/);
   expect(text("Text")).toContain("⊢ ~A ⅋ ~B, B ⊗ A");
   expect(JSON.parse(text("Session")).history.length).toBe(1);
-  expect(text("Rocq")).toMatch(/Lemma certificate[\s\S]*Qed\./);
+  expect(text("Rocq")).toMatch(
+    /^From NanoYalla Require Import macroll\.[\s\S]*Lemma certificate[\s\S]*Qed\./,
+  );
+  const share = page.getByRole("group", { name: "Share a link" });
   await page.getByRole("button", { name: "Export" }).click();
-  await page.getByRole("menuitem", { name: /^Link/ }).click();
+  await share.getByRole("menuitem", { name: /^This proof/ }).click();
   await expect(page.getByRole("status").filter({ hasText: "Link copied" })).toBeVisible();
-  expect(await page.evaluate(() => navigator.clipboard.readText())).toContain("#v=2&u=linear");
+  const whole = await page.evaluate(() => navigator.clipboard.readText());
+  expect(whole).toContain("#v=2&u=linear");
+  expect(whole).toContain("&d=");
+  // The menu stays open to say what was copied.
+  await share.getByRole("menuitem", { name: /^The sequent/ }).click();
+  await expect(
+    page.getByRole("status").filter({ hasText: "it opens the sequent with no step taken" }),
+  ).toBeVisible();
+  const bare = await page.evaluate(() => navigator.clipboard.readText());
+  expect(bare).toContain("#v=2&u=linear");
+  expect(bare).not.toContain("&d=");
 });
 
 test("Settings sets the formulas' font: the drawing laid out in it, every formula in it, the font fetched when chosen, the exports following it until they choose their own", async ({
@@ -343,7 +365,9 @@ test("the certificate of non-derivability downloads for a refuted goal", async (
   const download = page.waitForEvent("download");
   await page.getByRole("menuitem", { name: /^Not derivable/ }).click();
   const certificate = await readFile(await (await download).path(), "utf8");
-  expect(certificate).toMatch(/Lemma certificate : ~ ll[\s\S]*Qed\./);
+  expect(certificate).toMatch(
+    /^From Stdlib Require[\s\S]*From Deduxit\.Linear Require[\s\S]*Lemma certificate : ~ ll[\s\S]*Qed\./,
+  );
 });
 
 test("the link in the fragment restores the proof, or says it could not", async ({

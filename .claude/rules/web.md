@@ -81,6 +81,11 @@ the page reads.
   only while the judgement copied is the one shown. deduxit answers a proof without a term with
   `{"error": …}`, not a throw; the item is then off and words its `details.reason` (`noTerm` in
   `words.ts`). A new suite with terms is its `term` in the registry, nothing in the menu.
+- **The exports' forms** are deduxit's `Form` in the export settings (`exportSettings` in
+  `BottomBand.tsx`): LaTeX and Typst are fragments to paste (`styles.latex.form`,
+  `styles.typst.form`: `fragment`), each followed by a "Whole document" item (`standalone`,
+  the class `sub`); every Rocq file, the proof's and a refutation's, is `standalone`, so it
+  has its import and compiles alone. Each item's detail names what the file needs.
 - **The linear suite's calls never get an ordinary session**: fill (`fillable`, `fill`), the
   invertible rules (`setInvertible`), the engine choice and the cut are kept to linear proofs.
 - **The registry reads every linear mode deduxit's `about` lists** (the switches build six; a
@@ -353,7 +358,8 @@ the page reads.
   the fragment (a link of the first version, `#v=1&m=<mode>&…`, reads as the linear suite;
   `link.test.ts` holds both),
   the session deflate-raw and base64url, dropped past 2000 characters (the export menu
-  says so). A link whose session deduxit refuses loads the sequent and the mode, with
+  says so). The export menu's "Share a link" copies it with the session ("This proof") or
+  without ("The sequent": an exercise, no step taken). A link whose session deduxit refuses loads the sequent and the mode, with
   "Proof not restored"; one past `UNPACKED_LIMIT` (512 KiB, read through a capped
   inflate) says so, and one whose sequent does not parse puts it in the field with the
   parse error marked, as if typed. The sequent is the field's text with the ASCII connectives as their signs (`pretty`, which `words.test.ts` holds to read as the same sequent).

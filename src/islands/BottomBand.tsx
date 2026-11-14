@@ -381,10 +381,17 @@ function ExportMenu(props: {
     const o = p?.note?.outcome ?? p?.verdict?.outcome;
     return o?.verdict === "unprovable" ? o : undefined;
   };
-  const exportSettings = () =>
+  /**
+   * The exports' settings. LaTeX and Typst are fragments to paste into a document unless `whole`
+   * asks for a document of their own; a Rocq file always has its import, so that it compiles alone.
+   */
+  const exportSettings = (whole = false) =>
     JSON.stringify({
       limits: { work: props.prover.settings().budget },
       styles: {
+        latex: { form: whole ? "standalone" : "fragment" },
+        typst: { form: whole ? "standalone" : "fragment" },
+        rocq: { form: "standalone" },
         svg: {
           ids: false,
           essential:
@@ -416,12 +423,12 @@ function ExportMenu(props: {
   }
 
   const session = () => proof()?.session as SessionDoc;
-  /** A text export of the proof: the ordinary calls' for an ordinary session. */
-  const exported = (format: string) => {
+  /** A text export of the proof, a whole document where asked: the ordinary calls' for an ordinary session. */
+  const exported = (format: string, whole = false) => {
     const o = ordinarySession();
     return o
-      ? props.prover.api.ordinary.exportAs(o, format, exportSettings())
-      : props.prover.api.exportAs(session(), format, exportSettings());
+      ? props.prover.api.ordinary.exportAs(o, format, exportSettings(whole))
+      : props.prover.api.exportAs(session(), format, exportSettings(whole));
   };
   const drawing = () =>
     net() && !ordinarySession()
@@ -458,9 +465,11 @@ function ExportMenu(props: {
     );
   }
 
-  const text = (format: string, extension: string, type: string) => async () => {
-    download(`${name()}.${extension}`, await exported(format), type);
-  };
+  const text =
+    (format: string, extension: string, type: string, whole = false) =>
+    async () => {
+      download(`${name()}.${extension}`, await exported(format, whole), type);
+    };
 
   const complete = () => proof()?.view?.complete === true;
 
@@ -469,6 +478,8 @@ function ExportMenu(props: {
     detail: string;
     act: () => Promise<void>;
     off?: () => string | null;
+    /** A second form of the item above it, drawn indented under it. */
+    sub?: boolean;
     /** Where the item cannot apply at all: a refuted goal's certificate on a finished proof. */
     hidden?: () => boolean;
   }[] = [
@@ -481,13 +492,28 @@ function ExportMenu(props: {
     { label: "PDF", detail: "The drawing, as a PDF/A document", act: () => rendered("pdf") },
     {
       label: "LaTeX",
-      detail: "The derivation for LaTeX; it needs the packages ebproof, cmll and amssymb",
+      detail: "The derivation, to paste into a LaTeX document that loads ebproof, cmll and amssymb",
       act: text("latex", "tex", "text/x-tex"),
     },
     {
+      label: "Whole document",
+      detail:
+        "A LaTeX file that compiles on its own, cropped to the derivation; it needs ebproof, cmll and amssymb installed",
+      act: text("latex", "tex", "text/x-tex", true),
+      sub: true,
+    },
+    {
       label: "Typst",
-      detail: "The derivation for Typst: with the package curryst, or in plain Typst when tall",
+      detail:
+        "The derivation, to paste into a Typst document: it uses the package curryst, or plain Typst when tall",
       act: text("typst", "typ", "text/plain"),
+    },
+    {
+      label: "Whole document",
+      detail:
+        "A Typst file that compiles on its own, its page sized to the derivation; Typst downloads curryst by itself",
+      act: text("typst", "typ", "text/plain", true),
+      sub: true,
     },
     {
       label: "Text",
@@ -508,15 +534,16 @@ function ExportMenu(props: {
       label: "Rocq",
       get detail() {
         return ordinarySession()
-          ? "A certificate of the finished proof for Rocq, over Prop: it needs no library"
-          : "A certificate of the finished proof for Rocq: NanoYalla checks classical linear logic without Mix, weakening, cuts or quantifiers, rocq-deduxit the rest";
+          ? "A Rocq file that checks the finished proof, over Prop: it needs no library"
+          : "A Rocq file that checks the finished proof, its import included: it needs NanoYalla for classical linear logic without Mix, weakening, cuts or quantifiers, rocq-deduxit for the rest";
       },
       act: text("rocq", "v", "text/plain"),
       off: () => (complete() ? null : "The certificate is of a finished proof"),
     },
     {
       label: "Not derivable",
-      detail: "A Rocq certificate that a refuted goal has no proof; it needs rocq-deduxit",
+      detail:
+        "A Rocq file that checks that a refuted goal has no proof, its import included: it needs rocq-deduxit",
       act: async () =>
         download(
           `${name()}-refutation.v`,
@@ -572,22 +599,25 @@ function ExportMenu(props: {
     }
   }
 
-  async function copyLink() {
+  /** Copies a link to the proof as it stands, or with `bare` to its sequent alone, no step taken. */
+  async function copyLink(bare = false) {
     const p = proof();
     if (!p?.session) return;
     const written = await writeLink(
       p.calculus.suite === "ordinary" ? prettyOrdinary(p.input) : pretty(p.input),
       p.calculus.suite,
       parameterOf(p.calculus),
-      JSON.stringify(p.session),
+      bare ? undefined : JSON.stringify(p.session),
     );
     const url = `${location.origin}${location.pathname}${written.hash}`;
     try {
       await navigator.clipboard.writeText(url);
       setSaid(
-        written.whole
-          ? "Link copied: it holds the proof as it stands."
-          : "Link copied, with the sequent alone: the proof is too long for a link, so export the session file to keep it.",
+        bare
+          ? "Link copied: it opens the sequent with no step taken."
+          : written.whole
+            ? "Link copied: it holds the proof as it stands."
+            : "Link copied, with the sequent alone: the proof is too long for a link, so export the session file to keep it.",
       );
     } catch {
       setSaid(`Copy this link: ${url}`);
@@ -604,7 +634,7 @@ function ExportMenu(props: {
               <button
                 type="button"
                 role="menuitem"
-                class="mi"
+                class={item.sub ? "mi sub" : "mi"}
                 aria-disabled={item.off?.() ? "true" : undefined}
                 onClick={() => {
                   if (!item.off?.()) void run(item.act);
@@ -648,12 +678,40 @@ function ExportMenu(props: {
           </fieldset>
         </li>
         <li class="msep" aria-hidden="true" />
-        <li>
-          <button type="button" role="menuitem" class="mi" onClick={() => void run(copyLink)}>
-            <span class="fmt">Link</span>
-            <span class="fn">Copy a link to this proof</span>
-          </button>
+        <li role="none">
+          <div role="group" aria-labelledby="share-link">
+            <p class="kw-label h" id="share-link">
+              Share a link
+            </p>
+            <ul class="mlist">
+              <li>
+                <button
+                  type="button"
+                  role="menuitem"
+                  class="mi"
+                  onClick={() => void run(() => copyLink())}
+                >
+                  <span class="fmt">This proof</span>
+                  <span class="fn">A link to this proof as it stands</span>
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  role="menuitem"
+                  class="mi"
+                  onClick={() => void run(() => copyLink(true))}
+                >
+                  <span class="fmt">The sequent</span>
+                  <span class="fn">
+                    A link to the sequent alone, with no step taken, as an exercise
+                  </span>
+                </button>
+              </li>
+            </ul>
+          </div>
         </li>
+        <li class="msep" aria-hidden="true" />
         <li>
           <button
             type="button"

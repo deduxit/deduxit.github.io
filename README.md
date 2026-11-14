@@ -38,11 +38,12 @@ the tour.
 - Drawings: the derivation as deduxit draws it, one-sided or two-sided; the proof net
   of a finished MLL or MELL proof, and the essential net in intuitionistic logic; every
   rule label with its hint.
-- Exports: SVG, PNG, PDF, LaTeX (ebproof), Typst (curryst), text, the session as JSON,
-  a Rocq certificate of the proof, and a Rocq certificate that a refuted goal has no proof.
-  The drawings take one of five math fonts.
-- Keeping work: the proof in the link; every open proof saved in the browser and
-  offered back on the next visit; import of a session or a sequent.
+- Exports: SVG, PNG, PDF, LaTeX (ebproof) and Typst (curryst), each as a fragment or a
+  whole document, text, the session as JSON, a Rocq file that checks the proof, and one
+  that checks that a refuted goal has no proof. The drawings take one of five math fonts.
+- Keeping work: the proof in the link; a link to share, to the proof or to its sequent
+  alone; every open proof saved in the browser and offered back on the next visit;
+  import of a session or a sequent.
 - Access: everything by keyboard (`?` lists the keys); light and dark themes; every
   colour that carries a meaning also has a word, a sign or a shape; on a phone every
   control is at least 44 by 44 pixels.
