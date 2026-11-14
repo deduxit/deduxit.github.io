@@ -123,6 +123,28 @@ test("a problem opens on a new tab, and once the visitor proves it, it is marked
   ).toBeVisible();
 });
 
+test("a problem proved with steps Hint applied is marked proved, as Practice's text says", async ({
+  page,
+}) => {
+  await goto(page);
+  let practice = await openPractice(page);
+  await expect(practice).toContainText(
+    "A problem counts as proved when you close every goal yourself; Hint may help.",
+  );
+  await practice.getByRole("button", { name: /^Prove A & B ⊢ A,/ }).click();
+  // The fourth press applies ⊕₁; the axiom is the visitor's.
+  for (let press = 0; press < 4; press++)
+    await page.locator("footer").getByRole("button", { name: "Hint" }).click();
+  await rule(page, /^A⊥, formula/, "ax");
+  await expect(
+    page.getByRole("status").filter({ hasText: "Proved: every goal is closed" }),
+  ).toBeVisible();
+  practice = await openPractice(page);
+  await expect(
+    practice.getByRole("button", { name: /^Prove A & B ⊢ A, Easy, proved before/ }),
+  ).toContainText("Proved");
+});
+
 test("a problem the search closes is not marked proved", async ({ page }) => {
   await goto(page);
   let practice = await openPractice(page);
