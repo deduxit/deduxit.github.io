@@ -209,3 +209,37 @@ describe("the mark's lapis", () => {
     expect(named).toEqual([]);
   });
 });
+
+/** A wash token's colour and opacity in each scheme. */
+function wash(name: string): Readonly<Record<(typeof schemes)[number], readonly [Rgb, number]>> {
+  const rgba = "rgb\\((\\d+) (\\d+) (\\d+) / ([0-9.]+)\\)";
+  const match = new RegExp(`--color-${name}-wash: light-dark\\(${rgba}, ${rgba}\\);`).exec(tokens);
+  if (!match) throw new Error(`tokens.css: no --color-${name}-wash pair`);
+  const at = (i: number) =>
+    [[Number(match[i]), Number(match[i + 1]), Number(match[i + 2])], Number(match[i + 3])] as const;
+  return { light: at(1), dark: at(5) };
+}
+
+/** `top` at `alpha` laid over the colour `under`, as hex. */
+function over([top, alpha]: readonly [Rgb, number], under: string): string {
+  const channel = (c: number, i: number) =>
+    Math.round(c * alpha + Number.parseInt(under.slice(1 + 2 * i, 3 + 2 * i), 16) * (1 - alpha))
+      .toString(16)
+      .padStart(2, "0");
+  return `#${top.map(channel).join("")}`;
+}
+
+describe("a keyword's colour", () => {
+  it("reads at 4.5:1 on its wash, which app.css lays on the panel (SC 1.4.3)", () => {
+    const low: string[] = [];
+    for (const tone of ["ok", "warn", "bad", "accent"])
+      for (const scheme of schemes) {
+        const ratio = contrast(
+          colour(tone)[scheme],
+          over(wash(tone)[scheme], colour("panel")[scheme]),
+        );
+        if (ratio < 4.5) low.push(`${tone}, ${scheme}: ${ratio.toFixed(2)}`);
+      }
+    expect(low).toEqual([]);
+  });
+});

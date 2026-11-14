@@ -82,8 +82,12 @@
 .page p {
   margin: 0 0 var(--spacing-3);
 }
-.page a {
+/* A link in running text is underlined: its colour alone does not tell it
+   from the text around it (SC 1.4.1). */
+.page a:not(.logo) {
   color: var(--color-accent);
+  text-decoration: underline;
+  text-underline-offset: var(--spacing-0-5);
 }
 .page h2 {
   font: var(--font-weight-semibold) var(--text-panel) / var(--leading-snug) var(--font-text);
@@ -232,21 +236,29 @@ button.kw {
   min-height: var(--size-control-small);
   cursor: help;
 }
+/* A keyword's wash is laid on the panel whatever stands under it, so that its
+   colour reads at 4.5:1 on Learn's frame and the field alike (colours.test.ts). */
+.kw.bad,
+.kw.warn,
+.kw.ok,
+.kw.acc {
+  background-color: var(--color-panel);
+}
 .kw.bad {
   color: var(--color-bad);
-  background: var(--color-bad-wash);
+  background-image: linear-gradient(var(--color-bad-wash), var(--color-bad-wash));
 }
 .kw.warn {
   color: var(--color-warn);
-  background: var(--color-warn-wash);
+  background-image: linear-gradient(var(--color-warn-wash), var(--color-warn-wash));
 }
 .kw.ok {
   color: var(--color-ok);
-  background: var(--color-ok-wash);
+  background-image: linear-gradient(var(--color-ok-wash), var(--color-ok-wash));
 }
 .kw.acc {
   color: var(--color-accent);
-  background: var(--color-accent-wash);
+  background-image: linear-gradient(var(--color-accent-wash), var(--color-accent-wash));
 }
 .kw.plain {
   color: var(--color-dim);
