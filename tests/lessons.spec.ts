@@ -89,6 +89,12 @@ test("lesson 1 shows the rewrite of A ⊢ A to ⊢ A⊥, A with the Two-sided sw
   await frame.getByRole("button", { name: "Turn on Two-sided" }).click();
   await expect(frame.locator(".rewrite").getByRole("status")).toContainText("Two-sided is on");
   await expect(page.locator(".drawing svg title")).toHaveText("A ⊢ A");
+  // For this visit alone: the stored settings keep the switch off.
+  expect(
+    await page.evaluate(
+      () => JSON.parse(localStorage.getItem("deduxit-settings") ?? "{}").twoSided,
+    ),
+  ).not.toBe(true);
   await frame.getByRole("button", { name: "Turn it off" }).click();
   await expect(page.locator(".drawing svg title")).toHaveText("⊢ A⊥, A");
   await expect(page.getByRole("button", { name: /^A⊥, formula 1 of goal 1/ })).toBeVisible();

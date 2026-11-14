@@ -371,10 +371,13 @@ function LessonView(props: {
   /** Whether the lesson turned the Two-sided switch on to show its rewrite. */
   let sidesShown = false;
   const twoSided = () => props.prover.settings().twoSided;
-  /** Turns the Two-sided switch on, or back off: the rewrite shown as typed, then one-sided. */
+  /**
+   * Turns the Two-sided switch on, or back off: the rewrite shown as typed, then one-sided. For
+   * this visit alone, so that a reload never keeps it on under the one-sided lessons.
+   */
   function sides(on: boolean) {
     sidesShown = on;
-    props.prover.setSettings({ twoSided: on });
+    props.prover.setSettings({ twoSided: on }, true);
   }
   /** Turns the switch off again if the lesson turned it on: the lesson's reasons read one-sided. */
   function oneSided() {

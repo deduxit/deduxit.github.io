@@ -497,8 +497,9 @@ the page reads.
   yourself", opened as a practice problem opens, before "Try the faded proof again"). Every sequent a lesson shows as a problem is a store problem
   with that lesson, so the store's checks cover it. Optional parts: `rewrite` (lesson 1: one
   sentence on how the worked sequent, typed two-sided, reads one-sided, with buttons that
-  turn the Two-sided switch on and off; the lesson turns it off again at its next step and
-  when it closes, if it turned it on), `attempt` (an erroneous
+  turn the Two-sided switch on and off for the visit alone, never stored (`setSettings`'s
+  `visitOnly`); the lesson turns it off again at its next step and when it closes, if it
+  turned it on), `attempt` (an erroneous
   example: steps with the attempt's own reasons, played by Redo from the unfinished session
   `lessons/<id>.attempt.json` on the lesson's tab, then "which step went wrong?" answered as
   the hinge is; the wrong step is the one without a misconception, and `lessons.test.ts` holds

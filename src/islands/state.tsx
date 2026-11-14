@@ -426,6 +426,8 @@ export function createProver(say: (text: string) => void = () => undefined) {
     active: null,
   });
   const [settings, setSettingsSignal] = createSignal<Settings>(loadSettings());
+  /** The settings changed for this visit alone, by their values before: those are what is stored. */
+  const lent: Partial<Settings> = {};
   const [aside, setAsideShelf] = createSignal<Shelf | undefined>(undefined);
   /** The calculus last chosen in this visit, which a new empty tab starts in. */
   const [lastCalculus, setLastCalculus] = createSignal<Calculus>(linear("classical"));
@@ -859,11 +861,20 @@ export function createProver(say: (text: string) => void = () => undefined) {
       });
     }),
 
-    setSettings(change: Partial<Settings>) {
-      const next = { ...settings(), ...change };
+    /**
+     * Changes settings and stores them for the next visit; with `visitOnly`, the change holds for
+     * this visit alone, the values before it are what is stored, until the visitor sets them.
+     */
+    setSettings(change: Partial<Settings>, visitOnly = false) {
+      const now = settings();
+      for (const key of Object.keys(change) as (keyof Settings)[]) {
+        if (!visitOnly) delete lent[key];
+        else if (!(key in lent)) Object.assign(lent, { [key]: now[key] });
+      }
+      const next = { ...now, ...change };
       setSettingsSignal(next);
       try {
-        const { engine: _, ...kept } = next;
+        const { engine: _, ...kept } = { ...next, ...lent };
         storage()?.setItem(SETTINGS_KEY, JSON.stringify(kept));
       } catch {
         // The settings hold for this visit alone.
