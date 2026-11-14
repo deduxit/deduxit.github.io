@@ -92,6 +92,9 @@ export const LESSONS = [
   "Ordinary logic through the translations",
 ] as const;
 
+/** What each lesson holds, under its name in the list and in its button's name. */
+const LESSON_PARTS = "A worked proof, your turn, practice, a check";
+
 const RUBRICS: readonly (readonly [Rubric, string])[] = [
   ["tutorial", "Tutorial"],
   ["reference", "Reference"],
@@ -248,14 +251,15 @@ export function LearnFrame(props: {
                         <button
                           type="button"
                           class="lesson-open"
-                          aria-label={`Lesson ${lesson}: ${name}`}
+                          aria-label={`Lesson ${lesson}: ${name}. ${LESSON_PARTS}`}
                           onClick={() => open(lesson)}
                         >
+                          {/* Spaces between the parts, so that their text reads as words. */}
                           <span class="lesson-n" aria-hidden="true">
                             {lesson}
-                          </span>
-                          <span class="lesson-name">{name}</span>
-                          <span class="sub">A worked proof, your turn, practice, a check</span>
+                          </span>{" "}
+                          <span class="lesson-name">{name}</span>{" "}
+                          <span class="sub">{LESSON_PARTS}</span>
                         </button>
                       </Match>
                       <Match when={props.examples.some((e) => e.lesson === lesson)}>
@@ -1450,7 +1454,7 @@ function Exercise(props: {
               type="button"
               class="btn btn-s outline"
               disabled={busy()}
-              aria-label={`Watch ${props.example.title}`}
+              aria-label={`Watch the proof of ${props.example.title}`}
               data-tip="Its proof from the start: Redo plays the next step"
               onClick={async () => {
                 await props.prover.example(props.example, true);

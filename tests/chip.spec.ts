@@ -37,7 +37,8 @@ test("the calculus mark stands apart from the sequent, its calculus and fragment
   const mark = page.locator(".ptab[aria-current=true] .pt-mark");
   // A wide screen names the logic and shows that the mark opens a menu.
   await expect(mark).toHaveText(/^Linear \(LL\)\s*MLL\s*▾$/, { useInnerText: true });
-  await expect(mark).toHaveAccessibleName(/^Logic: Classical; fragment MLL/);
+  // Its name holds what it shows, for speech input (SC 2.5.3), then the switches' words.
+  await expect(mark).toHaveAccessibleName(/^Logic: Linear \(LL\) MLL ?, Classical; fragment MLL$/);
   const { sequent, parts } = await gaps(page);
   expect(sequent).toBeGreaterThanOrEqual(16);
   expect(parts).toBeGreaterThanOrEqual(8);

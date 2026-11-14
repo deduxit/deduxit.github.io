@@ -50,7 +50,7 @@ test("a lesson's problem opens at once, and Watch plays its proof one step at a 
     .getByRole("group", { name: "Does Tensor commutes have a proof?" })
     .getByRole("button", { name: "Has a proof" })
     .click();
-  await page.getByRole("button", { name: "Watch Tensor commutes" }).click();
+  await page.getByRole("button", { name: "Watch the proof of Tensor commutes" }).click();
   await expect(page.locator(".ptab")).toHaveCount(2);
   await expect(page.getByRole("button", { name: /^A⊥ ⅋ B⊥, formula 1 of goal 1/ })).toBeVisible();
   for (let step = 0; step < 4; step++) {

@@ -207,14 +207,15 @@ export function PracticePlace(props: { prover: Prover; ui: Ui; practice: Practic
                 type="button"
                 class="pr-item"
                 disabled={props.prover.busy()}
-                aria-label={`Prove ${displayed(problem.sequent)}, ${LEVEL_NAMES[problem.level]}${proved().has(problem.id) ? ", proved before" : ""}`}
+                aria-label={`Prove ${displayed(problem.sequent)}, ${LEVEL_NAMES[problem.level]}, ${problem.fragment}${proved().has(problem.id) ? ", proved before" : ""}`}
                 onClick={() => void open(problem)}
               >
-                <span class="m pr-seq">{displayed(problem.sequent)}</span>
+                {/* Spaces between the parts, so that their text reads as words. */}
+                <span class="m pr-seq">{displayed(problem.sequent)}</span>{" "}
                 <span class="pr-meta">
                   <Stairs level={problem.level} />
-                  <span>{LEVEL_NAMES[problem.level]}</span>
-                  <span class="pr-frag">{problem.fragment}</span>
+                  <span>{LEVEL_NAMES[problem.level]}</span>{" "}
+                  <span class="pr-frag">{problem.fragment}</span>{" "}
                   <Show when={proved().has(problem.id)}>
                     <span class="kw ok pr-done">
                       <CircleCheck aria-hidden="true" />

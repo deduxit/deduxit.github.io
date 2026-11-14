@@ -344,7 +344,7 @@ test("a practice problem proved with a cut counts its inferences beside those wi
   const card = frame.locator(".exercise").filter({ hasText: "A short lemma, three uses" });
   await expect(card).toContainText("Prove it with a cut on !B.");
   await card.getByRole("button", { name: "Has a proof" }).click();
-  await card.getByRole("button", { name: "Watch A short lemma, three uses" }).click();
+  await card.getByRole("button", { name: "Watch the proof of A short lemma, three uses" }).click();
   for (let step = 0; step < 17; step++)
     await page.locator("footer").getByRole("button", { name: "Redo" }).click();
   // The answer's feedback is a status of its own beside the count.

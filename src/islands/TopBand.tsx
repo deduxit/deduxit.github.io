@@ -206,6 +206,13 @@ function ProofTab(props: { proof: Proof; prover: Prover; ui: Ui; samples: readon
   const { ui, setUi } = props.ui;
   const markWords = () =>
     `Logic: ${calculusWords(props.proof.calculus)}${fragment() ? `; fragment ${fragment()}` : ""}`;
+  /** The prefix of the ids that name the mark. */
+  const named = `mark-${props.proof.id}`;
+  /** The fragment the mark shows beside the calculus, when it is not the mark itself. */
+  const shownFragment = () => {
+    const f = fragment();
+    return f && f !== mark(props.proof) ? f : undefined;
+  };
   // The mark's switches, opened by a key, closed with the focus lost (Escape): back to the mark.
   createEffect(
     on(
@@ -315,7 +322,7 @@ function ProofTab(props: { proof: Proof; prover: Prover; ui: Ui; samples: readon
         class="pt-mark"
         aria-expanded={isActive() && ui.menu === "calculus"}
         data-tip={markWords()}
-        aria-label={markWords()}
+        aria-labelledby={`${named}-logic ${named}-mk ${named}-frag ${named}-words`}
         ref={chip}
         onClick={(event) => {
           props.prover.activate(props.proof.id);
@@ -329,17 +336,32 @@ function ProofTab(props: { proof: Proof; prover: Prover; ui: Ui; samples: readon
         }}
       >
         {/* The suite named on a wide screen; a phone keeps the short mark. */}
-        <span class="mk">
+        <span class="mk" id={`${named}-mk`}>
           <span class="wide-only">{markLabel(props.proof.calculus)}</span>
           <span class="phone-only">{mark(props.proof)}</span>
         </span>
-        <Show when={fragment() !== mark(props.proof) && fragment()}>
-          {(f) => <span class="frag">{f()}</span>}
+        <Show when={shownFragment()}>
+          {(f) => (
+            <>
+              {/* A space, so that the mark and the fragment read as two words. */}{" "}
+              <span class="frag" id={`${named}-frag`}>
+                {f()}
+              </span>
+            </>
+          )}
         </Show>
         <span class="wide-only caret-down" aria-hidden="true">
           ▾
         </span>
       </button>
+      {/* The mark's name is what it shows at either width, which speech input says (SC 2.5.3),
+          between these words, which a screen reader alone hears. */}
+      <span id={`${named}-logic`} hidden>
+        Logic:
+      </span>
+      <span id={`${named}-words`} hidden>
+        , {markWords().slice("Logic: ".length)}
+      </span>
       <button
         type="button"
         class="pt-x"

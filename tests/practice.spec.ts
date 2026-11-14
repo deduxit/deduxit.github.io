@@ -114,12 +114,12 @@ test("a problem opens on a new tab, and once the visitor proves it, it is marked
   ).toBeVisible();
   practice = await openPractice(page);
   await expect(
-    practice.getByRole("button", { name: /^Prove A & B ⊢ A, Easy, proved before/ }),
+    practice.getByRole("button", { name: /^Prove A & B ⊢ A, Easy, ALL, proved before/ }),
   ).toContainText("Proved");
   await page.reload();
   practice = await openPractice(page);
   await expect(
-    practice.getByRole("button", { name: /^Prove A & B ⊢ A, Easy, proved before/ }),
+    practice.getByRole("button", { name: /^Prove A & B ⊢ A, Easy, ALL, proved before/ }),
   ).toBeVisible();
 });
 
@@ -141,7 +141,7 @@ test("a problem proved with steps Hint applied is marked proved, as Practice's t
   ).toBeVisible();
   practice = await openPractice(page);
   await expect(
-    practice.getByRole("button", { name: /^Prove A & B ⊢ A, Easy, proved before/ }),
+    practice.getByRole("button", { name: /^Prove A & B ⊢ A, Easy, ALL, proved before/ }),
   ).toContainText("Proved");
 });
 
