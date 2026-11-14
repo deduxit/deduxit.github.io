@@ -60,7 +60,8 @@ Everything comes from the Nix flake (flake-parts, `modules/`):
 - `nix develop` (or direnv) opens the dev shell; its `menu` lists the commands;
 - `nix build` builds the site into `result/`;
 - `nix flake check` runs every check: the site's build, Vitest, `astro check`, Biome,
-  Playwright in Chromium, the Content-Security-Policy's hashes, the licences served, the
+  Playwright in Chromium (axe's accessibility rules among its tests), the
+  Content-Security-Policy's hashes, the licences served, the
   formatting, the licence headers, and the problems against deduxit's command.
 
 The site is Astro with one Solid island, in TypeScript with Tailwind. deduxit's

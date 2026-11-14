@@ -713,6 +713,10 @@ the page reads.
   `tokens.css`, never a `style` attribute in markup (the `no-style-attributes` check):
   placement goes through the CSSOM (`el.style.left = …`) in a ref or an effect.
 - No `!important` (Biome's rule): reduced motion zeroes the duration tokens instead.
+- **A keyword's wash is laid on the panel** (`.kw.bad` and its kin: `background-color` the panel,
+  `background-image` the wash), whatever stands under it: on Learn's frame the wash over the
+  frame's tint left `--color-bad` at 4.29:1. `colours.test.ts` holds every tone at 4.5:1 on its
+  wash over the panel. A link in running text on a page of text is underlined (SC 1.4.1).
 - **No raw value outside the tokens** (`src/styles/tokens.test.ts`): every length, colour,
   duration, weight, opacity and layer in `app.css` is a `var(--…)`; allowed bare are 0, 1,
   `1fr`, `50%`/`100%`, `100vw`/`100vh`, and integers inside `calc()` as arithmetic over
@@ -724,8 +728,8 @@ the page reads.
   both 44 px under the phone's media query in `tokens.css`, and shares the states of the
   grammar's one rule in `app.css` (hover, `:active`, focus ring, disabled).
   `tests/targets.spec.ts` measures every visible control in every state at both widths
-  (44 on a phone, 24 on a desktop): a new control, popover or state gets a step in its
-  walk. A formula's button covers half the gap to its neighbours and is at least a
+  (44 on a phone, 24 on a desktop): a new control, popover or state gets a step in the walk
+  of `tests/states.ts`, which `tests/accessibility.spec.ts` walks too. A formula's button covers half the gap to its neighbours and is at least a
   control's height on screen, and `fitView` never zooms out below the size at which the
   active goal's formulas are a control wide (`floor`); a step that leaves them narrower
   zooms in to the floor unless the visitor zoomed by hand since the last fit (`byHand`).
@@ -738,7 +742,12 @@ the page reads.
   8 between the calculus and the fragment); `tests/chip.spec.ts` measures the gaps on the
   label (`.mk`) and that the phone's tab and `+` fit the row. On a wide screen the label names
   the suite with the mark and a ▾ follows (`markLabel`, "Linear (LL) ▾"), so that it reads as
-  the control it is; a phone keeps the short mark. Its accessible name stays "Logic: …".
+  the control it is; a phone keeps the short mark. Its accessible name is "Logic:", then what it
+  shows at that width, then the switches' words ("Logic: Linear (LL) MLL, Classical; fragment
+  MLL"): `aria-labelledby` over its own label and fragment and two `hidden` spans beside it, so
+  that the name holds the visible text at either width (SC 2.5.3, Label in Name), and the mark's
+  `textContent`, which tests read with `toContainText`, holds no word a screen reader alone
+  hears.
 - **On a phone** the bottom band keeps undo, redo, close all, hint, Practice and Learn;
   `wide-only` actions move to More's sheet. Tips follow a mouse or a keyboard, never a
   touch (`App.tsx`).
@@ -762,5 +771,29 @@ the page reads.
   `tests/phone.spec.ts` at a phone's width), against the built site served as Pages
   serves it (`tests/serve.ts`). Name elements by role and accessible name; a formula's
   button is named `<formula>, formula <p> of goal <g>`.
+- **axe** (`@axe-core/playwright`, `tests/accessibility.spec.ts`) runs WCAG 2.0 to 2.2 at A and
+  AA and axe's best practices on every page (the prover, privacy, 404, the Rocq library's old
+  address with its refresh taken out) and in every state of `tests/states.ts`, in both schemes
+  at a desktop's and a phone's width; a violation fails the test, with axe's reason in the
+  line. One exception is listed in the spec: a rule label's button over a drawing fitted to a
+  phone overlaps its neighbours (SC 2.5.8), its hint being in Learn's Reference as well (the
+  criterion's "equivalent" exception). What axe leaves "incomplete" is not asserted: contrast
+  over a gradient (the stage's dotted field, and every keyword's wash, which
+  `colours.test.ts` holds instead), under an overlapping element, or of symbols alone.
+- **A control's visible text is in its accessible name** (SC 2.5.3): axe compares words, joins
+  an element's text nodes with no space between elements and drops what stands in
+  parentheses. So the parts of a control's label are separated by a space in the markup
+  (`{" "}` between spans of a flex or grid button, which the layout ignores), and an
+  `aria-label` repeats every word the control shows (a practice row's fragment, a lesson's
+  parts, Watch's "the proof of").
+- **The stage measures its buttons at the scale the drawing is shown at** (`rendered()` in
+  `Stage.tsx`), never at `camera().k`: the effect that lays them again after a zoom runs before
+  the world's transform follows the camera, and a glide may be under way; measured at the
+  camera's scale, a fitted goal's buttons on a phone with Learn open lay 30 to 90 pixels off
+  their formulas. The sizes a button must reach on the screen still come from `camera().k`.
+- **The dock keeps clear of the stage's controls**: where it fits neither above the goal nor
+  below it without running under them (a short stage: a phone with Learn open), the goal moves
+  down until the dock fits above it, if the goal then still clears the controls
+  (`phone.spec.ts`).
 - In the dev shell, `e2e` drops the host's `LD_LIBRARY_PATH`, which breaks nixpkgs'
   Chromium; a scratch script that launches Chromium needs `env -u LD_LIBRARY_PATH` too.
