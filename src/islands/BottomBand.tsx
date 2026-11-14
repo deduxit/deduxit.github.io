@@ -679,10 +679,8 @@ function ExportMenu(props: {
         </li>
         <li class="msep" aria-hidden="true" />
         <li role="none">
-          <div role="group" aria-labelledby="share-link">
-            <p class="kw-label h" id="share-link">
-              Share a link
-            </p>
+          <fieldset class="share">
+            <legend class="kw-label h">Share a link</legend>
             <ul class="mlist">
               <li>
                 <button
@@ -709,7 +707,7 @@ function ExportMenu(props: {
                 </button>
               </li>
             </ul>
-          </div>
+          </fieldset>
         </li>
         <li class="msep" aria-hidden="true" />
         <li>

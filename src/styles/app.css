@@ -1204,8 +1204,9 @@ button.wordmark {
 .mi.icon-row {
   grid-template-columns: var(--size-icon) 1fr;
 }
-/* The exports' font: four names two by two, the one chosen marked as a segment is. */
-.font-choice {
+/* The exports' font and the share links, each a group of the menu under its legend. */
+.font-choice,
+.share {
   border: 0;
   margin: 0;
   padding: 0;
@@ -1569,13 +1570,12 @@ button.wordmark {
   gap: var(--spacing-2);
 }
 .prac-h {
+  font: var(--font-weight-semibold) var(--text-body) / var(--leading-snug) var(--font-text);
   display: list-item;
-  line-height: var(--size-control);
   min-height: var(--size-control);
   cursor: pointer;
   border-radius: var(--radius-control);
   padding: 0 var(--spacing-1);
-  font: var(--font-weight-semibold) var(--text-body) / var(--leading-snug) var(--font-text);
   color: var(--color-ink);
 }
 .prac-h::marker {
@@ -1587,6 +1587,9 @@ button.wordmark {
 /* A practice row's answer buttons, side by side in the row with Prove. */
 .decide {
   margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
 }
 .answer {
   margin-top: var(--spacing-2);

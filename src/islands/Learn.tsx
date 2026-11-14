@@ -1406,11 +1406,7 @@ function Exercise(props: {
         )}
       </Show>
       <div class="row">
-        <div
-          class="row decide"
-          role="group"
-          aria-label={`Does ${props.example.title} have a proof?`}
-        >
+        <fieldset class="row decide" aria-label={`Does ${props.example.title} have a proof?`}>
           <button
             type="button"
             class="btn btn-s outline"
@@ -1427,7 +1423,7 @@ function Exercise(props: {
           >
             No proof
           </button>
-        </div>
+        </fieldset>
         <button
           type="button"
           class="btn btn-s outline"
