@@ -51,8 +51,8 @@ async function tooSmall(page: Page, least: number): Promise<string[]> {
  * empty page, a proof with the rule popover, the split chooser, a refusal,
  * a hint, a proof closed and its net, every menu, the status and the
  * calculus, the restart warning, Practice and its filters, Learn's two
- * places and a lesson's parts, the tour, a field's parse error, the
- * restore bar, a goal an earlier step lost and a long reason.
+ * places and a lesson's parts, the tour, a field's parse error, and the
+ * restore bar.
  */
 async function walk(page: Page, least: number) {
   const found: string[] = [];
@@ -190,13 +190,20 @@ async function walk(page: Page, least: number) {
   await page.reload();
   await expect(page.getByRole("region", { name: "Restore" })).toBeVisible();
   await measure("restore");
-  // A goal an earlier step lost, with Go back.
-  await start(page, "A * B |- A", false);
+  return found;
+}
+
+/** A goal's reasons: a goal an earlier step lost, with Go back, and a long reason with its "more". */
+async function reasons(page: Page, least: number): Promise<string[]> {
+  const found: string[] = [];
+  const measure = async (state: string) => {
+    for (const small of await tooSmall(page, least)) found.push(`${state}: ${small}`);
+  };
+  await start(page, "A * B |- A");
   await rule(page, /^A⊥ ⅋ B⊥, formula/, "⅋");
   await page.getByRole("button", { name: "Close goal" }).click();
   await expect(page.getByRole("button", { name: "Go back" })).toBeVisible();
   await measure("lost goal");
-  // A long reason with its "more".
   await start(page, "!(a -o a * a * a), !(a -o a), a |- a * (a + 0)", false);
   await calculus(page, ["Intuitionistic"]);
   await page.getByRole("button", { name: "Close goal" }).click();
@@ -259,6 +266,12 @@ test("every control is a target of 24 by 24 pixels at least, at a desktop's widt
   expect(await walk(page, 24)).toEqual([]);
 });
 
+test("a goal's reasons and their controls are targets of 24 by 24 pixels at least, at a desktop's width", async ({
+  page,
+}) => {
+  expect(await reasons(page, 24)).toEqual([]);
+});
+
 test("an ordinary tab's controls are targets of 24 by 24 pixels at least, at a desktop's width", async ({
   page,
 }) => {
@@ -275,6 +288,10 @@ test.describe("at a phone's width", () => {
 
   test("every control is a target of 44 by 44 pixels at least", async ({ page }) => {
     expect(await walk(page, 44)).toEqual([]);
+  });
+
+  test("a goal's reasons and their controls are 44 by 44 pixels at least", async ({ page }) => {
+    expect(await reasons(page, 44)).toEqual([]);
   });
 
   test("the witness chooser and its refusal are 44 by 44 pixels at least", async ({ page }) => {
