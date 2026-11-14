@@ -167,8 +167,11 @@ test("an ordinary proof's link and stored copy carry its suite; an old link open
   browser,
 }) => {
   await ordinary(page, "minimal", "a -> b |- ~b -> ~a");
-  await rule(page, /^¬b → ¬a, formula/, "→R");
+  // The link is written after each change, the sequent's session first: wait for the step's.
   await expect(page).toHaveURL(/#v=2&u=ordinary&m=minimal&s=.*&d=/);
+  const before = page.url();
+  await rule(page, /^¬b → ¬a, formula/, "→R");
+  await expect(page).not.toHaveURL(before);
   const fresh = await browser.newPage();
   await fresh.goto(page.url());
   await expect(fresh.locator(".ptab[aria-current=true] .pt-mark")).toContainText("LM");
