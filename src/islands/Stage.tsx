@@ -615,7 +615,14 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
     return { w: Math.max(svg.width.baseVal.value, ...labels), h: svg.height.baseVal.value };
   };
 
-  function move(next: Camera, smooth = false) {
+  /**
+   * Whether the camera stands where the page put it (a fit, a goal brought into view), not
+   * where the visitor moved it: only then may the dock move the drawing to make room.
+   */
+  let placedByPage = true;
+
+  function move(next: Camera, smooth = false, byVisitor = false) {
+    placedByPage = !byVisitor;
     setGlide(smooth && !reduced());
     setCamera(next);
   }
@@ -685,7 +692,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
     const k = Math.max(0.2, Math.min(4, c.k * by));
     const px = at?.x ?? stage.clientWidth / 2;
     const py = at?.y ?? stage.clientHeight / 2;
-    move({ k, x: px - ((px - c.x) * k) / c.k, y: py - ((py - c.y) * k) / c.k }, !at);
+    move({ k, x: px - ((px - c.x) * k) / c.k, y: py - ((py - c.y) * k) / c.k }, !at, true);
   }
 
   /** Zooms by `by` about the point `from` of the stage, which then lies at `to`: a pinch. */
@@ -693,7 +700,11 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
     byHand = true;
     const c = camera();
     const k = Math.max(0.2, Math.min(4, c.k * by));
-    move({ k, x: to.x - ((from.x - c.x) * k) / c.k, y: to.y - ((from.y - c.y) * k) / c.k });
+    move(
+      { k, x: to.x - ((from.x - c.x) * k) / c.k, y: to.y - ((from.y - c.y) * k) / c.k },
+      false,
+      true,
+    );
   }
 
   createEffect(() => {
@@ -732,11 +743,17 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
     const below = goalBottom - s.top + gap;
     // Below, the dock must end over the stage's controls, which would cover its buttons (a
     // short stage: a phone with Learn open). Where it would not, the goal moves down until
-    // the dock fits above it, if the goal then still clears the controls.
+    // the dock fits above it, if the goal then still clears the controls, and unless the
+    // visitor moved the drawing there.
     const floorY =
       (stage.querySelector(".stage-ctl")?.getBoundingClientRect().top ?? s.bottom) - gap;
     const lift = gap - above;
-    if (above < gap && s.top + below + height > floorY && goalBottom + lift <= floorY) {
+    if (
+      placedByPage &&
+      above < gap &&
+      s.top + below + height > floorY &&
+      goalBottom + lift <= floorY
+    ) {
       move({ ...camera(), y: camera().y + lift });
       return;
     }
@@ -866,7 +883,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
         if (apart > 0) pinch(Math.hypot(now.x - other.x, now.y - other.y) / apart, from, to);
       } else if (pointers.size === 1 && was.pans) {
         const c = camera();
-        move({ ...c, x: c.x + now.x - was.x, y: c.y + now.y - was.y });
+        move({ ...c, x: c.x + now.x - was.x, y: c.y + now.y - was.y }, false, true);
       }
     };
     const up = (event: PointerEvent) => {
@@ -901,7 +918,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
         });
       } else {
         const c = camera();
-        move({ ...c, x: c.x - event.deltaX, y: c.y - event.deltaY });
+        move({ ...c, x: c.x - event.deltaX, y: c.y - event.deltaY }, false, true);
       }
     };
     const resized = new ResizeObserver(() => setDrawn((n) => n + 1));

@@ -144,4 +144,14 @@ test("with Learn open, a fitted goal's buttons lie over its formulas, and its do
     return { off, clear: !!dock && !!controls && dock.bottom <= controls.top };
   });
   expect(placed).toEqual({ off: [], clear: true });
+  // A drag up on the field stays where the visitor leaves it: the dock moves the drawing only
+  // where the page placed it.
+  const top = () =>
+    page.locator(".world").evaluate((w) => new DOMMatrix(getComputedStyle(w).transform).f);
+  const before = await top();
+  await page.mouse.move(200, 300);
+  await page.mouse.down();
+  for (let step = 1; step <= 5; step++) await page.mouse.move(200, 300 - 10 * step);
+  await page.mouse.up();
+  expect(await top()).toBeLessThan(before - 40);
 });
