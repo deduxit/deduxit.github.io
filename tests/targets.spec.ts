@@ -4,7 +4,10 @@
 // Every control of the page, in every state the page can be put in, is a
 // target of at least 44 by 44 pixels at a phone's width and of at least 24
 // by 24 (WCAG 2.2, 2.5.8) at a desktop's: measured where it is drawn. A link
-// inside a sentence is WCAG's inline exception and is not measured.
+// inside a sentence is WCAG's inline exception and is not measured. A rule
+// label's button over the drawing is as large as its neighbours leave it: it
+// overlaps no other button of the drawing, and where it is short of the floor
+// on an axis, it reaches a neighbour's button on that axis.
 
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
@@ -33,6 +36,41 @@ async function tooSmall(page: Page, least: number): Promise<string[]> {
       "button, input:not([type=checkbox]), select, textarea, summary, a[href], [role=tab], [role=radio], label.sw, label.chip",
     );
     const small: string[] = [];
+    const drawn = [...document.querySelectorAll<HTMLElement>(".hits button")].map((b) => ({
+      b,
+      r: b.getBoundingClientRect(),
+    }));
+    const across = (a: number, b: number, c: number, d: number) => Math.min(b, d) - Math.max(a, c);
+    for (const { b, r } of drawn) {
+      if (!b.classList.contains("lb")) continue;
+      for (const other of drawn) {
+        const o = other.r;
+        if (
+          other.b !== b &&
+          across(r.left, r.right, o.left, o.right) > 0.5 &&
+          across(r.top, r.bottom, o.top, o.bottom) > 0.5
+        )
+          small.push(
+            `${b.getAttribute("aria-label")} overlaps ${other.b.getAttribute("aria-label")}`,
+          );
+      }
+    }
+    /** Whether a label's button meets a neighbour's on the axis it is short on. */
+    const shared = (control: HTMLElement, r: DOMRect, vertical: boolean) =>
+      control.classList.contains("lb") &&
+      drawn.some(({ b, r: o }) => {
+        if (b === control) return false;
+        const [near, beside] = vertical
+          ? [
+              Math.min(Math.abs(o.top - r.bottom), Math.abs(r.top - o.bottom)),
+              across(r.left, r.right, o.left, o.right),
+            ]
+          : [
+              Math.min(Math.abs(o.left - r.right), Math.abs(r.left - o.right)),
+              across(r.top, r.bottom, o.top, o.bottom),
+            ];
+        return near < 0.75 && beside > 0;
+      });
     for (const control of controls) {
       if (!control.checkVisibility({ visibilityProperty: true, opacityProperty: false })) continue;
       if (control.closest(".sr-only, [aria-hidden=true]")) continue;
@@ -48,7 +86,9 @@ async function tooSmall(page: Page, least: number): Promise<string[]> {
       }
       const r = control.getBoundingClientRect();
       if (r.width === 0 && r.height === 0) continue;
-      if (Math.round(r.width) < least || Math.round(r.height) < least) {
+      const narrow = Math.round(r.width) < least && !shared(control, r, false);
+      const short = Math.round(r.height) < least && !shared(control, r, true);
+      if (narrow || short) {
         const name =
           control.getAttribute("aria-label") ??
           control.textContent?.trim().slice(0, 40) ??

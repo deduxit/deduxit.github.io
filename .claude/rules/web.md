@@ -733,7 +733,12 @@ the page reads.
   grammar's one rule in `app.css` (hover, `:active`, focus ring, disabled).
   `tests/targets.spec.ts` measures every visible control in every state at both widths
   (44 on a phone, 24 on a desktop): a new control, popover or state gets a step in the walk
-  of `tests/states.ts`, which `tests/accessibility.spec.ts` walks too. A formula's button covers half the gap to its neighbours and is at least a
+  of `tests/states.ts`, which `tests/accessibility.spec.ts` walks too. A rule label's button grows to a control's size but stops at a formula's or a cut's button
+  and halfway to the next label (`spread` in `src/lib/gap.ts`, pairs nearest first, each pair
+  only while its buttons still meet), so a label of a drawing fitted to a phone may be shorter
+  than 44 pixels: `targets.spec.ts` accepts that only where it reaches a neighbour's button on
+  that axis, and fails any two buttons of the drawing that overlap (they had overlapped at 44,
+  each hiding part of the other's taps). A formula's button covers half the gap to its neighbours and is at least a
   control's height on screen, and `fitView` never zooms out below the size at which the
   active goal's formulas are a control wide (`floor`); a step that leaves them narrower
   zooms in to the floor unless the visitor zoomed by hand since the last fit (`byHand`).
@@ -779,11 +784,14 @@ the page reads.
   AA and axe's best practices on every page (the prover, privacy, 404, the Rocq library's old
   address with its refresh taken out) and in every state of `tests/states.ts`, in both schemes
   at a desktop's and a phone's width; a violation fails the test, with axe's reason in the
-  line. One violation is filtered, with its reason in the spec: a rule label's button over a
-  drawing fitted to a phone overlaps its neighbours (SC 2.5.8). For a linear rule its hint is in
-  Learn's Reference as well (the criterion's "equivalent" exception); for LK's, LJ's, the
-  Lambek calculus's, Mix and weakening it is not, and it waits for a decision on how a drawing
-  fits a phone. What axe leaves "incomplete" is not asserted: contrast
+  line. One violation is filtered, with its reason in the spec (SC 2.5.8): a rule label's
+  button over a drawing fitted to a phone that is under 24 pixels because its neighbours are
+  nearer than that, or that lies partly under the stage's view controls or a sheet over the
+  stage. A label's button covered by another button of the drawing is never filtered: the
+  labels share the gaps (`spread`, below). For a linear rule its hint is in Learn's Reference
+  as well (the criterion's "equivalent" exception); for LK's, LJ's, the Lambek calculus's, Mix
+  and weakening it is not, and it waits for a decision on how a drawing fits a phone. What axe
+  leaves "incomplete" is not asserted: contrast
   over a gradient (the stage's dotted field, and every keyword's wash, which
   `colours.test.ts` holds instead), under an overlapping element, or of symbols alone.
 - **A control's visible text is in its accessible name** (SC 2.5.3): axe compares words, joins

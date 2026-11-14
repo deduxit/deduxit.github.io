@@ -33,6 +33,7 @@ import {
   Show,
 } from "solid-js";
 import { engineLabel, engineName, engineOf, engineTip } from "../lib/engines";
+import { type Box, spread } from "../lib/gap";
 import {
   type CutShown,
   failure,
@@ -471,14 +472,17 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
   /**
    * The rule labels' buttons, read off the drawing shown: deduxit writes an inference's label
    * right after its group `i<n>`, a text, or a group where the name has a subscript (`⊕₁`), whose
-   * digits the name writes as subscripts. Each is at least a control's height on the screen.
+   * digits the name writes as subscripts. Each grows to a control's size on the screen, as far
+   * as half the gap to the next label and the edge of a formula's or a cut's button (`spread`):
+   * a fitted drawing on a phone sets its labels closer than that, and overlapping buttons hid
+   * each other's taps.
    */
-  function labelTargets(): LabelHit[] {
+  function labelTargets(formulas: readonly Box[], cuts: readonly Box[]): LabelHit[] {
     if (ui.tab === "net" || !host.firstChild) return [];
     const origin = host.getBoundingClientRect();
     const at = rendered();
     const least = token("--size-control-small") / camera().k;
-    const found: LabelHit[] = [];
+    const found: { label: string; step: number; ink: Box }[] = [];
     for (const group of host.querySelectorAll("g[id]")) {
       if (!/^i\d+$/.test(group.id)) continue;
       const label = group.nextElementSibling;
@@ -491,25 +495,28 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
           : text;
       if (!name || !hinted(name, true)["data-rule-hint"]) continue;
       const r = label.getBoundingClientRect();
-      const w = Math.max(r.width / at, least);
-      const h = Math.max(r.height / at, least);
       found.push({
         label: name,
         // The description numbers the inference `i<n>` as n + 1.
         step: Number(group.id.slice(1)) + 1,
-        x: (r.left - origin.left) / at + r.width / at / 2 - w / 2,
-        y: (r.top - origin.top) / at + r.height / at / 2 - h / 2,
-        w,
-        h,
+        ink: {
+          x: (r.left - origin.left) / at,
+          y: (r.top - origin.top) / at,
+          w: r.width / at,
+          h: r.height / at,
+        },
       });
     }
-    return found;
+    const boxes = spread(
+      found.map((f) => f.ink),
+      least,
+      [...formulas, ...cuts],
+    );
+    return found.map((f, i) => ({ label: f.label, step: f.step, ...(boxes[i] as Box) }));
   }
   // Whenever the formulas' or the cuts' buttons are laid again, so are the labels'.
   createEffect(() => {
-    hits();
-    cutHits();
-    setLabelHits(labelTargets());
+    setLabelHits(labelTargets(hits(), cutHits()));
   });
 
   /** The inference whose premise an inference is, or -1 for the root. */

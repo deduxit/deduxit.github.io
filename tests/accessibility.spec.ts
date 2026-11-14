@@ -31,23 +31,36 @@ import {
 /** The rule sets run: WCAG 2.0, 2.1 and 2.2 at A and AA, and axe's best practices. */
 const TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22a", "wcag22aa", "best-practice"];
 
+/** One element axe judged under one rule. */
+type NodeResult = Awaited<ReturnType<AxeBuilder["analyze"]>>["violations"][number]["nodes"][number];
+
+/** A button the stage lays over its drawing: a rule label's, a formula's or a cut's. */
+const DRAWN = /^<button[^>]* class="(lb|fb|cb)"/;
+
 /**
- * Whether a violation is the one this audit lists and leaves: a rule label's button over a
- * drawing fitted to a phone overlaps its neighbours (SC 2.5.8). For a linear rule, the hint the
- * label opens is also in Learn's Reference, whose controls meet the criterion: SC 2.5.8's
- * "equivalent" exception. For a rule the Reference lacks (LK's and LJ's, the Lambek calculus's,
- * Mix, weakening) it is a violation that waits for a decision on how a drawing fits a phone.
- * A screen reader hears the hint as the label's description in every case.
+ * Whether a violation is one this audit lists and leaves (SC 2.5.8): a rule label's button
+ * over a drawing fitted to a phone that is smaller than 24 pixels because its neighbours are
+ * closer than that, or that lies partly under the stage's view controls or a sheet over the
+ * stage, which the drawing pans beneath. Each label's button shares the gap with its
+ * neighbours (`spread`), so one that a drawn button covers is never excepted. For a linear
+ * rule, the hint the label opens is also in Learn's Reference, whose controls meet the
+ * criterion: SC 2.5.8's "equivalent" exception. For a rule the Reference lacks (LK's and LJ's,
+ * the Lambek calculus's, Mix, weakening) it is a violation that waits for a decision on how a
+ * drawing fits a phone. A screen reader hears the hint as the label's description in every case.
  */
-const excepted = (rule: string, html: string) =>
-  rule === "target-size" && /^<button[^>]* class="lb"/.test(html);
+const excepted = (rule: string, node: NodeResult) =>
+  rule === "target-size" &&
+  /^<button[^>]* class="lb"/.test(node.html) &&
+  !node.any.some(
+    (check) => check.id === "target-size" && check.relatedNodes?.some((r) => DRAWN.test(r.html)),
+  );
 
 /** axe's violations on the page as it stands, one line per rule and element, with axe's reason. */
 async function violations(page: Page, state: string): Promise<string[]> {
   const results = await new AxeBuilder({ page }).withTags(TAGS).analyze();
   return results.violations.flatMap((rule) =>
     rule.nodes
-      .filter((node) => !excepted(rule.id, node.html))
+      .filter((node) => !excepted(rule.id, node))
       .map((node) => {
         const why = [...node.any, ...node.all, ...node.none].map((check) => check.message);
         return `${state}: ${rule.id} at ${node.target.join(" ")}: ${why.join("; ") || rule.help}`;
