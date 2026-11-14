@@ -390,10 +390,13 @@ test("the link in the fragment restores the proof, or says it could not", async 
   await expect(fresh.getByRole("button", { name: /^A⊥, formula 1 of goal 2/ })).toBeVisible();
   await expect(fresh.getByRole("region", { name: "Restore" })).toHaveCount(0);
   await expect(fresh.locator(".ptab")).toHaveCount(1);
-  await fresh.goto(url.replace(/&d=[^&]*/, "&d=AAAA"));
-  await fresh.reload();
-  await expect(fresh.getByText("Proof not restored")).toBeVisible();
-  await expect(fresh.getByRole("button", { name: /^A⊥ ⅋ B⊥, formula 1 of goal 1/ })).toBeVisible();
+  // A broken link, opened as a load of its own: a change of the fragment alone keeps the
+  // document, whose link of the proof, written 400 ms after its last change, could replace the
+  // broken one before a reload.
+  const broken = await browser.newPage();
+  await broken.goto(url.replace(/&d=[^&]*/, "&d=AAAA"));
+  await expect(broken.getByText("Proof not restored")).toBeVisible();
+  await expect(broken.getByRole("button", { name: /^A⊥ ⅋ B⊥, formula 1 of goal 1/ })).toBeVisible();
 });
 
 test("a link whose sequent does not parse shows the parse error under the field", async ({
