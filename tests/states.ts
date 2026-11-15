@@ -262,6 +262,30 @@ export async function ordinary(page: Page, visit: Visit) {
   await visit("ordinary countermodel");
 }
 
+/**
+ * A classical proof's other views: its truth table with the countermodel, its tableau with an
+ * open branch, and a table past the bound on atoms with the way to draw it.
+ */
+export async function methods(page: Page, visit: Visit) {
+  await goto(page);
+  await calculus(page, ["Ordinary", "Classical"]);
+  await page.getByRole("textbox", { name: "Sequent" }).fill("a -> b |- b -> a");
+  await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
+  await page.getByRole("tab", { name: "Table", exact: true }).click();
+  await expect(page.getByRole("img", { name: /^A countermodel of/ })).toBeVisible();
+  await visit("truth table");
+  await page.getByRole("tab", { name: "Tableau" }).click();
+  await expect(page.locator(".tb-end").first()).toBeVisible();
+  await visit("tableau");
+  await page.getByRole("button", { name: "New proof" }).click();
+  await page.getByRole("textbox", { name: "Sequent" }).fill("a, b, c, d, e, f, g, h, i, j, k |- a");
+  await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
+  await page.getByRole("tab", { name: "Table", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Draw all 2048 rows" })).toBeVisible();
+  await visit("table refused");
+  await page.getByRole("tab", { name: "Tree" }).click();
+}
+
 /** The witness chooser with a term typed, and its refusal. */
 export async function witnessing(page: Page, visit: Visit) {
   await start(page, "|- exists x. p(x), ~p(c)");

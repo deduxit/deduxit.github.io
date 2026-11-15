@@ -19,6 +19,7 @@ import {
   fonts,
   learning,
   menus,
+  methods,
   ordinary,
   pixel,
   practising,
@@ -151,8 +152,20 @@ test("an ordinary tab's controls are targets of 24 by 24 pixels at least, at a d
   expect(await measured(page, 24, ordinary)).toEqual([]);
 });
 
+test("a truth table's and a tableau's controls are targets of 24 by 24 pixels at least", async ({
+  page,
+}) => {
+  expect(await measured(page, 24, methods)).toEqual([]);
+});
+
 test.describe("at a phone's width", () => {
   test.use(pixel);
+
+  test("a truth table's and a tableau's controls are 44 by 44 pixels at least", async ({
+    page,
+  }) => {
+    expect(await measured(page, 44, methods)).toEqual([]);
+  });
 
   test("an ordinary tab's controls are 44 by 44 pixels at least", async ({ page }) => {
     expect(await measured(page, 44, ordinary)).toEqual([]);
