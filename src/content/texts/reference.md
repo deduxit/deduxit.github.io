@@ -72,15 +72,20 @@ atom.
 
 Two switches at the Logic mark beside the sequent each add a rule. With Mix on, `mix`
 splits a goal into two goals that share no formula. With Affine on, `wk` drops any
-formula, under `?` or not. Each rule is listed here as each drawing writes it.
+formula, under `?` or not. Here each is one-sided, and `wk` intuitionistic too; the next
+section has both two-sided.
 
 <div data-rules-added></div>
 
-With the Two-sided switch on, the stage names each classical rule by its two-sided
-names, listed under the rules above. A formula typed as a negation has two more rules,
-which move it to the other side of `⊢`:
+## Classical, two-sided
 
-<div data-rules-negation></div>
+With the Two-sided switch on, the stage draws a classical derivation as the sequent was
+typed: each formula on its side of `⊢`, any number on each side, and each rule named by
+the side it acts on. Most are a one-sided rule above read from that side, and listed
+under it by name. A formula typed as a negation has two more rules, `~L` and `~R`, which move it
+to the other side of `⊢`.
+
+<div data-rules-classical></div>
 
 ## The Lambek calculus
 

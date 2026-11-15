@@ -577,9 +577,11 @@ the page reads.
   intuitionistic proof, as for every rule. A step's reason is placed beside the rule label, which
   deduxit draws as a text, or as a group where the name has a subscript (`⊕₁`).
 - **The reference shows every hint a rule label shows** (SC 2.5.8's "equivalent" exception for
-  a label's small button, below): the written rules, the two-sided names they list, and the
-  parts `REFERENCE` in `src/lib/rules.ts` takes from the hints' own tables (Mix and affine
-  weakening in each drawing, the two-sided `~L` and `~R`, the Lambek calculus, LK, LJ), drawn
+  a label's small button, below): each label's own full name, schema and sentence, from the
+  written rules or from the parts `REFERENCE` in `src/lib/rules.ts` takes from the hints' own
+  tables (Mix and affine weakening, classical linear logic drawn two-sided, the Lambek
+  calculus, LK, LJ). A two-sided name listed under a one-sided rule is no equivalent: its
+  hint's schema is two-sided. The parts are drawn
   by `HintRules` into `<div data-rules-<key>>` in `texts/reference.md`, in the written rules'
   form (`RuleItem`). `rules.test.ts` holds every label of every calculus to `inReference`, and
   each part to its place in the text. A new rule of deduxit gets its hint and a place in the

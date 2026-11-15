@@ -625,38 +625,31 @@ const named = (hints: readonly RuleHint[], label: string): RuleHint => {
 
 /**
  * The rules Learn's reference draws from these tables, so that it shows every hint a rule label
- * shows: Mix and affine weakening in each drawing, the two-sided negation of classical linear
- * logic, the Lambek calculus, LK and LJ.
+ * shows: Mix and affine weakening, classical linear logic drawn two-sided, the Lambek calculus,
+ * LK and LJ.
  */
 export const REFERENCE: readonly ReferencePart[] = [
   {
     key: "added",
     rules: [
       { hint: named(ONE_SIDED, "mix"), drawing: "One-sided" },
-      { hint: named(CLASSICAL_TWO_SIDED, "mix"), drawing: "Two-sided" },
       { hint: named(ONE_SIDED, "wk"), drawing: "One-sided" },
-      { hint: named(CLASSICAL_TWO_SIDED, "wk"), drawing: "Two-sided" },
       { hint: named(INTUITIONISTIC, "wk"), drawing: "Intuitionistic" },
     ],
   },
-  {
-    key: "negation",
-    rules: [{ hint: named(CLASSICAL_TWO_SIDED, "~L") }, { hint: named(CLASSICAL_TWO_SIDED, "~R") }],
-  },
+  { key: "classical", rules: CLASSICAL_TWO_SIDED.map((hint) => ({ hint })) },
   { key: "lambek", rules: LAMBEK.map((hint) => ({ hint })) },
   { key: "lk", rules: LK.map((hint) => ({ hint })) },
   { key: "lj", rules: LJ.map((hint) => ({ hint })) },
 ];
 
 /**
- * Whether Learn's reference shows the hint of a calculus's label: a written rule of that name,
- * the written one-sided rule that lists it as a two-sided name (a classical drawing's two-sided
- * label), or the same hint among the parts taken from these tables.
+ * Whether Learn's reference shows the hint of a calculus's label, its full name, schema and
+ * sentence: a written rule, or the same hint among the parts taken from these tables.
  */
 export function inReference(written: readonly Written[], hint: RuleHint): boolean {
   return (
     written.includes(hint as Written) ||
-    (CLASSICAL_TWO_SIDED.includes(hint) && written.some((r) => r.twoSided?.includes(hint.name))) ||
     REFERENCE.some((part) => part.rules.some((r) => r.hint === hint))
   );
 }
