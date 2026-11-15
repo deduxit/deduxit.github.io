@@ -151,8 +151,9 @@ export default function App(props: {
    * Opens a link pasted into the open page, where only the fragment changed, as a load of it
    * would: the open proofs go to the restore bar and the link's proof opens alone.
    */
-  const pasted = () => {
-    const hash = location.hash;
+  const pasted = (event: HashChangeEvent) => {
+    // The event's own address: the page's write of its link may land before the event does.
+    const hash = new URL(event.newURL).hash;
     if (hash === wrote) return;
     opening = opening
       .catch(() => undefined)

@@ -405,16 +405,21 @@ test("a link pasted into the open page opens its proof, and the proof it replace
   await start(page, "A * B |- B * A");
   await rule(page, /^A⊥ ⅋ B⊥/, "⅋");
   await expect(page.getByRole("button", { name: /^A⊥, formula 1 of goal 2/ })).toBeVisible();
-  // Only the fragment changes, as when a link to this page is pasted into its address bar.
+  // The page has written the step's link.
+  await page.waitForTimeout(500);
+  // Only the fragment changes, as when a link to this page is pasted into its address bar, and
+  // the page's own write of its link lands before the change's event.
   await page.evaluate(() => {
+    const own = location.hash;
     location.hash = "#v=2&u=linear&m=classical&s=A+|-+A";
+    history.replaceState(null, "", own);
   });
   await expect(page.getByRole("button", { name: /^A⊥, formula 1 of goal 1/ })).toBeVisible();
   await expect(page.locator(".ptab")).toHaveCount(1);
   const bar = page.getByRole("region", { name: "Restore" });
   await expect(bar).toContainText("1 proof from your last visit");
   // The page's own link of the new proof, with its session, opens nothing.
-  await expect(page).toHaveURL(/&s=A.*&d=/);
+  await expect(page).toHaveURL(/&s=A\+%E2%8A%A2\+A&d=/);
   await page.waitForTimeout(500);
   await expect(page.locator(".ptab")).toHaveCount(1);
   await expect(bar).toContainText("1 proof from your last visit");
