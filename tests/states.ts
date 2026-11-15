@@ -116,8 +116,8 @@ export async function touring(page: Page, visit: Visit) {
 
 /**
  * Learn's two places and a lesson's parts: a worked proof, its dead end, its
- * prompt, its faded proof and its check; lesson 7's attempt, its question,
- * and the search that gives up; lesson 9's elimination; lesson 10's refusal.
+ * prompt, its faded proof and its check. It ends on the list of lessons,
+ * where `attempting` goes on.
  */
 export async function learning(page: Page, visit: Visit) {
   await band(page, "Learn", visit);
@@ -141,6 +141,20 @@ export async function learning(page: Page, visit: Visit) {
   await page.getByRole("region", { name: "Check" }).getByRole("radio").nth(1).check();
   await visit("lesson's check");
   await page.getByRole("button", { name: "All lessons" }).click();
+}
+
+/** Learn opened on the list of lessons, where `attempting` starts. */
+export async function toLessons(page: Page) {
+  await band(page, "Learn");
+  await page.getByRole("tab", { name: "Tutorial" }).click();
+}
+
+/**
+ * From Learn's list of lessons: lesson 7's attempt, its question, and the
+ * search that gives up; lesson 9's elimination; lesson 10's refusal. It ends
+ * with Learn turned off.
+ */
+export async function attempting(page: Page, visit: Visit) {
   await page.getByRole("button", { name: "Lesson 7: When there is no proof" }).click();
   await page.getByRole("button", { name: "Play the attempt" }).click();
   await visit("lesson's attempt");

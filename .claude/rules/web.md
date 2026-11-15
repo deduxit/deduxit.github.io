@@ -818,6 +818,18 @@ the page reads.
   leaves "incomplete" is not asserted: contrast
   over a gradient (the stage's dotted field, and every keyword's wash, which
   `colours.test.ts` holds instead), under an overlapping element, or of symbols alone.
+- **Each walk of the axe spec is a test of its own, under 20 seconds here.** axe takes 1.5 to
+  4 seconds a state (Learn's Reference the most), the page's own work under one. GitHub's
+  runner, with the other checks building beside the e2e, was 1.8 to 2.9 times slower on
+  2026-11-15: the Learn walk of twelve states, about 33 seconds here, ran past CI's 60 twice,
+  while the 20-second walks passed. So it is split (`learning`, then `attempting`, which
+  `targets.spec.ts` walks in a row), as `proving` and `menus` are. Time a walk with
+  `playwright test tests/accessibility.spec.ts -g NAME --workers 1` on idle cores; a slow
+  runner is closest with `CI=1` (60 s, the runner's budget) on one core and four workers
+  (`taskset -c N`, `--workers 4 --retries 0`), where the twelve-state walk failed and its
+  halves passed. Chromium's CPU throttling (`Emulation.setCPUThrottlingRate`) slowed the
+  walks unevenly, and is no measure. The phone's band and menus walk (about 20 seconds here)
+  is the longest left.
 - **A control's visible text is in its accessible name** (SC 2.5.3): axe compares words, joins
   an element's text nodes with no space between elements and drops what stands in
   parentheses. So the parts of a control's label are separated by a space in the markup

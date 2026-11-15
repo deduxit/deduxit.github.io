@@ -14,6 +14,7 @@ import { expect, test } from "./fixtures";
 import { goto } from "./prover";
 import {
   answers,
+  attempting,
   cutting,
   fonts,
   learning,
@@ -121,6 +122,7 @@ async function walk(page: Page, visit: Visit) {
   await menus(page, visit);
   await practising(page, visit);
   await learning(page, visit);
+  await attempting(page, visit);
   await touring(page, visit);
   await restoring(page, visit);
 }

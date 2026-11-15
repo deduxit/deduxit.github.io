@@ -13,6 +13,7 @@ import { expect, test } from "./fixtures";
 import { goto, proveCommuted, start } from "./prover";
 import {
   answers,
+  attempting,
   cutting,
   fonts,
   learning,
@@ -23,6 +24,7 @@ import {
   proving,
   reasons,
   restoring,
+  toLessons,
   touring,
   type Visit,
   witnessing,
@@ -183,10 +185,17 @@ async function studying(page: Page, visit: Visit) {
   await touring(page, visit);
 }
 
-/** Learn's states, from the empty page. */
+/** Learn's places and a worked lesson, from the empty page. */
 async function lessons(page: Page, visit: Visit) {
   await goto(page);
   await learning(page, visit);
+}
+
+/** The lessons on an attempt, a cut's elimination and a refusal, from Learn's list. */
+async function attempts(page: Page, visit: Visit) {
+  await goto(page);
+  await toLessons(page);
+  await attempting(page, visit);
 }
 
 /** The stage in each math font, from the empty page. */
@@ -202,6 +211,7 @@ const WALKS: readonly (readonly [string, (page: Page, visit: Visit) => Promise<v
   ["the band's menus, the status and the calculus", band],
   ["Practice and the tour", studying],
   ["Learn", lessons],
+  ["Learn's attempts", attempts],
   ["the restore bar", restored],
   ["a goal's reasons", reasons],
   ["Learn's answers", answers],
