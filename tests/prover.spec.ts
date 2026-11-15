@@ -536,9 +536,9 @@ test("import reads a session or a sequent, and refuses a level it does not know"
   await panel.getByRole("button", { name: "Import", exact: true }).click();
   await expect(panel.getByRole("status")).toHaveText("Imported a session.");
   await expect(page.locator(".ptab")).toHaveCount(2);
-  await panel.getByRole("textbox").fill('{"version":9,"terms":[],"roots":[],"atoms":[]}');
+  await panel.getByRole("textbox").fill('{"version":99,"terms":[],"roots":[],"atoms":[]}');
   await panel.getByRole("button", { name: "Import", exact: true }).click();
-  await expect(panel.getByRole("status")).toContainText("Level 9 unknown: not imported");
+  await expect(panel.getByRole("status")).toContainText("Level 99 unknown: not imported");
   await panel.locator('input[type="file"]').setInputFiles({
     name: "sequent.json",
     mimeType: "application/json",
