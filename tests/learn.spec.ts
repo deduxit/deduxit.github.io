@@ -4,7 +4,6 @@
 // Learn's frame and its places, the examples, the tour and About: one test
 // per interaction, against the built site with deduxit's real module.
 
-import { REFERENCE } from "../src/lib/rules";
 import { expect, test } from "./fixtures";
 import { goto } from "./prover";
 
@@ -41,16 +40,18 @@ test("the Reference lists every rule a label names, with the hint the label show
   await page.getByRole("button", { name: "Learn" }).click();
   const frame = page.getByRole("complementary", { name: "Learn" });
   await frame.getByRole("tab", { name: "Reference" }).click();
-  // Beside the written rules, the parts taken from the hints' tables: Mix and weakening, the
-  // two-sided negation, the Lambek calculus, LK and LJ.
-  for (const part of REFERENCE) {
-    const items = frame.locator(`[data-rules-${part.key}] .rule-list > li`);
-    await expect(items, part.key).toHaveCount(part.rules.length);
-    const first = part.rules[0]?.hint;
-    await expect(items.first()).toContainText(first?.title ?? "");
+  // Beside the written rules, the parts taken from the hints' tables: Mix and weakening,
+  // classical linear logic drawn two-sided, the Lambek calculus, LK and LJ.
+  for (const [part, name] of [
+    ["added", "mix: from ⊢ Γ and ⊢ Δ to ⊢ Γ, Δ"],
+    ["classical", "⅋L: from Γ, A ⊢ Δ and Γ′, B ⊢ Δ′ to Γ, Γ′, A ⅋ B ⊢ Δ, Δ′"],
+    ["lambek", "\\L: from Γ ⊢ A and Δ, B, Δ′ ⊢ C to Δ, Γ, A \\ B, Δ′ ⊢ C"],
+    ["lk", "WR: from Γ ⊢ Δ to Γ ⊢ A, Δ"],
+    ["lj", "¬R: from Γ, A ⊢ ⊥ to Γ ⊢ ¬A"],
+  ] as const) {
+    await expect(frame.locator(`[data-rules-${part}]`).getByRole("img", { name })).toBeAttached();
   }
   await expect(frame.getByRole("heading", { name: "LK", exact: true })).toBeAttached();
-  await expect(frame.getByRole("img", { name: "WR: from Γ ⊢ Δ to Γ ⊢ A, Δ" })).toBeAttached();
   await expect(frame.locator("[data-rules-added] .rule-list > li").first()).toContainText(
     "One-sided.",
   );

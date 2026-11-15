@@ -805,8 +805,11 @@ the page reads.
   address with its refresh taken out) and in every state of `tests/states.ts`, in both schemes
   at a desktop's and a phone's width; a violation fails the test, with axe's reason in the
   line. One violation is filtered, for the one reason SC 2.5.8 gives (its "equivalent"
-  exception): `target-size` on a rule label's button whose rule Learn's Reference shows with the
-  same hint (`inReference`, read by the label's name "Rule X, step N"). Such a button may be
+  exception): `target-size` on a rule label's button whose rule Learn's Reference draws, by the
+  label's name "Rule X, step N" against the schemas' names, which the spec reads from the built
+  Reference in a context of its own (`rules.test.ts` holds the same hint, calculus by
+  calculus). The e2e check's sources are `tests/` and the built site, so a spec imports
+  nothing from `src/`. Such a button may be
   under 24 pixels where its neighbours are nearer in a drawing fitted to a phone (no zoom floor
   for that: declined, 2026-11-14), or lie partly under the stage's view controls or a sheet
   over the stage. A label's button that overlaps another button of the drawing is never

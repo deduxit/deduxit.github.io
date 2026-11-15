@@ -7,12 +7,8 @@
 // width. A test fails on any violation; what axe cannot decide by itself
 // (its "incomplete" results) is checked by hand and not asserted here.
 
-import { readdirSync, readFileSync } from "node:fs";
 import AxeBuilder from "@axe-core/playwright";
 import type { Page } from "@playwright/test";
-import { parse } from "yaml";
-import { hintsFor, inReference } from "../src/lib/rules";
-import { calculusOf, SUITES } from "../src/lib/suites";
 import { expect, test } from "./fixtures";
 import { goto, proveCommuted, start } from "./prover";
 import {
@@ -35,37 +31,57 @@ import {
 /** The rule sets run: WCAG 2.0, 2.1 and 2.2 at A and AA, and axe's best practices. */
 const TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22a", "wcag22aa", "best-practice"];
 
-/** Learn's written rules, as `src/content/rules/` holds them. */
-const written = readdirSync(new URL("../src/content/rules/", import.meta.url))
-  .filter((name) => name.endsWith(".md"))
-  .map((name) =>
-    parse(
-      readFileSync(new URL(`../src/content/rules/${name}`, import.meta.url), "utf8").split(
-        "---\n",
-      )[1] ?? "",
-    ),
-  );
+/** The names of the rules Learn's Reference draws, read once from the built page. */
+let drawn: Promise<ReadonlySet<string>> | undefined;
 
-/** The names of the rules whose hints Learn's Reference shows, in every calculus the page reads. */
-const inTheReference = new Set(
-  SUITES.flatMap((s) => s.values.map((value) => calculusOf(s.key, "sequent", value)))
-    .filter((calculus) => calculus !== undefined)
-    .flatMap((calculus) => [false, true].flatMap((two) => hintsFor(written, calculus, two)))
-    .filter((hint) => inReference(written, hint))
-    .map((hint) => hint.name),
-);
+/**
+ * The names of the rules Learn's Reference draws, each schema's name, read in a context of its
+ * own (a second page of the same context would set the first one's proofs aside).
+ */
+function inTheReference(page: Page): Promise<ReadonlySet<string>> {
+  drawn ??= (async () => {
+    const context = await page.context().browser()?.newContext();
+    if (!context) throw new Error("no browser to read the Reference in");
+    try {
+      const reference = await context.newPage();
+      await reference.goto(new URL("/", page.url()).href);
+      await reference.getByRole("button", { name: "Learn" }).click();
+      const frame = reference.getByRole("complementary", { name: "Learn" });
+      await frame.getByRole("tab", { name: "Reference" }).click();
+      // Every place of the text that holds rules has its list.
+      await reference.waitForFunction(() => {
+        const places = [...document.querySelectorAll(".frame div")].filter((d) =>
+          d.getAttributeNames().some((a) => a.startsWith("data-rules")),
+        );
+        return places.length > 0 && places.every((d) => d.querySelector(".rule-list > li"));
+      });
+      const names = await frame
+        .locator(".rule-list .schema")
+        .evaluateAll((schemas) => schemas.map((s) => s.getAttribute("aria-label") ?? ""));
+      return new Set(names.map((name) => name.slice(0, name.indexOf(": from "))));
+    } finally {
+      await context.close();
+    }
+  })();
+  return drawn;
+}
 
 /**
  * Whether a violation is one SC 2.5.8 excepts: a rule label's button under 24 pixels, or partly
- * under the stage's view controls or a sheet over the stage, whose hint Learn's Reference also
- * shows. The Reference's controls meet the criterion, so the label's function is achieved
+ * under the stage's view controls or a sheet over the stage, whose rule Learn's Reference also
+ * draws (`reference`, by name; `rules.test.ts` holds each label to the same hint there). The Reference's controls meet the criterion, so the label's function is achieved
  * through an equivalent control (the criterion's "equivalent" exception). A label's button
  * that overlaps another button of the drawing is never excepted: each label shares the gap with
  * its neighbours (`spread`), and `crowded` names those that overlap, measured here, since axe
  * names no covering element for a target under 24 pixels. A screen reader hears the hint as the
  * label's description in every case.
  */
-const excepted = (rule: string, html: string, crowded: readonly string[]) => {
+const excepted = (
+  rule: string,
+  html: string,
+  crowded: readonly string[],
+  reference: ReadonlySet<string>,
+) => {
   const name = /^<button[^>]* class="lb"[^>]* aria-label="([^"]*)"/
     .exec(html)?.[1]
     ?.replaceAll("&amp;", "&");
@@ -74,7 +90,7 @@ const excepted = (rule: string, html: string, crowded: readonly string[]) => {
     rule === "target-size" &&
     name !== undefined &&
     label !== undefined &&
-    inTheReference.has(label) &&
+    reference.has(label) &&
     !crowded.includes(name)
   );
 };
@@ -106,9 +122,10 @@ async function crowding(page: Page): Promise<string[]> {
 async function violations(page: Page, state: string): Promise<string[]> {
   const results = await new AxeBuilder({ page }).withTags(TAGS).analyze();
   const crowded = await crowding(page);
+  const reference = await inTheReference(page);
   return results.violations.flatMap((rule) =>
     rule.nodes
-      .filter((node) => !excepted(rule.id, node.html, crowded))
+      .filter((node) => !excepted(rule.id, node.html, crowded, reference))
       .map((node) => {
         const why = [...node.any, ...node.all, ...node.none].map((check) => check.message);
         return `${state}: ${rule.id} at ${node.target.join(" ")}: ${why.join("; ") || rule.help}`;
