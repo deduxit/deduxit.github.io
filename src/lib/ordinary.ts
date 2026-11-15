@@ -120,42 +120,58 @@ export function json(text: string): unknown {
 /** A formula of an ordinary sequent's JSON: an atom by its index, a constant, or a connective over earlier formulas. */
 type Node = string | { readonly [tag: string]: number | readonly number[] };
 
+/** An ordinary sequent's JSON: its formulas, operands first, its atoms and its two sides. */
+export interface SequentForm {
+  readonly formulas: readonly Node[];
+  readonly atoms: readonly string[];
+  readonly left: readonly number[];
+  readonly right: readonly number[];
+}
+
 /**
- * An ordinary session's sequent as the field reads it, each compound part parenthesised and
- * written in signs, which the ordinary parser reads back.
+ * Every formula of an ordinary sequent's JSON written in signs, by its index, each compound part
+ * parenthesised, as the ordinary parser reads it back.
  */
-export function sequentText(session: OrdinarySession): string {
-  const { formulas, atoms, left, right } = session.sequent as {
-    formulas: readonly Node[];
-    atoms: readonly string[];
-    left: readonly number[];
-    right: readonly number[];
-  };
-  const written = new Map<number, string>();
+export function formulaTexts(form: SequentForm): string[] {
+  const { formulas, atoms } = form;
+  const written: string[] = [];
   // Every subformula precedes the formulas built from it, so one pass in order writes them all.
   formulas.forEach((node, i) => {
     const part = (k: number) => {
-      const text = written.get(k) ?? "";
+      const text = written[k] ?? "";
       return typeof formulas[k] === "object" &&
         !("V" in (formulas[k] as object)) &&
         !("¬" in (formulas[k] as object))
         ? `(${text})`
         : text;
     };
-    if (typeof node === "string") written.set(i, node);
+    if (typeof node === "string") written[i] = node;
     else {
       const [tag, args] = Object.entries(node)[0] as [string, number | readonly number[]];
-      if (tag === "V") written.set(i, atoms[args as number] ?? "?");
-      else if (tag === "¬") written.set(i, `¬${part(args as number)}`);
+      if (tag === "V") written[i] = atoms[args as number] ?? "?";
+      else if (tag === "¬") written[i] = `¬${part(args as number)}`;
       else {
         const [a, b] = args as readonly number[];
-        written.set(i, `${part(a as number)} ${tag} ${part(b as number)}`);
+        written[i] = `${part(a as number)} ${tag} ${part(b as number)}`;
       }
     }
   });
-  const side = (list: readonly number[]) => list.map((k) => written.get(k) ?? "").join(", ");
-  return `${side(left)}${left.length ? " " : ""}⊢ ${side(right)}`.trimEnd();
+  return written;
 }
+
+/** An ordinary sequent's JSON written in signs: `Γ ⊢ Δ`. */
+export function formText(form: SequentForm): string {
+  const written = formulaTexts(form);
+  const side = (list: readonly number[]) => list.map((k) => written[k] ?? "").join(", ");
+  return `${side(form.left)}${form.left.length ? " " : ""}⊢ ${side(form.right)}`.trimEnd();
+}
+
+/**
+ * An ordinary session's sequent as the field reads it, each compound part parenthesised and
+ * written in signs, which the ordinary parser reads back.
+ */
+export const sequentText = (session: OrdinarySession): string =>
+  formText(session.sequent as unknown as SequentForm);
 
 /**
  * Undo on a branch: the session without the step that opened `goal` and
