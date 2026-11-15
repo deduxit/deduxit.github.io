@@ -1037,6 +1037,10 @@ button.wordmark {
   padding: var(--spacing-4) var(--spacing-4) calc(2 * var(--size-control) + var(--spacing-6));
   background: var(--color-field);
 }
+/* The restore bar stands over the stage's top: the view's sentence starts under it. */
+.app:has(.restore) .method {
+  padding-top: calc(var(--size-control) + var(--spacing-6));
+}
 /* Each part keeps its height: the page scrolls, never a part's own box. */
 .method > * {
   flex-shrink: 0;
@@ -1166,6 +1170,10 @@ button.wordmark {
 @media (max-width: 640px) {
   .method {
     padding-inline: var(--spacing-3);
+  }
+  /* On a phone the restore bar wraps to two rows. */
+  .app:has(.restore) .method {
+    padding-top: calc(2 * var(--size-control) + var(--spacing-6));
   }
   .tb-branches {
     flex-direction: column;

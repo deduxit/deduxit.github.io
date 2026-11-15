@@ -110,3 +110,50 @@ test("the proof stays as it was behind the table and comes back with Tree", asyn
   await expect(page.getByRole("button", { name: /^a ∧ b, formula/ })).toBeVisible();
   await expect(page.getByRole("region", { name: "Truth table" })).toHaveCount(0);
 });
+
+test("a key that changes the proof under the table brings the tree back to show it", async ({
+  page,
+}) => {
+  await ordinary(page, "Classical", "a /\\ b |- b /\\ a");
+  await page.getByRole("tab", { name: "Table", exact: true }).click();
+  await expect(page.getByRole("region", { name: "Truth table" })).toBeVisible();
+  await page.keyboard.press("C");
+  await expect(page.getByRole("tab", { name: "Tree" })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("status").filter({ hasText: "Proved" })).toBeVisible();
+});
+
+test("a tableau closed by ⊥ says only that every branch closes", async ({ page }) => {
+  await ordinary(page, "Classical", "false |- a");
+  await page.getByRole("tab", { name: "Tableau" }).click();
+  const view = page.getByRole("region", { name: "Tableau" });
+  await expect(view.getByRole("status")).toHaveText(
+    "Valid Every branch closes, so no assignment makes every formula left of ⊢ true and every formula right of it false.",
+  );
+  await expect(view.locator(".tb-end")).toContainText("closed: ⊥ is true at line 1");
+});
+
+test("a proof of another logic shows its tree, never a stale table", async ({ page }) => {
+  await ordinary(page, "Classical", "a |- a");
+  await page.getByRole("tab", { name: "Table", exact: true }).click();
+  await calculus(page, ["Intuitionistic"]);
+  await expect(page.getByRole("tab", { name: "Table", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("tab", { name: "Tree" })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("region", { name: "Truth table" })).toHaveCount(0);
+});
+
+test("the restore bar leaves the view's sentence in sight", async ({ page }) => {
+  await ordinary(page, "Classical", "a -> b |- b -> a");
+  await page.reload();
+  await expect(page.getByRole("region", { name: "Restore" })).toBeVisible();
+  // A proof started meanwhile, the last visit's still waiting behind the bar.
+  await calculus(page, ["Ordinary", "Classical"]);
+  await page.getByRole("textbox", { name: "Sequent" }).fill("a -> b |- b -> a");
+  await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
+  await expect(page.getByRole("region", { name: "Restore" })).toBeVisible();
+  await page.getByRole("tab", { name: "Table", exact: true }).click();
+  const sentence = page.getByRole("region", { name: "Truth table" }).getByRole("status");
+  await expect(sentence).toBeVisible();
+  const bar = await page.getByRole("region", { name: "Restore" }).boundingBox();
+  const said = await sentence.boundingBox();
+  expect(bar && said && said.y >= bar.y + bar.height).toBe(true);
+});

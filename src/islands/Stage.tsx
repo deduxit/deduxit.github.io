@@ -1256,6 +1256,18 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
   /** The truth table or the tableau the stage shows in the drawing's place, or null. */
   const method = (): Method | null =>
     (ui.tab === "table" || ui.tab === "tableau") && decidable() ? ui.tab : null;
+  // The table or the tableau gives way to the tree when the proof changes under it (a key or
+  // the band acted on it: the visitor sees what changed) or when the proof shown has none.
+  createEffect(
+    on(
+      () => [proof()?.id, proof()?.session, decidable()] as const,
+      ([id, session, ok], before) => {
+        if (ui.tab !== "table" && ui.tab !== "tableau") return;
+        if (!ok || (before?.[0] === id && before?.[1] !== session)) setUi("tab", "tree");
+      },
+      { defer: true },
+    ),
+  );
   /** The active goal's place among the open goals, from 1. */
   const openPlace = () => (view()?.goals.findIndex((g) => g.goal === active()) ?? 0) + 1;
 

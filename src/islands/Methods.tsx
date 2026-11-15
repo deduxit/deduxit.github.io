@@ -254,8 +254,8 @@ function TableauView(props: { tree: Branch }) {
         }
       >
         <Verdict valid>
-          Every branch closes: each makes one formula both true and false, so no assignment makes
-          every formula left of ⊢ true and every formula right of it false.
+          Every branch closes, so no assignment makes every formula left of ⊢ true and every formula
+          right of it false.
         </Verdict>
       </Show>
       <section class="tb-scroll" tabindex="0" aria-label="The tableau's lines">
