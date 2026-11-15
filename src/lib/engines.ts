@@ -77,9 +77,15 @@ export const ENGINE_ORDER = [
   "inverse",
 ] as const;
 
-/** The engine whose work an outcome is: the classical refuter for its refutation, else the one it names. */
+/**
+ * The engine whose work an outcome is: the classical refuter for its refutation, else the one it
+ * names. An ordinary outcome decided through the embedding holds its image's outcome under
+ * `search.image`, whose engine it is.
+ */
 export function engineOf(outcome: Outcome | undefined | null): string | undefined {
   if (!outcome) return undefined;
+  const image = (outcome as { search?: { image?: Outcome } }).search?.image;
+  if (image) return engineOf(image);
   if (outcome.refutation?.kind === "classical") return "classical";
   return outcome.engine;
 }

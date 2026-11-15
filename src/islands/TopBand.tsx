@@ -473,7 +473,12 @@ function StatusDetails(props: { proof: Proof; prover: Prover; close: () => void 
               <dd>{calculusWords(props.proof.calculus)}</dd>
               <dt>Steps</dt>
               <dd>{view().steps}</dd>
-              <Show when={props.proof.verdict?.outcome?.engine}>
+              <Show
+                when={
+                  (props.proof.verdict?.outcome as { search?: { image?: { engine?: string } } })
+                    ?.search?.image?.engine ?? props.proof.verdict?.outcome?.engine
+                }
+              >
                 {(engine) => (
                   <>
                     <dt>Engine</dt>
