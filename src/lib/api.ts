@@ -217,6 +217,12 @@ export function createApi(changed: (pending: number) => void) {
       /** The Rocq certificate of an outcome's countermodel. */
       modelCertificate: (outcome: OrdinaryOutcome, settings: string) =>
         client.call<string>("ordinary_model_certificate", JSON.stringify(outcome), settings),
+      /** A classical sequent decided by its truth table, the table in the outcome's `search`. */
+      table: (sequent: string, settings: string) =>
+        json<OrdinaryOutcome>("ordinary_table", sequent, settings),
+      /** A classical sequent decided by a signed tableau, the tableau in the outcome's `search`. */
+      tableau: (sequent: string, settings: string) =>
+        json<OrdinaryOutcome>("ordinary_tableau", sequent, settings),
     },
     replay: (session: SessionDoc, todo: readonly Action[], settings: string) =>
       json<Replayed>("replay", doc(session), JSON.stringify(todo), settings),
