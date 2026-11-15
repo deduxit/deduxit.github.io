@@ -81,6 +81,17 @@ export type Store = Pick<Storage, "getItem" | "setItem" | "removeItem" | "key" |
  * A stored proof read back, or undefined for anything that is not one: of a shelf of the first
  * version, with its linear `mode`; of the second, with its `calculus` as the registry knows it.
  */
+/** Whether a stored proof's `custom` record has its file, assumptions and session. */
+const isCustomWork = (custom: unknown): boolean => {
+  if (!custom || typeof custom !== "object") return false;
+  const c = custom as Record<string, unknown>;
+  return (
+    typeof c["file"] === "string" &&
+    typeof c["assumptions"] === "string" &&
+    (c["session"] === null || typeof c["session"] === "object")
+  );
+};
+
 const proofOf = (p: unknown, version: 1 | 2): StoredProof | undefined => {
   if (!p || typeof p !== "object") return undefined;
   const proof = p as Record<string, unknown>;
@@ -104,7 +115,7 @@ const proofOf = (p: unknown, version: 1 | 2): StoredProof | undefined => {
     (proof["session"] === null || typeof proof["session"] === "object") &&
     Array.isArray(proof["redo"]) &&
     (proof["later"] === undefined || Array.isArray(proof["later"])) &&
-    (proof["custom"] === undefined || typeof proof["custom"] === "object") &&
+    (proof["custom"] === undefined || isCustomWork(proof["custom"])) &&
     typeof proof["saved"] === "number";
   if (!fine) return undefined;
   const { mode: _, ...rest } = proof;

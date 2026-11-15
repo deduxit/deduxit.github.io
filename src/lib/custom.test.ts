@@ -77,5 +77,9 @@ describe("the helpers", () => {
     const shelf = parseShelf(JSON.stringify({ version: 2, proofs: [stored], active: "p1" }));
     expect(shelf?.proofs[0]?.calculus).toEqual(custom("LJ"));
     expect(shelf?.proofs[0]?.custom?.session).toEqual(played.session);
+    // A record without its file is no proof this page reads: it is left out alone.
+    const broken = { ...stored, id: "p2", custom: {} };
+    const read = parseShelf(JSON.stringify({ version: 2, proofs: [stored, broken], active: "p1" }));
+    expect(read?.proofs.map((p) => p.id)).toEqual(["p1"]);
   });
 });
