@@ -242,6 +242,9 @@ test("the structural switch with a goal open marks and buttons that goal in the 
   await rule(page, /^a ∧ b, formula/, "∧R");
   await rule(page, /^a, formula 3/, "ax");
   const open = () => page.locator(".drawing svg g.open-goal").allTextContents();
+  // `rule` returns once the rule is pressed: the drawing of the step comes after, and read
+  // before it, `before` held both goals of ∧R.
+  await expect(page.locator(".drawing svg g.open-goal")).toHaveCount(1);
   const before = (await open()).join(" ");
   expect(before).toContain("⊢");
   const pop = await switches(page);

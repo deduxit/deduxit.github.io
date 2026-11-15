@@ -135,6 +135,9 @@ test("a replayed classical cut is drawn two-sided as before the replay", async (
   await calculus(page, ["Two-sided"]);
   await cut(page, "A -o B", [/^A ⊗ B⊥, formula 2/]);
   const drawn = () => page.locator(".drawing svg text").allTextContents();
+  // The chooser closes before the cut is drawn; a goal's buttons are laid over the drawing of
+  // the session shown, so the second premise's button says the drawing is the cut's.
+  await expect(page.getByRole("button", { name: /^A⊥ ⅋ B, formula 2 of goal 2/ })).toBeVisible();
   const before = await drawn();
   expect(before.join(" ")).toContain("⊢");
   // A step on the second premise, taken back: undo replays the session, its cut among the steps.
