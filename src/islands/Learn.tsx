@@ -19,11 +19,28 @@
 
 import { hinted, RuleName } from "./RuleHint";
 import { ArrowLeft, Compass, Play, X } from "lucide-solid";
-import { createEffect, createSignal, For, Match, onCleanup, Show, Switch } from "solid-js";
+import {
+  children,
+  createEffect,
+  createSignal,
+  For,
+  type JSX,
+  Match,
+  onCleanup,
+  Show,
+  Switch,
+} from "solid-js";
 import { Portal } from "solid-js/web";
 import { type Example, type Lesson, type Level, type Rule, written } from "../lib/content";
 import type { SessionDoc } from "../lib/deduxit";
 import { LEVEL_NAMES } from "../lib/practice";
+import {
+  hintId,
+  REFERENCE,
+  type ReferencePart,
+  type ReferenceRule,
+  type RuleHint,
+} from "../lib/rules";
 import { actions as actionsOf, goalAt } from "../lib/steps";
 import { displayed } from "../lib/words";
 import type { Prover } from "./state";
@@ -131,35 +148,66 @@ export function Schema(props: { rule: Pick<Rule, "name" | "premises" | "conclusi
   );
 }
 
-/** The rules as the reference lists them: each schema, its names and what it does. */
+/** A rule as the reference lists it: its schema, its full name and what it does, then `children`, a line of more. */
+function RuleItem(props: {
+  id: string;
+  rule: Pick<RuleHint, "name" | "title" | "premises" | "conclusion" | "says">;
+  children?: JSX.Element;
+}) {
+  const more = children(() => props.children);
+  return (
+    <li id={props.id}>
+      <Schema rule={props.rule} />
+      <p>
+        <span class="rule-title">{props.rule.title}</span> <Words text={props.rule.says} />
+      </p>
+      <Show when={more()}>
+        <p class="sub">{more()}</p>
+      </Show>
+    </li>
+  );
+}
+
+/** The written rules as the reference lists them: each schema, its names and what it does. */
 function Rules(props: { rules: readonly Rule[] }) {
   return (
     <ul class="rule-list">
       <For each={props.rules}>
         {(rule) => (
-          <li id={`rule-${rule.id.replace(/^\d+-/, "")}`}>
-            <Schema rule={rule} />
-            <p>
-              <span class="rule-title">{rule.title}</span> <Words text={rule.says} />
-            </p>
-            <p class="sub">
-              <Show
-                when={rule.oneSided}
-                fallback={
-                  <>
-                    Two-sided: <span class="m">{rule.twoSided?.join(", ")}</span>.
-                  </>
-                }
-              >
-                {(one) => (
-                  <>
-                    One-sided: <span class="m">{one()}</span>.
-                  </>
-                )}
-              </Show>{" "}
-              Lesson {rule.lesson}.
-            </p>
-          </li>
+          <RuleItem id={`rule-${rule.id.replace(/^\d+-/, "")}`} rule={rule}>
+            <Show
+              when={rule.oneSided}
+              fallback={
+                <>
+                  Two-sided: <span class="m">{rule.twoSided?.join(", ")}</span>.
+                </>
+              }
+            >
+              {(one) => (
+                <>
+                  One-sided: <span class="m">{one()}</span>.
+                </>
+              )}
+            </Show>{" "}
+            Lesson {rule.lesson}.
+          </RuleItem>
+        )}
+      </For>
+    </ul>
+  );
+}
+
+/** A part of the reference taken from the rule hints' own tables, listed as the written rules are. */
+function HintRules(props: { part: ReferencePart }) {
+  const id = (r: ReferenceRule) =>
+    `rule-${props.part.key}-${r.drawing ? `${r.drawing.toLowerCase()}-` : ""}${hintId(r.hint.name).replace(/^rule-hint-/, "")}`;
+  return (
+    <ul class="rule-list">
+      <For each={props.part.rules}>
+        {(r) => (
+          <RuleItem id={id(r)} rule={r.hint}>
+            {r.drawing && `${r.drawing}.`}
+          </RuleItem>
         )}
       </For>
     </ul>
@@ -177,6 +225,8 @@ export function LearnFrame(props: {
   const { ui, setUi } = props.ui;
   const [rulesAt, setRulesAt] = createSignal<HTMLElement>();
   const [twoSidedAt, setTwoSidedAt] = createSignal<HTMLElement>();
+  /** Where each part of the reference taken from the hints' tables goes, by its key. */
+  const [partsAt, setPartsAt] = createSignal<ReadonlyMap<string, HTMLElement>>(new Map());
   const open = (lesson: number | null) => setUi({ lesson, reason: null });
   const opened = () => props.lessons.find((l) => l.lesson === ui.lesson);
   return (
@@ -288,6 +338,14 @@ export function LearnFrame(props: {
               ready={(host) => {
                 setRulesAt(host.querySelector<HTMLElement>("[data-rules]") ?? undefined);
                 setTwoSidedAt(host.querySelector<HTMLElement>("[data-rules-two]") ?? undefined);
+                setPartsAt(
+                  new Map(
+                    REFERENCE.flatMap((part) => {
+                      const at = host.querySelector<HTMLElement>(`[data-rules-${part.key}]`);
+                      return at ? [[part.key, at] as const] : [];
+                    }),
+                  ),
+                );
               }}
             />
             <Show when={rulesAt()}>
@@ -304,6 +362,17 @@ export function LearnFrame(props: {
                 </Portal>
               )}
             </Show>
+            <For each={REFERENCE}>
+              {(part) => (
+                <Show when={partsAt().get(part.key)}>
+                  {(at) => (
+                    <Portal mount={at()}>
+                      <HintRules part={part} />
+                    </Portal>
+                  )}
+                </Show>
+              )}
+            </For>
           </Match>
         </Switch>
         <Written name="licence" class="frame-licence" />

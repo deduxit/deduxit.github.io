@@ -603,3 +603,60 @@ export function hintNamed(hints: readonly RuleHint[], label: string): RuleHint |
 export function hintId(label: string): string {
   return `rule-hint-${Array.from(label, (c) => c.codePointAt(0)?.toString(16)).join("-")}`;
 }
+
+/** A rule of Learn's reference taken from these tables, with the drawing it belongs to where its part holds several. */
+export interface ReferenceRule {
+  readonly hint: RuleHint;
+  readonly drawing?: string;
+}
+
+/** A part of Learn's reference taken from these tables, drawn into the reference's `<div data-rules-<key>>`. */
+export interface ReferencePart {
+  readonly key: string;
+  readonly rules: readonly ReferenceRule[];
+}
+
+/** The hint a table gives a label, which must be there. */
+const named = (hints: readonly RuleHint[], label: string): RuleHint => {
+  const hint = hintNamed(hints, label);
+  if (!hint) throw new Error(`no hint of ${label}`);
+  return hint;
+};
+
+/**
+ * The rules Learn's reference draws from these tables, so that it shows every hint a rule label
+ * shows: Mix and affine weakening in each drawing, the two-sided negation of classical linear
+ * logic, the Lambek calculus, LK and LJ.
+ */
+export const REFERENCE: readonly ReferencePart[] = [
+  {
+    key: "added",
+    rules: [
+      { hint: named(ONE_SIDED, "mix"), drawing: "One-sided" },
+      { hint: named(CLASSICAL_TWO_SIDED, "mix"), drawing: "Two-sided" },
+      { hint: named(ONE_SIDED, "wk"), drawing: "One-sided" },
+      { hint: named(CLASSICAL_TWO_SIDED, "wk"), drawing: "Two-sided" },
+      { hint: named(INTUITIONISTIC, "wk"), drawing: "Intuitionistic" },
+    ],
+  },
+  {
+    key: "negation",
+    rules: [{ hint: named(CLASSICAL_TWO_SIDED, "~L") }, { hint: named(CLASSICAL_TWO_SIDED, "~R") }],
+  },
+  { key: "lambek", rules: LAMBEK.map((hint) => ({ hint })) },
+  { key: "lk", rules: LK.map((hint) => ({ hint })) },
+  { key: "lj", rules: LJ.map((hint) => ({ hint })) },
+];
+
+/**
+ * Whether Learn's reference shows the hint of a calculus's label: a written rule of that name,
+ * the written one-sided rule that lists it as a two-sided name (a classical drawing's two-sided
+ * label), or the same hint among the parts taken from these tables.
+ */
+export function inReference(written: readonly Written[], hint: RuleHint): boolean {
+  return (
+    written.includes(hint as Written) ||
+    (CLASSICAL_TWO_SIDED.includes(hint) && written.some((r) => r.twoSided?.includes(hint.name))) ||
+    REFERENCE.some((part) => part.rules.some((r) => r.hint === hint))
+  );
+}

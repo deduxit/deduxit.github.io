@@ -576,6 +576,14 @@ the page reads.
   `(∃₁)`; both cuts are named `cut`, and `ruleNamed` takes the two-sided one in an
   intuitionistic proof, as for every rule. A step's reason is placed beside the rule label, which
   deduxit draws as a text, or as a group where the name has a subscript (`⊕₁`).
+- **The reference shows every hint a rule label shows** (SC 2.5.8's "equivalent" exception for
+  a label's small button, below): the written rules, the two-sided names they list, and the
+  parts `REFERENCE` in `src/lib/rules.ts` takes from the hints' own tables (Mix and affine
+  weakening in each drawing, the two-sided `~L` and `~R`, the Lambek calculus, LK, LJ), drawn
+  by `HintRules` into `<div data-rules-<key>>` in `texts/reference.md`, in the written rules'
+  form (`RuleItem`). `rules.test.ts` holds every label of every calculus to `inReference`, and
+  each part to its place in the text. A new rule of deduxit gets its hint and a place in the
+  reference; without the place, the axe spec no longer excepts its label's small button.
 - **Learn's practice is a lesson's**: the problems with a `lesson`, under the tutorial's
   lesson, easiest first, provable and unprovable mixed, never three alike in a row
   (`problems.test.ts`); a card asks "Has a proof" or "No proof" and answers at once
@@ -794,14 +802,14 @@ the page reads.
   AA and axe's best practices on every page (the prover, privacy, 404, the Rocq library's old
   address with its refresh taken out) and in every state of `tests/states.ts`, in both schemes
   at a desktop's and a phone's width; a violation fails the test, with axe's reason in the
-  line. One violation is filtered, with its reason in the spec (SC 2.5.8): a rule label's
-  button over a drawing fitted to a phone that is under 24 pixels because its neighbours are
-  nearer than that, or that lies partly under the stage's view controls or a sheet over the
-  stage. A label's button that overlaps another button of the drawing is never filtered, the
-  overlap measured by the spec itself (axe names no covering element for a target under 24
-  pixels): the labels share the gaps (`spread`, below). For a linear rule its hint is in Learn's Reference
-  as well (the criterion's "equivalent" exception); for LK's, LJ's, the Lambek calculus's, Mix
-  and weakening it is not, and it waits for a decision on how a drawing fits a phone. What axe
+  line. One violation is filtered, for the one reason SC 2.5.8 gives (its "equivalent"
+  exception): `target-size` on a rule label's button whose rule Learn's Reference shows with the
+  same hint (`inReference`, read by the label's name "Rule X, step N"). Such a button may be
+  under 24 pixels where its neighbours are nearer in a drawing fitted to a phone (no zoom floor
+  for that: declined, 2026-11-14), or lie partly under the stage's view controls or a sheet
+  over the stage. A label's button that overlaps another button of the drawing is never
+  filtered, the overlap measured by the spec itself (axe names no covering element for a target
+  under 24 pixels): the labels share the gaps (`spread`, below). What axe
   leaves "incomplete" is not asserted: contrast
   over a gradient (the stage's dotted field, and every keyword's wash, which
   `colours.test.ts` holds instead), under an overlapping element, or of symbols alone.

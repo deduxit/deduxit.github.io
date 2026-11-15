@@ -9,7 +9,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { parse } from "yaml";
 import type { Mode } from "./deduxit";
-import { hintId, hintNamed, hintsFor } from "./rules";
+import { hintId, hintNamed, hintsFor, inReference, REFERENCE } from "./rules";
 import type { Calculus, Logic } from "./suites";
 
 const written = readdirSync(new URL("../content/rules/", import.meta.url))
@@ -61,6 +61,28 @@ describe("every rule label has a hint", () => {
       // One plain sentence: a capital, and a full stop that ends it and nothing before.
       expect(hint?.says.replace(/`[^`]*`/g, "F"), label).toMatch(/^[FA-Z][^.]*\.$/);
     }
+  });
+});
+
+// SC 2.5.8 excepts a target whose function an equivalent control on the page achieves: a rule
+// label's button over a drawing fitted to a phone may be under 24 pixels because Learn's
+// Reference shows the same hint.
+describe("every rule label's hint is in Learn's Reference", () => {
+  it.each(cases)("in %s", (_, calculus, twoSided, labels) => {
+    const hints = hintsFor(written, calculus, twoSided);
+    for (const label of labels.split(" ")) {
+      const hint = hintNamed(hints, label);
+      expect(hint && inReference(written, hint), label).toBe(true);
+    }
+  });
+
+  it("which has a place for each part taken from the hints' tables", () => {
+    const reference = readFileSync(
+      new URL("../content/texts/reference.md", import.meta.url),
+      "utf8",
+    );
+    for (const part of REFERENCE)
+      expect(reference, part.key).toContain(`<div data-rules-${part.key}></div>`);
   });
 });
 

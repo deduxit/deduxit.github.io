@@ -68,6 +68,45 @@ the first-order quantifiers and without the exchange, in deduxit's names: there 
 `(cL)`, `(∀₁L)` and the like, here `!w`, `!c`, `∀L`. As above, deduxit's axiom takes an
 atom.
 
+## Mix and weakening
+
+Two switches at the Logic mark beside the sequent each add a rule. With Mix on, `mix`
+splits a goal into two goals that share no formula. With Affine on, `wk` drops any
+formula, under `?` or not. Each rule is listed here as each drawing writes it.
+
+<div data-rules-added></div>
+
+With the Two-sided switch on, the stage names each classical rule by its two-sided
+names, listed under the rules above. A formula typed as a negation has two more rules,
+which move it to the other side of `⊢`:
+
+<div data-rules-negation></div>
+
+## The Lambek calculus
+
+The Lambek calculus keeps the hypotheses in the order they are written, and has an
+implication for each side: `A \ B` takes its `A` from the left, and `B / A` from the
+right. The Logic mark does not offer it; the stage draws a session of it opened from a
+link or a file.
+
+<div data-rules-lambek></div>
+
+## Ordinary logic
+
+The ordinary suite proves classical logic in LK, and intuitionistic and minimal logic
+in LJ, which has one formula right of `⊢`. The stage draws both as G3 does: the axiom
+takes a context, and the rules contract what they use twice. So weakening and
+contraction are drawn only with the Structural rules switch on. In minimal logic,
+`⊥L` is no rule.
+
+### LK
+
+<div data-rules-lk></div>
+
+### LJ
+
+<div data-rules-lj></div>
+
 ## The engines
 
 Every search on this page is deduxit's: it picks an engine by the sequent's

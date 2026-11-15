@@ -7,8 +7,12 @@
 // width. A test fails on any violation; what axe cannot decide by itself
 // (its "incomplete" results) is checked by hand and not asserted here.
 
+import { readdirSync, readFileSync } from "node:fs";
 import AxeBuilder from "@axe-core/playwright";
 import type { Page } from "@playwright/test";
+import { parse } from "yaml";
+import { hintsFor, inReference } from "../src/lib/rules";
+import { calculusOf, SUITES } from "../src/lib/suites";
 import { expect, test } from "./fixtures";
 import { goto, proveCommuted, start } from "./prover";
 import {
@@ -31,23 +35,49 @@ import {
 /** The rule sets run: WCAG 2.0, 2.1 and 2.2 at A and AA, and axe's best practices. */
 const TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22a", "wcag22aa", "best-practice"];
 
+/** Learn's written rules, as `src/content/rules/` holds them. */
+const written = readdirSync(new URL("../src/content/rules/", import.meta.url))
+  .filter((name) => name.endsWith(".md"))
+  .map((name) =>
+    parse(
+      readFileSync(new URL(`../src/content/rules/${name}`, import.meta.url), "utf8").split(
+        "---\n",
+      )[1] ?? "",
+    ),
+  );
+
+/** The names of the rules whose hints Learn's Reference shows, in every calculus the page reads. */
+const inTheReference = new Set(
+  SUITES.flatMap((s) => s.values.map((value) => calculusOf(s.key, "sequent", value)))
+    .filter((calculus) => calculus !== undefined)
+    .flatMap((calculus) => [false, true].flatMap((two) => hintsFor(written, calculus, two)))
+    .filter((hint) => inReference(written, hint))
+    .map((hint) => hint.name),
+);
+
 /**
- * Whether a violation is one this audit lists and leaves (SC 2.5.8): a rule label's button
- * over a drawing fitted to a phone that is smaller than 24 pixels because its neighbours are
- * closer than that, or that lies partly under the stage's view controls or a sheet over the
- * stage, which the drawing pans beneath. Each label's button shares the gap with its
- * neighbours (`spread`), so one that overlaps another button of the drawing (`crowded`, the
- * names of those, measured here: axe names no covering element for a target under 24 pixels)
- * is never excepted. For a linear rule, the hint the label opens is also in Learn's Reference,
- * whose controls meet the criterion: SC 2.5.8's "equivalent" exception. For a rule the
- * Reference lacks (LK's and LJ's, the Lambek calculus's, Mix, weakening) it is a violation that
- * waits for a decision on how a drawing fits a phone. A screen reader hears the hint as the
+ * Whether a violation is one SC 2.5.8 excepts: a rule label's button under 24 pixels, or partly
+ * under the stage's view controls or a sheet over the stage, whose hint Learn's Reference also
+ * shows. The Reference's controls meet the criterion, so the label's function is achieved
+ * through an equivalent control (the criterion's "equivalent" exception). A label's button
+ * that overlaps another button of the drawing is never excepted: each label shares the gap with
+ * its neighbours (`spread`), and `crowded` names those that overlap, measured here, since axe
+ * names no covering element for a target under 24 pixels. A screen reader hears the hint as the
  * label's description in every case.
  */
-const excepted = (rule: string, html: string, crowded: readonly string[]) =>
-  rule === "target-size" &&
-  /^<button[^>]* class="lb"/.test(html) &&
-  !crowded.some((name) => html.includes(`aria-label="${name}"`));
+const excepted = (rule: string, html: string, crowded: readonly string[]) => {
+  const name = /^<button[^>]* class="lb"[^>]* aria-label="([^"]*)"/
+    .exec(html)?.[1]
+    ?.replaceAll("&amp;", "&");
+  const label = name === undefined ? undefined : /^Rule (.+), step \d+$/.exec(name)?.[1];
+  return (
+    rule === "target-size" &&
+    name !== undefined &&
+    label !== undefined &&
+    inTheReference.has(label) &&
+    !crowded.includes(name)
+  );
+};
 
 /** The names of the rule labels' buttons that overlap another button over the drawing. */
 async function crowding(page: Page): Promise<string[]> {

@@ -4,6 +4,7 @@
 // Learn's frame and its places, the examples, the tour and About: one test
 // per interaction, against the built site with deduxit's real module.
 
+import { REFERENCE } from "../src/lib/rules";
 import { expect, test } from "./fixtures";
 import { goto } from "./prover";
 
@@ -31,6 +32,28 @@ test("Learn frames the window with the tutorial and the reference, and off leave
   await expect(page.locator(".band.bottom .lb").filter({ hasText: "Steps" })).toBeVisible();
   await page.keyboard.press("l");
   await expect(frame).toHaveCount(0);
+});
+
+test("the Reference lists every rule a label names, with the hint the label shows", async ({
+  page,
+}) => {
+  await goto(page);
+  await page.getByRole("button", { name: "Learn" }).click();
+  const frame = page.getByRole("complementary", { name: "Learn" });
+  await frame.getByRole("tab", { name: "Reference" }).click();
+  // Beside the written rules, the parts taken from the hints' tables: Mix and weakening, the
+  // two-sided negation, the Lambek calculus, LK and LJ.
+  for (const part of REFERENCE) {
+    const items = frame.locator(`[data-rules-${part.key}] .rule-list > li`);
+    await expect(items, part.key).toHaveCount(part.rules.length);
+    const first = part.rules[0]?.hint;
+    await expect(items.first()).toContainText(first?.title ?? "");
+  }
+  await expect(frame.getByRole("heading", { name: "LK", exact: true })).toBeAttached();
+  await expect(frame.getByRole("img", { name: "WR: from Γ ⊢ Δ to Γ ⊢ A, Δ" })).toBeAttached();
+  await expect(frame.locator("[data-rules-added] .rule-list > li").first()).toContainText(
+    "One-sided.",
+  );
 });
 
 test("a lesson's problem opens at once, and Watch plays its proof one step at a time", async ({
