@@ -13,7 +13,7 @@
 
 import { createEffect, createSignal, on, onCleanup, onMount, Show } from "solid-js";
 import { unwrap } from "solid-js/store";
-import { readLink, writeLink } from "../lib/link";
+import { type LinkContent, readLink, writeLink } from "../lib/link";
 import { MATH_FONTS, type MathFont } from "../lib/deduxit";
 import { prettyOrdinary } from "../lib/ordinary";
 import { paths } from "../lib/steps";
@@ -106,51 +106,83 @@ export default function App(props: {
     void font(chosen).catch(() => undefined);
   });
 
+  /** Opens the proof a link holds, or its sequent alone with the reason where the proof is not read. */
+  async function openLink(link: LinkContent) {
+    // A suite or parameter this page does not know opens in the suite's first calculus.
+    const calculus =
+      calculusOf(link.suite, "sequent", link.parameter) ??
+      SUITES.find((s) => s.key === link.suite)?.start ??
+      SUITES[0]?.start;
+    const restored = link.session !== undefined ? await prover.open(link.session) : null;
+    if (restored && !("problem" in restored)) return;
+    const opened = await prover.open(link.sequent, calculus);
+    const p = prover.current();
+    if ("problem" in opened) {
+      // The link's sequent does not parse: it goes into the field with its
+      // problem marked, as if it had been typed.
+      const id = prover.add();
+      prover.setInput(id, link.sequent);
+      if (calculus) await prover.setCalculus(id, calculus);
+      await prover.submit(id);
+    } else if (p && (link.session !== undefined || link.problem)) {
+      prover.banner(p.id, {
+        keyword: "Proof not restored",
+        sentence:
+          restored && "problem" in restored
+            ? `The link's proof was not read (${restored.problem.keyword}), so the sequent is loaded alone: start again, or import the session file.`
+            : link.problem === "version"
+              ? "The link was made by another version of this page, so the sequent is loaded alone."
+              : link.problem === "size"
+                ? "The link's proof unpacks to more than a link may hold, so the sequent is loaded alone: import the session file instead."
+                : "The link's proof did not unpack, so the sequent is loaded alone.",
+      });
+    }
+  }
+
   // While the link and the saved proofs load, a change of the active proof is
   // the page starting, not the visitor's: a menu opened meanwhile stays open.
   let starting = true;
-  onMount(async () => {
+  /** The fragment the page wrote last, as the browser reads it back: a change to it is the page's own. */
+  let wrote = "";
+  /** The page's start, then each link pasted into it, opened one after another. */
+  let opening: Promise<void> = Promise.resolve();
+
+  /**
+   * Opens a link pasted into the open page, where only the fragment changed, as a load of it
+   * would: the open proofs go to the restore bar and the link's proof opens alone.
+   */
+  const pasted = () => {
+    const hash = location.hash;
+    if (hash === wrote) return;
+    opening = opening
+      .catch(() => undefined)
+      .then(async () => {
+        const link = await readLink(hash);
+        if (!link) return;
+        // Not `starting`: the old proof's menus and selection close as the active proof changes.
+        prover.leave();
+        await openLink(link);
+        prover.prune();
+        if (prover.store.proofs.length === 0) prover.add();
+      });
+  };
+
+  onMount(() => {
     void font().catch(() => undefined);
     // The worker starts with the first call: this one, so that deduxit's
     // module loads after the first paint, before the visitor's first step.
     void prover.api.about().catch(() => undefined);
     prover.begin();
-    const link = await readLink(location.hash);
-    if (link) {
-      // A suite or parameter this page does not know opens in the suite's first calculus.
-      const calculus =
-        calculusOf(link.suite, "sequent", link.parameter) ??
-        SUITES.find((s) => s.key === link.suite)?.start ??
-        SUITES[0]?.start;
-      const restored = link.session !== undefined ? await prover.open(link.session) : null;
-      if (!restored || "problem" in restored) {
-        const opened = await prover.open(link.sequent, calculus);
-        const p = prover.current();
-        if ("problem" in opened) {
-          // The link's sequent does not parse: it goes into the field with its
-          // problem marked, as if it had been typed.
-          const id = prover.add();
-          prover.setInput(id, link.sequent);
-          if (calculus) await prover.setCalculus(id, calculus);
-          await prover.submit(id);
-        } else if (p && (link.session !== undefined || link.problem)) {
-          prover.banner(p.id, {
-            keyword: "Proof not restored",
-            sentence:
-              restored && "problem" in restored
-                ? `The link's proof was not read (${restored.problem.keyword}), so the sequent is loaded alone: start again, or import the session file.`
-                : link.problem === "version"
-                  ? "The link was made by another version of this page, so the sequent is loaded alone."
-                  : link.problem === "size"
-                    ? "The link's proof unpacks to more than a link may hold, so the sequent is loaded alone: import the session file instead."
-                    : "The link's proof did not unpack, so the sequent is loaded alone.",
-          });
-        }
-      }
-    }
-    prover.prune();
-    if (prover.store.proofs.length === 0) prover.add();
-    starting = false;
+    const hash = location.hash;
+    opening = (async () => {
+      const link = await readLink(hash);
+      if (link) await openLink(link);
+      prover.prune();
+      if (prover.store.proofs.length === 0) prover.add();
+      starting = false;
+    })();
+    window.addEventListener("hashchange", pasted);
+    onCleanup(() => window.removeEventListener("hashchange", pasted));
   });
 
   // Autosave: every change of a proof, a moment after it settles.
@@ -191,6 +223,7 @@ export default function App(props: {
             JSON.stringify(unwrap(session)),
           );
           history.replaceState(null, "", written.hash);
+          wrote = location.hash;
           setLinkShort(!written.whole);
         }, 400);
       },

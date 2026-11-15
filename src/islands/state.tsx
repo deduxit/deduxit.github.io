@@ -432,8 +432,8 @@ export function createProver(say: (text: string) => void = () => undefined) {
   /** The calculus last chosen in this visit, which a new empty tab starts in. */
   const [lastCalculus, setLastCalculus] = createSignal<Calculus>(linear("classical"));
   const [busy, setBusy] = createSignal(false);
-  /** This visit's key among the stored proofs. */
-  const visit = freshId();
+  /** This visit's key among the stored proofs; a link opened in the page starts a new one. */
+  let visit = freshId();
 
   /**
    * One action that changes a proof at a time: each reads the session before
@@ -884,6 +884,23 @@ export function createProver(say: (text: string) => void = () => undefined) {
     /** At the page's start: sets the last visit's proofs aside for the restore bar. */
     begin() {
       setAsideShelf(setAside(storage(), visit));
+    },
+
+    /**
+     * Before a link pasted into the open page is opened, as a new load would: stops the work
+     * under way, closes every proof and starts a new visit in classical linear logic, so that
+     * the closed proofs are in the restore bar with those set aside before.
+     */
+    leave() {
+      if (busy()) api.cancel();
+      save();
+      visit = freshId();
+      setLastCalculus(linear("classical"));
+      batch(() => {
+        setStore("proofs", []);
+        setStore("active", null);
+      });
+      actions.begin();
     },
 
     /** Restores the last visit's proofs beside the open ones. */

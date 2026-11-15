@@ -399,6 +399,30 @@ test("the link in the fragment restores the proof, or says it could not", async 
   await expect(broken.getByRole("button", { name: /^A⊥ ⅋ B⊥, formula 1 of goal 1/ })).toBeVisible();
 });
 
+test("a link pasted into the open page opens its proof, and the proof it replaces is restorable", async ({
+  page,
+}) => {
+  await start(page, "A * B |- B * A");
+  await rule(page, /^A⊥ ⅋ B⊥/, "⅋");
+  await expect(page.getByRole("button", { name: /^A⊥, formula 1 of goal 2/ })).toBeVisible();
+  // Only the fragment changes, as when a link to this page is pasted into its address bar.
+  await page.evaluate(() => {
+    location.hash = "#v=2&u=linear&m=classical&s=A+|-+A";
+  });
+  await expect(page.getByRole("button", { name: /^A⊥, formula 1 of goal 1/ })).toBeVisible();
+  await expect(page.locator(".ptab")).toHaveCount(1);
+  const bar = page.getByRole("region", { name: "Restore" });
+  await expect(bar).toContainText("1 proof from your last visit");
+  // The page's own link of the new proof, with its session, opens nothing.
+  await expect(page).toHaveURL(/&s=A.*&d=/);
+  await page.waitForTimeout(500);
+  await expect(page.locator(".ptab")).toHaveCount(1);
+  await expect(bar).toContainText("1 proof from your last visit");
+  await bar.getByRole("button", { name: "Restore" }).click();
+  await expect(page.locator(".ptab")).toHaveCount(2);
+  await expect(page.getByRole("button", { name: /^A⊥, formula 1 of goal 2/ })).toBeVisible();
+});
+
 test("a link whose sequent does not parse shows the parse error under the field", async ({
   page,
 }) => {
