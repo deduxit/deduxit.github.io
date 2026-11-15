@@ -7,7 +7,7 @@
 // state: a new control, popover or state gets a step here, and both see it.
 
 import { devices, expect, type Page } from "@playwright/test";
-import { calculus, goto, rule, start } from "./prover";
+import { calculus, goto, rule, start, switches } from "./prover";
 
 /** Called in each state, with the state's name. */
 export type Visit = (state: string) => Promise<void>;
@@ -284,6 +284,42 @@ export async function methods(page: Page, visit: Visit) {
   await expect(page.getByRole("button", { name: "Draw all 2048 rows" })).toBeVisible();
   await visit("table refused");
   await page.getByRole("tab", { name: "Tree" }).click();
+}
+
+/**
+ * A classical proof's translations and interpolants: the Logic popover that offers them, a
+ * translation whose verdicts agree, one that is not valid with its countermodel, and an
+ * interpolant before and after a formula is moved to the other part.
+ */
+export async function transforms(page: Page, visit: Visit) {
+  await goto(page);
+  await calculus(page, ["Ordinary", "Classical"]);
+  await page.getByRole("textbox", { name: "Sequent" }).fill("p /\\ (p -> q), s |- q \\/ t");
+  await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
+  let pop = await switches(page);
+  await visit("logic, classical");
+  await pop.getByRole("button", { name: "Translate into intuitionistic logic" }).click();
+  const translation = page.getByRole("dialog", { name: "Translate into intuitionistic logic" });
+  await expect(translation.getByRole("status")).toContainText("Both valid");
+  await visit("translation");
+  pop = await switches(page);
+  await pop.getByRole("button", { name: "Find an interpolant" }).click();
+  const interpolant = page.getByRole("dialog", { name: "Find an interpolant" });
+  await expect(interpolant.getByRole("status")).toContainText("Interpolant");
+  await visit("interpolant");
+  await interpolant.getByRole("button", { name: "Part 1 s" }).click();
+  await expect(interpolant.getByRole("button", { name: "Part 2 s" })).toBeVisible();
+  await expect(interpolant.getByRole("status")).toContainText("Interpolant");
+  await visit("interpolant, a formula moved");
+  await page.keyboard.press("Escape");
+  await page.getByRole("button", { name: "New proof" }).click();
+  await page.getByRole("textbox", { name: "Sequent" }).fill("a \\/ b |- a");
+  await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
+  pop = await switches(page);
+  await pop.getByRole("button", { name: "Translate into intuitionistic logic" }).click();
+  await expect(page.getByRole("img", { name: /^A countermodel of/ })).toBeVisible();
+  await visit("translation, not valid");
+  await page.keyboard.press("Escape");
 }
 
 /** The witness chooser with a term typed, and its refusal. */

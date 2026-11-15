@@ -27,6 +27,7 @@ import {
   reasons,
   restoring,
   touring,
+  transforms,
   type Visit,
   witnessing,
 } from "./states";
@@ -158,6 +159,12 @@ test("a truth table's and a tableau's controls are targets of 24 by 24 pixels at
   expect(await measured(page, 24, methods)).toEqual([]);
 });
 
+test("a translation's and an interpolant's controls are targets of 24 by 24 pixels at least", async ({
+  page,
+}) => {
+  expect(await measured(page, 24, transforms)).toEqual([]);
+});
+
 test.describe("at a phone's width", () => {
   test.use(pixel);
 
@@ -165,6 +172,12 @@ test.describe("at a phone's width", () => {
     page,
   }) => {
     expect(await measured(page, 44, methods)).toEqual([]);
+  });
+
+  test("a translation's and an interpolant's controls are 44 by 44 pixels at least", async ({
+    page,
+  }) => {
+    expect(await measured(page, 44, transforms)).toEqual([]);
   });
 
   test("an ordinary tab's controls are 44 by 44 pixels at least", async ({ page }) => {

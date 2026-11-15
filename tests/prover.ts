@@ -23,7 +23,7 @@ export async function start(page: Page, sequent: string, fresh = true) {
 
 /** The current tab's calculus switches, opened from its mark if they are not open yet. */
 export async function switches(page: Page) {
-  const pop = page.getByRole("dialog", { name: "Logic" });
+  const pop = page.getByRole("dialog", { name: "Logic", exact: true });
   if (!(await pop.isVisible())) await page.locator(".ptab[aria-current=true] .pt-mark").click();
   await expect(pop).toBeVisible();
   return pop;
