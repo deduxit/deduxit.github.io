@@ -28,6 +28,7 @@ import type {
   Termed,
 } from "./deduxit";
 import type { OrdinaryOutcome, OrdinarySession, OrdinaryStep, OrdinaryView } from "./ordinary";
+import type { Comparison, Interpolation } from "./transforms";
 import { type Client, createClient, type WorkerLike } from "./protocol";
 import type { Action, Replayed } from "./steps";
 
@@ -223,6 +224,12 @@ export function createApi(changed: (pending: number) => void) {
       /** A classical sequent decided by a signed tableau, the tableau in the outcome's `search`. */
       tableau: (sequent: string, settings: string) =>
         json<OrdinaryOutcome>("ordinary_tableau", sequent, settings),
+      /** A classical sequent translated negatively, both decided: `options` names the translation. */
+      translate: (sequent: string, options: string, settings: string) =>
+        json<Comparison>("ordinary_translate", sequent, options, settings),
+      /** A sequent decided in `logic` and its interpolant for `partition`, the halves checked. */
+      interpolate: (sequent: string, logic: string, partition: string, settings: string) =>
+        json<Interpolation>("ordinary_interpolate", sequent, logic, partition, settings),
     },
     replay: (session: SessionDoc, todo: readonly Action[], settings: string) =>
       json<Replayed>("replay", doc(session), JSON.stringify(todo), settings),

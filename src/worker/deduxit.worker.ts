@@ -60,6 +60,8 @@ const calls = {
   ordinary_model_certificate: deduxit.ordinary_model_certificate,
   ordinary_table: deduxit.ordinary_table,
   ordinary_tableau: deduxit.ordinary_tableau,
+  ordinary_translate: deduxit.ordinary_translate,
+  ordinary_interpolate: deduxit.ordinary_interpolate,
   replay: (session: string, todo: string, settings: string) =>
     JSON.stringify(
       replay(deduxit, JSON.parse(session) as SessionDoc, JSON.parse(todo) as Action[], settings),
