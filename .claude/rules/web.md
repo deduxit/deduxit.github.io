@@ -100,6 +100,23 @@ the page reads.
   the Export menu's "Countermodel" (`ordinary_model_certificate`, standalone), shown for an
   ordinary proof only, greyed until a goal's close or hint found one. The class `.model` is
   Learn's: the figure's are `.countermodel*`. `tests/states.ts`'s ordinary walk ends on it.
+- **A classical proof's truth table and tableau are views of the stage, not a method of the
+  tab** (`Methods.tsx`, `src/lib/methods.ts`): the tablist offers Table and Tableau beside Tree
+  and Net for a started proof of classical ordinary logic alone (`decidable` in `Stage.tsx`),
+  `ui.tab` holds `table` or `tableau`, and the stage puts its panel (`.method`) in the drawing's
+  place, the camera, the formulas' buttons and the dock hidden (`data-method`), the proof kept
+  as it was. The panel asks deduxit's `ordinary_table` or `ordinary_tableau` with the session's
+  sequent (`sequentText`) and shows the verdict in one sentence that names the values (the
+  cognitive load: no searching the table for the row), the table (the atoms, then the formulas
+  left of ⊢ and right of it, not every subformula) or the tree (numbered signed lines, a split
+  as two branches side by side, stacked on a phone), and under a sequent that is not valid the
+  countermodel (`ModelFigure`, `Countermodel.tsx`). A table past deduxit's `table_atoms` says so
+  and draws on request up to 14 atoms (`MOST_ATOMS`) by sending the bound raised. They are views
+  and not a method of the tab (the registry's `methods`, the link's `k`) because they decide at
+  once and hold no steps: a tab of their own would hold nothing to do, and as views they cost a
+  visitor who does not press them nothing (the author's rule: not overwhelming). A model the
+  views build is made once (`createMemo`): a prop is a getter read at every use, and the table
+  built afresh per cell took 27 s for 2048 rows.
 - **The linear suite's calls never get an ordinary session**: fill (`fillable`, `fill`), the
   invertible rules (`setInvertible`), the engine choice and the cut are kept to linear proofs.
 - **The registry reads every linear mode deduxit's `about` lists** (the switches build six; a

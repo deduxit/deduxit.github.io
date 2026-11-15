@@ -188,6 +188,10 @@
   --size-frame: 360px;
   /* The tallest a countermodel's drawing stands under its note before it scales down. */
   --size-model: 240px;
+  /* A tableau's line: its number, its sign, and the indent of a branch's end under the formulas. */
+  --size-tableau-number: 2.5em;
+  --size-tableau-sign: 1.25em;
+  --size-tableau-indent: 3.75em;
   --size-tour: 320px;
   --size-text: 640px;
   --size-ledger-label: 160px;

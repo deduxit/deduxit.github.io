@@ -75,7 +75,8 @@ export function createUi() {
     /** The witness chooser open at a formula, for ∃R or ∀L: a term typed, or the witness left open. */
     witnessing: { goal: number; position: number; rule: string } | null;
     menu: Menu;
-    tab: "tree" | "net";
+    /** The stage's view: the derivation, the net, or a classical proof's truth table or tableau. */
+    tab: "tree" | "net" | "table" | "tableau";
     ladder: Ladder | null;
     live: string;
     /** The calculus a switch asked for, until the visitor confirms the restart. */

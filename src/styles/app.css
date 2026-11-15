@@ -1013,6 +1013,167 @@ button.wordmark {
   font: var(--font-weight-normal) var(--text-small) / var(--leading-snug) var(--font-text);
   color: var(--color-ink);
 }
+/* A classical proof's truth table or tableau, in the drawing's place: a page of its own that
+   scrolls as a page does, the stage's camera and dock out of the way while it shows. */
+.stage[data-method] .world,
+.stage[data-method] .hits,
+.stage[data-method] .dock,
+.stage[data-method] .stage-ctl > :not(.tabs) {
+  display: none;
+}
+.method {
+  position: absolute;
+  inset: 0;
+  z-index: var(--layer-stage);
+  overflow: auto;
+  overscroll-behavior: contain;
+  touch-action: auto;
+  cursor: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-3);
+  /* The view's tabs stand over the stage's bottom right: the last line clears them. */
+  padding: var(--spacing-4) var(--spacing-4) calc(2 * var(--size-control) + var(--spacing-6));
+  background: var(--color-field);
+}
+/* Each part keeps its height: the page scrolls, never a part's own box. */
+.method > * {
+  flex-shrink: 0;
+}
+.method-verdict {
+  max-width: var(--size-text);
+  margin: 0;
+  line-height: var(--leading-normal);
+}
+.method-model {
+  max-width: var(--size-text);
+}
+.method-model:focus-visible {
+  outline: var(--line-strong) solid var(--color-accent);
+}
+
+/* The truth table: T and F under each column, the atoms ruled off from the formulas and ⊢
+   standing between the formulas left of it and right of it. */
+.tt-scroll,
+.tb-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: var(--spacing-1);
+}
+.tt {
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+.tt th,
+.tt td {
+  padding: var(--spacing-1) var(--spacing-3);
+  text-align: center;
+  white-space: nowrap;
+}
+.tt thead th {
+  font-size: var(--text-math);
+  border-bottom: var(--line) solid var(--color-line);
+}
+.tt td[data-value="F"] {
+  color: var(--color-dim);
+}
+.tt [data-edge="atoms"] {
+  border-left: var(--line) solid var(--color-line);
+}
+.tt th[data-edge="turnstile"] {
+  position: relative;
+  padding-left: var(--spacing-5);
+}
+.tt th[data-edge="turnstile"]::before {
+  content: "⊢";
+  position: absolute;
+  left: 0;
+  font-family: var(--font-math);
+  color: var(--color-dim);
+}
+.tt td[data-edge="turnstile"] {
+  padding-left: var(--spacing-5);
+}
+.tt tr[data-falsifies] td {
+  background: var(--color-bad-wash);
+}
+.tt .tt-mark {
+  text-align: left;
+  color: var(--color-bad);
+}
+
+/* The tableau: a line per signed formula, its number and its source in the margins, and a
+   split as a bar the two branches hang from, side by side; on a phone one under the other. */
+.tb {
+  display: grid;
+  gap: var(--spacing-0-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.tb-line {
+  display: grid;
+  grid-template-columns: var(--size-tableau-number) var(--size-tableau-sign) auto auto;
+  justify-content: start;
+  align-items: baseline;
+  column-gap: var(--spacing-2);
+}
+.tb-line .m {
+  font-size: var(--text-math);
+}
+.tb-n,
+.tb-from {
+  color: var(--color-dim);
+  font-size: var(--text-small);
+  font-variant-numeric: tabular-nums;
+}
+.tb-n {
+  text-align: right;
+}
+.tb-from {
+  padding-left: var(--spacing-2);
+}
+.tb-sign {
+  font-weight: var(--font-weight-semibold);
+}
+.tb-split {
+  margin-top: var(--spacing-2);
+}
+.tb-branches {
+  display: flex;
+  gap: var(--spacing-5);
+  margin: 0;
+  padding: var(--spacing-2) 0 0;
+  list-style: none;
+  border-top: var(--line-strong) solid var(--color-line);
+}
+.tb-branch {
+  flex: 0 0 auto;
+  padding-left: var(--spacing-2);
+  border-left: var(--line-strong) solid var(--color-line);
+}
+.tb-end {
+  padding-left: calc(var(--size-tableau-indent) + 2 * var(--spacing-2));
+  font-size: var(--text-small);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-bad);
+}
+.tb-end[data-closed] {
+  color: var(--color-ok);
+}
+@media (max-width: 640px) {
+  .method {
+    padding-inline: var(--spacing-3);
+  }
+  .tb-branches {
+    flex-direction: column;
+    gap: var(--spacing-3);
+    border-top: none;
+  }
+}
+
 /* A "not valid" goal's countermodel under its note: deduxit's drawing, coloured as the stage's,
    the model's world in the net's highlight colour. */
 .countermodel {

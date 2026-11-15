@@ -68,6 +68,8 @@ import {
   type Settings,
   viewJson,
 } from "./state";
+import { ModelFigure } from "./Countermodel";
+import { type Method, MethodView } from "./Methods";
 import { hinted, titled } from "./RuleHint";
 import { ladderKey, phone, token, type Ui, Why, Words } from "./ui";
 
@@ -875,6 +877,8 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
     // makes a pinch of the two.
     const pointers = new Map<number, { x: number; y: number; pans: boolean }>();
     const down = (event: PointerEvent) => {
+      // The truth table and the tableau scroll as a page does.
+      if ((event.target as Element).closest(".method")) return;
       const control = (event.target as Element).closest("button, input, .dock, .pop, .cluster");
       if (control && (event.pointerType !== "touch" || pointers.size === 0)) {
         if (event.pointerType === "touch")
@@ -910,6 +914,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
     // pointers make the pinch, so their gesture events are only kept from the page.
     let scaled = 1;
     const gesture = (event: Event) => {
+      if ((event.target as Element).closest(".method")) return;
       event.preventDefault();
       if (pointers.size > 0) return;
       const { scale, clientX, clientY } = event as Event & {
@@ -924,7 +929,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
       scaled = scale;
     };
     const wheel = (event: WheelEvent) => {
-      if (!host.firstChild) return;
+      if (!host.firstChild || (event.target as Element).closest(".method")) return;
       event.preventDefault();
       if (event.ctrlKey || event.metaKey) {
         const s = stage.getBoundingClientRect();
@@ -1243,6 +1248,14 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
   };
   /** The proof whose greyed Net tab was pressed, until Tree is pressed: its reason stays in view. */
   const [netAsked, setNetAsked] = createSignal<string | null>(null);
+  /** Whether the proof's sequent has a truth table and a tableau: a started classical ordinary one. */
+  const decidable = () => {
+    const p = proof();
+    return !!p?.session && p.calculus.suite === "ordinary" && p.calculus.logic === "classical";
+  };
+  /** The truth table or the tableau the stage shows in the drawing's place, or null. */
+  const method = (): Method | null =>
+    (ui.tab === "table" || ui.tab === "tableau") && decidable() ? ui.tab : null;
   /** The active goal's place among the open goals, from 1. */
   const openPlace = () => (view()?.goals.findIndex((g) => g.goal === active()) ?? 0) + 1;
 
@@ -1252,6 +1265,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
       aria-label="The proof"
       ref={stage}
       data-dropping={dropping() ? "" : undefined}
+      data-method={method() ?? undefined}
       onDragOver={(event) => {
         event.preventDefault();
         setDropping(true);
@@ -1349,6 +1363,8 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
           </For>
         </div>
       </div>
+
+      <Show when={method()}>{(m) => <MethodView prover={props.prover} method={m()} />}</Show>
 
       <Show when={proof()?.banner}>
         {(banner) => (
@@ -2067,7 +2083,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
             type="button"
             role="tab"
             class="tab"
-            aria-selected={ui.tab === "tree"}
+            aria-selected={ui.tab === "tree" || (ui.tab !== "net" && method() === null)}
             data-tip="The derivation"
             data-key="V"
             onClick={() => {
@@ -2092,6 +2108,29 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
           >
             Net
           </button>
+          {/* A classical sequent's two other ways of deciding it, shown only where asked for. */}
+          <Show when={decidable()}>
+            <button
+              type="button"
+              role="tab"
+              class="tab"
+              aria-selected={method() === "table"}
+              data-tip="The truth table: every assignment of the atoms"
+              onClick={() => setUi("tab", "table")}
+            >
+              Table
+            </button>
+            <button
+              type="button"
+              role="tab"
+              class="tab"
+              aria-selected={method() === "tableau"}
+              data-tip="The tableau: the formulas taken apart, branch by branch"
+              onClick={() => setUi("tab", "tableau")}
+            >
+              Tableau
+            </button>
+          </Show>
         </div>
         <span class="sep" />
         <button
@@ -2133,38 +2172,6 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
         </div>
       </Show>
     </section>
-  );
-}
-
-/**
- * A "not valid" goal's countermodel, drawn by deduxit (a picture, its `<desc>` read by a screen
- * reader), with one sentence on what it shows.
- */
-function ModelFigure(props: { outcome: OrdinaryOutcome; prover: Prover }) {
-  const [drawing] = createResource(
-    () => props.outcome,
-    (outcome) =>
-      props.prover.api.ordinary
-        .modelDrawing(
-          outcome,
-          JSON.stringify({ styles: { svg: { font: props.prover.settings().stageFont } } }),
-        )
-        .catch(() => null),
-  );
-  const world = () => props.outcome.countermodel?.model.world ?? 0;
-  return (
-    <Show when={drawing()}>
-      {(svg) => (
-        <figure class="countermodel">
-          <div class="countermodel-drawing" innerHTML={svg()} />
-          <figcaption class="said-why">
-            {props.outcome.logic === "classical"
-              ? "Its one world makes every formula left of ⊢ true and every formula right of it false."
-              : `World ${String(world())}, outlined, forces every formula left of ⊢ and not the one right of it. A world forces what every world below it forces, and an arrow points up.`}
-          </figcaption>
-        </figure>
-      )}
-    </Show>
   );
 }
 
