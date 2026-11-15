@@ -115,6 +115,21 @@ export function Calculus(props: { prover: Prover; ui: Ui }) {
               <span class="sw-t" aria-hidden="true" />
               Structural rules
             </label>
+            {/* A started classical sequent's translations and interpolants, each asked for. */}
+            <Show when={logic() === "classical" && proof()?.session}>
+              <div class="calc-more">
+                <button type="button" class="btn btn-s" onClick={() => setUi("menu", "translate")}>
+                  Translate into intuitionistic logic
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-s"
+                  onClick={() => setUi("menu", "interpolate")}
+                >
+                  Find an interpolant
+                </button>
+              </div>
+            </Show>
           </>
         }
       >

@@ -49,6 +49,8 @@ export type Menu =
   | "steps"
   | "about"
   | "practice"
+  | "translate"
+  | "interpolate"
   | "more"
   | null;
 

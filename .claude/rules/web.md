@@ -117,6 +117,23 @@ the page reads.
   visitor who does not press them nothing (the author's rule: not overwhelming). A model the
   views build is made once (`createMemo`): a prop is a getter read at every use, and the table
   built afresh per cell took 27 s for 2048 rows.
+- **A classical proof's translations and interpolant are two sheets over the stage, asked for in
+  the tab's Logic popover alone** (`Transforms.tsx`, `src/lib/transforms.ts`): under the switches of
+  a started classical ordinary proof, "Translate into intuitionistic logic" and "Find an
+  interpolant" set `ui.menu` to `translate` or `interpolate`, a `.menu.transform` sheet as Practice
+  is (light dismiss, Escape), its title taking the focus. Not a view tab: the stage's row of views
+  is full on a phone (364 of 375 pixels with Table and Tableau), and a visitor who does not ask
+  meets nothing new (the author's rule: not overwhelming). Each answer opens with its verdict
+  sentence (`method-verdict`, `role="status"`): a translation's two verdicts and that they agree,
+  then the translated sequent large, "Prove it in <logic>" (`prover.open` with the target's
+  calculus: a new tab, no `origin`), one line per logic and the target's Kripke model where it is
+  not valid (the classical one in words); an interpolant's keyword, the formula large, its three
+  checks (its atoms, then the two halves deduxit decided, `first` and `second`, written from
+  their own sequents). The translations are offered Glivenko, Kuroda, Gödel–Gentzen, Kolmogorov,
+  from the least change to the most, each into the logic `about` names (`transforms.test.ts`);
+  the partition is a toggle per formula (`aria-pressed` for part 1, its number written before it,
+  part 2 dashed), Craig's split (the formulas left of ⊢) at the start and again for each new
+  sequent. Both calls are sent `{}` as settings, as the table's are.
 - **The linear suite's calls never get an ordinary session**: fill (`fillable`, `fill`), the
   invertible rules (`setInvertible`), the engine choice and the cut are kept to linear proofs.
 - **The registry reads every linear mode deduxit's `about` lists** (the switches build six; a

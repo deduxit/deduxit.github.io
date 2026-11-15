@@ -74,6 +74,7 @@ import {
 import { Written } from "./Learn";
 import { Dictionary, Logo } from "./Logo";
 import { type Practice, PracticePlace } from "./Practice";
+import { InterpolateSheet, TranslateSheet } from "./Transforms";
 import { applyTheme } from "./TopBand";
 import type { Menu, Ui } from "./ui";
 
@@ -304,6 +305,12 @@ export function BottomBand(props: {
       </Show>
       <Show when={ui.menu === "practice"}>
         <PracticePlace prover={props.prover} ui={props.ui} practice={props.practice} />
+      </Show>
+      <Show when={ui.menu === "translate"}>
+        <TranslateSheet prover={props.prover} ui={props.ui} />
+      </Show>
+      <Show when={ui.menu === "interpolate"}>
+        <InterpolateSheet prover={props.prover} ui={props.ui} />
       </Show>
       <Show when={ui.menu === "more"}>
         <MoreSheet prover={props.prover} ui={props.ui} tour={props.tour} />

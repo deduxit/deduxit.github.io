@@ -421,6 +421,7 @@ button.wordmark {
 .mi,
 .pr-item,
 .chip,
+.tf-part,
 .linkish {
   min-height: var(--size-control);
   min-width: var(--size-control);
@@ -448,7 +449,8 @@ button.wordmark {
   .rule,
   .mi,
   .pr-item,
-  .chip
+  .chip,
+  .tf-part
 ):hover:not(:disabled, [aria-disabled="true"]) {
   background: var(--color-panel-2);
   border-color: var(--color-line);
@@ -1859,6 +1861,137 @@ button.wordmark {
 .stairs[data-level="3"] i:nth-child(-n + 3),
 .stairs[data-level="4"] i {
   background: currentColor;
+}
+
+/* A classical sequent's translation or interpolant: a sheet over the stage, as wide as a line of
+   text, the answer's formula the one large thing in it. */
+.menu.transform {
+  width: min(calc(var(--size-text) + 2 * var(--spacing-3)), calc(100vw - var(--spacing-5)));
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-2);
+  padding: var(--spacing-3);
+}
+.menu.transform > * {
+  flex-shrink: 0;
+  max-width: 100%;
+}
+.tf-intro {
+  margin: 0;
+  max-width: var(--size-text);
+}
+.menu.transform .sub {
+  margin: 0;
+}
+.tf-seg {
+  flex-wrap: wrap;
+  width: auto;
+}
+@media (max-width: 640px) {
+  .tf-seg {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+  }
+}
+.tf-answer {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-2);
+  width: 100%;
+  padding-top: var(--spacing-2);
+  border-top: var(--line) solid var(--color-edge);
+}
+.tf-answer .row {
+  margin: 0;
+}
+.tf-to {
+  margin: 0;
+  font-size: var(--text-math-large);
+  overflow-wrap: anywhere;
+}
+.tf-evidence {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--spacing-1) var(--spacing-3);
+  margin: 0;
+  font-size: var(--text-small);
+}
+.tf-evidence dt {
+  color: var(--color-dim);
+}
+.tf-evidence dd {
+  margin: 0;
+}
+/* The sequent's formulas, each a button in the part it is in: part 1 filled, part 2 dashed, and
+   the part's number before it, so that no colour alone tells the two apart. */
+.tf-parts {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-1-5);
+}
+.tf-part {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1-5);
+  padding: 0 var(--spacing-2);
+  border: var(--line) dashed var(--color-line);
+  font-size: var(--text-math);
+  overflow-wrap: anywhere;
+}
+.tf-part[aria-pressed="true"] {
+  border-style: solid;
+  border-color: var(--color-accent);
+  background: var(--color-accent-wash);
+}
+.tf-n {
+  font: var(--font-weight-semibold) var(--text-small) / var(--leading-none) var(--font-text);
+  color: var(--color-dim);
+}
+.tf-turnstile {
+  font-size: var(--text-math);
+}
+.tf-checks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+  max-width: var(--size-text);
+}
+.tf-check {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-1-5);
+}
+.tf-check svg.lucide {
+  flex: none;
+  width: var(--size-icon);
+  height: var(--size-icon);
+  align-self: center;
+  color: var(--color-warn);
+}
+.tf-check[data-ok] svg.lucide {
+  color: var(--color-ok);
+}
+.tf-check .m {
+  overflow-wrap: anywhere;
+}
+/* The Logic popover's way to them: under the switches, apart from them. */
+.calc-more {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-1);
+  flex-basis: 100%;
+  padding-top: var(--spacing-2);
+  border-top: var(--line) solid var(--color-edge);
 }
 
 /* Practice: a sheet over the stage, wider than a menu, the filters above the problems. */
