@@ -69,6 +69,7 @@ import {
   viewJson,
 } from "./state";
 import { ModelFigure } from "./Countermodel";
+import { CustomPanel } from "./Custom";
 import { type Method, MethodView } from "./Methods";
 import { hinted, titled } from "./RuleHint";
 import { ladderKey, phone, token, type Ui, Why, Words } from "./ui";
@@ -1277,7 +1278,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
       aria-label="The proof"
       ref={stage}
       data-dropping={dropping() ? "" : undefined}
-      data-method={method() ?? undefined}
+      data-method={proof()?.calculus.suite === "rules" ? "custom" : (method() ?? undefined)}
       onDragOver={(event) => {
         event.preventDefault();
         setDropping(true);
@@ -1377,6 +1378,9 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
       </div>
 
       <Show when={method()}>{(m) => <MethodView prover={props.prover} method={m()} />}</Show>
+      <Show when={proof()?.calculus.suite === "rules"}>
+        <CustomPanel prover={props.prover} />
+      </Show>
 
       <Show when={proof()?.banner}>
         {(banner) => (
@@ -1391,7 +1395,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
         {(text) => <p class="banner kw warn">The drawing failed: {text()}</p>}
       </Show>
 
-      <Show when={!proof()?.session}>
+      <Show when={!proof()?.session && proof()?.calculus.suite !== "rules"}>
         <div class="empty">
           <p>
             Type a sequent, or open one from{" "}

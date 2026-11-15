@@ -20,6 +20,7 @@ import {
   learning,
   menus,
   methods,
+  customising,
   ordinary,
   pixel,
   practising,
@@ -165,8 +166,18 @@ test("a translation's and an interpolant's controls are targets of 24 by 24 pixe
   expect(await measured(page, 24, transforms)).toEqual([]);
 });
 
+test("a calculus of one's own's controls are targets of 24 by 24 pixels at least", async ({
+  page,
+}) => {
+  expect(await measured(page, 24, customising)).toEqual([]);
+});
+
 test.describe("at a phone's width", () => {
   test.use(pixel);
+
+  test("a calculus of one's own's controls are 44 by 44 pixels at least", async ({ page }) => {
+    expect(await measured(page, 44, customising)).toEqual([]);
+  });
 
   test("a truth table's and a tableau's controls are 44 by 44 pixels at least", async ({
     page,

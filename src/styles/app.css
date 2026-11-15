@@ -1059,6 +1059,86 @@ button.wordmark {
   outline: var(--line-strong) solid var(--color-accent);
 }
 
+/* A calculus of one's own: the panel has no view tabs (the stage's Tree and Net draw the other
+   suites), its drawing in the stage's ink, its file and steps under it. */
+.stage[data-method="custom"] .stage-ctl {
+  display: none;
+}
+.custom-drawing {
+  max-width: 100%;
+  overflow-x: auto;
+}
+.custom-drawing svg {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  fill: var(--color-ink);
+}
+.custom-drawing svg text {
+  fill: var(--color-ink);
+  font-synthesis: none;
+}
+.custom-drawing svg :is(g[stroke], path, line) {
+  stroke: var(--color-ink);
+}
+.custom-file {
+  width: min(100%, var(--size-text));
+}
+.custom-file summary {
+  cursor: pointer;
+  min-height: var(--size-control-small);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1-5);
+}
+/* A closed part shows that it opens, an open one that it closes. */
+.custom-file summary::before {
+  content: "▸";
+  color: var(--color-dim);
+}
+.custom-file[open] summary::before {
+  content: "▾";
+}
+.custom-from {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+.custom-text {
+  display: block;
+  width: 100%;
+  font: var(--text-small) / var(--leading-snug) var(--font-mono);
+  padding: var(--spacing-2);
+  border: var(--line) solid var(--color-line);
+  border-radius: var(--radius-control);
+  background: var(--color-panel);
+  color: var(--color-ink);
+}
+.custom-goals,
+.custom-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-2);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  list-style: none;
+}
+.custom-steps,
+.custom-give {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-2);
+  max-width: var(--size-text);
+}
+.custom-field {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
 /* The truth table: T and F under each column, the atoms ruled off from the formulas and ⊢
    standing between the formulas left of it and right of it. */
 .tt-scroll,

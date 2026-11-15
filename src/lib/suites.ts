@@ -6,14 +6,16 @@
  * calls of deduxit's module, proved by a method (the sequent calculus, the only one today), in
  * one of its calculi, named by the suite's parameter. A tab's choice is a `Calculus`: its
  * suite, its method and the suite's parameter, as deduxit's `about` names them (`mode` for the
- * linear suite, `logic` for the ordinary one); `suites.test.ts` holds the registry to `about`.
+ * linear suite, `logic` for the ordinary one, `calculus` for a calculus given as a rule file);
+ * `suites.test.ts` holds the registry to `about`.
  */
 
+import { BUILT_IN } from "./custom";
 import { MODES, type Mode } from "./deduxit";
 import { modeWords } from "./words";
 
 /** The suites the page offers, by deduxit's names. */
-export type SuiteKey = "linear" | "ordinary";
+export type SuiteKey = "linear" | "ordinary" | "rules";
 
 /** How a suite's proofs are built: the sequent calculus, a tree grown from the goal upward. */
 export type Method = "sequent";
@@ -27,7 +29,9 @@ export const LOGICS: readonly Logic[] = ["classical", "intuitionistic", "minimal
 /** A tab's calculus: its suite, its method and the suite's parameter. */
 export type Calculus =
   | { readonly suite: "linear"; readonly method: Method; readonly mode: Mode }
-  | { readonly suite: "ordinary"; readonly method: Method; readonly logic: Logic };
+  | { readonly suite: "ordinary"; readonly method: Method; readonly logic: Logic }
+  /** A calculus given as a rule file, named by the file's `name`: a built-in one or the visitor's. */
+  | { readonly suite: "rules"; readonly method: Method; readonly calculus: string };
 
 /** A suite as the page offers it. */
 export interface Suite {
@@ -38,15 +42,23 @@ export interface Suite {
   readonly tip: string;
   readonly methods: readonly Method[];
   /** The parameter that names a calculus of the suite, as `about` names it. */
-  readonly parameter: "mode" | "logic";
-  /** The values the page reads, a part of deduxit's (the calculus's switches offer some of them). */
+  readonly parameter: "mode" | "logic" | "calculus";
+  /**
+   * The values the page reads, a part of deduxit's (the calculus's switches offer some of them).
+   * A rule file's name is any name: the custom suite lists the built-in ones.
+   */
   readonly values: readonly string[];
+  /**
+   * Whether the suite's segment stands on the calculus's segmented control. A calculus of one's
+   * own is reached by its own button there, so a visitor who never opens one sees nothing new.
+   */
+  readonly segment: boolean;
   /** The calculus a new tab of the suite starts in. */
   readonly start: Calculus;
   /** The prefix of the suite's calls in deduxit's module, as `about` gives it. */
   readonly calls: string;
-  /** Its call that reads a finished proof back as a λ-term, as `about` names it. */
-  readonly term: string;
+  /** Its call that reads a finished proof back as a λ-term, as `about` names it, or null. */
+  readonly term: string | null;
 }
 
 /** The registered suites, in the order the segmented control shows them. */
@@ -59,6 +71,7 @@ export const SUITES: readonly Suite[] = [
     parameter: "mode",
     // Every mode a session the page reads can be in, the switches' and the ordered ones.
     values: [...MODES, "cyclic", "lambek", "lambek-star"],
+    segment: true,
     start: { suite: "linear", method: "sequent", mode: "classical" },
     calls: "",
     term: "term",
@@ -70,9 +83,22 @@ export const SUITES: readonly Suite[] = [
     methods: ["sequent"],
     parameter: "logic",
     values: LOGICS,
+    segment: true,
     start: { suite: "ordinary", method: "sequent", logic: "intuitionistic" },
     calls: "ordinary_",
     term: "ordinary_term",
+  },
+  {
+    key: "rules",
+    name: "Custom calculus",
+    tip: "A calculus written as a rule file, built-in or your own: every step checked against its rules",
+    methods: ["sequent"],
+    parameter: "calculus",
+    values: BUILT_IN,
+    segment: false,
+    start: { suite: "rules", method: "sequent", calculus: "LJ" },
+    calls: "rules_",
+    term: null,
   },
 ];
 
@@ -89,8 +115,19 @@ export const ordinary = (logic: Logic): Calculus => ({
   logic,
 });
 
-/** The suite's parameter of a calculus: its mode, or its logic. */
-export const parameterOf = (c: Calculus): string => (c.suite === "linear" ? c.mode : c.logic);
+/** The calculus of a rule file, by its name. */
+export const custom = (calculus: string): Calculus => ({
+  suite: "rules",
+  method: "sequent",
+  calculus,
+});
+
+/** The longest rule file's name a link or the shelf reads. */
+const LONGEST_NAME = 64;
+
+/** The suite's parameter of a calculus: its mode, its logic, or its rule file's name. */
+export const parameterOf = (c: Calculus): string =>
+  c.suite === "linear" ? c.mode : c.suite === "ordinary" ? c.logic : c.calculus;
 
 /** The linear mode of a calculus; the default mode for a calculus of another suite. */
 export const modeOf = (c: Calculus): Mode => (c.suite === "linear" ? c.mode : "classical");
@@ -110,12 +147,15 @@ export function calculusOf(
 ): Calculus | undefined {
   const s = SUITES.find((x) => x.key === key);
   if (!s?.methods.includes((method ?? "sequent") as Method)) return undefined;
+  if (s.key === "rules")
+    return parameter?.trim() && parameter.length <= LONGEST_NAME ? custom(parameter) : undefined;
   if (!parameter || !s.values.includes(parameter)) return undefined;
   return s.key === "linear" ? linear(parameter as Mode) : ordinary(parameter as Logic);
 }
 
 /** The calculus's short mark on its tab. */
 export function markOf(c: Calculus): string {
+  if (c.suite === "rules") return c.calculus;
   if (c.suite === "ordinary")
     return { classical: "LK", intuitionistic: "LJ", minimal: "LM" }[c.logic];
   const names: Record<Mode, string> = {
@@ -139,6 +179,7 @@ export function markLabel(c: Calculus): string {
 
 /** The calculus in the switches' words, for the status and the mark's name. */
 export function calculusWords(c: Calculus): string {
+  if (c.suite === "rules") return `Custom calculus, ${c.calculus}`;
   if (c.suite === "ordinary")
     return {
       classical: "Ordinary, classical (LK)",
@@ -150,4 +191,6 @@ export function calculusWords(c: Calculus): string {
 
 /** Whether a calculus's goals are two-sided with one formula right of ⊢ (LJ, LM, ILL). */
 export const intuitionistic = (c: Calculus) =>
-  c.suite === "linear" ? c.mode.startsWith("intuitionistic") : c.logic !== "classical";
+  c.suite === "linear"
+    ? c.mode.startsWith("intuitionistic")
+    : c.suite === "ordinary" && c.logic !== "classical";

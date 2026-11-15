@@ -140,7 +140,11 @@ export function BottomBand(props: {
             tip="Undo on this branch"
             keyName="U"
             alone
-            disabled={!proof()?.session || proof()?.view?.steps === 0 || props.prover.busy()}
+            disabled={
+              proof()?.custom
+                ? (proof()?.custom?.view?.steps ?? 0) === 0 || props.prover.busy()
+                : !proof()?.session || proof()?.view?.steps === 0 || props.prover.busy()
+            }
             onClick={() => void props.prover.undo()}
             show={key}
           />
@@ -607,7 +611,7 @@ function ExportMenu(props: {
     () => (complete() ? proof()?.session : undefined),
     (session): Promise<Termed> =>
       props.prover.api
-        .term(suite(isOrdinary(session) ? "ordinary" : "linear").term, session, "")
+        .term(suite(isOrdinary(session) ? "ordinary" : "linear").term ?? "term", session, "")
         .catch((thrown: unknown) => ({
           error: failure(thrown instanceof Error ? thrown.message : thrown),
         })),

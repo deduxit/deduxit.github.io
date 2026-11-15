@@ -62,6 +62,17 @@ const calls = {
   ordinary_tableau: deduxit.ordinary_tableau,
   ordinary_translate: deduxit.ordinary_translate,
   ordinary_interpolate: deduxit.ordinary_interpolate,
+  rules_calculus: deduxit.rules_calculus,
+  rules_read: deduxit.rules_read,
+  rules_start: deduxit.rules_start,
+  rules_view: deduxit.rules_view,
+  rules_rules: deduxit.rules_rules,
+  rules_apply: deduxit.rules_apply,
+  rules_assume: deduxit.rules_assume,
+  rules_undo: deduxit.rules_undo,
+  rules_check: deduxit.rules_check,
+  rules_draw: deduxit.rules_draw,
+  rules_export: deduxit.rules_export,
   replay: (session: string, todo: string, settings: string) =>
     JSON.stringify(
       replay(deduxit, JSON.parse(session) as SessionDoc, JSON.parse(todo) as Action[], settings),

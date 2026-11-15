@@ -12,6 +12,16 @@ import { batch, createSignal } from "solid-js";
 import { createStore, produce } from "solid-js/store";
 import { type Api, createApi } from "../lib/api";
 import {
+  assumptionsJson,
+  BUILT_IN,
+  type CustomSession,
+  type CustomStep,
+  type CustomView,
+  fileOf,
+  isCustom,
+  nameOf,
+} from "../lib/custom";
+import {
   type Engines,
   failure,
   type Hint,
@@ -67,6 +77,7 @@ import {
 import { SETTINGS_KEY } from "../lib/storage";
 import {
   type Calculus,
+  custom,
   linear,
   type Logic,
   modeOf,
@@ -142,6 +153,27 @@ export interface Elim {
 /** A proof's session: its suite's own document. */
 export type Session = SessionDoc | OrdinarySession;
 
+/**
+ * A proof in a calculus given as a rule file: the file as the editor holds it, the assumptions,
+ * and the session once started, which holds the file it was started in. Kept apart from
+ * `Proof.session`, so that the linear and ordinary calls never get such a session.
+ */
+export interface CustomWork {
+  /** The rule file's text. */
+  file: string;
+  /** The assumptions, one sequent per line. */
+  assumptions: string;
+  session: CustomSession | null;
+  /** What the page shows of the session; never stored. */
+  view: CustomView | null;
+  /** The finished derivation's verdict, once deduxit checked it whole; never stored. */
+  checked: string | null;
+  /** What deduxit said of the rule file or the last step, shown in the panel; never stored. */
+  problem: Said | null;
+  /** The goal worked on, by its id: the one a step opened or undo reopened; never stored. */
+  goal: number | null;
+}
+
 /** One open proof. */
 export interface Proof {
   readonly id: string;
@@ -177,6 +209,8 @@ export interface Proof {
   origin: { readonly from: string; readonly path: Path } | null;
   /** The elimination of a finished proof's cuts on each view, never stored. */
   elim: { tree: Elim | null; net: Elim | null };
+  /** The work of a proof in a calculus given as a rule file; null in the other suites. */
+  custom: CustomWork | null;
 }
 
 /** The visitor's settings, kept in the browser but for the engine, which holds for the visit. */
@@ -345,9 +379,28 @@ const freshId = () => `p${Date.now().toString(36)}${(counter++).toString(36)}`;
 
 /** Whether an open proof is a stored one: the same session, or the same text not started. */
 const isOpen = (open: Proof, stored: StoredProof) =>
-  open.session
-    ? JSON.stringify(open.session) === JSON.stringify(stored.session)
-    : !stored.session && open.input.trim() !== "" && open.input === stored.input;
+  open.custom?.session
+    ? JSON.stringify(open.custom.session) === JSON.stringify(stored.custom?.session)
+    : open.session
+      ? JSON.stringify(open.session) === JSON.stringify(stored.session)
+      : !stored.session &&
+        !stored.custom?.session &&
+        open.input.trim() !== "" &&
+        open.input === stored.input;
+
+/** The work of a new proof in `calculus`: a custom one's, its file read later. */
+const customWork = (calculus: Calculus): CustomWork | null =>
+  calculus.suite === "rules"
+    ? {
+        file: "",
+        assumptions: "",
+        session: null,
+        view: null,
+        checked: null,
+        problem: null,
+        goal: null,
+      }
+    : null;
 
 const blank = (calculus: Calculus): Proof => ({
   id: freshId(),
@@ -367,6 +420,7 @@ const blank = (calculus: Calculus): Proof => ({
   engines: {},
   origin: null,
   elim: { tree: null, net: null },
+  custom: customWork(calculus),
 });
 
 /** A goal's formulas as a key, equal for the same formulas in any order: how two tabs' sequents are compared. */
@@ -602,13 +656,22 @@ export function createProver(say: (text: string) => void = () => undefined) {
       version: 2,
       active: store.active,
       proofs: store.proofs
-        .filter((p) => p.session || p.input.trim())
+        .filter((p) => p.session || p.custom?.session || p.input.trim())
         .map(
           (p): StoredProof => ({
             id: p.id,
             input: p.input,
             calculus: p.calculus,
             session: p.session,
+            ...(p.custom
+              ? {
+                  custom: {
+                    file: p.custom.file,
+                    assumptions: p.custom.assumptions,
+                    session: p.custom.session,
+                  },
+                }
+              : {}),
             redo: p.redo,
             ...(p.later.length ? { later: p.later } : {}),
             engines: p.engines,
@@ -643,12 +706,117 @@ export function createProver(say: (text: string) => void = () => undefined) {
     return null;
   }
 
+  /** Shows a custom session on a proof, with the rule file the editor keeps. */
+  const showCustom = (
+    id: string,
+    played: { session: CustomSession; view: CustomView },
+    goal: number | null = null,
+  ) =>
+    update(id, (q) => {
+      q.calculus = custom(played.view.calculus.name);
+      q.input = played.view.sequent;
+      q.custom = {
+        file: q.custom?.file.trim() ? q.custom.file : fileOf(played.session),
+        assumptions: played.view.assumptions.join("\n"),
+        session: played.session,
+        view: played.view,
+        checked: null,
+        problem: null,
+        goal,
+      };
+      q.editing = false;
+      q.inputProblem = null;
+      q.note = null;
+      q.banner = null;
+      q.verdict = null;
+    });
+
+  /** The rule file of a proof in a calculus given as data: the editor's, else the built-in one named. */
+  async function fileFor(id: string): Promise<string> {
+    const p = store.proofs.find((q) => q.id === id);
+    if (p?.calculus.suite !== "rules") return "";
+    if (p.custom?.file.trim()) return p.custom.file;
+    const name = p.calculus.calculus;
+    if (!BUILT_IN.includes(name)) return "";
+    const file = await attempt(() => api.custom.calculus(name));
+    if (!file.ok) return "";
+    update(id, (q) => {
+      if (q.custom && !q.custom.file.trim()) q.custom.file = file.value;
+    });
+    return file.value;
+  }
+
+  /** Starts the field's text as a derivation in the proof's rule file, from its assumptions. */
+  async function startCustom(id: string, text: string) {
+    const file = await fileFor(id);
+    const p = store.proofs.find((q) => q.id === id);
+    if (!p?.custom) return;
+    if (!file.trim()) {
+      update(id, (q) => {
+        if (q.custom)
+          q.custom.problem = { keyword: "No rules", sentence: "Write the rule file first." };
+      });
+      return;
+    }
+    const started = await attempt(() =>
+      api.custom.start(file, text, assumptionsJson(p.custom?.assumptions ?? ""), ordinaryJson()),
+    );
+    if (!started.ok) {
+      const failed = started.failed;
+      if (!failed) return;
+      update(id, (q) => {
+        // The goal's problem marks the field; the rule file's and the assumptions' the panel.
+        if (failed.code === "parse" && !q.custom?.assumptions.trim())
+          q.inputProblem = problemAt(failed);
+        else if (q.custom) q.custom.problem = inputProblem(failed);
+      });
+      return;
+    }
+    setLastCalculus(custom(started.value.view.calculus.name));
+    showCustom(id, started.value);
+    save();
+  }
+
+  /**
+   * Opens a custom session as a new proof (a document opened, pasted or linked), checked again
+   * by deduxit as it is read.
+   */
+  async function openCustom(session: CustomSession): Promise<{ kind: string } | { problem: Said }> {
+    const view = await attempt(() => api.custom.view(session, ordinaryJson()));
+    if (!view.ok)
+      return {
+        problem: view.failed ? inputProblem(view.failed) : { keyword: "Stopped", sentence: "" },
+      };
+    const id = actions.add();
+    update(id, (q) => (q.custom = customWork(custom(view.value.calculus.name))));
+    showCustom(id, { session, view: view.value });
+    update(id, (q) => {
+      if (q.custom) q.custom.file = fileOf(session);
+    });
+    save();
+    return { kind: "session" };
+  }
+
   /**
    * Reads a text into a proof in a calculus and starts it: the field's text in the suite's own
    * syntax, a sequent's JSON, or a session pasted there, an ordinary one in its own logic.
    */
   async function startText(id: string, text: string, calculus: Calculus) {
     const doc = parsed(text);
+    if (isCustom(doc)) {
+      const opened = await openCustom(doc);
+      if ("problem" in opened) update(id, (q) => (q.inputProblem = opened.problem));
+      else actions.remove(id);
+      return;
+    }
+    if (calculus.suite === "rules") {
+      update(id, (q) => {
+        q.calculus = calculus;
+        q.custom ??= customWork(calculus);
+      });
+      await startCustom(id, text);
+      return;
+    }
     if (isOrdinary(doc)) {
       const failed = await showOrdinary(id, doc);
       if (failed) update(id, (q) => (q.inputProblem = problemAt(failed)));
@@ -813,7 +981,121 @@ export function createProver(say: (text: string) => void = () => undefined) {
     return false;
   }
 
+  /** Runs a call on a proof's custom session and shows what it answered, or keeps its failure. */
+  async function onCustom(
+    id: string,
+    call: (session: CustomSession) => Promise<{ session: CustomSession; view: CustomView }>,
+    next: (answer: Record<string, unknown>) => number | null = () => null,
+  ): Promise<Failure | null> {
+    const session = store.proofs.find((q) => q.id === id)?.custom?.session;
+    if (!session) return null;
+    const played = await attempt(() => call(session));
+    if (!played.ok) {
+      if (played.failed) {
+        const failed = played.failed;
+        update(id, (q) => {
+          if (q.custom) q.custom.problem = inputProblem(failed);
+        });
+      }
+      return played.failed;
+    }
+    showCustom(id, played.value, next(played.value as unknown as Record<string, unknown>));
+    save();
+    return null;
+  }
+
   const actions = {
+    /** Changes a custom proof's rule file as typed; the calculus is named by the file's name. */
+    setCustomFile(id: string, file: string) {
+      update(id, (q) => {
+        if (!q.custom) return;
+        q.custom.file = file;
+        q.custom.problem = null;
+        const name = nameOf(file);
+        if (name && !q.custom.session) q.calculus = custom(name);
+      });
+    },
+
+    /** Changes a custom proof's assumptions, one sequent per line. */
+    setCustomAssumptions(id: string, assumptions: string) {
+      update(id, (q) => {
+        if (!q.custom) return;
+        q.custom.assumptions = assumptions;
+        q.custom.problem = null;
+      });
+    },
+
+    /** Starts a custom proof's rule file afresh from a built-in calculus, with its example goal. */
+    customFrom: guard(async (id: string, name: string, example: string) => {
+      const file = await attempt(() => api.custom.calculus(name));
+      if (!file.ok) return;
+      update(id, (q) => {
+        q.calculus = custom(name);
+        q.custom = { ...(customWork(custom(name)) as CustomWork), file: file.value };
+        q.input = example;
+        q.inputProblem = null;
+        q.editing = true;
+      });
+    }),
+
+    /** Reads a custom proof's rule file from the built-in calculus it names, where it has none. */
+    async customFile(id: string) {
+      await fileFor(id);
+    },
+
+    /** The steps deduxit offers for a goal of a custom proof, or its failure. */
+    async customRules(id: string, goal: number) {
+      const session = store.proofs.find((q) => q.id === id)?.custom?.session;
+      if (!session) return { ok: false as const, failed: null };
+      return attempt(() => api.custom.rules(session, goal, ordinaryJson()));
+    },
+
+    /** Applies a step to a goal of a custom proof; answers deduxit's refusal, if any. */
+    customApply: guard((id: string, goal: number, step: CustomStep) =>
+      onCustom(
+        id,
+        (session) => api.custom.apply(session, goal, step, ordinaryJson()),
+        (answer) => (answer["opened"] as number[] | undefined)?.[0] ?? null,
+      ),
+    ),
+
+    /** Chooses the goal of a custom proof to work on. */
+    customChoose(id: string, goal: number) {
+      update(id, (q) => {
+        if (q.custom) q.custom.goal = goal;
+      });
+    },
+
+    /** Closes a goal of a custom proof by a hypothesis in force. */
+    customAssume: guard((id: string, goal: number) =>
+      onCustom(id, (session) => api.custom.assume(session, goal, ordinaryJson())),
+    ),
+
+    /** Checks a finished custom derivation whole and keeps the verdict. */
+    customCheck: guard(async (id: string) => {
+      const session = store.proofs.find((q) => q.id === id)?.custom?.session;
+      if (!session) return;
+      const checked = await attempt(() => api.custom.check(session, ordinaryJson()));
+      update(id, (q) => {
+        if (!q.custom) return;
+        if (checked.ok) q.custom.checked = checked.value.verdict;
+        else if (checked.failed) q.custom.problem = inputProblem(checked.failed);
+      });
+    }),
+
+    /** Leaves a custom proof's session for its start: the file and goal kept to change. */
+    customRestart(id: string) {
+      update(id, (q) => {
+        if (!q.custom) return;
+        q.custom.session = null;
+        q.custom.view = null;
+        q.custom.checked = null;
+        q.custom.problem = null;
+        q.editing = true;
+      });
+      save();
+    },
+
     api,
     store,
     pending,
@@ -922,15 +1204,23 @@ export function createProver(say: (text: string) => void = () => undefined) {
             })),
             engines: { ...(stored.engines ?? {}) },
             origin: stored.origin ?? null,
-            editing: !stored.session,
+            editing: !stored.session && !stored.custom?.session,
+            custom: stored.custom
+              ? { ...stored.custom, view: null, checked: null, problem: null, goal: null }
+              : customWork(stored.calculus),
           };
-          setStore("proofs", (all) => [...all.filter((p) => p.session || p.input.trim()), proof]);
+          setStore("proofs", (all) => [
+            ...all.filter((p) => p.session || p.custom?.session || p.input.trim()),
+            proof,
+          ]);
         }
         setStore("active", shelf.active ?? store.proofs[0]?.id ?? null);
       });
       dropAside(storage());
       setAsideShelf(undefined);
-      for (const p of store.proofs) if (p.session && !p.view) void actions.refresh(p.id);
+      for (const p of store.proofs)
+        if ((p.session && !p.view) || (p.custom?.session && !p.custom.view))
+          void actions.refresh(p.id);
       save();
     },
 
@@ -950,6 +1240,21 @@ export function createProver(say: (text: string) => void = () => undefined) {
     /** Reads the view of a stored session again. */
     async refresh(id: string) {
       const p = store.proofs.find((q) => q.id === id);
+      const mine = p?.custom?.session;
+      if (mine) {
+        const view = await attempt(() => api.custom.view(mine, ordinaryJson()));
+        update(id, (q) => {
+          if (!q.custom) return;
+          if (view.ok) q.custom.view = view.value;
+          else {
+            // A stored session deduxit no longer reads: its sequent and file stay to start again.
+            q.custom.session = null;
+            q.editing = true;
+            if (view.failed) q.banner = inputProblem(view.failed);
+          }
+        });
+        return;
+      }
       if (!p?.session) return;
       const o = ordinaryOf(p);
       const result = o
@@ -1023,6 +1328,25 @@ export function createProver(say: (text: string) => void = () => undefined) {
       const p = store.proofs.find((q) => q.id === id);
       if (!p) return;
       setLastCalculus(calculus);
+      if (calculus.suite === "rules" || p.calculus.suite === "rules") {
+        // A rule file's proof starts from the file chosen; its steps do not carry over.
+        update(id, (q) => {
+          q.calculus = calculus;
+          q.session = null;
+          q.view = null;
+          q.redo = [];
+          q.later = [];
+          q.verdict = null;
+          q.engines = {};
+          q.note = null;
+          q.banner = null;
+          q.elim = { tree: null, net: null };
+          q.editing = true;
+          q.custom = customWork(calculus);
+        });
+        if (calculus.suite === "rules") await fileFor(id);
+        return;
+      }
       if (!p.session) {
         update(id, (q) => (q.calculus = calculus));
         return;
@@ -1078,6 +1402,19 @@ export function createProver(say: (text: string) => void = () => undefined) {
     async open(text: string, calculus?: Calculus): Promise<{ kind: string } | { problem: Said }> {
       const doc = parsed(text);
       const into = calculus ?? lastCalculus();
+      if (isCustom(doc)) return openCustom(doc);
+      if (doc === undefined && into.suite === "rules") {
+        // A sequent of a rule file's: started at once in a built-in calculus, else left to the
+        // visitor with the field filled, the file to be written.
+        const id = actions.add();
+        update(id, (q) => {
+          q.calculus = into;
+          q.custom = customWork(into);
+          q.input = text;
+        });
+        if (BUILT_IN.includes(into.calculus)) await startCustom(id, text);
+        return { kind: "sequent" };
+      }
       if (
         isOrdinary(doc) ||
         isOrdinarySequent(doc) ||
@@ -1462,6 +1799,15 @@ export function createProver(say: (text: string) => void = () => undefined) {
     /** Undo on the active goal's branch (on a finished proof, the last step). */
     undo: guard(async () => {
       const p = current();
+      // A custom proof takes back its last step: its session keeps no branches apart.
+      if (p?.custom?.session) {
+        await onCustom(
+          p.id,
+          (session) => api.custom.undo(session, ordinaryJson()),
+          (answer) => (answer["reopened"] as number | null | undefined) ?? null,
+        );
+        return;
+      }
       if (!p?.session) return;
       const o = ordinaryOf(p);
       if (o) {

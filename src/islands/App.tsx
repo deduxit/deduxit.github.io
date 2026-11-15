@@ -197,6 +197,9 @@ export default function App(props: {
           p.calculus,
           p.redo.length,
           p.later.length,
+          p.custom?.session,
+          p.custom?.file,
+          p.custom?.assumptions,
         ]),
       () => {
         clearTimeout(saving);
@@ -211,12 +214,22 @@ export default function App(props: {
   createEffect(
     on(
       () =>
-        [prover.current()?.session, prover.current()?.calculus, prover.current()?.input] as const,
+        [
+          prover.current()?.session ?? prover.current()?.custom?.session,
+          prover.current()?.calculus,
+          prover.current()?.input,
+        ] as const,
       ([session, calculus, input]) => {
         clearTimeout(linking);
         if (!session || !calculus || !input) return;
         linking = setTimeout(async () => {
-          const text = calculus.suite === "ordinary" ? prettyOrdinary(input) : pretty(input);
+          // A rule file's sequent is written in the file's own symbols, which no sign replaces.
+          const text =
+            calculus.suite === "ordinary"
+              ? prettyOrdinary(input)
+              : calculus.suite === "rules"
+                ? input
+                : pretty(input);
           const written = await writeLink(
             text,
             calculus.suite,

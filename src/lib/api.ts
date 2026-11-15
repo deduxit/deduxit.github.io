@@ -27,6 +27,15 @@ import type {
   Stepped,
   Termed,
 } from "./deduxit";
+import type {
+  CustomChecked,
+  CustomOffered,
+  CustomPlayed,
+  CustomSession,
+  CustomStep,
+  CustomView,
+  Described,
+} from "./custom";
 import type { OrdinaryOutcome, OrdinarySession, OrdinaryStep, OrdinaryView } from "./ordinary";
 import type { Comparison, Interpolation } from "./transforms";
 import { type Client, createClient, type WorkerLike } from "./protocol";
@@ -48,8 +57,8 @@ export interface About {
       readonly default: string;
     }[];
     readonly settings: readonly string[];
-    /** The name of its call for a finished proof's λ-term. */
-    readonly term: string;
+    /** The name of its call for a finished proof's λ-term, or null for a suite without terms. */
+    readonly term: string | null;
   }[];
 }
 
@@ -230,6 +239,42 @@ export function createApi(changed: (pending: number) => void) {
       /** A sequent decided in `logic` and its interpolant for `partition`, the halves checked. */
       interpolate: (sequent: string, logic: string, partition: string, settings: string) =>
         json<Interpolation>("ordinary_interpolate", sequent, logic, partition, settings),
+    },
+    /** The custom calculus's calls (`rules_…`): derivations in a calculus given as a rule file. */
+    custom: {
+      /** A built-in calculus's rule file, as text. */
+      calculus: (name: string) => client.call<string>("rules_calculus", name),
+      /** A rule file (its text, or a built-in name) checked and described. */
+      read: (calculus: string, settings: string) =>
+        json<Described>("rules_read", calculus, settings),
+      start: (calculus: string, goal: string, assumptions: string, settings: string) =>
+        json<CustomPlayed>("rules_start", calculus, goal, assumptions, settings),
+      view: (session: CustomSession, settings: string) =>
+        json<CustomView>("rules_view", JSON.stringify(session), settings),
+      rules: (session: CustomSession, goal: number, settings: string) =>
+        json<CustomOffered[]>("rules_rules", JSON.stringify(session), goal, settings),
+      apply: (session: CustomSession, goal: number, step: CustomStep, settings: string) =>
+        json<CustomPlayed & { opened: number[] }>(
+          "rules_apply",
+          JSON.stringify(session),
+          goal,
+          JSON.stringify(step),
+          settings,
+        ),
+      assume: (session: CustomSession, goal: number, settings: string) =>
+        json<CustomPlayed>("rules_assume", JSON.stringify(session), goal, settings),
+      undo: (session: CustomSession, settings: string) =>
+        json<CustomPlayed & { reopened: number | null }>(
+          "rules_undo",
+          JSON.stringify(session),
+          settings,
+        ),
+      check: (session: CustomSession, settings: string) =>
+        json<CustomChecked>("rules_check", JSON.stringify(session), settings),
+      draw: (session: CustomSession, settings: string) =>
+        client.call<string>("rules_draw", JSON.stringify(session), settings),
+      exportAs: (session: CustomSession, format: string, settings: string) =>
+        client.call<string>("rules_export", JSON.stringify(session), format, settings),
     },
     replay: (session: SessionDoc, todo: readonly Action[], settings: string) =>
       json<Replayed>("replay", doc(session), JSON.stringify(todo), settings),

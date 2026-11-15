@@ -2,7 +2,7 @@
 // Licensed under the EUPL
 
 import { describe, expect, it } from "vitest";
-import { calculusOf, linear, markLabel, ordinary, parameterOf, SUITES } from "./suites";
+import { calculusOf, custom, linear, markLabel, ordinary, parameterOf, SUITES } from "./suites";
 import { deduxit } from "./testing";
 
 describe("the suite registry", () => {
@@ -42,6 +42,10 @@ describe("the suite registry", () => {
     expect(calculusOf("ordinary", "sequent", "mix")).toBeUndefined();
     expect(calculusOf("ordinary", "tableau", "classical")).toBeUndefined();
     expect(calculusOf("modal", "sequent", "K")).toBeUndefined();
+    // A rule file of one's own is named by the file: any name up to a bound.
+    expect(calculusOf("rules", "sequent", "Mini")).toEqual(custom("Mini"));
+    expect(calculusOf("rules", "sequent", " ")).toBeUndefined();
+    expect(calculusOf("rules", "sequent", "x".repeat(65))).toBeUndefined();
   });
 });
 
@@ -50,5 +54,6 @@ describe("the tab's mark on a wide screen", () => {
     expect(markLabel(linear("classical"))).toBe("Linear (LL)");
     expect(markLabel(linear("intuitionistic-affine"))).toBe("Linear (ILL+aff)");
     expect(markLabel(ordinary("intuitionistic"))).toBe("Ordinary (LJ)");
+    expect(markLabel(custom("tableau"))).toBe("Custom calculus (tableau)");
   });
 });

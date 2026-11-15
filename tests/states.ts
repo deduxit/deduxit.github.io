@@ -369,3 +369,45 @@ export async function fonts(page: Page, visit: Visit) {
     await visit(`${font}, split`);
   }
 }
+
+/** Takes the step of a custom calculus's goal whose button starts with `words`. */
+export async function customStep(page: Page, words: string) {
+  const escaped = words.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  await page
+    .getByRole("list", { name: "Steps that apply" })
+    .getByRole("button", { name: new RegExp(`^${escaped}`) })
+    .first()
+    .click();
+}
+
+/**
+ * A calculus of one's own: the popover's entry, the panel's start and its rule file, a
+ * derivation in LJ by steps, a step asking what it needs, and the verdict.
+ */
+export async function customising(page: Page, visit: Visit) {
+  await goto(page);
+  const pop = await switches(page);
+  await pop.getByRole("button", { name: "Your own calculus" }).click();
+  await visit("custom entry");
+  await page.keyboard.press("Escape");
+  await expect(page.getByText("A rule file is a calculus written down")).toBeVisible();
+  await page.getByText("The rule file", { exact: true }).click();
+  await expect(page.getByRole("textbox", { name: "The rule file" })).toHaveValue(/"LJ"/);
+  await visit("custom start");
+  await page.getByRole("textbox", { name: "Sequent" }).fill("a ∧ b ⊢ b ∧ a");
+  await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
+  await customStep(page, "∧R on b ∧ a");
+  await expect(page.getByText("Open goal 1 of 2")).toBeVisible();
+  await visit("custom steps");
+  await customStep(page, "cut");
+  await expect(page.getByRole("form", { name: /^Give what cut needs/ })).toBeVisible();
+  await visit("custom giving");
+  await page.getByRole("button", { name: "Other steps" }).click();
+  await customStep(page, "∧L₂ on a ∧ b");
+  await customStep(page, "ax");
+  await customStep(page, "∧L₁ on a ∧ b");
+  await customStep(page, "ax");
+  await page.getByRole("button", { name: "Check the derivation" }).click();
+  await expect(page.getByRole("status").filter({ hasText: "in the calculus given" })).toBeVisible();
+  await visit("custom valid");
+}

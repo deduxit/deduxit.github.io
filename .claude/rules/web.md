@@ -134,6 +134,27 @@ the page reads.
   the partition is a toggle per formula (`aria-pressed` for part 1, its number written before it,
   part 2 dashed), Craig's split (the formulas left of ⊢) at the start and again for each new
   sequent. Both calls are sent `{}` as settings, as the table's are.
+- **A calculus of one's own** (deduxit's `rules_…` calls, `src/lib/custom.ts`,
+  `src/islands/Custom.tsx`) is the registry's suite `rules`, its parameter the rule file's
+  `name` (any name of at most 64 characters: `calculusOf` takes it, the built-in names are its
+  `values`). It has no segment on the calculus's segmented control (`Suite.segment`): the
+  popover's one button "Your own calculus" opens it, so a visitor who never presses it sees
+  nothing else of it (the author's rule: not overwhelming). Its proof keeps its work in
+  `Proof.custom` (the rule file as typed, the assumptions, the session, and never stored its
+  view, verdict, problem and goal), never in `Proof.session`, so no linear or ordinary call
+  ever gets such a session and every code path that reads `session` sees the proof as not
+  started; the stage shows `CustomPanel` in the drawing's place (`data-method="custom"`, its
+  tabs hidden). The panel's first screen says what a rule file is in one sentence and starts
+  from LJ or the tableau (`STARTERS`, the example goals `EXAMPLES`); the goal is typed in the
+  sequent field, the file and the assumptions are closed `<details>` under it. Once started:
+  the drawing (`rules_draw`, deduxit's `<title>` and `<desc>`), the open goals, the steps
+  deduxit offers for the goal chosen (`distinctSteps`: one button per text), a step that needs
+  values asks for each by name (`step_needs`), "Close by a hypothesis", the bottom band's Undo
+  (the last step: the session keeps no branches apart), and the finished derivation's check,
+  "Valid in the calculus given". The session holds the rule file, so the link (`u=rules`,
+  `m=` the name, `d=` the session) and the shelf (`StoredProof.custom`) keep the calculus with
+  the proof; reading either back runs `rules_view`, which checks every step again. A link
+  without a session restores a built-in calculus's goal, not a file of one's own.
 - **The linear suite's calls never get an ordinary session**: fill (`fillable`, `fill`), the
   invertible rules (`setInvertible`), the engine choice and the cut are kept to linear proofs.
 - **The registry reads every linear mode deduxit's `about` lists** (the switches build six; a

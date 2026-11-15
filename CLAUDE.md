@@ -9,7 +9,9 @@ Maintainer notes (stripped before Claude sees this file).
 deduxit's web front end, to be served at https://deduxit.github.io/: a student types a
 sequent of linear logic, or of ordinary logic in a tab whose calculus is the ordinary suite
 (LK and LJ), and proves it by clicking, or lets the search close a goal, and sees the
-derivation and, for MLL, the net drawn as the command draws them. Nothing is
+derivation and, for MLL, the net drawn as the command draws them; behind one button of the
+calculus popover, they build a derivation in a calculus given as a rule file (LJ, the tableau or
+their own), each step checked against its rules. Nothing is
 installed and nothing is sent to a server: the prover runs in the page, as deduxit's
 WebAssembly module in a module worker.
 

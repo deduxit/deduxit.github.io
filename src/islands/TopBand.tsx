@@ -10,6 +10,7 @@
  * place marked.
  */
 
+import { EXAMPLES } from "../lib/custom";
 import {
   BookOpen,
   CircleCheck,
@@ -49,6 +50,11 @@ function underTab(pop: HTMLElement, inset: number) {
 
 /** A proof's state as its dot shows it. */
 export function tone(proof: Proof): "ok" | "bad" | "warn" | "open" | "none" {
+  if (proof.custom) {
+    const view = proof.custom.view;
+    if (!view) return "none";
+    return view.finished && proof.custom.checked ? "ok" : "open";
+  }
   if (!proof.view) return "none";
   if (proof.view.complete) return "ok";
   if (proof.verdict?.tone === "bad") return "bad";
@@ -70,7 +76,11 @@ export const mark = (proof: Proof): string => markOf(proof.calculus);
 
 /** A proof's sequent as its tab shows it, in its suite's signs. */
 export const tabText = (proof: Proof): string =>
-  proof.calculus.suite === "ordinary" ? prettyOrdinary(proof.input) : displayed(proof.input);
+  proof.calculus.suite === "ordinary"
+    ? prettyOrdinary(proof.input)
+    : proof.calculus.suite === "rules"
+      ? proof.input
+      : displayed(proof.input);
 
 const storage = () => {
   try {
@@ -227,6 +237,7 @@ function ProofTab(props: { proof: Proof; prover: Prover; ui: Ui; samples: readon
 
   const statusWords = () => {
     const p = props.proof;
+    if (p.custom) return customWords(p);
     if (!p.view) return "Not started";
     if (p.view.complete) return "Proved, checked step by step";
     if (p.verdict) return p.verdict.keyword;
@@ -281,7 +292,11 @@ function ProofTab(props: { proof: Proof; prover: Prover; ui: Ui; samples: readon
           aria-label="Sequent"
           aria-invalid={props.proof.inputProblem ? "true" : undefined}
           placeholder={
-            props.proof.calculus.suite === "ordinary" ? "a /\\ b |- b /\\ a" : "A * B |- B * A"
+            props.proof.calculus.suite === "ordinary"
+              ? "a /\\ b |- b /\\ a"
+              : props.proof.calculus.suite === "rules"
+                ? (EXAMPLES[props.proof.calculus.calculus] ?? "a ⊢ a")
+                : "A * B |- B * A"
           }
           spellcheck={false}
           autocomplete="off"
@@ -297,7 +312,10 @@ function ProofTab(props: { proof: Proof; prover: Prover; ui: Ui; samples: readon
             if (event.key === "Enter") {
               event.preventDefault();
               void props.prover.submit(props.proof.id);
-            } else if (event.key === "Escape" && props.proof.session) {
+            } else if (
+              event.key === "Escape" &&
+              (props.proof.session || props.proof.custom?.session)
+            ) {
               event.preventDefault();
               event.stopPropagation();
               props.prover.edit(props.proof.id, false);
@@ -427,8 +445,17 @@ function ProofTab(props: { proof: Proof; prover: Prover; ui: Ui; samples: readon
   );
 }
 
+/** A custom proof's state in words, for its dot and its status. */
+function customWords(proof: Proof): string {
+  const view = proof.custom?.view;
+  if (!view) return "Not started";
+  if (view.finished)
+    return proof.custom?.checked ? "Valid in the calculus given" : "Every goal is closed";
+  return `${view.goals.length} open ${view.goals.length === 1 ? "goal" : "goals"}`;
+}
+
 function StatusDetails(props: { proof: Proof; prover: Prover; close: () => void }) {
-  const v = () => props.proof.view;
+  const v = () => (props.proof.custom ? null : props.proof.view);
   return (
     <div
       class="cluster pop status-pop"
@@ -436,7 +463,16 @@ function StatusDetails(props: { proof: Proof; prover: Prover; close: () => void 
       aria-label="Status"
       ref={(pop) => queueMicrotask(() => underTab(pop, token("--spacing-3")))}
     >
-      <Show when={v()} fallback={<p>Not started: type a sequent and press Enter.</p>}>
+      <Show
+        when={v()}
+        fallback={
+          <p>
+            {props.proof.custom?.view
+              ? `${customWords(props.proof)}.`
+              : "Not started: type a sequent and press Enter."}
+          </p>
+        }
+      >
         {(view) => (
           <>
             <p>

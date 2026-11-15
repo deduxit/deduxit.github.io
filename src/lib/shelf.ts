@@ -20,6 +20,7 @@
  */
 
 import type { SessionDoc } from "./deduxit";
+import type { CustomSession } from "./custom";
 import type { OrdinarySession } from "./ordinary";
 import type { Action } from "./steps";
 import { type Calculus, calculusOf } from "./suites";
@@ -32,6 +33,15 @@ export interface StoredProof {
   readonly calculus: Calculus;
   /** The session, once the sequent is started: the suite's own document. */
   readonly session: SessionDoc | OrdinarySession | null;
+  /**
+   * A proof in a calculus given as a rule file: the file as the editor held it, the
+   * assumptions, and the session, which holds the file it was started in.
+   */
+  readonly custom?: {
+    readonly file: string;
+    readonly assumptions: string;
+    readonly session: CustomSession | null;
+  };
   /** What undo took back in a linear proof, the last first out, until a new step. */
   readonly redo: readonly (readonly Action[])[];
   /**
@@ -84,7 +94,7 @@ const proofOf = (p: unknown, version: 1 | 2): StoredProof | undefined => {
         ? calculusOf(
             String(stored["suite"]),
             String(stored["method"]),
-            String(stored["mode"] ?? stored["logic"]),
+            String(stored["mode"] ?? stored["logic"] ?? stored["calculus"]),
           )
         : undefined;
   const fine =
@@ -94,6 +104,7 @@ const proofOf = (p: unknown, version: 1 | 2): StoredProof | undefined => {
     (proof["session"] === null || typeof proof["session"] === "object") &&
     Array.isArray(proof["redo"]) &&
     (proof["later"] === undefined || Array.isArray(proof["later"])) &&
+    (proof["custom"] === undefined || typeof proof["custom"] === "object") &&
     typeof proof["saved"] === "number";
   if (!fine) return undefined;
   const { mode: _, ...rest } = proof;
