@@ -1013,6 +1013,31 @@ button.wordmark {
   font: var(--font-weight-normal) var(--text-small) / var(--leading-snug) var(--font-text);
   color: var(--color-ink);
 }
+/* A "not valid" goal's countermodel under its note: deduxit's drawing, coloured as the stage's,
+   the model's world in the net's highlight colour. */
+.countermodel {
+  flex-basis: 100%;
+  margin: 0;
+  padding: 0 var(--spacing-1);
+}
+.countermodel-drawing svg {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: var(--size-model);
+  fill: var(--color-ink);
+}
+.countermodel-drawing svg text {
+  fill: var(--color-ink);
+  font-synthesis: none;
+}
+.countermodel-drawing svg :is(g[stroke], path, rect) {
+  stroke: var(--color-ink);
+}
+.countermodel-drawing svg rect[stroke="#d55e00"] {
+  stroke: var(--color-net-highlight);
+}
 .said-why .rest,
 .said-why .more {
   margin-left: var(--spacing-1);

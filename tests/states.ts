@@ -228,7 +228,10 @@ export async function answers(page: Page, visit: Visit) {
   await visit("practice answered");
 }
 
-/** An ordinary tab: its calculus's switches, the field's examples, and a proof's rules. */
+/**
+ * An ordinary tab: its calculus's switches, the field's examples, a proof's rules, and a goal
+ * that is not valid with its countermodel drawn.
+ */
 export async function ordinary(page: Page, visit: Visit) {
   await goto(page);
   await page
@@ -250,6 +253,13 @@ export async function ordinary(page: Page, visit: Visit) {
   await page.getByRole("button", { name: /^a → b, formula/ }).click();
   await expect(page.getByRole("dialog", { name: "Rules" })).toBeVisible();
   await visit("ordinary rules");
+  await page.keyboard.press("Escape");
+  await page.getByRole("button", { name: "New proof" }).click();
+  await page.getByRole("textbox", { name: "Sequent" }).fill("|- a \\/ ~a");
+  await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
+  await page.getByRole("button", { name: "Close goal" }).click();
+  await expect(page.getByRole("img", { name: /^A countermodel of/ })).toBeVisible();
+  await visit("ordinary countermodel");
 }
 
 /** The witness chooser with a term typed, and its refusal. */

@@ -86,6 +86,20 @@ the page reads.
   `styles.typst.form`: `fragment`), each followed by a "Whole document" item (`standalone`,
   the class `sub`); every Rocq file, the proof's and a refutation's, is `standalone`, so it
   has its import and compiles alone. Each item's detail names what the file needs.
+- **An ordinary outcome is deduxit's of wire level 12**: `search` tagged by `method`, a session's
+  goal decided through the embedding (`{"method": "embedding", "translation", "image"}`), the
+  image's linear outcome nested whole. Its engine and refutation are the image's: `engineOf`
+  unwraps `search.image`, and the status reads the engine there (a linear outcome keeps its own
+  at the top). `reason` and `verdict` stay at the top.
+- **A "not valid" goal shows its countermodel**: deduxit's `ordinary_close` and `ordinary_hint`
+  give the outcome the SAT solver's Kripke model (`countermodel`, `countermodelOf`), which
+  `ModelFigure` in `Stage.tsx` draws under the note by `ordinary_model_drawing` in the stage's
+  font, as a picture (`role="img"`, deduxit's `<title>` and `<desc>`), with one sentence under it
+  (`figcaption`); the note's sentence then points at it. The drawing's colours are the stage's
+  (`.countermodel-drawing`), the model's world in the net's highlight. Its Rocq certificate is
+  the Export menu's "Countermodel" (`ordinary_model_certificate`, standalone), shown for an
+  ordinary proof only, greyed until a goal's close or hint found one. The class `.model` is
+  Learn's: the figure's are `.countermodel*`. `tests/states.ts`'s ordinary walk ends on it.
 - **The linear suite's calls never get an ordinary session**: fill (`fillable`, `fill`), the
   invertible rules (`setInvertible`), the engine choice and the cut are kept to linear proofs.
 - **The registry reads every linear mode deduxit's `about` lists** (the switches build six; a

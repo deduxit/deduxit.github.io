@@ -50,17 +50,42 @@ export interface OrdinaryView {
   readonly inferences: readonly number[];
 }
 
+/** A Kripke model as deduxit writes it: each world's atoms and arrows up, and the model's world. */
+export interface KripkeModel {
+  readonly worlds: readonly {
+    readonly atoms: readonly string[];
+    readonly falsity?: boolean;
+    readonly arrows?: readonly number[];
+  }[];
+  readonly world: number;
+}
+
 /** An ordinary outcome: valid with its derivation, not valid, or unknown with its reason. */
 export interface OrdinaryOutcome {
   readonly version: number;
   readonly verdict: "valid" | "not_valid" | "unknown";
   readonly logic: Logic;
-  readonly translation?: string;
   readonly reason?: { readonly kind: string; readonly [key: string]: unknown };
-  readonly engine?: string;
-  readonly statistics?: { readonly work?: number; readonly [key: string]: unknown };
+  /**
+   * How it was decided: a goal of a session through the embedding, `{"method": "embedding",
+   * "translation", "image"}`, `image` the translated sequent's outcome with its engine.
+   */
+  readonly search?: {
+    readonly method: string;
+    readonly translation?: string;
+    readonly image?: { readonly engine?: string; readonly [key: string]: unknown };
+    readonly [key: string]: unknown;
+  };
+  /** A `not_valid` goal's Kripke model, with the sequent it refutes, where deduxit found one. */
+  readonly countermodel?: { readonly sequent: unknown; readonly model: KripkeModel };
   readonly [key: string]: unknown;
 }
+
+/** The countermodel of an outcome, where it is an ordinary "not valid" that has one. */
+export const countermodelOf = (outcome: unknown): KripkeModel | undefined => {
+  const o = outcome as OrdinaryOutcome | undefined;
+  return o?.verdict === "not_valid" && o.countermodel ? o.countermodel.model : undefined;
+};
 
 /** A step as `ordinary_apply` takes it: the formula's side and position there, and the rule. */
 export interface OrdinaryStep {
@@ -294,6 +319,13 @@ export function ordinaryVerdict(outcome: OrdinaryOutcome): Said & { tone: Tone }
       keyword: "Valid",
       sentence: `The search found a derivation, and deduxit's checker accepted it in ${named(outcome.logic)}.`,
       tone: "ok",
+    };
+  }
+  if (outcome.verdict === "not_valid" && outcome.countermodel) {
+    return {
+      keyword: "Not valid",
+      sentence: `The sequent has no derivation in ${named(outcome.logic)}. deduxit found a Kripke model that shows it: a sequent with a derivation holds at every world of every model, and this one fails at world ${String(outcome.countermodel.model.world)}.`,
+      tone: "bad",
     };
   }
   if (outcome.verdict === "not_valid") {

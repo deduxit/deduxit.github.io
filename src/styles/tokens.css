@@ -186,6 +186,8 @@
   --size-menu: 400px;
   --size-practice: 920px;
   --size-frame: 360px;
+  /* The tallest a countermodel's drawing stands under its note before it scales down. */
+  --size-model: 240px;
   --size-tour: 320px;
   --size-text: 640px;
   --size-ledger-label: 160px;

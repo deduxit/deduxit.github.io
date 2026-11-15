@@ -44,7 +44,7 @@ import {
   type Outcome,
   type StepForm,
 } from "../lib/deduxit";
-import { isOrdinary } from "../lib/ordinary";
+import { countermodelOf, isOrdinary, type OrdinaryOutcome } from "../lib/ordinary";
 import { goalAt, paths, searchMade, subtree } from "../lib/steps";
 import { intuitionistic } from "../lib/suites";
 import {
@@ -1748,6 +1748,12 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
                   </button>
                 </Show>
                 <Why said={n().said} />
+                <Show when={countermodelOf(n().outcome)}>
+                  <ModelFigure
+                    outcome={n().outcome as unknown as OrdinaryOutcome}
+                    prover={props.prover}
+                  />
+                </Show>
                 <Show when={lostGoal()}>
                   <p class="said-why">{lost(sequentUnprovable())}</p>
                 </Show>
@@ -2127,6 +2133,38 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
         </div>
       </Show>
     </section>
+  );
+}
+
+/**
+ * A "not valid" goal's countermodel, drawn by deduxit (a picture, its `<desc>` read by a screen
+ * reader), with one sentence on what it shows.
+ */
+function ModelFigure(props: { outcome: OrdinaryOutcome; prover: Prover }) {
+  const [drawing] = createResource(
+    () => props.outcome,
+    (outcome) =>
+      props.prover.api.ordinary
+        .modelDrawing(
+          outcome,
+          JSON.stringify({ styles: { svg: { font: props.prover.settings().stageFont } } }),
+        )
+        .catch(() => null),
+  );
+  const world = () => props.outcome.countermodel?.model.world ?? 0;
+  return (
+    <Show when={drawing()}>
+      {(svg) => (
+        <figure class="countermodel">
+          <div class="countermodel-drawing" innerHTML={svg()} />
+          <figcaption class="said-why">
+            {props.outcome.logic === "classical"
+              ? "Its one world makes every formula left of ⊢ true and every formula right of it false."
+              : `World ${String(world())}, outlined, forces every formula left of ⊢ and not the one right of it. A world forces what every world below it forces, and an arrow points up.`}
+          </figcaption>
+        </figure>
+      )}
+    </Show>
   );
 }
 

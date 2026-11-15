@@ -98,6 +98,28 @@ test("an ordinary goal's close says not valid, and the field's menu opens the ex
   expect(await drawn(page)).not.toMatch(LINEAR);
 });
 
+test("a goal that is not valid shows its countermodel drawn, and Export writes its certificate", async ({
+  page,
+}) => {
+  await ordinary(page, "intuitionistic", "((a -> b) -> a) -> a");
+  await page.getByRole("button", { name: "Close goal" }).click();
+  const note = page.locator(".dock .note");
+  await expect(note.locator(".kw.bad")).toHaveText("Not valid");
+  const model = note.getByRole("img", { name: "A countermodel of ⊢ ((a → b) → a) → a" });
+  await expect(model).toBeVisible();
+  await expect(model.locator("desc")).toContainText("World 0, the model's world, forces nothing");
+  await expect(note.locator("figcaption")).toContainText(
+    "World 0, outlined, forces every formula left of ⊢ and not the one right of it.",
+  );
+  await page.getByRole("button", { name: "Export" }).click();
+  const download = page.waitForEvent("download");
+  await page.getByRole("menuitem", { name: /^Countermodel/ }).click();
+  const certificate = await readFile(await (await download).path(), "utf8");
+  expect(certificate).toMatch(
+    /^From Stdlib Require[\s\S]*From Deduxit\.Intuitionistic Require Import KripkeCheck\.[\s\S]*Lemma certificate : ~ lj \(atom := string\) intuitionistic \[\][\s\S]*kripke_refutation[\s\S]*Qed\./,
+  );
+});
+
 test("undo in an ordinary proof is per branch, and past a split takes the split back", async ({
   page,
 }) => {

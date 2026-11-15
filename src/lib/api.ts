@@ -211,6 +211,12 @@ export function createApi(changed: (pending: number) => void) {
         client.call<string>("ordinary_draw", JSON.stringify(session), settings),
       exportAs: (session: OrdinarySession, format: string, settings: string) =>
         client.call<string>("ordinary_export", JSON.stringify(session), format, settings),
+      /** An outcome's countermodel drawn as SVG, checked first. */
+      modelDrawing: (outcome: OrdinaryOutcome, settings: string) =>
+        client.call<string>("ordinary_model_drawing", JSON.stringify(outcome), settings),
+      /** The Rocq certificate of an outcome's countermodel. */
+      modelCertificate: (outcome: OrdinaryOutcome, settings: string) =>
+        client.call<string>("ordinary_model_certificate", JSON.stringify(outcome), settings),
     },
     replay: (session: SessionDoc, todo: readonly Action[], settings: string) =>
       json<Replayed>("replay", doc(session), JSON.stringify(todo), settings),

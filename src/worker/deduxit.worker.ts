@@ -56,6 +56,8 @@ const calls = {
   ordinary_term: deduxit.ordinary_term,
   ordinary_draw: deduxit.ordinary_draw,
   ordinary_export: deduxit.ordinary_export,
+  ordinary_model_drawing: deduxit.ordinary_model_drawing,
+  ordinary_model_certificate: deduxit.ordinary_model_certificate,
   replay: (session: string, todo: string, settings: string) =>
     JSON.stringify(
       replay(deduxit, JSON.parse(session) as SessionDoc, JSON.parse(todo) as Action[], settings),

@@ -44,7 +44,13 @@ import {
   type Termed,
 } from "../lib/deduxit";
 import { writeLink } from "../lib/link";
-import { isOrdinary, prettyOrdinary, stepsOf } from "../lib/ordinary";
+import {
+  countermodelOf,
+  isOrdinary,
+  type OrdinaryOutcome,
+  prettyOrdinary,
+  stepsOf,
+} from "../lib/ordinary";
 import { actions, goalAt, paths } from "../lib/steps";
 import { intuitionistic, parameterOf, suite } from "../lib/suites";
 import { noTerm, notTaken, pretty } from "../lib/words";
@@ -381,6 +387,12 @@ function ExportMenu(props: {
     const o = p?.note?.outcome ?? p?.verdict?.outcome;
     return o?.verdict === "unprovable" ? o : undefined;
   };
+  /** The ordinary outcome of the note or the verdict, where it is a "not valid" with a countermodel. */
+  const refuted = (): OrdinaryOutcome | undefined => {
+    const p = proof();
+    const o: unknown = p?.note?.outcome ?? p?.verdict?.outcome;
+    return countermodelOf(o) ? (o as OrdinaryOutcome) : undefined;
+  };
   /**
    * The exports' settings. LaTeX and Typst are fragments to paste into a document unless `whole`
    * asks for a document of their own; a Rocq file always has its import, so that it compiles alone.
@@ -550,7 +562,7 @@ function ExportMenu(props: {
           await props.prover.api.certificate(outcome() as Outcome, exportSettings()),
           "text/plain",
         ),
-      // An ordinary goal's certificate of non-validity is not among the page's calls.
+      // An ordinary goal's certificate of non-validity is its countermodel's, the item below.
       hidden: () => complete() || ordinarySession() !== undefined,
       off: () => {
         const kind = outcome()?.refutation?.kind;
@@ -560,6 +572,25 @@ function ExportMenu(props: {
         if (!kind || kind === "exhausted") return "An exhausted search leaves no certificate";
         return null;
       },
+    },
+    {
+      label: "Countermodel",
+      get detail() {
+        return refuted()?.logic === "classical"
+          ? "A Rocq file that checks, from the countermodel's one world, that the goal is not valid. It needs no library"
+          : "A Rocq file that checks, from the countermodel, that the goal has no derivation, its import first. It needs rocq-deduxit";
+      },
+      act: async () =>
+        download(
+          `${name()}-countermodel.v`,
+          await props.prover.api.ordinary.modelCertificate(
+            refuted() as OrdinaryOutcome,
+            exportSettings(),
+          ),
+          "text/plain",
+        ),
+      hidden: () => complete() || ordinarySession() === undefined,
+      off: () => (refuted() ? null : "Close a goal that is not valid first"),
     },
   ];
 
