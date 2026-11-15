@@ -31,6 +31,7 @@ import {
   hypotheses,
   type Interpolation,
   interpolantAtoms,
+  joinWords,
   listed,
   logicName,
   moved,
@@ -151,7 +152,8 @@ export function TranslateSheet(props: { prover: Prover; ui: Ui }) {
         </For>
       </fieldset>
       <p class="sub">
-        {words()?.does} It translates into {logicName(words()?.target ?? "intuitionistic")}.
+        {words()?.does} {joinWords(sequent()?.form.right.length ?? 0)} It translates into{" "}
+        {logicName(words()?.target ?? "intuitionistic")}.
       </p>
       <section class="tf-answer" aria-busy={answer.loading} aria-label="The translation">
         <Show when={answer.loading}>

@@ -10,6 +10,7 @@ import {
   hypotheses,
   type Interpolation,
   interpolantAtoms,
+  joinWords,
   listed,
   moved,
   sharedAtoms,
@@ -61,6 +62,21 @@ describe("the translations", () => {
     expect(verdictWords(not.decided, not.translated)).toBe(
       "not valid: the Kripke model below shows it",
     );
+  });
+
+  it("say how a valid verdict was shown, a derivation or the SAT solver's proof", () => {
+    const atoms = "abcdefghijklmnopqrstuvwxyz".split("");
+    const c = translate(`|- ${atoms.map((a) => `${a} \\/ ~${a}`).join(" /\\ ")}`, "glivenko");
+    expect(c.classical.derivation).toBeUndefined();
+    expect(verdictWords(c.classical, c.sequent)).toBe(
+      "valid: the SAT solver showed that no values make it false, and deduxit checked its proof",
+    );
+  });
+
+  it("say that several formulas right of ⊢ are joined first", () => {
+    expect(joinWords(1)).toBe("");
+    expect(joinWords(2)).toBe("The formulas right of ⊢ are first joined by ∨ into one.");
+    expect(translatedText(translate("a |- b, c", "glivenko"))).toBe("a ⊢ ¬¬(b ∨ c)");
   });
 });
 

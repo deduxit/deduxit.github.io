@@ -33,7 +33,7 @@ export const TRANSLATIONS: readonly TranslationWords[] = [
   {
     key: "glivenko",
     name: "Glivenko",
-    does: "Puts ¬¬ before the formula right of ⊢.",
+    does: "Puts ¬¬ before the formula right of ⊢, if there is one.",
     target: "intuitionistic",
   },
   {
@@ -112,6 +112,10 @@ export function moved(partition: Partition, side: "left" | "right", position: nu
     : [...list, position].sort((a, b) => a - b);
   return { ...partition, [side]: next };
 }
+
+/** What a translation does to a sequent with `right` formulas right of ⊢, when the line needs more. */
+export const joinWords = (right: number) =>
+  right > 1 ? "The formulas right of ⊢ are first joined by ∨ into one." : "";
 
 /** A logic's name in running text. */
 export const logicName = (logic: Logic) => `${logic} logic`;
@@ -204,7 +208,13 @@ export function agreementWords(c: Comparison): {
 
 /** One logic's verdict on its sequent, in a few words, for the line under the agreement. */
 export function verdictWords(outcome: OrdinaryOutcome, form: SequentForm): string {
-  if (outcome.verdict === "valid") return "valid: deduxit found a derivation and checked it";
+  if (outcome.verdict === "valid") {
+    if (outcome.derivation) return "valid: deduxit found a derivation and checked it";
+    // The SAT solver proves a classical sequent valid by a refutation of its negation, no derivation.
+    if (outcome.clausal_proof)
+      return "valid: the SAT solver showed that no values make it false, and deduxit checked its proof";
+    return "valid";
+  }
   if (outcome.verdict === "not_valid") {
     if (outcome.logic === "classical" && outcome.countermodel)
       return `not valid: with ${worldWords(outcome, form)}, every formula left of ⊢ is true and every formula right of it false`;
