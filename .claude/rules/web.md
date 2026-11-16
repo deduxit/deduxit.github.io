@@ -462,10 +462,20 @@ the page reads.
   node the workspace has just remade (`remade`: a restart, and the node of a tab whose sequent
   changed, which keeps the earlier session so that the change's Undo brings it back) until its
   tab shows the new session. Without that the view hands back the tab's old session.
-- **A typed tab's sequent changed** (an effect over the linked tabs' sequents, `seen`): one action
-  "sequent change", its given node set, its proof restarted and the tab's new session laid in;
-  what was made from it is out of date. A made tab's sequent changed by hand leaves the workspace
-  (its line would be false); the design's read-only field is not built.
+- **A typed tab's sequent or logic changed** (an effect over the linked tabs' sessions, `seen`
+  keyed by logic and sequent, `keyOf`): the tab that owns its given sequent (no line above it)
+  makes one action, "sequent change" or "logic change": its given node set, its proof restarted
+  and the tab's new session laid in; what was made from it is out of date. A made tab's or a
+  copy's own change leaves the workspace ("unlinking", the tab parked): its line would be false,
+  and a copy shares its given node with the tab it was copied from. The design's read-only field
+  is not built.
+- **Undo needs the sessions the tabs no longer hold**: `latest` keeps each linked tab's latest
+  session of the sequent the workspace knows (steps included), laid in (`work(kept)`) before a
+  change or a closing, so that their Undo brings that proof back. The bindings leave out of `work`
+  a node an undo took away. After an undo or redo, a tab whose node is gone is closed if the
+  workspace opened it (`opened`) or unlinked and parked (`parked`) if the visitor typed it; a
+  parked tab whose node comes back is linked again after it shows the session back (the write
+  runs the change's effect, which would read the tab's own sequent as a change).
 - **What needs no search is made again by itself** after every action (`remake`: the instant
   derived nodes not current); a proof is started again only by Start again (Update when it has no
   steps); a check by Check.
@@ -474,8 +484,8 @@ the page reads.
   else it is the sheet `ui.menu === "workspace"` from the Workspace button, which names the count
   and the tabs out of date and takes the warn style. Its Undo and Redo say the action's name.
   "Show as graph" from three rows lays the rows in columns over the stage (`WorkspaceGraph`).
-- **The link** of a linked tab is version 3 (`writeWorkspaceLink`: the tab, the tab it was made
-  from and the tabs made from it, packed without results; `n` the shown node); past the limit the
+- **The link** of a linked tab is version 3 (`writeWorkspaceLink`: the tab's whole linked group,
+  every tab joined to it by lines either way, packed without results; `n` the shown node); past the limit the
   tab's own link. Arriving (`arrive`) reads it as a claim (`workspace_open`), opens every linked
   tab, shows the link's and says so in the tab's banner; the panel stays closed.
 - `tests/workspace.spec.ts` drives each; `linking` in `tests/states.ts` puts the page in each
