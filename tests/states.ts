@@ -229,8 +229,8 @@ export async function answers(page: Page, visit: Visit) {
 }
 
 /**
- * An ordinary tab: its calculus's switches, the field's examples, a proof's rules, and a goal
- * that is not valid with its countermodel drawn.
+ * An ordinary tab: its calculus's switches, the field's examples, a proof's rules, a goal that is
+ * not valid with its countermodel drawn, and that model in the editor, checked and refused.
  */
 export async function ordinary(page: Page, visit: Visit) {
   await goto(page);
@@ -260,6 +260,18 @@ export async function ordinary(page: Page, visit: Visit) {
   await page.getByRole("button", { name: "Close goal" }).click();
   await expect(page.getByRole("img", { name: /^A countermodel of/ })).toBeVisible();
   await visit("ordinary countermodel");
+  await page.getByRole("button", { name: "Change this model and check it" }).click();
+  await expect(page.locator(".kripke-canvas")).toBeVisible();
+  await visit("ordinary model editor");
+  await page.getByRole("button", { name: "Check the model" }).click();
+  await expect(page.locator(".modal-check")).toContainText("Fails");
+  await visit("ordinary model check");
+  await page.getByRole("textbox", { name: "Atoms world 0 forces" }).fill("b");
+  await page.getByRole("textbox", { name: "Atoms world 0 forces" }).press("Tab");
+  await page.getByRole("button", { name: "Check the model" }).click();
+  await expect(page.locator(".modal-check")).toContainText("No model of intuitionistic logic");
+  await visit("ordinary model refused");
+  await page.getByRole("tab", { name: "Tree" }).click();
   await band(page, "Practice", visit);
   const practice = page.getByRole("dialog", { name: "Practice" });
   await expect(practice.getByRole("checkbox", { name: "Minimal" })).toBeVisible();
@@ -500,11 +512,15 @@ export async function modalising(page: Page, visit: Visit) {
   await expect(page.locator(".modal .kw.ok", { hasText: "Valid" })).toBeVisible();
   await expect(page.locator(".modal .custom-drawing svg")).toBeVisible();
   await visit("modal valid");
-  await page.getByText("Try a model of your own").click();
+  await page.getByText("Check a model").click();
   await page.getByRole("button", { name: "Start from one world" }).click();
   await page.getByRole("button", { name: "Check the model" }).click();
   await expect(page.locator(".modal-check")).toContainText("does not see itself");
+  await expect(page.locator(".kripke-arrow.missing")).toHaveCount(1);
   await visit("modal frame");
+  await page.getByRole("button", { name: "Add a world" }).click();
+  await expect(page.locator(".kripke-form legend")).toHaveText("World 1");
+  await visit("modal editor, a world added");
   const linking = await switches(page);
   await linking.getByRole("button", { name: "Duplicate this proof" }).click();
   await expect(page.locator(".ptab")).toHaveCount(2);

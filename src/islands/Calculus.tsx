@@ -20,7 +20,9 @@
 
 import { For, Show } from "solid-js";
 import type { Mode } from "../lib/deduxit";
+import { ONE_WORLD } from "../lib/kripke";
 import { SYSTEMS, systemWords } from "../lib/modal";
+import { isOrdinary, sequentText } from "../lib/ordinary";
 import {
   type Calculus as Chosen,
   custom,
@@ -63,6 +65,11 @@ export function Calculus(props: { prover: Prover; ui: Ui }) {
   const mix = () => mode().endsWith("mix");
   const affine = () => mode().includes("affine");
   const { ui, setUi } = props.ui;
+  /** The started ordinary sequent as text, for a model to be checked against; null for none. */
+  const ordinarySequent = () => {
+    const session = proof()?.session;
+    return session && isOrdinary(session) && logic() ? sequentText(session) : null;
+  };
 
   function ask(next: Chosen) {
     const p = proof();
@@ -215,6 +222,33 @@ export function Calculus(props: { prover: Prover; ui: Ui }) {
                     Find an interpolant
                   </button>
                 </div>
+              </Show>
+              {/* A model of the started sequent's logic, to draw and check: asked for here. */}
+              <Show when={ordinarySequent()}>
+                {(sequent) => (
+                  <div class="calc-more">
+                    <button
+                      type="button"
+                      class="btn btn-s"
+                      onClick={() => {
+                        const l = logic();
+                        if (!l) return;
+                        setUi({
+                          modelSeed: {
+                            model: ONE_WORLD,
+                            sequent: sequent(),
+                            logic: l,
+                            found: false,
+                          },
+                          tab: "model",
+                          menu: null,
+                        });
+                      }}
+                    >
+                      Check a model
+                    </button>
+                  </div>
+                )}
               </Show>
               <Show when={proof()?.session && useWorkspace()}>
                 {(ws) => (

@@ -12,7 +12,8 @@
 import { createSignal, For, Show } from "solid-js";
 import { createStore } from "solid-js/store";
 import type { Hint, Offered } from "../lib/deduxit";
-import type { Calculus } from "../lib/suites";
+import type { Kripke } from "../lib/kripke";
+import type { Calculus, Logic } from "../lib/suites";
 import type { Said } from "../lib/words";
 
 /** A formula of a goal, by its position. */
@@ -64,6 +65,15 @@ export interface Reason {
   readonly text: string;
 }
 
+/** What the stage's model view starts from: a model, its sequent (text or JSON) and its logic. */
+export interface ModelSeed {
+  readonly model: Kripke;
+  readonly sequent: string;
+  readonly logic: Logic;
+  /** Whether the model is a countermodel deduxit found, to change; else one of the visitor's own. */
+  readonly found: boolean;
+}
+
 /** Learn's two places. */
 export type Rubric = "tutorial" | "reference";
 
@@ -78,8 +88,13 @@ export function createUi() {
     /** The witness chooser open at a formula, for ∃R or ∀L: a term typed, or the witness left open. */
     witnessing: { goal: number; position: number; rule: string } | null;
     menu: Menu;
-    /** The stage's view: the derivation, the net, or a classical proof's truth table or tableau. */
-    tab: "tree" | "net" | "table" | "tableau";
+    /**
+     * The stage's view: the derivation, the net, a classical proof's truth table or tableau, or a
+     * Kripke model to change and check (`modelSeed` the one it starts from).
+     */
+    tab: "tree" | "net" | "table" | "tableau" | "model";
+    /** The model the model view starts from, the sequent it is checked against, and the logic. */
+    modelSeed: ModelSeed | null;
     ladder: Ladder | null;
     live: string;
     /** The calculus a switch asked for, until the visitor confirms the restart. */
@@ -104,6 +119,7 @@ export function createUi() {
     witnessing: null,
     menu: null,
     tab: "tree",
+    modelSeed: null,
     ladder: null,
     live: "",
     pendingCalculus: null,

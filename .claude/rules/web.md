@@ -190,11 +190,42 @@ the page reads.
   decision two sentences on □, ◇ and the system and "Try []p -> [][]p"; after it the verdict
   (`verdictWords`), the system in a sentence, the drawing (`modal_draw`: the derivation as a
   tree, `.custom-drawing`, or the countermodel as a figure, `.countermodel`), and a closed
-  `<details>` with the model to change (atoms typed per world, an arrow per `label.chip`
-  checkbox, at most `MOST_WORLDS`) and check (`modal_evaluate`: the frame condition and its
-  worlds, or holds, or the failing world with each formula's value and witness, and then
-  `modal_model_drawing` at that world). A change of the system is no restart warning: the tab
-  holds no steps.
+  `<details>` ("Change the model and check it", or "Check a model" for a valid sequent) with
+  the model editor (`KripkeEditor`, below) and its check (`modal_evaluate`: the frame condition
+  and its worlds, or holds, or the failing world with each formula's value and witness, marked
+  on the editor's drawing). A change of the system is no restart warning: the tab holds no
+  steps.
+- **The model editor** (`src/islands/KripkeEditor.tsx`, its data, geometry and words in
+  `src/lib/kripke.ts`) draws a Kripke model of either suite on an SVG canvas and changes it;
+  deduxit's check of what was drawn is the only judge, so the editor sends the model as drawn
+  (`kripkeJson`: the arrows as written, nothing closed; ⊥ in minimal logic alone, which no
+  control sets elsewhere) and every change takes the last check and its marks away.
+  - A drag from a world onto another toggles that arrow, back onto the world after leaving it
+    a loop, onto empty space moves the world; a press without moving selects it. The places
+    are the editor's own (`layout` as deduxit draws: rows top to bottom from the model's world
+    in modal logic, bottom to top by height in ordinary logic), kept across edits and laid
+    out afresh only when the number of worlds changes from outside.
+  - Every drag has a control beside it (WCAG 2.5.7): the selected world's form has its atoms,
+    its arrows as `label.chip` checkboxes ("World 0 sees world 1", "World 0 is below world
+    1"), ⊥ in minimal logic and its removal. A world is a focusable `role="button"` whose
+    name says its atoms, arrows and marks (`worldWords`); Enter or Space selects it, the arrow
+    keys move it; an edit is said in the editor's `aria-live` line.
+  - The boxes' words are a separate `aria-hidden` layer (`.kripke-words`, no pointer events):
+    words drawn inside a button that its name does not contain in order fail axe's
+    `label-content-name-mismatch` (WCAG 2.5.3), whatever `aria-hidden` says.
+  - Marks are colour and a pattern or word: the failing world a thick outline and "fails
+    here", a witness or a frame condition's world a dashed outline ("witness"), and the arrow
+    a frame condition asks for drawn dashed (`missingArrow`; `kripke.test.ts` checks against
+    deduxit that adding it meets the condition named there).
+- **The model view** (`ModelCheck.tsx`, `ui.tab` `"model"`, `data-method="model"`): an
+  ordinary model in the drawing's place, from `ui.modelSeed` (the model, the sequent as text
+  or JSON, the logic, whether deduxit found it). `ModelFigure`'s "Change this model and check
+  it" opens a countermodel there (from the stage's note, the truth table, the tableau and the
+  transformations' sheets, which it closes); the calculus popover's "Check a model" opens one
+  world against the started ordinary sequent. The check is `ordinary_model`; its
+  `invalid_model` refusal is said as "No model of … logic" with deduxit's reason
+  (`refusalWords`). A "Model" tab shows only while the view does; Tree, or another proof on
+  the stage, leaves it.
 - **Proving a modal sequent step by step**: under a valid derivation, "Prove it step by step"
   (`modalSteps`) turns the tab into a calculus given as data: the rule file `modal_calculus`
   gives (`G3S4`), the sequent the root of the valid derivation (`rootSequent`, every compound

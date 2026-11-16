@@ -37,6 +37,7 @@ import type {
   DeriveStep,
   Described,
 } from "./custom";
+import type { Forcing } from "./kripke";
 import type { Evaluation, ModalOutcome } from "./modal";
 import type { OrdinaryOutcome, OrdinarySession, OrdinaryStep, OrdinaryView } from "./ordinary";
 import type { Comparison, Interpolation } from "./transforms";
@@ -227,6 +228,20 @@ export function createApi(changed: (pending: number) => void) {
       /** An outcome's countermodel drawn as SVG, checked first. */
       modelDrawing: (outcome: OrdinaryOutcome, settings: string) =>
         client.call<string>("ordinary_model_drawing", JSON.stringify(outcome), settings),
+      /** A sequent of `logic`, typed or as JSON, read as the page shows it: its `text`. */
+      read: (input: string, logic: string, settings: string) =>
+        json<{ text: string }>("ordinary_read", input, logic, settings),
+      /**
+       * A Kripke model the visitor drew, checked against a sequent (text or JSON) of `logic`, at
+       * `world` or at every world; a model of another logic throws `invalid_model`.
+       */
+      model: (
+        model: string,
+        sequent: string,
+        logic: string,
+        world: number | undefined,
+        settings: string,
+      ) => json<Forcing>("ordinary_model", model, sequent, logic, world, settings),
       /** The Rocq certificate of an outcome's countermodel. */
       modelCertificate: (outcome: OrdinaryOutcome, settings: string) =>
         client.call<string>("ordinary_model_certificate", JSON.stringify(outcome), settings),
@@ -312,9 +327,6 @@ export function createApi(changed: (pending: number) => void) {
       /** A model checked against the statement, at `world` or at every world. */
       evaluate: (statement: string, model: string, world: number | undefined, settings: string) =>
         json<Evaluation>("modal_evaluate", statement, model, world, settings),
-      /** A model drawn as the statement's countermodel at `world`, checked to be one. */
-      modelDrawing: (statement: string, model: string, world: number, settings: string) =>
-        client.call<string>("modal_model_drawing", statement, model, world, settings),
     },
     /**
      * The workspace's calls (`workspace_…`): the linked tabs. `doc` is the workspace's document as

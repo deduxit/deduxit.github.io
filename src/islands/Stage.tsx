@@ -69,6 +69,7 @@ import {
   viewJson,
 } from "./state";
 import { ModelFigure } from "./Countermodel";
+import { ModelView } from "./ModelCheck";
 import { CustomPanel } from "./Custom";
 import { ModalPanel } from "./Modal";
 import { type Method, MethodView } from "./Methods";
@@ -1267,6 +1268,23 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
     const p = proof();
     return !!p?.session && isNatural(p.calculus);
   };
+  /** The Kripke model the stage shows in the drawing's place, to change and check, or null. */
+  const modelShown = () => {
+    const suite = proof()?.calculus.suite;
+    return ui.tab === "model" && suite !== "rules" && suite !== "modal" && !deduced()
+      ? ui.modelSeed
+      : null;
+  };
+  // The model view gives way to the tree when another proof comes to the stage.
+  createEffect(
+    on(
+      () => proof()?.id,
+      () => {
+        if (ui.tab === "model") setUi("tab", "tree");
+      },
+      { defer: true },
+    ),
+  );
   // The table or the tableau gives way to the tree when the proof changes under it (a key or
   // the band acted on it: the visitor sees what changed) or when the proof shown has none.
   createEffect(
@@ -1295,7 +1313,9 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
             ? "modal"
             : deduced()
               ? "natural"
-              : (method() ?? undefined)
+              : modelShown()
+                ? "model"
+                : (method() ?? undefined)
       }
       onDragOver={(event) => {
         event.preventDefault();
@@ -1396,8 +1416,9 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
       </div>
 
       <Show when={!deduced() && method()}>
-        {(m) => <MethodView prover={props.prover} method={m()} />}
+        {(m) => <MethodView prover={props.prover} method={m()} ui={props.ui} />}
       </Show>
+      <Show when={modelShown()}>{(seed) => <ModelView prover={props.prover} seed={seed()} />}</Show>
       <Show when={deduced()}>
         <NaturalView prover={props.prover} />
       </Show>
@@ -1816,6 +1837,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
                   <ModelFigure
                     outcome={n().outcome as unknown as OrdinaryOutcome}
                     prover={props.prover}
+                    ui={props.ui}
                   />
                 </Show>
                 <Show when={lostGoal()}>
@@ -2131,7 +2153,9 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
             type="button"
             role="tab"
             class="tab"
-            aria-selected={ui.tab === "tree" || (ui.tab !== "net" && method() === null)}
+            aria-selected={
+              ui.tab === "tree" || (ui.tab !== "net" && method() === null && !modelShown())
+            }
             data-tip="The derivation"
             data-key="V"
             onClick={() => {
@@ -2156,6 +2180,18 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
           >
             Net
           </button>
+          {/* A model to change and check, a tab only while it shows: Tree goes back. */}
+          <Show when={modelShown()}>
+            <button
+              type="button"
+              role="tab"
+              class="tab"
+              aria-selected="true"
+              data-tip="A Kripke model, to change and check"
+            >
+              Model
+            </button>
+          </Show>
           {/* A classical sequent's two other ways of deciding it, shown only where asked for. */}
           <Show when={decidable()}>
             <button

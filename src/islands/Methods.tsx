@@ -34,6 +34,7 @@ import {
 import { isOrdinary, type OrdinaryOutcome, sequentText } from "../lib/ordinary";
 import { ModelFigure } from "./Countermodel";
 import type { Prover } from "./state";
+import type { Ui } from "./ui";
 
 /** The views a classical proof's sequent can be shown in besides its derivation. */
 export type Method = "table" | "tableau";
@@ -44,7 +45,7 @@ const MOST_ATOMS = 14;
 /** deduxit's answer: the outcome, or what it refused. */
 type Answer = { readonly outcome: OrdinaryOutcome } | { readonly failure: Failure };
 
-export function MethodView(props: { prover: Prover; method: Method }) {
+export function MethodView(props: { prover: Prover; method: Method; ui: Ui }) {
   const sequent = () => {
     const session = props.prover.current()?.session;
     return session && isOrdinary(session) ? sequentText(session) : undefined;
@@ -113,7 +114,7 @@ export function MethodView(props: { prover: Prover; method: Method }) {
             </Switch>
             <Show when={o().countermodel}>
               <div class="method-model" ref={figure} tabindex="-1">
-                <ModelFigure outcome={o()} prover={props.prover} />
+                <ModelFigure outcome={o()} prover={props.prover} ui={props.ui} />
               </div>
             </Show>
           </>

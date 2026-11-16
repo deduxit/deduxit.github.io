@@ -196,7 +196,7 @@ export function TranslateSheet(props: { prover: Prover; ui: Ui }) {
                   <dd>{verdictWords(c().decided, c().translated)}</dd>
                 </dl>
                 <Show when={c().decided.countermodel}>
-                  <ModelFigure outcome={c().decided} prover={props.prover} />
+                  <ModelFigure outcome={c().decided} prover={props.prover} ui={props.ui} />
                 </Show>
               </>
             );
@@ -286,7 +286,7 @@ export function InterpolateSheet(props: { prover: Prover; ui: Ui }) {
         </Show>
         <Show when={failureIn(answer())}>{(f) => <Refused failure={f()} />}</Show>
         <Show when={!answer.loading && found()}>
-          {(i) => <InterpolantView found={i()} prover={props.prover} />}
+          {(i) => <InterpolantView found={i()} prover={props.prover} ui={props.ui} />}
         </Show>
       </section>
     </Sheet>
@@ -294,7 +294,7 @@ export function InterpolateSheet(props: { prover: Prover; ui: Ui }) {
 }
 
 /** An interpolation's answer: the interpolant and its checks, or why there is none. */
-function InterpolantView(props: { found: Interpolation; prover: Prover }) {
+function InterpolantView(props: { found: Interpolation; prover: Prover; ui: Ui }) {
   const outcome = () => props.found.outcome;
   return (
     <Show
@@ -306,7 +306,7 @@ function InterpolantView(props: { found: Interpolation; prover: Prover }) {
               The sequent is not valid, and only a valid sequent has one.
             </Verdict>
             <Show when={outcome().countermodel}>
-              <ModelFigure outcome={outcome()} prover={props.prover} />
+              <ModelFigure outcome={outcome()} prover={props.prover} ui={props.ui} />
             </Show>
           </Show>
           <Show when={outcome().verdict === "unknown"}>
