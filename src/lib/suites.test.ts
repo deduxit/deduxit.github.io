@@ -2,7 +2,17 @@
 // Licensed under the EUPL
 
 import { describe, expect, it } from "vitest";
-import { calculusOf, custom, linear, markLabel, ordinary, parameterOf, SUITES } from "./suites";
+import {
+  calculusOf,
+  calculusWords,
+  custom,
+  linear,
+  markLabel,
+  modal,
+  ordinary,
+  parameterOf,
+  SUITES,
+} from "./suites";
 import { deduxit } from "./testing";
 
 describe("the suite registry", () => {
@@ -46,7 +56,9 @@ describe("the suite registry", () => {
     expect(calculusOf("linear", "natural", "classical")).toBeUndefined();
     expect(calculusOf("ordinary", "sequent", "mix")).toBeUndefined();
     expect(calculusOf("ordinary", "tableau", "classical")).toBeUndefined();
-    expect(calculusOf("modal", "sequent", "K")).toBeUndefined();
+    expect(calculusOf("modal", "sequent", "S4")).toEqual(modal("S4"));
+    expect(calculusOf("modal", "sequent", "S6")).toBeUndefined();
+    expect(calculusOf("modal", "natural", "K")).toBeUndefined();
     // A rule file of one's own is named by the file: any name up to a bound.
     expect(calculusOf("rules", "sequent", "Mini")).toEqual(custom("Mini"));
     expect(calculusOf("rules", "sequent", " ")).toBeUndefined();
@@ -61,5 +73,8 @@ describe("the tab's mark on a wide screen", () => {
     expect(markLabel(ordinary("intuitionistic"))).toBe("Ordinary (LJ)");
     expect(markLabel(ordinary("intuitionistic", "natural"))).toBe("Ordinary (NJ)");
     expect(markLabel(custom("tableau"))).toBe("Custom calculus (tableau)");
+    expect(markLabel(modal("S4"))).toBe("Modal (S4)");
+    expect(calculusWords(modal("S4"))).toBe("Modal, S4 (reflexive, transitive)");
+    expect(calculusWords(modal("K"))).toBe("Modal, K (no condition)");
   });
 });

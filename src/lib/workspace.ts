@@ -8,8 +8,10 @@
  * words, no Solid: the island's `workspace.tsx` holds the state.
  *
  * A linked tab is a proof node of the workspace (`ordinary.start`, class
- * `work`). Its sequent is the node above it: a given sequent for a tab the
- * visitor typed, or a translation of one for a tab made from it.
+ * `work`), or for a modal tab its decision (`modal.decide`): a modal tab holds
+ * no steps, only the outcome. Its sequent is the node above it: a given
+ * sequent for a tab the visitor typed, or a translation of one for a tab made
+ * from it.
  */
 
 /** A node's state as the bindings write it. */
@@ -98,6 +100,10 @@ const TRANSLATIONS: { readonly [key: string]: string } = {
   "godel-gentzen": "Gödel and Gentzen's translation",
 };
 
+/** Whether a node is a tab's: a proof (class `work`), or a modal tab's decision. */
+export const isTabNode = (node: WorkspaceNode): boolean =>
+  node.class === "work" || node.operation === "modal.decide";
+
 /** The words at a made line's end, for the node that made the sequent. */
 export function labelOf(node: WorkspaceNode): string {
   if (node.operation === "ordinary.translate") {
@@ -125,7 +131,7 @@ export function rowsOf(view: WorkspaceView, tabs: { readonly [tab: string]: numb
   const depths = new Map<number, number>();
   for (const node of view.nodes) {
     const tab = tabOf.get(node.node);
-    if (node.class !== "work" || tab === undefined) continue;
+    if (!isTabNode(node) || tab === undefined) continue;
     const input = byNode.get(node.from[0] ?? -1);
     // The chain of made sequents up to the given one.
     const made: WorkspaceNode[] = [];
@@ -248,6 +254,25 @@ export function joined(
       { add: { kind: "ordinary.sequent", value: statement } },
       { connect: { operation: "ordinary.start", from: [{ made: at }] } },
       { work: { node: { made: at + 1 }, session } },
+    ],
+    sequent: { made: at },
+    proof: { made: at + 1 },
+  };
+}
+
+/**
+ * The edits that put a modal tab into the workspace: its statement as a given value, and its
+ * decision on it, which the page runs at once. Returns the edits and how a later edit names the
+ * statement's and the decision's nodes.
+ */
+export function joinedModal(
+  statement: string,
+  at: number,
+): { edits: Edit[]; sequent: Named; proof: Named } {
+  return {
+    edits: [
+      { add: { kind: "modal.sequent", value: statement } },
+      { connect: { operation: "modal.decide", from: [{ made: at }] } },
     ],
     sequent: { made: at },
     proof: { made: at + 1 },

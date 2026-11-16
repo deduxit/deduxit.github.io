@@ -14,7 +14,7 @@ import {
   setAside,
   type StoredProof,
 } from "./shelf";
-import { linear, ordinary } from "./suites";
+import { linear, modal, ordinary } from "./suites";
 
 class Memory implements Store {
   map = new Map<string, string>();
@@ -114,6 +114,9 @@ describe("the stored proofs", () => {
     ]);
     const kept = shelf(proof("a"), { ...proof("b"), calculus: linear("lambek-star") });
     expect(parseShelf(JSON.stringify(kept))).toEqual(kept);
+    // A modal tab keeps its system.
+    const modalKept = shelf({ ...proof("c"), calculus: modal("S4") });
+    expect(parseShelf(JSON.stringify(modalKept))).toEqual(modalKept);
   });
 
   it("leaves out a proof it cannot read alone, and refuses what is not a shelf", () => {
@@ -121,7 +124,10 @@ describe("the stored proofs", () => {
     expect(parseShelf('{"version":3,"proofs":[]}')).toBeUndefined();
     expect(parseShelf('{"version":1,"proofs":{}}')).toBeUndefined();
     // A calculus the registry does not know, beside one it does: the other proof stays.
-    const unknown = { ...proof("a"), calculus: { suite: "modal", method: "sequent", logic: "K" } };
+    const unknown = {
+      ...proof("a"),
+      calculus: { suite: "temporal", method: "sequent", logic: "K" },
+    };
     expect(
       parseShelf(JSON.stringify({ version: 2, active: "b", proofs: [unknown, proof("b")] })),
     ).toEqual({ version: 2, active: "b", proofs: [proof("b")] });

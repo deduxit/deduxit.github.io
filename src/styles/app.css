@@ -1062,7 +1062,7 @@ button.wordmark {
 /* A calculus of one's own: the panel has no view tabs (the stage's Tree and Net draw the other
    suites), its drawing in the stage's ink, its file and steps under it. A proof by natural
    deduction is drawn the same way, its own switch between the tree and Fitch's lines. */
-.stage:is([data-method="custom"], [data-method="natural"]) .stage-ctl {
+.stage:is([data-method="custom"], [data-method="natural"], [data-method="modal"]) .stage-ctl {
   display: none;
 }
 .nd-bar,
@@ -1291,6 +1291,40 @@ button.wordmark {
   flex-basis: 100%;
   margin: 0;
   padding: 0 var(--spacing-1);
+}
+/* In the modal panel, a column, the figure takes its own height, not the column's. */
+.modal .countermodel {
+  flex-basis: auto;
+}
+/* A modal model's editor: each world on a line, its atoms, the worlds it sees, its removal. */
+.modal-worlds {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.modal-world,
+.modal-sees {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+/* The atoms' field and the world chooser take the width of their text, so a world fits a line. */
+.modal .custom-field .field,
+.calc .custom-field .field {
+  width: auto;
+}
+.modal-sees {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.modal-values {
+  margin: 0;
+  padding-left: var(--spacing-4);
 }
 .countermodel-drawing svg {
   display: block;

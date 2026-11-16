@@ -3,7 +3,7 @@
 
 /**
  * The workspace of linked tabs: tabs made from one another (a translation and its proof, a
- * copy), each a proof node of deduxit's workspace document, which the page holds and sends with
+ * copy), each a proof node of deduxit's workspace document (a modal tab's node its decision), which the page holds and sends with
  * every `workspace_…` call. Until the first link the page is as it was: no document, no call,
  * no button. The panel lists the linked tabs, each under the line that says how it was made;
  * its Undo and Redo take back whole changes by name; the graph is the same list in columns.
@@ -24,8 +24,9 @@ import {
 } from "solid-js";
 import { createStore } from "solid-js/store";
 import { failure } from "../lib/deduxit";
+import { prettyModal } from "../lib/modal";
 import { isOrdinary, type OrdinarySession, sequentText } from "../lib/ordinary";
-import { ordinary, type Logic } from "../lib/suites";
+import { type Logic, modal, ordinary } from "../lib/suites";
 import { displayed } from "../lib/words";
 import {
   type Action,
@@ -34,6 +35,7 @@ import {
   checkWords,
   type Edit,
   joined,
+  joinedModal,
   type Named,
   outOfDate,
   type Row,
@@ -135,6 +137,95 @@ export function createWorkspace(prover: Prover, ui: Ui) {
   /** What the workspace compares of a tab: its logic and its sequent. */
   const keyOf = (session: OrdinarySession) => `${session.logic}\n${sequentText(session)}`;
 
+  /**
+   * A modal tab's statement once decided, with what the workspace compares of it: its system and
+   * its sequent as typed. Null for a tab of another suite or not decided yet.
+   */
+  const modalOf = (
+    tab: string,
+  ): { statement: string; system: string; text: string; key: string } | null => {
+    const p = prover.store.proofs.find((q) => q.id === tab);
+    const statement = p?.modal?.statement;
+    if (!statement || !p.modal?.outcome) return null;
+    const read = JSON.parse(statement) as { system?: string; text?: string };
+    const system = read.system ?? "K";
+    const text = read.text ?? p.input;
+    return { statement, system, text, key: `${system}\n${text}` };
+  };
+
+  /** Whether a node is a modal tab's decision, which only a modal tab may be linked to. */
+  const isModalNode = (node: number) =>
+    state.view?.nodes.find((n) => n.node === node)?.operation === "modal.decide";
+
+  /**
+   * Takes a tab out of the workspace whose suite changed (a modal tab switched to ordinary logic,
+   * or back): its node is the other suite's, a proof or a decision the tab no longer holds.
+   * Undo brings the node back and links the tab again.
+   */
+  function leaveForSuite(tab: string, node: number, text: string) {
+    void queued(async () => {
+      unlink(tab);
+      parked.set(node, tab);
+      await act({ name: "unlinking", edits: [{ remove: { node } }] });
+      setUi(
+        "live",
+        `${text} is no longer linked: its tab is now in another suite. Workspace has Undo unlinking.`,
+      );
+    }).catch(said);
+  }
+
+  /** Makes the nodes given, a modal tab's decision, and reads the view. */
+  async function runNodes(nodes: readonly number[]) {
+    const doc = state.doc;
+    if (doc === null || nodes.length === 0) return;
+    const ran = await prover.api.workspace.run(doc, nodes, work(), settings());
+    setState("doc", ran.workspace);
+    await look();
+  }
+
+  /** The statement a modal tab's decision is made on: the given node above it, as JSON. */
+  const statementAbove = (node: number): string | null => {
+    const view = state.view;
+    if (!view) return null;
+    const input = sequentNode(view, node);
+    const value = view.nodes.find((n) => n.node === input)?.value;
+    return value ? JSON.stringify(value) : null;
+  };
+
+  /**
+   * Shows on each linked modal tab the statement its decision is made on now, decided again:
+   * after an Undo, and after a change, which a copy of the same decision follows (the workspace
+   * makes one record for one recipe on one statement).
+   */
+  async function followStatements() {
+    for (const [tab, node] of Object.entries(state.tabs)) {
+      const now = modalOf(tab);
+      const above = statementAbove(node);
+      if (!now || !above) continue;
+      const read = JSON.parse(above) as { system?: string; text?: string };
+      const key = `${read.system ?? "K"}\n${read.text ?? ""}`;
+      if (key === now.key) continue;
+      seen.set(tab, key);
+      await prover.showModalStatement(tab, above);
+    }
+  }
+
+  /** Opens a modal decision's statement on a new tab, decided there, and links the tab. */
+  async function openModalNode(node: number): Promise<string | null> {
+    const statement = statementAbove(node);
+    if (!statement) return null;
+    const read = JSON.parse(statement) as { system?: string; text?: string };
+    if (!read.text) return null;
+    const done = await prover.open(read.text, modal(read.system ?? "K"));
+    if ("problem" in done) return null;
+    const tab = prover.current()?.id ?? null;
+    if (tab) {
+      opened.add(tab);
+      link(tab, node);
+    }
+    return tab;
+  }
+
   /** Runs `step` after the calls before it, keeping the queue alive past a failure. */
   const queued = <T,>(step: () => Promise<T>): Promise<T> => {
     const next = queue.then(step);
@@ -208,12 +299,18 @@ export function createWorkspace(prover: Prover, ui: Ui) {
     at: number,
   ): Promise<{ edits: Edit[]; sequent: Named } | null> {
     const session = sessionOf(tab);
-    if (!session) return null;
+    const modalTab = modalOf(tab);
+    if (!session && !modalTab) return null;
     const known = state.tabs[tab];
     if (known !== undefined && state.view) {
       const sequent = sequentNode(state.view, known);
       return sequent === null ? null : { edits: [], sequent };
     }
+    if (modalTab) {
+      const join = joinedModal(modalTab.statement, at);
+      return { edits: join.edits, sequent: join.sequent };
+    }
+    if (!session) return null;
     const join = joined(await statement(session), JSON.stringify(session), at);
     return { edits: join.edits, sequent: join.sequent };
   }
@@ -226,6 +323,8 @@ export function createWorkspace(prover: Prover, ui: Ui) {
       seen.set(tab, keyOf(session));
       latest.set(tab, session);
     }
+    const modalTab = modalOf(tab);
+    if (modalTab) seen.set(tab, modalTab.key);
     setState("tabs", tab, node);
   }
 
@@ -320,6 +419,10 @@ export function createWorkspace(prover: Prover, ui: Ui) {
           const node = state.tabs[tab];
           const view = state.view;
           if (node === undefined || !view) continue;
+          if (isModalNode(node)) {
+            leaveForSuite(tab, node, displayed(sequentText(session)));
+            continue;
+          }
           const row = rows().find((r) => r.tab === tab);
           const input = sequentNode(view, node);
           const owns =
@@ -368,6 +471,60 @@ export function createWorkspace(prover: Prover, ui: Ui) {
     ),
   );
 
+  /**
+   * A linked modal tab's sequent or system changed by the visitor: the tab that owns its given
+   * statement changes it and its decision is made again; a copy, the same decision of the same
+   * statement, follows at once (`followStatements`). A copy's own change leaves the workspace,
+   * its statement another tab's to change, and so does a tab that came into modal logic from
+   * another suite.
+   */
+  createEffect(
+    on(
+      () => Object.keys(state.tabs).map((tab) => [tab, modalOf(tab)?.key ?? null] as const),
+      (tabs) => {
+        for (const [tab, key] of tabs) {
+          const modalTab = modalOf(tab);
+          const before = seen.get(tab);
+          if (!key || !modalTab || before === key) continue;
+          seen.set(tab, key);
+          const node = state.tabs[tab];
+          const view = state.view;
+          if (node === undefined || !view) continue;
+          if (!isModalNode(node)) {
+            leaveForSuite(tab, node, prettyModal(modalTab.text));
+            continue;
+          }
+          const row = rows().find((r) => r.tab === tab);
+          const input = sequentNode(view, node);
+          if (row?.line !== null || input === null) {
+            void queued(async () => {
+              unlink(tab);
+              parked.set(node, tab);
+              await act({ name: "unlinking", edits: [{ remove: { node } }] });
+              setUi(
+                "live",
+                `${prettyModal(modalTab.text)} is no longer linked: its sequent was another tab's. Workspace has Undo unlinking.`,
+              );
+            }).catch(said);
+            continue;
+          }
+          const systemChanged = before !== undefined && before.split("\n")[0] !== modalTab.system;
+          void queued(async () => {
+            await act({
+              name: systemChanged ? "system change" : "sequent change",
+              edits: [{ set: { node: input, value: modalTab.statement } }],
+            });
+            await runNodes([node]);
+            await followStatements();
+            const stale = outOfDate(rows());
+            if (stale > 0) setUi("live", changeWords(stale, state.view?.undo ?? null));
+          }).catch(said);
+        }
+      },
+      { defer: true },
+    ),
+  );
+
   const rows = createMemo((): Row[] => (state.view ? rowsOf(state.view, state.tabs) : []));
 
   /**
@@ -399,6 +556,19 @@ export function createWorkspace(prover: Prover, ui: Ui) {
         latest.set(tab, session);
         setState("tabs", tab, node);
       }
+      // A parked modal tab whose decision is back is linked again, showing that statement.
+      await look();
+      for (const [node, tab] of Array.from(parked.entries())) {
+        if (!isModalNode(node)) continue;
+        parked.delete(node);
+        if (!open.has(tab)) continue;
+        const above = statementAbove(node);
+        if (!above) continue;
+        const read = JSON.parse(above) as { system?: string; text?: string };
+        seen.set(tab, `${read.system ?? "K"}\n${read.text ?? ""}`);
+        await prover.showModalStatement(tab, above);
+        setState("tabs", tab, node);
+      }
       // Each tab first shows the session the change brought back, then the view is read with it.
       const byNode = new Map(Object.entries(state.tabs).map(([tab, node]) => [node, tab]));
       for (const [node, session] of Object.entries(answer.sessions)) {
@@ -410,6 +580,8 @@ export function createWorkspace(prover: Prover, ui: Ui) {
         }
       }
       await look();
+      // A modal tab shows the statement its decision is made on now, decided again.
+      await followStatements();
       // A tab whose node the change took away: closed if the workspace opened it, else unlinked.
       const alive = new Set((state.view?.nodes ?? []).map((n) => n.node));
       for (const [node, tab] of Array.from(byNode.entries())) {
@@ -421,7 +593,13 @@ export function createWorkspace(prover: Prover, ui: Ui) {
       // A proof whose tab was closed comes back on a tab of its own.
       const linked = new Set(Object.values(state.tabs));
       for (const n of state.view?.nodes ?? []) {
-        if (n.class !== "work" || linked.has(n.node) || !isOrdinary(n.value)) continue;
+        if (linked.has(n.node)) continue;
+        if (n.operation === "modal.decide") {
+          parked.delete(n.node);
+          await openModalNode(n.node);
+          continue;
+        }
+        if (n.class !== "work" || !isOrdinary(n.value)) continue;
         parked.delete(n.node);
         await openNode(n.node, (n.value as OrdinarySession).logic);
       }
@@ -510,6 +688,26 @@ export function createWorkspace(prover: Prover, ui: Ui) {
     /** "Duplicate this proof": one action, "copy", a new tab with the same proof, linked. */
     duplicate: (tab: string) =>
       queued(async () => {
+        const modalTab = modalOf(tab);
+        if (modalTab) {
+          const join = await joining(tab, 0);
+          if (!join) return;
+          const at = join.edits.length;
+          const made = await act({
+            name: "copy",
+            edits: [
+              ...join.edits,
+              { connect: { operation: "modal.decide", from: [join.sequent] } },
+            ],
+          });
+          const copy = made[at] as number;
+          if (join.edits.length > 0) link(tab, made[1] as number);
+          await runNodes(join.edits.length > 0 ? [made[1] as number, copy] : [copy]);
+          await openModalNode(copy);
+          firstLink();
+          setUi("live", `${prettyModal(modalTab.text)}: a copy opened on a new tab.`);
+          return;
+        }
         const session = sessionOf(tab);
         if (!session) return;
         const join = await joining(tab, 0);
@@ -532,6 +730,25 @@ export function createWorkspace(prover: Prover, ui: Ui) {
     /** Start again: the row's proof made anew from its sequent now; Undo brings the old one back. */
     startAgain: (row: Row) =>
       queued(async () => {
+        if (state.view?.nodes.find((n) => n.node === row.node)?.operation === "modal.decide") {
+          // A modal tab's decision is made again on the statement above it, which the tab shows.
+          setState("running", row.node);
+          try {
+            await runNodes([row.node]);
+            const above = statementAbove(row.node);
+            if (above) {
+              const read = JSON.parse(above) as { system?: string; text?: string };
+              seen.set(row.tab, `${read.system ?? "K"}\n${read.text ?? ""}`);
+              await prover.showModalStatement(row.tab, above);
+            }
+            prover.activate(row.tab);
+            setUi("live", "Decided again.");
+          } finally {
+            setState("running", null);
+            await look();
+          }
+          return;
+        }
         setState("running", row.node);
         remade.add(row.node);
         try {
@@ -587,6 +804,11 @@ export function createWorkspace(prover: Prover, ui: Ui) {
         await remake();
         let tab: string | null = null;
         for (const n of state.view?.nodes ?? []) {
+          if (n.operation === "modal.decide") {
+            const made = await openModalNode(n.node);
+            if (n.node === shown) tab = made;
+            continue;
+          }
           if (n.class !== "work" || !isOrdinary(n.value)) continue;
           const made = await openNode(n.node, n.value.logic);
           if (n.node === shown) tab = made;
@@ -755,6 +977,13 @@ function RowItem(props: { row: Row; workspace: Workspace; prover: Prover }) {
     return session && isOrdinary(session) ? sequentText(session) : (proof()?.input ?? "");
   };
   const words = () => {
+    const outcome = proof()?.modal?.outcome;
+    if (outcome)
+      return outcome.verdict === "valid"
+        ? "Valid"
+        : outcome.verdict === "not_valid"
+          ? "Not valid"
+          : "Not decided";
     const v = proof()?.view;
     if (!v) return "Not started";
     if (v.complete) return "Proved";
@@ -820,12 +1049,18 @@ function RowItem(props: { row: Row; workspace: Workspace; prover: Prover }) {
         aria-current={shown() ? "true" : undefined}
         onClick={() => props.prover.activate(props.row.tab)}
       >
-        <span class="ws-sequent m">{displayed(text())}</span>
+        <span class="ws-sequent m">
+          {proof()?.calculus.suite === "modal" ? prettyModal(text()) : displayed(text())}
+        </span>
         <span class="ws-state sub">
           {words()}
           {(() => {
             const calculus = proof()?.calculus;
-            return calculus?.suite === "ordinary" ? ` · ${calculus.logic} logic` : "";
+            return calculus?.suite === "ordinary"
+              ? ` · ${calculus.logic} logic`
+              : calculus?.suite === "modal"
+                ? ` · ${calculus.system}`
+                : "";
           })()}
         </span>
       </button>

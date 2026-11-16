@@ -585,8 +585,9 @@ export function hintsFor(
   twoSided: boolean,
 ): readonly RuleHint[] {
   if (calculus.suite === "ordinary") return calculus.logic === "classical" ? LK : LJ;
-  // A rule file names its own rules, which no hint of the page's describes.
-  if (calculus.suite === "rules") return [];
+  // A rule file names its own rules, which no hint of the page's describes; a modal tab takes
+  // no steps.
+  if (calculus.suite === "rules" || calculus.suite === "modal") return [];
   const mode = calculus.mode;
   if (mode.startsWith("lambek")) return LAMBEK;
   if (mode.startsWith("intuitionistic"))

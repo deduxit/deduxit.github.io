@@ -14,16 +14,19 @@
  * steps; the presentation and the structural rules are settings of the tab, kept with the
  * others, and change only how a derivation is drawn. Under the suites, one button opens a
  * calculus of one's own, a rule file, which the stage's panel then holds: it has no segment, so
- * a visitor who never presses it sees nothing else of it.
+ * a visitor who never presses it sees nothing else of it. A second button opens modal logic, whose
+ * one switch is the system, a chooser of the fifteen from K to S5, each named with its conditions.
  */
 
 import { For, Show } from "solid-js";
 import type { Mode } from "../lib/deduxit";
+import { SYSTEMS, systemWords } from "../lib/modal";
 import {
   type Calculus as Chosen,
   custom,
   LOGICS,
   linear,
+  modal,
   modeOf as linearMode,
   ordinary,
   SUITES,
@@ -97,7 +100,55 @@ export function Calculus(props: { prover: Prover; ui: Ui }) {
       >
         Your own calculus
       </button>
-      <Show when={calculus().suite !== "rules"}>
+      <button
+        type="button"
+        class="btn btn-s"
+        aria-pressed={calculus().suite === "modal"}
+        data-tip="Modal logic: □ necessarily, ◇ possibly, decided in a system from K to S5 with a derivation or a countermodel"
+        onClick={() => {
+          if (calculus().suite !== "modal") ask(modal("K"));
+        }}
+      >
+        Modal logic
+      </button>
+      <Show when={calculus().suite === "modal"}>
+        <label class="custom-field" data-tip="The conditions every world's arrows meet">
+          <span>System</span>
+          <select
+            class="field"
+            aria-label="System"
+            value={(() => {
+              const c = calculus();
+              return c.suite === "modal" ? c.system : "K";
+            })()}
+            onChange={(event) => ask(modal(event.currentTarget.value))}
+          >
+            <For each={SYSTEMS}>{(s) => <option value={s.name}>{s.name}</option>}</For>
+          </select>
+        </label>
+        <p class="sub">
+          {(() => {
+            const c = calculus();
+            return systemWords(c.suite === "modal" ? c.system : "K");
+          })()}
+        </p>
+        <Show when={proof()?.modal?.outcome && useWorkspace()}>
+          {(ws) => (
+            <button
+              type="button"
+              class="btn btn-s"
+              onClick={() => {
+                const id = proof()?.id;
+                setUi("menu", null);
+                if (id) void ws().duplicate(id);
+              }}
+            >
+              Duplicate this proof
+            </button>
+          )}
+        </Show>
+      </Show>
+      <Show when={calculus().suite !== "rules" && calculus().suite !== "modal"}>
         <Show
           when={calculus().suite === "linear"}
           fallback={

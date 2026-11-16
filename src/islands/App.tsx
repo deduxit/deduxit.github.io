@@ -15,6 +15,7 @@ import { createEffect, createSignal, on, onCleanup, onMount, Show } from "solid-
 import { unwrap } from "solid-js/store";
 import { type LinkContent, readLink, writeLink, writeWorkspaceLink } from "../lib/link";
 import { MATH_FONTS, type MathFont } from "../lib/deduxit";
+import { prettyModal } from "../lib/modal";
 import { prettyOrdinary } from "../lib/ordinary";
 import { paths } from "../lib/steps";
 import { failure } from "../lib/deduxit";
@@ -233,10 +234,23 @@ export default function App(props: {
           prover.current()?.session ?? prover.current()?.custom?.session,
           prover.current()?.calculus,
           prover.current()?.input,
+          prover.current()?.modal?.outcome,
         ] as const,
-      ([session, calculus, input]) => {
+      ([session, calculus, input, decided]) => {
         clearTimeout(linking);
-        if (!session || !calculus || !input) return;
+        if (!calculus || !input) return;
+        // A modal tab's link holds its sequent and system alone: it is decided again on arrival.
+        if (calculus.suite === "modal") {
+          if (!decided) return;
+          linking = setTimeout(async () => {
+            const written = await writeLink(prettyModal(input), "modal", parameterOf(calculus));
+            history.replaceState(null, "", written.hash);
+            wrote = location.hash;
+            setLinkShort(!written.whole);
+          }, 400);
+          return;
+        }
+        if (!session) return;
         linking = setTimeout(async () => {
           // A rule file's sequent is written in the file's own symbols, which no sign replaces.
           const text =

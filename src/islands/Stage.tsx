@@ -70,6 +70,7 @@ import {
 } from "./state";
 import { ModelFigure } from "./Countermodel";
 import { CustomPanel } from "./Custom";
+import { ModalPanel } from "./Modal";
 import { type Method, MethodView } from "./Methods";
 import { NaturalView } from "./Natural";
 import { hinted, titled } from "./RuleHint";
@@ -1290,9 +1291,11 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
       data-method={
         proof()?.calculus.suite === "rules"
           ? "custom"
-          : deduced()
-            ? "natural"
-            : (method() ?? undefined)
+          : proof()?.calculus.suite === "modal"
+            ? "modal"
+            : deduced()
+              ? "natural"
+              : (method() ?? undefined)
       }
       onDragOver={(event) => {
         event.preventDefault();
@@ -1401,6 +1404,9 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
       <Show when={proof()?.calculus.suite === "rules"}>
         <CustomPanel prover={props.prover} />
       </Show>
+      <Show when={proof()?.calculus.suite === "modal"}>
+        <ModalPanel prover={props.prover} />
+      </Show>
 
       <Show when={proof()?.banner}>
         {(banner) => (
@@ -1415,7 +1421,13 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
         {(text) => <p class="banner kw warn">The drawing failed: {text()}</p>}
       </Show>
 
-      <Show when={!proof()?.session && proof()?.calculus.suite !== "rules"}>
+      <Show
+        when={
+          !proof()?.session &&
+          proof()?.calculus.suite !== "rules" &&
+          proof()?.calculus.suite !== "modal"
+        }
+      >
         <div class="empty">
           <p>
             Type a sequent, or open one from{" "}

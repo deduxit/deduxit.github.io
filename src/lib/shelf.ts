@@ -105,7 +105,7 @@ const proofOf = (p: unknown, version: 1 | 2): StoredProof | undefined => {
         ? calculusOf(
             String(stored["suite"]),
             String(stored["method"]),
-            String(stored["mode"] ?? stored["logic"] ?? stored["calculus"]),
+            String(stored["mode"] ?? stored["logic"] ?? stored["calculus"] ?? stored["system"]),
           )
         : undefined;
   const fine =

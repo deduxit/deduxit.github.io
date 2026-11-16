@@ -54,6 +54,7 @@ import {
   retract as retractOrdinary,
   sequentText as ordinaryText,
 } from "../lib/ordinary";
+import { type Evaluation, type Model, type ModalOutcome, modelJson } from "../lib/modal";
 import { Cancelled } from "../lib/protocol";
 import {
   type Shelf,
@@ -80,6 +81,7 @@ import {
   custom,
   linear,
   type Logic,
+  modal,
   modeOf,
   ordinary,
   SUITES,
@@ -174,6 +176,25 @@ export interface CustomWork {
   goal: number | null;
 }
 
+/**
+ * A proof of modal logic: the statement deduxit read, the outcome of deciding it, and the Kripke
+ * model the visitor edits and has checked. Only the sequent and the system are stored: the
+ * outcome is decided again when the proof is read back.
+ */
+export interface ModalWork {
+  /** The statement: the sequent's JSON with its system and its text, as deduxit wrote it. */
+  statement: string | null;
+  outcome: ModalOutcome | null;
+  /** The model being edited: the countermodel's, or one begun from a single world. */
+  model: Model | null;
+  /** The world the model is checked at; null for every world. */
+  world: number | null;
+  /** The last check of the model, cleared by any change of it. */
+  evaluation: Evaluation | null;
+  /** What deduxit said of the last call, shown in the panel. */
+  problem: Said | null;
+}
+
 /** One open proof. */
 export interface Proof {
   readonly id: string;
@@ -211,6 +232,8 @@ export interface Proof {
   elim: { tree: Elim | null; net: Elim | null };
   /** The work of a proof in a calculus given as a rule file; null in the other suites. */
   custom: CustomWork | null;
+  /** The work of a proof of modal logic; null in the other suites. */
+  modal: ModalWork | null;
 }
 
 /** The visitor's settings, kept in the browser but for the engine, which holds for the visit. */
@@ -402,6 +425,12 @@ const customWork = (calculus: Calculus): CustomWork | null =>
       }
     : null;
 
+/** The work of a new proof in `calculus`: a modal one's, nothing decided yet. */
+const modalWork = (calculus: Calculus): ModalWork | null =>
+  calculus.suite === "modal"
+    ? { statement: null, outcome: null, model: null, world: null, evaluation: null, problem: null }
+    : null;
+
 const blank = (calculus: Calculus): Proof => ({
   id: freshId(),
   input: "",
@@ -421,6 +450,7 @@ const blank = (calculus: Calculus): Proof => ({
   origin: null,
   elim: { tree: null, net: null },
   custom: customWork(calculus),
+  modal: modalWork(calculus),
 });
 
 /** A goal's formulas as a key, equal for the same formulas in any order: how two tabs' sequents are compared. */
@@ -549,6 +579,8 @@ export function createProver(say: (text: string) => void = () => undefined) {
       ...viewJson(s, ordinary("classical")),
     });
   };
+  /** The settings of a modal call: the budget alone, the tab's defaults for the rest. */
+  const modalJson = () => JSON.stringify({ limits: { work: settings().budget } });
   /**
    * The engines of the grafts a session still holds: an entry whose goal undo reopened, or took
    * back with the step below it, goes with it.
@@ -798,6 +830,46 @@ export function createProver(say: (text: string) => void = () => undefined) {
   }
 
   /**
+   * Reads the field's text as a modal sequent claimed in `system` and decides it: the statement
+   * and the outcome shown in the panel, a parse error marked in the field.
+   */
+  async function startModal(id: string, text: string, system: string) {
+    const settings = modalJson();
+    const read = await attempt(() => api.modal.read(text, system, settings));
+    if (!read.ok) {
+      const failed = read.failed;
+      if (failed) update(id, (q) => (q.inputProblem = problemAt(failed)));
+      return;
+    }
+    const calculus = modal(system);
+    setLastCalculus(calculus);
+    update(id, (q) => {
+      q.calculus = calculus;
+      q.modal = { ...(modalWork(calculus) as ModalWork), statement: read.value };
+      // A tab that held another suite's proof holds none now: no call of that suite gets it.
+      q.session = null;
+      q.view = null;
+      q.custom = null;
+      q.redo = [];
+      q.later = [];
+      q.editing = false;
+      q.inputProblem = null;
+      q.note = null;
+      q.banner = null;
+      q.verdict = null;
+    });
+    const decided = await attempt(() => api.modal.decide(read.value, settings));
+    update(id, (q) => {
+      if (!q.modal || q.modal.statement !== read.value) return;
+      if (decided.ok) {
+        q.modal.outcome = decided.value;
+        q.modal.model = decided.value.countermodel?.model ?? null;
+      } else if (decided.failed) q.modal.problem = inputProblem(decided.failed);
+    });
+    save();
+  }
+
+  /**
    * Reads a text into a proof in a calculus and starts it: the field's text in the suite's own
    * syntax, a sequent's JSON, or a session pasted there, an ordinary one in its own logic.
    */
@@ -815,6 +887,10 @@ export function createProver(say: (text: string) => void = () => undefined) {
         q.custom ??= customWork(calculus);
       });
       await startCustom(id, text);
+      return;
+    }
+    if (calculus.suite === "modal") {
+      await startModal(id, text, calculus.system);
       return;
     }
     if (isOrdinary(doc)) {
@@ -1007,6 +1083,56 @@ export function createProver(say: (text: string) => void = () => undefined) {
   }
 
   const actions = {
+    /** Shows a statement on a modal tab, as the workspace holds it: its sequent and system, decided again. */
+    async showModalStatement(id: string, statement: string) {
+      const read = JSON.parse(statement) as { system?: string; text?: string };
+      const text = read.text;
+      if (!text) return;
+      update(id, (q) => (q.input = text));
+      await startModal(id, text, read.system ?? "K");
+    },
+
+    /** Changes the model a modal proof's panel edits; its last check no longer holds. */
+    setModalModel(id: string, model: Model | null) {
+      update(id, (q) => {
+        if (!q.modal) return;
+        q.modal.model = model;
+        q.modal.evaluation = null;
+        q.modal.problem = null;
+        if (model && q.modal.world !== null && q.modal.world >= model.worlds.length)
+          q.modal.world = null;
+      });
+    },
+
+    /** Chooses the world a modal proof's model is checked at; null for every world. */
+    setModalWorld(id: string, world: number | null) {
+      update(id, (q) => {
+        if (!q.modal) return;
+        q.modal.world = world;
+        q.modal.evaluation = null;
+      });
+    },
+
+    /** Checks a modal proof's model against its statement, at its world or at every world. */
+    modalCheck: guard(async (id: string) => {
+      const work = store.proofs.find((q) => q.id === id)?.modal;
+      if (!work?.statement || !work.model) return;
+      const statement = work.statement;
+      const json = modelJson(work.model);
+      const checked = await attempt(() =>
+        api.modal.evaluate(statement, json, work.world ?? undefined, modalJson()),
+      );
+      update(id, (q) => {
+        // An answer for a model changed meanwhile is dropped: the check is the model's shown.
+        if (!q.modal?.model || modelJson(q.modal.model) !== json) return;
+        if (checked.ok) q.modal.evaluation = checked.value;
+        else if (checked.failed) q.modal.problem = inputProblem(checked.failed);
+      });
+    }),
+
+    /** The settings of a modal call, for the panel's drawings. */
+    modalJson,
+
     /** Changes a custom proof's rule file as typed; the calculus is named by the file's name. */
     setCustomFile(id: string, file: string) {
       update(id, (q) => {
@@ -1223,6 +1349,7 @@ export function createProver(say: (text: string) => void = () => undefined) {
       for (const p of store.proofs)
         if ((p.session && !p.view) || (p.custom?.session && !p.custom.view))
           void actions.refresh(p.id);
+        else if (p.modal && !p.modal.statement && p.input.trim()) void actions.submit(p.id);
       save();
     },
 
@@ -1330,6 +1457,27 @@ export function createProver(say: (text: string) => void = () => undefined) {
       const p = store.proofs.find((q) => q.id === id);
       if (!p) return;
       setLastCalculus(calculus);
+      if (calculus.suite === "modal" || p.calculus.suite === "modal") {
+        // A modal sequent is decided again in the system chosen; one of another suite is read
+        // again from the field's text, which the modal syntax reads as ordinary logic's.
+        update(id, (q) => {
+          q.calculus = calculus;
+          q.session = null;
+          q.view = null;
+          q.redo = [];
+          q.later = [];
+          q.verdict = null;
+          q.engines = {};
+          q.note = null;
+          q.banner = null;
+          q.elim = { tree: null, net: null };
+          q.editing = true;
+          q.custom = customWork(calculus);
+          q.modal = modalWork(calculus);
+        });
+        if (p.input.trim()) await startText(id, p.input, calculus);
+        return;
+      }
       if (calculus.suite === "rules" || p.calculus.suite === "rules") {
         // A rule file's proof starts from the file chosen; its steps do not carry over.
         update(id, (q) => {
@@ -1405,6 +1553,16 @@ export function createProver(say: (text: string) => void = () => undefined) {
       const doc = parsed(text);
       const into = calculus ?? lastCalculus();
       if (isCustom(doc)) return openCustom(doc);
+      if (doc === undefined && into.suite === "modal") {
+        const id = actions.add();
+        update(id, (q) => {
+          q.calculus = into;
+          q.modal = modalWork(into);
+          q.input = text;
+        });
+        await startModal(id, text, into.system);
+        return { kind: "sequent" };
+      }
       if (doc === undefined && into.suite === "rules") {
         // A sequent of a rule file's: started at once in a built-in calculus, else left to the
         // visitor with the field filled, the file to be written.

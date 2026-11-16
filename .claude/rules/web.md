@@ -177,6 +177,37 @@ the page reads.
   session's (`citedLines`), refusing on the page a number no line in force is shown by; both
   drawings come from one session (`rules_draw` with `view.layout`), and Save as writes the
   drawing shown (`rules_export`).
+- **Modal logic** (deduxit's `modal_…` calls, `src/lib/modal.ts`, `src/islands/Modal.tsx`) is
+  the registry's suite `modal`, its parameter `system` (the fifteen names, `K` the default), the
+  method `sequent` (the labelled sequent calculus). Like a calculus of one's own it has no
+  segment: the popover's button "Modal logic" opens it, and with it the one switch, a chooser of
+  the systems each named with its conditions (`systemWords`); a visitor who never presses it sees
+  nothing of it (the author's rule). Its proof keeps its work in `Proof.modal` (the statement
+  `modal_read` wrote, the outcome, the model being edited, the world to check at, the last
+  check), never in `Proof.session`; only the sequent and the system are stored and linked
+  (`u=modal&m=S4&s=…`, no `d`), and a stored or linked one is decided again when read
+  (`restore`'s `submit`). The stage shows `ModalPanel` (`data-method="modal"`): before a
+  decision two sentences on □, ◇ and the system and "Try []p -> [][]p"; after it the verdict
+  (`verdictWords`), the system in a sentence, the drawing (`modal_draw`: the derivation as a
+  tree, `.custom-drawing`, or the countermodel as a figure, `.countermodel`), and a closed
+  `<details>` with the model to change (atoms typed per world, an arrow per `label.chip`
+  checkbox, at most `MOST_WORLDS`) and check (`modal_evaluate`: the frame condition and its
+  worlds, or holds, or the failing world with each formula's value and witness, and then
+  `modal_model_drawing` at that world). A change of the system is no restart warning: the tab
+  holds no steps.
+- **A modal tab in the workspace** joins as its statement (`modal.sequent`) and its decision
+  (`modal.decide`, `joinedModal`), which the page runs at once (`runNodes`): it has no work
+  node, so `rowsOf` takes a tab's node as `isTabNode` (class `work`, or `modal.decide`), and
+  nothing of it is in `work()`. "Duplicate this proof" (in the popover once decided) adds a
+  second decision on the same statement and opens it on a new tab (`openModalNode`, which
+  reads the statement above the node and decides it there). Its key is the system and the text
+  (`modalOf`): the owner's change sets the given statement and runs its decision; a copy is the
+  same recipe on the same statement, which the library's cache makes one record, so the copy
+  follows at once and shows the new statement, decided (`followStatements`, also after Undo);
+  Update on a modal row runs its decision and shows the statement above it
+  (`showModalStatement`). A copy's own change unlinks it, and so does a switch of a linked tab
+  into or out of modal logic (`leaveForSuite`: its node is the other suite's); Undo of either
+  links the parked modal tab again and shows its statement.
 - **The linear suite's calls never get an ordinary session**: fill (`fillable`, `fill`), the
   invertible rules (`setInvertible`), the engine choice and the cut are kept to linear proofs.
 - **The registry reads every linear mode deduxit's `about` lists** (the switches build six; a

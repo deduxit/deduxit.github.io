@@ -26,6 +26,7 @@ import {
 import { createEffect, createSignal, For, on, onMount, Show } from "solid-js";
 import { Dynamic } from "solid-js/web";
 import { effective, parseTheme, THEME_KEY, type Theme, toggled } from "../lib/theme";
+import { EXAMPLE as MODAL_EXAMPLE, prettyModal, verdictWords } from "../lib/modal";
 import { prettyOrdinary } from "../lib/ordinary";
 import type { Sample } from "../lib/content";
 import { calculusWords, markLabel, markOf, ordinary } from "../lib/suites";
@@ -51,6 +52,10 @@ function underTab(pop: HTMLElement, inset: number) {
 
 /** A proof's state as its dot shows it. */
 export function tone(proof: Proof): "ok" | "bad" | "warn" | "open" | "none" {
+  if (proof.modal) {
+    const verdict = proof.modal.outcome?.verdict;
+    return verdict === "valid" ? "ok" : verdict === "not_valid" ? "bad" : verdict ? "warn" : "none";
+  }
   if (proof.custom) {
     const view = proof.custom.view;
     if (!view) return "none";
@@ -81,7 +86,9 @@ export const tabText = (proof: Proof): string =>
     ? prettyOrdinary(proof.input)
     : proof.calculus.suite === "rules"
       ? proof.input
-      : displayed(proof.input);
+      : proof.calculus.suite === "modal"
+        ? prettyModal(proof.input)
+        : displayed(proof.input);
 
 const storage = () => {
   try {
@@ -242,6 +249,7 @@ function ProofTab(props: { proof: Proof; prover: Prover; ui: Ui; samples: readon
   const statusWords = () => {
     const p = props.proof;
     if (p.custom) return customWords(p);
+    if (p.modal) return modalWords(p);
     if (!p.view) return "Not started";
     if (p.view.complete) return "Proved, checked step by step";
     if (p.verdict) return p.verdict.keyword;
@@ -300,7 +308,9 @@ function ProofTab(props: { proof: Proof; prover: Prover; ui: Ui; samples: readon
               ? "a /\\ b |- b /\\ a"
               : props.proof.calculus.suite === "rules"
                 ? (EXAMPLES[props.proof.calculus.calculus] ?? "a ⊢ a")
-                : "A * B |- B * A"
+                : props.proof.calculus.suite === "modal"
+                  ? MODAL_EXAMPLE
+                  : "A * B |- B * A"
           }
           spellcheck={false}
           autocomplete="off"
@@ -318,7 +328,7 @@ function ProofTab(props: { proof: Proof; prover: Prover; ui: Ui; samples: readon
               void props.prover.submit(props.proof.id);
             } else if (
               event.key === "Escape" &&
-              (props.proof.session || props.proof.custom?.session)
+              (props.proof.session || props.proof.custom?.session || props.proof.modal?.statement)
             ) {
               event.preventDefault();
               event.stopPropagation();
@@ -438,7 +448,13 @@ function ProofTab(props: { proof: Proof; prover: Prover; ui: Ui; samples: readon
           <Show
             when={props.proof.calculus.suite === "linear"}
             fallback={
-              <p class="sub">Typed with {"-> /\\ \\/ ~ <-> true false"}, or their signs.</p>
+              <p class="sub">
+                Typed with{" "}
+                {props.proof.calculus.suite === "modal"
+                  ? "[] <> -> /\\ \\/ ~ <-> true false"
+                  : "-> /\\ \\/ ~ <-> true false"}
+                , or their signs.
+              </p>
             }
           >
             <p class="sub">Fragment: {props.proof.view?.fragment ?? "not started"}.</p>
@@ -447,6 +463,14 @@ function ProofTab(props: { proof: Proof; prover: Prover; ui: Ui; samples: readon
       </Show>
     </div>
   );
+}
+
+/** A modal proof's state in words, for its dot and its status. */
+function modalWords(proof: Proof): string {
+  const outcome = proof.modal?.outcome;
+  if (!outcome) return proof.modal?.statement ? "Deciding" : "Not started";
+  const verdict = verdictWords(outcome);
+  return `${verdict.keyword} in ${outcome.system}`;
 }
 
 /** A custom proof's state in words, for its dot and its status. */
@@ -473,7 +497,9 @@ function StatusDetails(props: { proof: Proof; prover: Prover; close: () => void 
           <p>
             {props.proof.custom?.view
               ? `${customWords(props.proof)}.`
-              : "Not started: type a sequent and press Enter."}
+              : props.proof.modal?.statement
+                ? `${modalWords(props.proof)}.`
+                : "Not started: type a sequent and press Enter."}
           </p>
         }
       >
