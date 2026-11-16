@@ -467,6 +467,56 @@ export async function customising(page: Page, visit: Visit) {
   await visit("custom valid");
 }
 
+/**
+ * Modal logic: the popover's button and its system chooser, the first screen, a countermodel in
+ * K, the model checked where it fails and where it holds, a valid sequent's derivation in S4, a
+ * model that is none of S4, a linked copy in the workspace, and a parse error.
+ */
+export async function modalising(page: Page, visit: Visit) {
+  await goto(page);
+  const pop = await switches(page);
+  await pop.getByRole("button", { name: "Modal logic" }).click();
+  await expect(pop.getByRole("combobox", { name: "System" })).toHaveValue("K");
+  await visit("modal entry");
+  await page.keyboard.press("Escape");
+  await expect(page.getByText(/Modal logic adds □A/)).toBeVisible();
+  await visit("modal start");
+  await page.getByRole("textbox", { name: "Sequent" }).fill("[]p -> [][]p");
+  await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
+  await expect(page.locator(".modal .kw.bad", { hasText: "Not valid" })).toBeVisible();
+  await expect(page.locator(".modal .countermodel-drawing svg")).toBeVisible();
+  await visit("modal countermodel");
+  await page.getByText("Change the model and check it").click();
+  await page.getByRole("button", { name: "Check the model" }).click();
+  await expect(page.locator(".modal-check")).toContainText("□□p is false: world 1 shows it");
+  await visit("modal check");
+  await page.getByRole("combobox", { name: "The world to check the sequent at" }).selectOption("2");
+  await page.getByRole("button", { name: "Check the model" }).click();
+  await expect(page.locator(".modal-check")).toContainText("Holds");
+  await visit("modal holds");
+  const again = await switches(page);
+  await again.getByRole("combobox", { name: "System" }).selectOption("S4");
+  await page.keyboard.press("Escape");
+  await expect(page.locator(".modal .kw.ok", { hasText: "Valid" })).toBeVisible();
+  await expect(page.locator(".modal .custom-drawing svg")).toBeVisible();
+  await visit("modal valid");
+  await page.getByText("Try a model of your own").click();
+  await page.getByRole("button", { name: "Start from one world" }).click();
+  await page.getByRole("button", { name: "Check the model" }).click();
+  await expect(page.locator(".modal-check")).toContainText("does not see itself");
+  await visit("modal frame");
+  const linking = await switches(page);
+  await linking.getByRole("button", { name: "Duplicate this proof" }).click();
+  await expect(page.locator(".ptab")).toHaveCount(2);
+  await page.getByRole("button", { name: /^Workspace, 2 linked tabs/ }).waitFor();
+  await visit("modal linked");
+  await page.getByRole("button", { name: "New proof" }).click();
+  await page.getByRole("textbox", { name: "Sequent" }).fill("[]p ->");
+  await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
+  await expect(page.getByRole("alert")).toBeVisible();
+  await visit("modal parse error");
+}
+
 /** Starts `sequent` in the tab's calculus, set to natural deduction, and waits for its goal. */
 export async function deduce(page: Page, sequent: string) {
   await page.getByRole("textbox", { name: "Sequent" }).fill(sequent);

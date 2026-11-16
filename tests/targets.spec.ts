@@ -23,6 +23,7 @@ import {
   coursing,
   customising,
   deducing,
+  modalising,
   ordinary,
   pixel,
   practising,
@@ -179,6 +180,10 @@ test("a calculus of one's own's controls are targets of 24 by 24 pixels at least
   expect(await measured(page, 24, customising)).toEqual([]);
 });
 
+test("modal logic's controls are targets of 24 by 24 pixels at least", async ({ page }) => {
+  expect(await measured(page, 24, modalising)).toEqual([]);
+});
+
 test("the ordinary course's controls are targets of 24 by 24 pixels at least", async ({ page }) => {
   expect(await measured(page, 24, coursing)).toEqual([]);
 });
@@ -200,6 +205,10 @@ test.describe("at a phone's width", () => {
 
   test("a calculus of one's own's controls are 44 by 44 pixels at least", async ({ page }) => {
     expect(await measured(page, 44, customising)).toEqual([]);
+  });
+
+  test("modal logic's controls are 44 by 44 pixels at least", async ({ page }) => {
+    expect(await measured(page, 44, modalising)).toEqual([]);
   });
 
   test("a truth table's and a tableau's controls are 44 by 44 pixels at least", async ({
