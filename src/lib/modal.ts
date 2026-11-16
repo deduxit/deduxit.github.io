@@ -11,6 +11,16 @@
 
 import { prettyOrdinary } from "./ordinary";
 
+export {
+  addWorld,
+  atomsOf,
+  atomsText,
+  MOST_WORLDS,
+  removeWorld,
+  setAtoms,
+  toggleArrow,
+} from "./kripke";
+
 /** A sequent typed in the modal syntax, in signs: `[]` as □, `<>` as ◇, the rest as ordinary logic's. */
 export const prettyModal = (input: string): string =>
   prettyOrdinary(input).replaceAll("<>", "◇").replaceAll("[]", "□");
@@ -219,62 +229,5 @@ export function valueWords(value: Value): string {
   return `${value.formula} is ${value.true ? "true" : "false"}${shown}`;
 }
 
-/** The atoms of a world as the editor shows them: their names, comma-separated. */
-export const atomsText = (world: World): string => world.atoms.join(", ");
-
-/** The atoms typed in the editor: names separated by commas or spaces, each once. */
-export function atomsOf(text: string): string[] {
-  const names = text
-    .split(/[\s,]+/)
-    .map((name) => name.trim())
-    .filter((name) => name !== "");
-  return Array.from(new Set(names));
-}
-
-/** The model with a world added, forcing nothing and seeing nothing. */
-export const addWorld = (model: Model): Model => ({
-  ...model,
-  worlds: [...model.worlds, { atoms: [], arrows: [] }],
-});
-
-/** The model with world `at` taken out: the arrows to it gone, the later worlds renumbered. */
-export function removeWorld(model: Model, at: number): Model {
-  const renumber = (w: number) => (w > at ? w - 1 : w);
-  const worlds = model.worlds
-    .filter((_, i) => i !== at)
-    .map((w) => ({
-      atoms: w.atoms,
-      arrows: (w.arrows ?? []).filter((t) => t !== at).map(renumber),
-    }));
-  const world = model.world === undefined || model.world === at ? 0 : renumber(model.world);
-  return { ...model, worlds, world: Math.min(world, Math.max(worlds.length - 1, 0)) };
-}
-
-/** The model with the arrow from world `from` to world `to` added or taken out. */
-export function toggleArrow(model: Model, from: number, to: number): Model {
-  return {
-    ...model,
-    worlds: model.worlds.map((w, i) => {
-      if (i !== from) return w;
-      const arrows = w.arrows ?? [];
-      const next = arrows.includes(to)
-        ? arrows.filter((t) => t !== to)
-        : [...arrows, to].sort((a, b) => a - b);
-      return { atoms: w.atoms, arrows: next };
-    }),
-  };
-}
-
-/** The model with world `at`'s atoms set from the editor's text. */
-export function setAtoms(model: Model, at: number, text: string): Model {
-  return {
-    ...model,
-    worlds: model.worlds.map((w, i) => (i === at ? { ...w, atoms: atomsOf(text) } : w)),
-  };
-}
-
 /** A model as deduxit's calls read it: a document of level 13. */
 export const modelJson = (model: Model): string => JSON.stringify({ ...model, version: 13 });
-
-/** The most worlds the editor holds: enough to try a frame, few enough to read. */
-export const MOST_WORLDS = 8;

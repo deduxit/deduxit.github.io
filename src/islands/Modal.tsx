@@ -7,27 +7,22 @@
  * drawn as a tree (each formula at a world, `w0 : □p`) or the countermodel drawn with an arrow
  * from each world to each world it sees. Under it, closed until asked for, the model to change
  * and check again: the frame condition it fails is named, or where the sequent fails, with each
- * formula's value and the world that shows it. Nothing leaves the page: deduxit runs in its
- * worker.
+ * formula's value and the world that shows it, marked on the model's drawing. Nothing leaves the
+ * page: deduxit runs in its worker.
  */
 
 import { createResource, For, Show } from "solid-js";
+import { type Marks, missingArrow, ONE_WORLD } from "../lib/kripke";
 import {
-  addWorld,
-  atomsText,
   CONDITION_WORDS,
   EXAMPLE,
   evaluationWords,
-  MOST_WORLDS,
   type Model,
-  modelJson,
-  removeWorld,
   SYSTEMS,
-  setAtoms,
-  toggleArrow,
   valueWords,
   verdictWords,
 } from "../lib/modal";
+import { KripkeEditor } from "./KripkeEditor";
 import type { Prover } from "./state";
 import { Why } from "./ui";
 
@@ -176,7 +171,7 @@ function Decided(props: { prover: Prover }) {
   );
 }
 
-/** The model to change and check: worlds, their atoms and arrows, the world to check at. */
+/** The model to change and check, drawn: its worlds, their atoms and arrows, the world to check at. */
 function Editor(props: { prover: Prover }) {
   const proof = () => props.prover.current();
   const work = () => proof()?.modal ?? null;
@@ -186,153 +181,48 @@ function Editor(props: { prover: Prover }) {
     if (p) props.prover.setModalModel(p.id, next);
   };
   const evaluation = () => work()?.evaluation ?? null;
-  const [failingDrawing] = createResource(
-    () => {
-      const e = evaluation();
-      const m = model();
-      const statement = work()?.statement;
-      return e?.failing !== undefined && m && statement
-        ? ([statement, modelJson(m), e.failing] as const)
-        : undefined;
-    },
-    ([statement, json, world]) =>
-      props.prover.api.modal
-        .modelDrawing(
-          statement,
-          json,
-          world,
-          JSON.stringify({ styles: { svg: { font: props.prover.settings().stageFont } } }),
-        )
-        .catch(() => null),
-  );
-  const worldNumbers = () => (model()?.worlds ?? []).map((_, i) => i);
+  const marks = (): Marks | undefined => {
+    const e = evaluation();
+    if (!e) return undefined;
+    if (e.frame)
+      return { frame: e.frame.worlds, missing: missingArrow(e.frame.condition, e.frame.worlds) };
+    return {
+      ...(e.failing === undefined ? {} : { failing: e.failing }),
+      witnesses: (e.values ?? []).flatMap((v) => (v.witness === undefined ? [] : [v.witness])),
+    };
+  };
   return (
     <details class="custom-file modal-editor">
       <summary>
-        {work()?.outcome?.countermodel
-          ? "Change the model and check it"
-          : "Try a model of your own"}
+        {work()?.outcome?.countermodel ? "Change the model and check it" : "Check a model"}
       </summary>
       <Show
         when={model()}
         fallback={
           <p class="row">
-            <button
-              type="button"
-              class="btn"
-              onClick={() => set({ worlds: [{ atoms: [], arrows: [] }], world: 0 })}
-            >
+            <button type="button" class="btn" onClick={() => set({ ...ONE_WORLD })}>
               Start from one world
             </button>
           </p>
         }
       >
         {(m) => (
-          <>
-            <p class="method-verdict">
-              Each world forces the atoms written in it and sees the worlds ticked.
-            </p>
-            <ol class="modal-worlds" start="0">
-              <For each={m().worlds}>
-                {(world, at) => (
-                  <li class="modal-world">
-                    <label class="custom-field">
-                      <span>World {String(at())} forces</span>
-                      <input
-                        class="field"
-                        spellcheck={false}
-                        autocomplete="off"
-                        aria-label={`Atoms world ${String(at())} forces`}
-                        placeholder="p, q"
-                        value={atomsText(world)}
-                        onChange={(event) => {
-                          const now = model();
-                          if (now) set(setAtoms(now, at(), event.currentTarget.value));
-                        }}
-                      />
-                    </label>
-                    <fieldset class="modal-sees" aria-label={`Worlds world ${String(at())} sees`}>
-                      <span>sees</span>
-                      <For each={worldNumbers()}>
-                        {(to) => (
-                          <label class="chip">
-                            <input
-                              type="checkbox"
-                              aria-label={`World ${String(at())} sees world ${String(to)}`}
-                              checked={(world.arrows ?? []).includes(to)}
-                              onChange={() => {
-                                const now = model();
-                                if (now) set(toggleArrow(now, at(), to));
-                              }}
-                            />
-                            {String(to)}
-                          </label>
-                        )}
-                      </For>
-                    </fieldset>
-                    <Show when={m().worlds.length > 1}>
-                      <button
-                        type="button"
-                        class="btn btn-s"
-                        aria-label={`Remove world ${String(at())}`}
-                        onClick={() => {
-                          const now = model();
-                          if (now) set(removeWorld(now, at()));
-                        }}
-                      >
-                        Remove
-                      </button>
-                    </Show>
-                  </li>
-                )}
-              </For>
-            </ol>
-            <p class="row">
-              <button
-                type="button"
-                class="btn"
-                disabled={m().worlds.length >= MOST_WORLDS}
-                onClick={() => {
-                  const now = model();
-                  if (now) set(addWorld(now));
-                }}
-              >
-                Add a world
-              </button>
-              <label class="custom-field">
-                <span>Check at</span>
-                <select
-                  class="field"
-                  aria-label="The world to check the sequent at"
-                  value={
-                    work()?.world === null || work()?.world === undefined
-                      ? ""
-                      : String(work()?.world)
-                  }
-                  onChange={(event) => {
-                    const p = proof();
-                    const value = event.currentTarget.value;
-                    if (p) props.prover.setModalWorld(p.id, value === "" ? null : Number(value));
-                  }}
-                >
-                  <option value="">every world</option>
-                  <For each={worldNumbers()}>
-                    {(w) => <option value={String(w)}>world {String(w)}</option>}
-                  </For>
-                </select>
-              </label>
-              <button
-                type="button"
-                class="btn btn-primary"
-                disabled={props.prover.busy()}
-                onClick={() => {
-                  const p = proof();
-                  if (p) void props.prover.modalCheck(p.id);
-                }}
-              >
-                Check the model
-              </button>
-            </p>
+          <KripkeEditor
+            model={m()}
+            reading="modal"
+            onChange={(next) => set(next as Model)}
+            marks={marks()}
+            world={work()?.world ?? null}
+            onWorld={(w) => {
+              const p = proof();
+              if (p) props.prover.setModalWorld(p.id, w);
+            }}
+            onCheck={() => {
+              const p = proof();
+              if (p) void props.prover.modalCheck(p.id);
+            }}
+            busy={props.prover.busy()}
+          >
             <Show when={evaluation()}>
               {(e) => (
                 <div class="modal-check" role="status">
@@ -342,22 +232,24 @@ function Editor(props: { prover: Prover }) {
                     </span>{" "}
                     {evaluationWords(e()).sentence}
                   </p>
+                  <Show when={e().frame}>
+                    {(f) => (
+                      <p class="said-why">
+                        {f().condition === "serial"
+                          ? `Drag an arrow from world ${String(f().worlds[0] ?? 0)} to any world.`
+                          : `The dashed arrow is the one ${e().system} asks for: drag it in, or change the arrows around it.`}
+                      </p>
+                    )}
+                  </Show>
                   <Show when={e().values?.length}>
                     <ul class="modal-values">
                       <For each={e().values}>{(v) => <li class="m">{valueWords(v)}</li>}</For>
                     </ul>
                   </Show>
-                  <Show when={failingDrawing()}>
-                    {(svg) => (
-                      <figure class="countermodel">
-                        <div class="countermodel-drawing" innerHTML={svg()} />
-                      </figure>
-                    )}
-                  </Show>
                 </div>
               )}
             </Show>
-          </>
+          </KripkeEditor>
         )}
       </Show>
     </details>

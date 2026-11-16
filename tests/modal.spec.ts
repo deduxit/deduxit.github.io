@@ -99,8 +99,9 @@ test("a changed model is checked: the failing world's values and the frame condi
   const check = page.locator(".modal-check");
   await expect(check).toContainText("Fails");
   await expect(check).toContainText("□□p is false: world 1 shows it");
-  await expect(check.locator(".countermodel-drawing svg")).toBeVisible();
+  await expect(page.locator('.kripke-world[data-world="0"]')).toHaveAttribute("data-failing", "");
   // World 1 no longer forces p: □p is false at world 0, so the sequent holds there.
+  await page.locator('.kripke-world[data-world="1"]').click();
   await page.getByRole("textbox", { name: "Atoms world 1 forces" }).fill("");
   await page.getByRole("textbox", { name: "Atoms world 1 forces" }).press("Tab");
   await page.getByRole("button", { name: "Check the model" }).click();

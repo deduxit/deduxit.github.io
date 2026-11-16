@@ -1326,6 +1326,129 @@ button.wordmark {
   margin: 0;
   padding-left: var(--spacing-4);
 }
+/* The model editor: worlds as boxes on a canvas of the panel's colour, the atoms in the math
+   font, the arrows in the stage's line colour. What a check found is marked twice, in colour and
+   in a pattern or a word: the failing world a thick outline and "fails here", a witness a dashed
+   outline and "witness", a frame condition's worlds a dashed outline and the arrow it asks for
+   drawn dashed. A drag shows the arrow it would add, or the place it would move the world to. */
+.kripke {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  width: 100%;
+  max-width: var(--size-text);
+}
+/* Each part its own height: a reason's line (.said-why) is a whole line of a row, never a column's
+   height. */
+.kripke > * {
+  flex: none;
+}
+.kripke-canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: var(--size-canvas);
+  border: var(--line) solid var(--color-edge);
+  border-radius: var(--radius-control);
+  background: var(--color-panel);
+  touch-action: none;
+  user-select: none;
+}
+.kripke-canvas[data-dragging] {
+  cursor: grabbing;
+}
+.kripke-arrow {
+  fill: none;
+  stroke: var(--color-line);
+  stroke-width: var(--line-arrow);
+}
+.kripke-arrow.missing {
+  stroke: var(--color-warn);
+  stroke-dasharray: var(--dash-missing);
+}
+.kripke-arrow.preview,
+.kripke-arrow.loose {
+  stroke: var(--color-accent);
+  stroke-dasharray: var(--dash-preview);
+}
+.kripke-tip path {
+  fill: var(--color-line);
+}
+.kripke-tip.missing path {
+  fill: var(--color-warn);
+}
+.kripke-ghost {
+  fill: var(--color-accent-wash);
+  stroke: var(--color-accent);
+  stroke-dasharray: var(--dash-preview);
+}
+.kripke-world {
+  cursor: grab;
+}
+.kripke-world:focus {
+  outline: none;
+}
+.kripke-box {
+  fill: var(--color-panel-2);
+  stroke: var(--color-ink);
+  stroke-width: var(--line);
+}
+.kripke-world[aria-pressed="true"] .kripke-box {
+  fill: var(--color-accent-wash);
+  stroke: var(--color-accent);
+  stroke-width: var(--line-strong);
+}
+.kripke-world:focus-visible .kripke-box,
+.kripke-world[data-target] .kripke-box {
+  stroke: var(--color-accent);
+  stroke-width: var(--line-focus);
+}
+.kripke-world[data-frame] .kripke-box,
+.kripke-world[data-witness] .kripke-box {
+  stroke: var(--color-warn);
+  stroke-width: var(--line-strong);
+  stroke-dasharray: var(--dash-mark);
+}
+.kripke-world[data-failing] .kripke-box {
+  stroke: var(--color-bad);
+  stroke-width: var(--line-failing);
+  stroke-dasharray: none;
+}
+.kripke-num {
+  font: var(--font-weight-semibold) var(--text-canvas) var(--font-text);
+  fill: var(--color-dim);
+}
+.kripke-atoms {
+  font: var(--font-weight-normal) var(--text-canvas-math) var(--font-math);
+  fill: var(--color-ink);
+}
+.kripke-tag {
+  font: var(--font-weight-semibold) var(--text-canvas) var(--font-text);
+  fill: var(--color-ink);
+}
+.kripke-words {
+  pointer-events: none;
+}
+.kripke-words [data-failing] .kripke-tag {
+  fill: var(--color-bad);
+}
+.kripke-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-2);
+  margin: 0;
+  padding: var(--spacing-2) var(--spacing-3);
+  border: var(--line) solid var(--color-edge);
+  border-radius: var(--radius-control);
+}
+.kripke-form legend {
+  padding: 0 var(--spacing-1);
+  font: var(--font-weight-semibold) var(--text-small) / var(--leading-snug) var(--font-text);
+}
+.kripke .custom-field .field {
+  width: auto;
+}
 .countermodel-drawing svg {
   display: block;
   width: auto;

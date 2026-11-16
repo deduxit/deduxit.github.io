@@ -109,6 +109,9 @@
   --text-title: 32px;
   --text-math: 17px;
   --text-math-large: 20px;
+  /* The model editor's words on its canvas, in its own units (scaled with the canvas). */
+  --text-canvas: 10px;
+  --text-canvas-math: 15px;
 
   --leading-*: initial;
   --leading-none: 1;
@@ -204,6 +207,14 @@
   --size-learn-sheet: 46vh;
   --line: 1px;
   --line-strong: 2px;
+  /* The model editor's canvas: its tallest, its arrows, its marks' outlines and dashes. */
+  --size-canvas: 360px;
+  --line-arrow: 1.5px;
+  --line-focus: 3px;
+  --line-failing: 3.5px;
+  --dash-missing: 5 4;
+  --dash-mark: 5 3;
+  --dash-preview: 3 3;
   --press: 1px;
   --blur-hud: 10px;
   --opacity-disabled: 0.42;
