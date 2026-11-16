@@ -248,8 +248,12 @@ the page reads.
     changes a started problem's sequent or calculus (`submit`, `setCalculus`) asks first and says
     the reason on the tab's banner, so a key does no more than a button; the buttons are greyed
     with the reason as their tip, and the calculus popover says the reason in place of its
-    switches. A modal problem with the search barred is not decided (`startModal`): the editor
-    is open, empty, and the model the student makes is the answer.
+    switches. `modalSteps`, `customFrom` and `showModalStatement` ask `fixed` too (each would
+    turn a pack's tab into another calculus). deduxit's table and tableau decide, so the stage's
+    Table and Tableau tabs are not offered where the search is barred (`decidable`). A modal
+    problem with the search barred is not decided (`startModal`): the editor is open, empty, its
+    tab's status "Undecided: find a model", and the model the student makes is the answer; a
+    valid modal problem has none, so it is never done.
   - A pack opened holds the address (the linking effect writes no tab's link meanwhile), so a
     reload opens it again with its kept answers: a kept session opens as its tab (its text the
     problem's), a kept model is checked again.
@@ -269,10 +273,24 @@ the page reads.
   writes keep `&e=1`. GitHub Pages sets no header, and a `<meta>` CSP cannot carry
   `frame-ancestors`, so any page may frame it; the page in a frame reads and keeps only its own
   partitioned storage.
-- **Print** (`@media print` in `app.css`): the light scheme, no band, menu, pack bar or stage
-  controls; with the course pack's sheet open, its handout alone (`.pk-handout`, `print-only`:
-  the title, each problem and its calculus, the link and the code), shown through a page made
-  invisible around it.
+- **Print** (`@media print` in `app.css`, last in the file): the light scheme whatever
+  `data-theme` says, no band, menu, pack bar or stage controls (the selectors weigh what the
+  screen's `.band.top` and `.menu.transform` weigh, and come later); with the course pack's sheet
+  open, its handout alone (`.pk-handout`, `print-only`: the title, each problem and its calculus,
+  the link and the code), drawn at the body's end through a `Portal` so that it flows over
+  pages, everything else in the body left out.
+- **A tableau written by hand** (`TableauCheck.tsx`, `src/lib/written.ts`, `ui.tab`
+  `"written"`): "Check a tableau" in the calculus popover of a started classical sequent opens
+  it in the drawing's place, a "Your tableau" tab while it shows. It begins with the sequent's
+  own lines (`startLines`, the root lines of `ordinary_tableau`'s tableau that cite no line;
+  deduxit's tableau itself is not shown), and `ordinary_tableau_review(text, sequent, settings)`
+  reviews it: `closed` and `open` right and finished (an open one's `countermodel` opens in the
+  model view), `wrong` and `unfinished` the student's to fix, its `text_line` selected in the
+  field; a text that is no tableau is the call's `parse` failure, its `details.line` and
+  `column` selected and `details.hint` said.
+- **vitest keeps a module cache** (`node_modules/.vitest-cache`) keyed by a file's content, the
+  module's store path resolved in it: after deduxit's module changes (a lock bump, an
+  `--override-input`), `rm -rf node_modules/.vitest-cache` or a unit test runs the old module.
 - **Proving a modal sequent step by step**: under a valid derivation, "Prove it step by step"
   (`modalSteps`) turns the tab into a calculus given as data: the rule file `modal_calculus`
   gives (`G3S4`), the sequent the root of the valid derivation (`rootSequent`, every compound

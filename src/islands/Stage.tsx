@@ -44,7 +44,7 @@ import {
   type Outcome,
   type StepForm,
 } from "../lib/deduxit";
-import { countermodelOf, isOrdinary, type OrdinaryOutcome } from "../lib/ordinary";
+import { countermodelOf, isOrdinary, type OrdinaryOutcome, sequentText } from "../lib/ordinary";
 import { goalAt, paths, searchMade, subtree } from "../lib/steps";
 import { intuitionistic, isNatural } from "../lib/suites";
 import {
@@ -70,6 +70,7 @@ import {
 } from "./state";
 import { ModelFigure } from "./Countermodel";
 import { ModelView } from "./ModelCheck";
+import { TableauCheckView } from "./TableauCheck";
 import { usePacks } from "./Packs";
 import { isHandin, readHandin } from "../lib/pack";
 import { CustomPanel } from "./Custom";
@@ -1266,7 +1267,13 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
   /** Whether the proof's sequent has a truth table and a tableau: a started classical ordinary one. */
   const decidable = () => {
     const p = proof();
-    return !!p?.session && p.calculus.suite === "ordinary" && p.calculus.logic === "classical";
+    // A course pack that bars the search bars deduxit's table and tableau too: they decide.
+    return (
+      !!p?.session &&
+      p.calculus.suite === "ordinary" &&
+      p.calculus.logic === "classical" &&
+      prover().limits().search(p.id) === null
+    );
   };
   /** The truth table or the tableau the stage shows in the drawing's place, or null. */
   const method = (): Method | null =>
@@ -1286,12 +1293,19 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
       ? ui.modelSeed
       : null;
   };
+  /** The classical sequent whose tableau the visitor writes by hand in the drawing's place, or null. */
+  const writtenShown = () => {
+    const session = proof()?.session;
+    return ui.tab === "written" && decidable() && session && isOrdinary(session)
+      ? sequentText(session)
+      : null;
+  };
   // The model view gives way to the tree when another proof comes to the stage.
   createEffect(
     on(
       () => proof()?.id,
       () => {
-        if (ui.tab === "model") setUi("tab", "tree");
+        if (ui.tab === "model" || ui.tab === "written") setUi("tab", "tree");
       },
       { defer: true },
     ),
@@ -1326,7 +1340,9 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
               ? "natural"
               : modelShown()
                 ? "model"
-                : (method() ?? undefined)
+                : writtenShown()
+                  ? "written"
+                  : (method() ?? undefined)
       }
       onDragOver={(event) => {
         event.preventDefault();
@@ -1430,6 +1446,9 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
         {(m) => <MethodView prover={props.prover} method={m()} ui={props.ui} />}
       </Show>
       <Show when={modelShown()}>{(seed) => <ModelView prover={props.prover} seed={seed()} />}</Show>
+      <Show when={writtenShown()}>
+        {(sequent) => <TableauCheckView prover={props.prover} ui={props.ui} sequent={sequent()} />}
+      </Show>
       <Show when={deduced()}>
         <NaturalView prover={props.prover} />
       </Show>
@@ -2168,7 +2187,8 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
             role="tab"
             class="tab"
             aria-selected={
-              ui.tab === "tree" || (ui.tab !== "net" && method() === null && !modelShown())
+              ui.tab === "tree" ||
+              (ui.tab !== "net" && method() === null && !modelShown() && !writtenShown())
             }
             data-tip="The derivation"
             data-key="V"
@@ -2194,6 +2214,18 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
           >
             Net
           </button>
+          {/* A tableau written by hand, a tab only while it shows: Tree goes back. */}
+          <Show when={writtenShown()}>
+            <button
+              type="button"
+              role="tab"
+              class="tab"
+              aria-selected="true"
+              data-tip="Your tableau, checked by deduxit"
+            >
+              Your tableau
+            </button>
+          </Show>
           {/* A model to change and check, a tab only while it shows: Tree goes back. */}
           <Show when={modelShown()}>
             <button

@@ -295,6 +295,15 @@ export async function methods(page: Page, visit: Visit) {
   await page.getByRole("tab", { name: "Tableau" }).click();
   await expect(page.locator(".tb-end").first()).toBeVisible();
   await visit("tableau");
+  const pop = await switches(page);
+  await pop.getByRole("button", { name: "Check a tableau" }).click();
+  await expect(page.getByRole("textbox", { name: "Your tableau, a line each" })).toHaveValue(
+    /^1 T a → b\n2 F b → a$/,
+  );
+  await visit("tableau written by hand");
+  await page.getByRole("button", { name: "Check the tableau" }).click();
+  await expect(page.locator(".written .kw")).toHaveText("Unfinished");
+  await visit("tableau reviewed");
   await page.getByRole("button", { name: "New proof" }).click();
   await page.getByRole("textbox", { name: "Sequent" }).fill("a, b, c, d, e, f, g, h, i, j, k |- a");
   await page.getByRole("textbox", { name: "Sequent" }).press("Enter");

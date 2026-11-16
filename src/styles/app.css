@@ -3146,43 +3146,48 @@ fieldset {
   display: none;
 }
 
+/* A tableau written by hand: a field wide enough for a line and its indents, in the stage's
+   math font, the example beside it in the same. */
+.written-text {
+  width: 100%;
+  max-width: var(--size-text);
+  font: var(--font-weight-normal) var(--text-math) / var(--leading-snug) var(--font-math);
+  white-space: pre;
+}
+.written-example {
+  margin: var(--spacing-2) 0 0;
+  font: var(--font-weight-normal) var(--text-math) / var(--leading-snug) var(--font-math);
+}
+
 /* Print: a handout or the proof shown, on white, without the page's controls. With the course
-   pack's sheet open, its handout alone: the pack's title, its problems, its link. */
+   pack's sheet open, its handout alone (drawn at the body's end, so that it flows over pages):
+   the pack's title, its problems, its link. The selectors match the screen's rules in weight and
+   come later, so they win. */
 @media print {
-  :root {
+  :root,
+  :root[data-theme="dark"],
+  :root[data-theme="light"] {
     color-scheme: light;
   }
-  .band,
-  .restore,
-  .pack-bar,
-  .embed-open,
-  .stage-ctl,
-  .menu {
+  .app .band,
+  .app .restore,
+  .app .pack-bar,
+  .app .embed-open,
+  .app .stage-ctl,
+  .app .menu {
     display: none;
   }
-  .print-only {
+  body:has(.pk-handout) > :not(:has(.pk-handout)) {
+    display: none;
+  }
+  .pk-handout.print-only {
     display: block;
-  }
-  /* The handout shows through a page made invisible around it: it lives in the sheet. */
-  .app:has(.pk-handout) .menu.pack-sheet {
-    display: block;
-  }
-  .app:has(.pk-handout) * {
-    visibility: hidden;
-  }
-  .app:has(.pk-handout) .pk-handout,
-  .app:has(.pk-handout) .pk-handout * {
-    visibility: visible;
-  }
-  .pk-handout {
-    position: fixed;
-    inset: 0;
     padding: var(--spacing-6);
-    background: var(--color-panel);
     font: var(--font-weight-normal) var(--text-panel) / var(--leading-normal) var(--font-text);
     color: var(--color-ink);
   }
   .pk-handout li {
     margin-bottom: var(--spacing-3);
+    break-inside: avoid;
   }
 }

@@ -38,6 +38,7 @@ import type {
   Described,
 } from "./custom";
 import type { Forcing } from "./kripke";
+import type { TableauReview } from "./written";
 import type { Evaluation, ModalOutcome } from "./modal";
 import type { OrdinaryOutcome, OrdinarySession, OrdinaryStep, OrdinaryView } from "./ordinary";
 import type { Comparison, Interpolation } from "./transforms";
@@ -248,6 +249,12 @@ export function createApi(changed: (pending: number) => void) {
       /** A classical sequent decided by its truth table, the table in the outcome's `search`. */
       table: (sequent: string, settings: string) =>
         json<OrdinaryOutcome>("ordinary_table", sequent, settings),
+      /**
+       * A tableau written by hand, reviewed against a sequent (`""` for the one its first lines
+       * state): the first wrong step, an unfinished branch, or a tableau that closes or ends open.
+       */
+      tableauReview: (text: string, sequent: string, settings: string) =>
+        json<TableauReview>("ordinary_tableau_review", text, sequent, settings),
       /** A classical sequent decided by a signed tableau, the tableau in the outcome's `search`. */
       tableau: (sequent: string, settings: string) =>
         json<OrdinaryOutcome>("ordinary_tableau", sequent, settings),

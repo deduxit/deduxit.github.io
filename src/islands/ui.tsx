@@ -93,9 +93,10 @@ export function createUi() {
     menu: Menu;
     /**
      * The stage's view: the derivation, the net, a classical proof's truth table or tableau, or a
-     * Kripke model to change and check (`modelSeed` the one it starts from).
+     * Kripke model to change and check (`modelSeed` the one it starts from), or a classical
+     * proof's tableau written by hand.
      */
-    tab: "tree" | "net" | "table" | "tableau" | "model";
+    tab: "tree" | "net" | "table" | "tableau" | "model" | "written";
     /** The model the model view starts from, the sequent it is checked against, and the logic. */
     modelSeed: ModelSeed | null;
     ladder: Ladder | null;

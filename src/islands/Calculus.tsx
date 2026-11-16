@@ -254,6 +254,15 @@ export function Calculus(props: { prover: Prover; ui: Ui }) {
                       >
                         Check a model
                       </button>
+                      <Show when={logic() === "classical"}>
+                        <button
+                          type="button"
+                          class="btn btn-s"
+                          onClick={() => setUi({ tab: "written", menu: null })}
+                        >
+                          Check a tableau
+                        </button>
+                      </Show>
                     </div>
                   )}
                 </Show>

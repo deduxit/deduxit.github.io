@@ -62,6 +62,7 @@ const calls = {
   ordinary_model_certificate: deduxit.ordinary_model_certificate,
   ordinary_table: deduxit.ordinary_table,
   ordinary_tableau: deduxit.ordinary_tableau,
+  ordinary_tableau_review: deduxit.ordinary_tableau_review,
   ordinary_translate: deduxit.ordinary_translate,
   ordinary_interpolate: deduxit.ordinary_interpolate,
   rules_calculus: deduxit.rules_calculus,
