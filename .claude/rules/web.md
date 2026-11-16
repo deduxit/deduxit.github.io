@@ -578,7 +578,9 @@ the page reads.
   `ordinary_close` within a hundredth of the page's budget and the categories to the sequent
   and to deduxit; the flake's `ordinary-problems` check (`modules/_checks/ordinary_problems.py`)
   holds the verdicts to `deduxit prove --logic` and every worked session beside a problem
-  (`<id>.natural.json`, `<id>.tableau.json`) to `deduxit check --calculus`.
+  (`<id>.sequent.json`, `<id>.natural.json`, `<id>.tableau.json`) to `deduxit interact
+  --state` and `proof`, which check every step again (`check --calculus` reads a derivation,
+  not a session).
 - **Practice follows the current tab's suite** (`createPractice`'s `store`): an ordinary tab's
   Practice is the ordinary store (`/ordinary-problems.json`, `offeredOrdinary`: every problem,
   valid or not, to decide), filtered by `ORDINARY_GROUPS` (its connectives and the logic it
@@ -596,7 +598,20 @@ the page reads.
   from the finished session alone: `ordinary_undo` takes it back step by step, the states are
   kept, and step `k` is shown on the lesson's tab (`showOrdinarySession`); a step's rule is the
   session's history's, which `src/content/ordinary/lessons.test.ts` holds to the lesson's
-  steps. Only the `sequent` method plays today. Zod stays out of the island (`course.ts` is
+  steps. Each method plays on its own stage: `sequent` an ordinary tab
+  (`showOrdinarySession`); `tableau` a session of the calculus `tableau` on a custom tab
+  (`rules_undo`, `showCustomSession`); `natural` an ordinary tab set to natural deduction, the
+  state put into its view's store (`putNatural`, which the view's own start then leaves be);
+  `table` no stage, its rows (each step's rule `holds` or `falsifies`) read in the lesson and
+  the whole table opened at the end, its faded part the last rows predicted without reasons. A
+  goal closed by a line reads `line` ("a line in force"). A natural deduction lesson sets the
+  view's drawing to its `layout` (`setNaturalLayout`; its reasons cite Fitch's line numbers),
+  and a table lesson shows each row's assignment, read off `ordinary_table`. The course stays in
+  Learn from a lesson's opening until the visitor goes to a linear tab
+  (`ordinaryCourseKept`, `leaveOrdinaryCourse`): a tableau's worked proof and practice open on a
+  custom tab, whose tutorial would otherwise be the linear course.
+  Opening an ordinary sequent keeps the calculus's method (`openOrdinary`): a problem opened for
+  natural deduction is proved by it. Practice opens a lesson's problems in its method. Zod stays out of the island (`course.ts` is
   the content config's and the tests'): Zod 4 probes `new Function`, which the CSP reports.
 - **Every problem is decided by the command, and checked twice**: `src/content/linear/problems.test.ts`
   (each verdict and fragment by the module, each session to its sequent, mode and a

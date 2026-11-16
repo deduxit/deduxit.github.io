@@ -898,6 +898,8 @@ export function createProver(say: (text: string) => void = () => undefined) {
         : start?.suite === "ordinary"
           ? start.logic
           : "intuitionistic";
+    // The method chosen stays: a sequent opened for natural deduction is proved by it.
+    const method = into.suite === "ordinary" ? into.method : "sequent";
     const started = await attempt(() => api.ordinary.start(text, logic, ordinaryJson()));
     if (!started.ok) {
       const failed = started.failed;
@@ -905,16 +907,16 @@ export function createProver(say: (text: string) => void = () => undefined) {
       if (failed.code === "parse" || failed.code === "json") return { problem: problemAt(failed) };
       const id = actions.add();
       update(id, (q) => {
-        q.calculus = ordinary(logic);
+        q.calculus = ordinary(logic, method);
         q.input = text;
         q.inputProblem = inputProblem(failed);
       });
       return { kind: "sequent" };
     }
     const id = actions.add();
-    setLastCalculus(ordinary(logic));
+    setLastCalculus(ordinary(logic, method));
     update(id, (q) => {
-      q.calculus = ordinary(logic);
+      q.calculus = ordinary(logic, method);
       q.input = doc === undefined ? text : ordinaryText(started.value.session);
     });
     show(id, { session: started.value.session, view: asView(started.value.view) }, 0);
@@ -1486,6 +1488,12 @@ export function createProver(say: (text: string) => void = () => undefined) {
         save();
       },
     ),
+
+    /** Shows a session in a calculus given as data on the proof `id`: a step of a lesson's tableau. */
+    showCustomSession(id: string, played: { session: CustomSession; view: CustomView }) {
+      showCustom(id, played);
+      save();
+    },
 
     /** Shows an ordinary session on the proof `id`: a step of an ordinary lesson's worked proof. */
     async showOrdinarySession(id: string, session: OrdinarySession) {

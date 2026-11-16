@@ -17,7 +17,7 @@
  * templates, with their licence.
  */
 
-import { OrdinaryCourseView } from "./Course";
+import { leaveOrdinaryCourse, OrdinaryCourseView, ordinaryCourseKept } from "./Course";
 import { hinted, RuleName } from "./RuleHint";
 import { ArrowLeft, Compass, Play, X } from "lucide-solid";
 import {
@@ -27,6 +27,7 @@ import {
   For,
   type JSX,
   Match,
+  on,
   onCleanup,
   Show,
   Switch,
@@ -240,6 +241,12 @@ export function LearnFrame(props: {
   const open = (lesson: number | null) => setUi({ lesson, reason: null });
   /** The current tab's suite, whose course the tutorial shows. */
   const suite = () => props.prover.current()?.calculus.suite ?? "linear";
+  // A linear tab's tutorial is the linear course again, whatever the ordinary one kept.
+  createEffect(
+    on(suite, (s) => {
+      if (s === "linear") leaveOrdinaryCourse();
+    }),
+  );
   /** Opens a new tab of ordinary logic, whose tutorial is the ordinary course. */
   const toOrdinary = async () => {
     const id = props.prover.add();
@@ -281,7 +288,7 @@ export function LearnFrame(props: {
       <div class="frame-body" id="frame-panel" role="tabpanel" aria-labelledby={`ftab-${ui.learn}`}>
         <Switch>
           {/* An ordinary tab's tutorial is the ordinary suite's course. */}
-          <Match when={ui.learn === "tutorial" && suite() === "ordinary"}>
+          <Match when={ui.learn === "tutorial" && (suite() === "ordinary" || ordinaryCourseKept())}>
             <OrdinaryCourseView course={props.ordinary} prover={props.prover} ui={props.ui} />
           </Match>
           <Match when={ui.learn === "tutorial" && opened()}>

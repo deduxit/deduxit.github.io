@@ -36,7 +36,7 @@ import {
 } from "../lib/natural";
 import { isOrdinary, type SequentForm } from "../lib/ordinary";
 import { download } from "./BottomBand";
-import type { Prover } from "./state";
+import type { Proof, Prover } from "./state";
 
 /** The two drawings of one proof. */
 type Layout = "tree" | "fitch";
@@ -59,6 +59,29 @@ const [works, setWorks] = createStore<Record<string, Work>>({});
 /** The drawing the visitor chose, the same for every proof. */
 const [layout, setLayout] = createSignal<Layout>("tree");
 
+/** Sets the drawing of every natural deduction proof: a lesson's, whose reasons cite its lines. */
+export const setNaturalLayout = (chosen: Layout) => setLayout(chosen);
+
+/** The natural deduction problem of a proof's ordinary sequent, in its logic. */
+function problemOfProof(p: Proof | undefined): Problem | undefined {
+  const session = p?.session;
+  if (!p || !session || !isOrdinary(session) || p.calculus.suite !== "ordinary") return undefined;
+  return problemOf(session.sequent as unknown as SequentForm, p.calculus.logic);
+}
+
+/** A proof's key in the store: the tab and its natural deduction problem. */
+const keyOf = (p: Proof, q: Problem) => [p.id, q.calculus, q.goal, ...q.assumptions].join("\n");
+
+/**
+ * Puts a session on a proof's natural deduction view, its steps those a lesson's worked proof
+ * has played: the view shows it as if the visitor had taken them.
+ */
+export function putNatural(p: Proof, played: CustomPlayed) {
+  const q = problemOfProof(p);
+  if (!q) return;
+  setWorks(keyOf(p, q), { problem: q, played, goal: null, said: null, checked: false });
+}
+
 /** What a step leaves open, asked for by name, and the values typed so far. */
 interface Giving {
   readonly names: readonly string[];
@@ -67,16 +90,11 @@ interface Giving {
 
 export function NaturalView(props: { prover: Prover }) {
   const proof = () => props.prover.current();
-  const problem = createMemo(() => {
-    const p = proof();
-    const session = p?.session;
-    if (!p || !session || !isOrdinary(session) || p.calculus.suite !== "ordinary") return undefined;
-    return problemOf(session.sequent as unknown as SequentForm, p.calculus.logic);
-  });
+  const problem = createMemo(() => problemOfProof(proof()));
   const key = () => {
     const p = proof();
     const q = problem();
-    return p && q ? [p.id, q.calculus, q.goal, ...q.assumptions].join("\n") : undefined;
+    return p && q ? keyOf(p, q) : undefined;
   };
   const work = () => {
     const k = key();
@@ -100,7 +118,10 @@ export function NaturalView(props: { prover: Prover }) {
       setWorks(k, { problem: q, played: null, goal: null, said: null, checked: false });
       api()
         .start(q.calculus, q.goal, JSON.stringify(q.assumptions), settings())
-        .then((played) => setWorks(k, "played", played))
+        // A lesson may have put its worked proof here meanwhile: that stays.
+        .then((played) => {
+          if (!works[k]?.played) setWorks(k, "played", played);
+        })
         .catch((thrown) => setWorks(k, "said", failureOf(thrown).message));
     }),
   );

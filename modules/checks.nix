@@ -42,7 +42,8 @@
 #               (modules/_checks/problems.py)
 #   ordinary-problems  the ordinary suite's store (src/content/ordinary/problems/)
 #               against deduxit's command: every verdict in its logic `prove
-#               --logic`'s, every worked session one `check --calculus` accepts
+#               --logic`'s, every worked session one `interact --state` resumes
+#               and `proof` accepts
 #               (modules/_checks/ordinary_problems.py)
 #   pages-paths the site as Pages publishes it: a 404.html at its root;
 #               nothing at /deduxit or /rocq-deduxit or under them, where

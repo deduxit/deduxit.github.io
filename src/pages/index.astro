@@ -118,9 +118,16 @@ const ordinaryLessons = (await getCollection("ordinaryLessons")).sort(
 );
 const ordinaryCourse: OrdinaryCourse = {
   lessons: ordinaryLessons.map((l) => {
-    const session = ordinarySessions[`../content/ordinary/problems/${l.data.worked}.${l.data.method}.json`];
+    // A truth table's lesson reads its rows off the sequent: it has no session.
+    const session =
+      l.data.method === "table"
+        ? ""
+        : ordinarySessions[`../content/ordinary/problems/${l.data.worked}.${l.data.method}.json`];
     const problem = ordinaryProblems.find((p) => p.id === l.data.worked);
-    if (!session || !problem) throw new Error(`lesson ${l.id}: no worked proof beside its problem`);
+    if (session === undefined || !problem)
+      throw new Error(`lesson ${l.id}: no worked proof beside its problem`);
+    const model = ordinaryProblems.find((p) => p.id === l.data.model);
+    if (l.data.model && !model) throw new Error(`lesson ${l.id}: no problem ${l.data.model}`);
     return {
       id: l.id,
       lesson: l.data.lesson,
@@ -129,12 +136,14 @@ const ordinaryCourse: OrdinaryCourse = {
       sequent: problem.data.sequent,
       method: l.data.method,
       logic: l.data.logic,
+      layout: l.data.layout ?? null,
       choices: l.data.choices,
       steps: l.data.steps,
       faded: l.data.faded,
       explain: l.data.explain,
       hinge: l.data.hinge,
       session,
+      model: model ? { sequent: model.data.sequent, logic: model.data.logic } : null,
     };
   }),
   problems: ordinaryProblems

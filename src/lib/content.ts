@@ -196,13 +196,20 @@ export interface OrdinaryLesson {
   readonly sequent: string;
   readonly method: "sequent" | "natural" | "tableau" | "table";
   readonly logic: "classical" | "intuitionistic" | "minimal";
+  /** The drawing a natural deduction lesson plays in, whose lines its reasons cite. */
+  readonly layout: "tree" | "fitch" | null;
   readonly choices: readonly string[];
   readonly steps: readonly Reason[];
   readonly faded: number;
   readonly explain: { readonly after: number; readonly prompt: string; readonly answer: string };
   readonly hinge: { readonly question: string; readonly options: readonly Option[] };
-  /** The worked proof's session, as deduxit wrote it. */
+  /** The worked proof's session, as deduxit wrote it; empty for a truth table, which has none. */
   readonly session: string;
+  /** The problem whose countermodel the lesson reads: its sequent and its logic. */
+  readonly model: {
+    readonly sequent: string;
+    readonly logic: "classical" | "intuitionistic" | "minimal";
+  } | null;
 }
 
 /** The ordinary course: its lessons, and the problems they practise. */
