@@ -1,0 +1,16 @@
+{
+  "version": 8,
+  "logic": "classical",
+  "sequent": {
+    "formulas": [{ "V": 0 }, { "¬": 0 }, { "∨": [0, 1] }, "⊥"],
+    "atoms": ["a"],
+    "left": [],
+    "right": [2]
+  },
+  "inferences": [
+    { "left": [], "right": [2], "rule": "∨R", "principal": ["right", 0], "premises": [1] },
+    { "left": [], "right": [0, 1], "rule": "¬R", "principal": ["right", 1], "premises": [2] },
+    { "left": [0], "right": [0], "rule": "ax" }
+  ],
+  "history": [0, 1, 2]
+}

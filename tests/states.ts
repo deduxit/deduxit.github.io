@@ -460,3 +460,26 @@ export async function deducing(page: Page, visit: Visit) {
   await expect(page.getByRole("status").filter({ hasText: "Valid in NJ" })).toBeVisible();
   await visit("natural valid");
 }
+
+/**
+ * The ordinary course, in an ordinary tab's Learn: its list, lesson 3's worked proof played
+ * with a prediction, its self-explanation prompt, the finished proof and the hinge answered.
+ */
+export async function coursing(page: Page, visit: Visit) {
+  await goto(page);
+  await calculus(page, ["Ordinary", "Classical"]);
+  await band(page, "Learn", visit);
+  await page.getByRole("tab", { name: "Tutorial" }).click();
+  await expect(page.getByText("The course on ordinary logic")).toBeVisible();
+  await visit("ordinary course");
+  await page.getByRole("button", { name: /^Lesson 3: The sequent calculus LK/ }).click();
+  await page.getByRole("button", { name: "Start the worked proof" }).click();
+  await page.getByRole("button", { name: "Predict ∨R", exact: true }).click();
+  await expect(page.getByRole("note", { name: "Why this step" })).toContainText("Right");
+  await visit("ordinary lesson's step");
+  await page.getByRole("button", { name: "Show the step" }).click();
+  await page.getByRole("button", { name: "Show the step" }).click();
+  await expect(page.locator(".lesson-view .kw.ok").filter({ hasText: "Proved" })).toBeVisible();
+  await page.getByRole("region", { name: "Check" }).getByRole("radio").nth(1).check();
+  await visit("ordinary lesson's check");
+}
