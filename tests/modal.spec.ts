@@ -2,13 +2,14 @@
 // Licensed under the EUPL
 
 // Modal logic on the page: the calculus popover's button opens it, a sequent is decided in the
-// system chosen (K by default) with a derivation or a countermodel, the model is changed and
-// checked again, and the link keeps the sequent and the system. A visitor who never presses the
-// button sees none of it.
+// system chosen (K by default) with a derivation or a countermodel, a valid sequent is proved step
+// by step in its system's labelled calculus, the model is changed and checked again, and the link
+// keeps the sequent and the system. A visitor who never presses the button sees none of it.
 
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
 import { goto, switches } from "./prover";
+import { customStep } from "./states";
 
 /** Opens the page with its tab in modal logic, in the system given. */
 async function modalTab(page: Page, system = "K") {
@@ -63,6 +64,29 @@ test("the system chosen decides again: valid in S4 with its labelled derivation"
   await expect(page.locator(".modal .kw.ok")).toHaveText("Valid");
   await expect(page.locator(".modal .custom-drawing svg")).toContainText("Trans");
   await expect(page.getByText("In S4 every world sees itself")).toBeVisible();
+});
+
+test("a valid sequent is proved step by step in its system's labelled calculus", async ({
+  page,
+}) => {
+  await modalTab(page, "T");
+  await decide(page, "[]p |- p");
+  await expect(page.locator(".modal .kw.ok")).toHaveText("Valid");
+  await page.getByRole("button", { name: "Prove it step by step" }).click();
+  await expect(page.getByText("Open goal 1 of 1")).toBeVisible();
+  await expect(page.locator(".custom-drawing svg title")).toHaveText("w0 : □p ⊢ w0 : p");
+  await expect(page.locator(".ptab[aria-current=true] .pt-mark")).toContainText("G3T");
+  await customStep(page, "Ref");
+  const form = page.getByRole("form", { name: /^Give what Ref needs/ });
+  await form.getByRole("textbox").first().fill("w0");
+  await form.getByRole("button", { name: "Apply Ref" }).click();
+  await customStep(page, "L□ on w0 : □p, w0 R w0");
+  await customStep(page, "ax on w0 : p");
+  await expect(page.getByText("Every goal is closed")).toBeVisible();
+  await page.getByRole("button", { name: "Check the derivation" }).click();
+  await expect(
+    page.getByRole("status").filter({ hasText: "Valid in the calculus given" }),
+  ).toBeVisible();
 });
 
 test("a changed model is checked: the failing world's values and the frame condition named", async ({

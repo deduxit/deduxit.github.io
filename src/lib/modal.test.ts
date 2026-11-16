@@ -6,17 +6,20 @@ import {
   addWorld,
   atomsOf,
   type Evaluation,
+  type ModalOutcome,
   evaluationWords,
   frameWords,
   type Model,
   modelJson,
   prettyModal,
   removeWorld,
+  rootSequent,
   SYSTEM_NAMES,
   setAtoms,
   systemWords,
   toggleArrow,
 } from "./modal";
+import type { CustomPlayed } from "./custom";
 import { deduxit } from "./testing";
 
 /** Three worlds in a row, p at the middle one: K's countermodel of □p ⊢ □□p. */
@@ -103,5 +106,40 @@ describe("a frame fault in words", () => {
 describe("a modal sequent in signs", () => {
   it("writes [] as □ and <> as ◇, and ordinary logic's signs as the ordinary suite does", () => {
     expect(prettyModal("[]p -> <>(p /\\ ~q) <-> q")).toBe("□p → ◇(p ∧ ¬q) ↔ q");
+  });
+});
+
+describe("a modal sequent step by step", () => {
+  /** The root of `text`'s derivation in `system`, which must be valid there. */
+  const root = (text: string, system: string) => {
+    const statement = deduxit.modal_read(text, system, "");
+    const outcome = JSON.parse(deduxit.modal_decide(statement, "")) as ModalOutcome;
+    expect(outcome.verdict).toBe("valid");
+    return { statement, text: rootSequent(outcome.derivation) as string };
+  };
+
+  it("is the derivation's root, every compound operand bracketed", () => {
+    expect(root("[]p |- p", "T").text).toBe("w0 : □p ⊢ w0 : p");
+    expect(root("a /\\ b /\\ c |- (a /\\ b) /\\ c", "K").text).toBe(
+      "w0 : ((a ∧ b) ∧ c) ⊢ w0 : ((a ∧ b) ∧ c)",
+    );
+    expect(rootSequent(undefined)).toBeNull();
+  });
+
+  it("starts a session in the system's labelled calculus on the sequent decided", () => {
+    for (const [text, system] of [
+      ["[]p |- p", "T"],
+      ["a <-> b <-> c |- a <-> b <-> c", "K"],
+      ["a /\\ b /\\ c |- (a /\\ b) /\\ c", "K"],
+    ] as const) {
+      const { statement, text: labelled } = root(text, system);
+      const file = deduxit.modal_calculus(statement, "");
+      const played = JSON.parse(deduxit.rules_start(file, labelled, "[]", "{}")) as CustomPlayed;
+      expect(played.view.calculus.name).toBe(`G3${system}`);
+      expect(played.view.goals).toHaveLength(1);
+      // The session's sequent is the one decided, not a reading of the typed text.
+      if (system === "K" && text.includes("/\\"))
+        expect(played.view.sequent).toContain("(a ∧ b) ∧ c");
+    }
   });
 });

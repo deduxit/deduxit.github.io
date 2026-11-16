@@ -65,6 +65,38 @@ export function systemWords(name: string): string {
 /** A sequent to try in a new modal tab. */
 export const EXAMPLE = "[]p -> [][]p";
 
+/** A term of a derivation in a calculus given as data, as its JSON writes it. */
+type Term = string | { readonly atom: string } | readonly [string, ...number[]];
+
+/**
+ * The root of a valid outcome's labelled derivation as the calculus reads it, every compound
+ * operand in brackets (`w0 : (a ∧ b) ∧ c` as `w0 : ((a ∧ b) ∧ c)`), so that it reads back as the
+ * same sequent whatever the calculus's precedences; null for no derivation.
+ */
+export function rootSequent(derivation: unknown): string | null {
+  const d = derivation as {
+    readonly terms?: readonly Term[];
+    readonly nodes?: readonly { readonly sequent: readonly (readonly number[])[] }[];
+  } | null;
+  const root = d?.nodes?.[d.nodes.length - 1];
+  const terms = d?.terms;
+  if (!root || !terms) return null;
+  const shown = (at: number, outer: boolean): string => {
+    const term = terms[at];
+    if (term === undefined) return "?";
+    if (typeof term === "string") return term;
+    if (!Array.isArray(term)) return (term as { atom: string }).atom;
+    const [connective, ...operands] = term as readonly [string, ...number[]];
+    if (operands.length === 0) return connective;
+    if (operands.length === 1) return `${connective}${shown(operands[0] as number, false)}`;
+    const inner = operands.map((o) => shown(o, false)).join(` ${connective} `);
+    return outer ? inner : `(${inner})`;
+  };
+  const [left = [], right = []] = root.sequent;
+  const side = (members: readonly number[]) => members.map((m) => shown(m, true)).join(", ");
+  return `${side(left)} ⊢ ${side(right)}`.trim();
+}
+
 /** A world of a Kripke model, as deduxit writes it. */
 export interface World {
   readonly atoms: readonly string[];

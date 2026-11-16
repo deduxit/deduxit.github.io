@@ -306,6 +306,9 @@ export function createApi(changed: (pending: number) => void) {
         client.call<string>("modal_draw", JSON.stringify(outcome), settings),
       exportAs: (outcome: ModalOutcome, format: string, settings: string) =>
         client.call<string>("modal_export", JSON.stringify(outcome), format, settings),
+      /** The system's labelled calculus as a rule file, the one a valid derivation is in. */
+      calculus: (statement: string, settings: string) =>
+        client.call<string>("modal_calculus", statement, settings),
       /** A model checked against the statement, at `world` or at every world. */
       evaluate: (statement: string, model: string, world: number | undefined, settings: string) =>
         json<Evaluation>("modal_evaluate", statement, model, world, settings),

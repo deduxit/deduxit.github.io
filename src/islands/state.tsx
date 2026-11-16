@@ -54,7 +54,13 @@ import {
   retract as retractOrdinary,
   sequentText as ordinaryText,
 } from "../lib/ordinary";
-import { type Evaluation, type Model, type ModalOutcome, modelJson } from "../lib/modal";
+import {
+  type Evaluation,
+  type Model,
+  type ModalOutcome,
+  modelJson,
+  rootSequent,
+} from "../lib/modal";
 import { Cancelled } from "../lib/protocol";
 import {
   type Shelf,
@@ -1164,6 +1170,38 @@ export function createProver(say: (text: string) => void = () => undefined) {
         q.inputProblem = null;
         q.editing = true;
       });
+    }),
+
+    /**
+     * Proves a modal tab's sequent step by step: the tab becomes a session in the system's
+     * labelled calculus (`G3S4`), every formula at world w0, built as a calculus given as data.
+     */
+    modalSteps: guard(async (id: string) => {
+      const p = store.proofs.find((q) => q.id === id);
+      const statement = p?.modal?.statement;
+      const text = rootSequent(p?.modal?.outcome?.derivation);
+      if (!p || !statement || !text) return;
+      const file = await attempt(() => api.modal.calculus(statement, modalJson()));
+      if (!file.ok) return;
+      // Started first, so that a sequent the calculus cannot read leaves the modal tab whole.
+      const started = await attempt(() =>
+        api.custom.start(file.value, text, assumptionsJson(""), ordinaryJson()),
+      );
+      if (!started.ok) {
+        const failed = started.failed;
+        if (failed)
+          update(id, (q) => {
+            if (q.modal) q.modal.problem = inputProblem(failed);
+          });
+        return;
+      }
+      update(id, (q) => {
+        q.modal = null;
+        q.custom = null;
+      });
+      setLastCalculus(custom(started.value.view.calculus.name));
+      showCustom(id, started.value);
+      save();
     }),
 
     /** Reads a custom proof's rule file from the built-in calculus it names, where it has none. */

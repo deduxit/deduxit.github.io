@@ -144,6 +144,18 @@ function Decided(props: { prover: Prover }) {
                   world 1.
                 </p>
                 <div class="custom-drawing" innerHTML={svg()} />
+                <p class="row">
+                  <button
+                    type="button"
+                    class="btn"
+                    onClick={() => {
+                      const p = proof();
+                      if (p) void props.prover.modalSteps(p.id);
+                    }}
+                  >
+                    Prove it step by step
+                  </button>
+                </p>
               </>
             }
           >

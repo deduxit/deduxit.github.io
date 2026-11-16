@@ -195,6 +195,14 @@ the page reads.
   worlds, or holds, or the failing world with each formula's value and witness, and then
   `modal_model_drawing` at that world). A change of the system is no restart warning: the tab
   holds no steps.
+- **Proving a modal sequent step by step**: under a valid derivation, "Prove it step by step"
+  (`modalSteps`) turns the tab into a calculus given as data: the rule file `modal_calculus`
+  gives (`G3S4`), the sequent the root of the valid derivation (`rootSequent`, every compound
+  operand bracketed: the typed text read by the calculus would associate `∧` and `↔` otherwise,
+  and an atom named `R` is the calculus's relation), started before the tab changes, so a
+  refusal is said in the modal panel and leaves it whole; then the builder of `Custom.tsx`. Its offered steps are backward steps; in a sequent calculus a forward step
+  (deduxit's `Interactive::extend`) is the same node as the backward step at the same members,
+  so the builder needs no call of its own for it.
 - **A modal tab in the workspace** joins as its statement (`modal.sequent`) and its decision
   (`modal.decide`, `joinedModal`), which the page runs at once (`runNodes`): it has no work
   node, so `rowsOf` takes a tab's node as `isTabNode` (class `work`, or `modal.decide`), and
