@@ -28,7 +28,7 @@ test("Learn frames the window with the tutorial and the reference, and off leave
   await frame.getByRole("tab", { name: "Reference" }).click();
   await expect(frame.getByRole("table")).toContainText("linear implication");
   // With Learn on, every action of the bottom band shows its label.
-  await expect(page.locator(".band.bottom .lb").filter({ hasText: "Steps" })).toBeVisible();
+  await expect(page.locator(".band.bottom .act-name").filter({ hasText: "Steps" })).toBeVisible();
   await page.keyboard.press("l");
   await expect(frame).toHaveCount(0);
 });

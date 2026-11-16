@@ -1772,7 +1772,7 @@ button.wordmark {
 .app[data-learn] .win {
   border-radius: var(--radius-control);
 }
-.app[data-learn] .act .lb {
+.app[data-learn] .act .act-name {
   position: static;
   width: auto;
   height: auto;
@@ -2308,8 +2308,8 @@ fieldset {
     padding: var(--spacing-1);
     flex-wrap: nowrap;
   }
-  .act .lb,
-  .app[data-learn] .act .lb {
+  .act .act-name,
+  .app[data-learn] .act .act-name {
     position: absolute;
     width: var(--line);
     height: var(--line);
@@ -2347,7 +2347,7 @@ fieldset {
     padding: var(--spacing-0-5) var(--spacing-0-5) 0;
     min-width: var(--size-control);
   }
-  .app[data-learn] .act .lb {
+  .app[data-learn] .act .act-name {
     position: static;
     width: auto;
     height: auto;

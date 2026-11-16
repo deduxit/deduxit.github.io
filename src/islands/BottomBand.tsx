@@ -123,7 +123,7 @@ export function BottomBand(props: {
   const { ui, setUi } = props.ui;
   const proof = () => props.prover.current();
   const toggle = (menu: Menu) => setUi("menu", ui.menu === menu ? null : menu);
-  const labelled = (label: string) => <span class="lb">{label}</span>;
+  const labelled = (label: string) => <span class="act-name">{label}</span>;
   const key = (k: string) => (
     <Show when={props.prover.settings().showKeys}>
       <kbd class="k">{k}</kbd>
