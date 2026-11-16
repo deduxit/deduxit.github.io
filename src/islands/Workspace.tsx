@@ -445,6 +445,56 @@ export function createWorkspace(prover: Prover, ui: Ui) {
         }
       }).catch(said),
 
+    /**
+     * What a link of the tab holds: the workspace's part with the tab's linked group (its proof
+     * and what it was made from, no results) and the tab's node; null for a tab not linked.
+     */
+    packFor: (tab: string) =>
+      queued(async () => {
+        const node = state.tabs[tab];
+        const doc = state.doc;
+        if (node === undefined || doc === null) return null;
+        // The tab, the tab it was made from, and the tabs made from it.
+        const from = rows().find((r) => r.node === node)?.line?.from;
+        const nodes = [
+          node,
+          ...(from == null ? [] : [from]),
+          ...rows()
+            .filter((r) => r.line?.from === node)
+            .map((r) => r.node),
+        ];
+        const document = await prover.api.workspace.pack(doc, nodes, work(), settings());
+        return { document, node };
+      }),
+
+    /**
+     * Opens the linked tabs a link holds, each on a tab of its own, the link's shown tab shown;
+     * what needs no search is made at once, and the panel stays closed. Returns whether it read.
+     */
+    arrive: (document: string, shown: number) =>
+      queued(async () => {
+        const opened = await prover.api.workspace.open(document, settings());
+        setState({ doc: opened, told: true });
+        await look();
+        await remake();
+        let tab: string | null = null;
+        for (const n of state.view?.nodes ?? []) {
+          if (n.class !== "work" || !isOrdinary(n.value)) continue;
+          const made = await openNode(n.node, n.value.logic);
+          if (n.node === shown) tab = made;
+        }
+        await look();
+        const count = rows().length;
+        if (tab) {
+          prover.activate(tab);
+          prover.banner(tab, {
+            keyword: "Linked tabs",
+            sentence: `This link holds ${count} linked ${count === 1 ? "tab" : "tabs"}. The Workspace button shows them.`,
+          });
+        }
+        return count > 0;
+      }),
+
     /** Makes a line's check. */
     check: (node: number) =>
       queued(async () => {

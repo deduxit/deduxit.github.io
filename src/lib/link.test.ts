@@ -10,6 +10,7 @@ import {
   toBase64url,
   UNPACKED_LIMIT,
   writeLink,
+  writeWorkspaceLink,
 } from "./link";
 
 describe("the link's codec", () => {
@@ -121,6 +122,42 @@ describe("the link's codec", () => {
     expect(fits.length).toBe(UNPACKED_LIMIT);
     const read = await readLink((await writeLink("A", "linear", "mix", fits, Infinity)).hash);
     expect(read?.session).toBe(fits);
+  });
+
+  it("reads back a linked tab's workspace and node, and writes the tab's own link past the limit", async () => {
+    await fc.assert(
+      fc.asyncProperty(fc.string(), fc.json(), fc.nat(), async (sequent, workspace, node) => {
+        const written = await writeWorkspaceLink(
+          sequent,
+          "ordinary",
+          "classical",
+          workspace,
+          node,
+          undefined,
+          Number.POSITIVE_INFINITY,
+        );
+        expect(written).toMatchObject({ whole: true });
+        expect(written.hash.startsWith("#v=3&")).toBe(true);
+        expect(await readLink(written.hash)).toEqual({
+          sequent,
+          suite: "ordinary",
+          parameter: "classical",
+          workspace: { document: workspace, node },
+        });
+      }),
+    );
+    // A workspace that does not compress: letters of a simple generator.
+    let seed = 7;
+    const noise = Array.from({ length: 4000 }, () => {
+      seed = (seed * 48271) % 2147483647;
+      return String.fromCharCode(33 + (seed % 90));
+    }).join("");
+    const short = await writeWorkspaceLink("a |- a", "ordinary", "classical", noise, 3, "{}");
+    expect(short.whole).toBe(false);
+    expect(short.hash.startsWith("#v=2&")).toBe(true);
+    expect((await readLink(short.hash))?.session).toBe("{}");
+    const broken = await readLink("#v=3&u=ordinary&m=classical&s=a&n=x&w=AA");
+    expect(broken?.problem).toBe("document");
   });
 
   it("encodes bytes as base64url and back", () => {

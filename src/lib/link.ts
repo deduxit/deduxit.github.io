@@ -16,6 +16,13 @@
  * characters the link holds the sequent and the calculus alone, and says so.
  * A link of the first version, `#v=1&m=<mode>&s=…`, written before the page had
  * suites, reads as the linear suite in that mode.
+ *
+ * A linked tab writes `#v=3&u=…&m=…&s=…&n=<node>&w=<workspace>`: `u`, `m` and
+ * `s` the shown tab's, as in version 2, so that a page that does not know
+ * version 3 opens that sequent; `w` the workspace's document as
+ * `workspace_pack` writes it (the linked tabs' sequents, recipes and proofs,
+ * no results), packed as `d` is; `n` the shown tab's node in it. A workspace
+ * past `LINK_LIMIT` writes the version-2 link of the shown tab, and says so.
  * Reading a link unpacks at most `UNPACKED_LIMIT` bytes: a crafted link can
  * hold a document that inflates a thousandfold, in the visitor's own tab,
  * before deduxit's limits ever read it.
@@ -23,6 +30,9 @@
 
 /** This format's version mark. */
 export const LINK_VERSION = "2";
+
+/** The version mark of a link that holds linked tabs. */
+export const WORKSPACE_VERSION = "3";
 
 /** The version mark of the links written before suites, all of the linear suite. */
 const LINEAR_ONLY = "1";
@@ -46,6 +56,8 @@ export interface LinkContent {
   readonly parameter: string;
   /** The session document's JSON text, when the link carried one that unpacked. */
   readonly session?: string;
+  /** The linked tabs' workspace, and the shown tab's node in it (version 3). */
+  readonly workspace?: { readonly document: string; readonly node: number };
   /** Why the session could not be read back: a version mark this page does not know, a document that did not unpack, or one past `UNPACKED_LIMIT`. */
   readonly problem?: "version" | "document" | "size";
 }
@@ -107,6 +119,37 @@ export function fromBase64url(text: string): Uint8Array {
   return Uint8Array.from(binary, (c) => c.charCodeAt(0));
 }
 
+/**
+ * The fragment of a linked tab: its sequent and calculus, and the workspace packed with the tab's
+ * node, when that fits; else the tab's own link, which `whole` false says.
+ */
+export async function writeWorkspaceLink(
+  sequent: string,
+  suite: string,
+  parameter: string,
+  workspace: string,
+  node: number,
+  session: string | undefined,
+  limit = LINK_LIMIT,
+): Promise<Written> {
+  const packed = await through(
+    new TextEncoder().encode(workspace),
+    new CompressionStream("deflate-raw"),
+  );
+  const params = new URLSearchParams({
+    v: WORKSPACE_VERSION,
+    u: suite,
+    m: parameter,
+    s: sequent,
+    n: String(node),
+    w: toBase64url(packed),
+  });
+  const full = `#${params}`;
+  if (full.length <= limit) return { hash: full, whole: true };
+  const own = await writeLink(sequent, suite, parameter, session, limit);
+  return { hash: own.hash, whole: false };
+}
+
 /** The fragment for a sequent in a suite's calculus, and the session when there is one and it fits. */
 export async function writeLink(
   sequent: string,
@@ -139,6 +182,19 @@ export async function readLink(
   const version = params.get("v");
   const suite = version === LINEAR_ONLY ? "linear" : (params.get("u") ?? "linear");
   const read = { sequent, suite, parameter };
+  if (version === WORKSPACE_VERSION) {
+    const packedWorkspace = params.get("w");
+    const node = Number(params.get("n"));
+    if (packedWorkspace === null || !Number.isInteger(node) || node < 0)
+      return { ...read, problem: "document" };
+    try {
+      const bytes = await inflate(fromBase64url(packedWorkspace), limit);
+      const document = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+      return { ...read, workspace: { document, node } };
+    } catch (thrown) {
+      return { ...read, problem: thrown instanceof TooLarge ? "size" : "document" };
+    }
+  }
   if (version !== LINK_VERSION && version !== LINEAR_ONLY) return { ...read, problem: "version" };
   const packed = params.get("d");
   if (packed === null) return read;

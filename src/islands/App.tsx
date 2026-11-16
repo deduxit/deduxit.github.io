@@ -13,7 +13,7 @@
 
 import { createEffect, createSignal, on, onCleanup, onMount, Show } from "solid-js";
 import { unwrap } from "solid-js/store";
-import { type LinkContent, readLink, writeLink } from "../lib/link";
+import { type LinkContent, readLink, writeLink, writeWorkspaceLink } from "../lib/link";
 import { MATH_FONTS, type MathFont } from "../lib/deduxit";
 import { prettyOrdinary } from "../lib/ordinary";
 import { paths } from "../lib/steps";
@@ -114,6 +114,13 @@ export default function App(props: {
 
   /** Opens the proof a link holds, or its sequent alone with the reason where the proof is not read. */
   async function openLink(link: LinkContent) {
+    // Linked tabs: each opens on a tab of its own, the link's shown one shown.
+    if (link.workspace) {
+      const read = await workspace
+        .arrive(link.workspace.document, link.workspace.node)
+        .catch(() => false);
+      if (read) return;
+    }
     // A suite or parameter this page does not know opens in the suite's first calculus.
     const calculus =
       calculusOf(link.suite, "sequent", link.parameter) ??
@@ -130,7 +137,7 @@ export default function App(props: {
       prover.setInput(id, link.sequent);
       if (calculus) await prover.setCalculus(id, calculus);
       await prover.submit(id);
-    } else if (p && (link.session !== undefined || link.problem)) {
+    } else if (p && (link.session !== undefined || link.problem || link.workspace)) {
       prover.banner(p.id, {
         keyword: "Proof not restored",
         sentence:
@@ -138,9 +145,11 @@ export default function App(props: {
             ? `The link's proof was not read (${restored.problem.keyword}), so the sequent is loaded alone: start again, or import the session file.`
             : link.problem === "version"
               ? "The link was made by another version of this page, so the sequent is loaded alone."
-              : link.problem === "size"
-                ? "The link's proof unpacks to more than a link may hold, so the sequent is loaded alone: import the session file instead."
-                : "The link's proof did not unpack, so the sequent is loaded alone.",
+              : link.workspace
+                ? "The linked tabs could not be restored, so the sequent is loaded alone."
+                : link.problem === "size"
+                  ? "The link's proof unpacks to more than a link may hold, so the sequent is loaded alone: import the session file instead."
+                  : "The link's proof did not unpack, so the sequent is loaded alone.",
       });
     }
   }
@@ -236,12 +245,23 @@ export default function App(props: {
               : calculus.suite === "rules"
                 ? input
                 : pretty(input);
-          const written = await writeLink(
-            text,
-            calculus.suite,
-            parameterOf(calculus),
-            JSON.stringify(unwrap(session)),
-          );
+          const shown = prover.current()?.id;
+          const linked = shown ? await workspace.packFor(shown).catch(() => null) : null;
+          const written = linked
+            ? await writeWorkspaceLink(
+                text,
+                calculus.suite,
+                parameterOf(calculus),
+                linked.document,
+                linked.node,
+                JSON.stringify(unwrap(session)),
+              )
+            : await writeLink(
+                text,
+                calculus.suite,
+                parameterOf(calculus),
+                JSON.stringify(unwrap(session)),
+              );
           history.replaceState(null, "", written.hash);
           wrote = location.hash;
           setLinkShort(!written.whole);

@@ -38,9 +38,7 @@ test("one sequent shows nothing of the workspace", async ({ page }) => {
   await expect(page.locator(".ws-stage[data-docked]")).toHaveCount(0);
 });
 
-test("a translation proved on a new tab is linked under a line that says how", async ({
-  page,
-}) => {
+test("a translation proved on a new tab is linked under a line that says how", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await classical(page, "|- a \\/ ~a");
   await proveTranslation(page);
@@ -113,4 +111,25 @@ test("a narrow window shows the workspace as a sheet from its button", async ({ 
   await expect(page.getByRole("dialog", { name: "Workspace" })).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog", { name: "Workspace" })).toBeHidden();
+});
+
+test("a link of a linked tab opens its linked tabs, the shown one shown, the panel closed", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await classical(page, "|- a \\/ ~a");
+  await proveTranslation(page);
+  // The link is written a moment after the change.
+  await expect.poll(() => page.evaluate(() => location.hash)).toMatch(/^#v=3&/);
+  const hash = await page.evaluate(() => location.hash);
+  const fresh = await page.context().newPage();
+  await fresh.setViewportSize({ width: 1280, height: 800 });
+  await fresh.goto(`/${hash}`);
+  await expect(fresh.locator(".ptab")).toHaveCount(2);
+  await expect(fresh.locator(".ptab[aria-current=true]")).toContainText("¬¬(a ∨ ¬a)");
+  await expect(fresh.getByText("This link holds 2 linked tabs.")).toBeVisible();
+  await expect(fresh.getByRole("region", { name: "Workspace" })).toHaveCount(0);
+  await fresh.getByRole("button", { name: "Workspace, 2 linked tabs" }).click();
+  const ws = fresh.getByRole("region", { name: "Workspace" });
+  await expect(ws.locator(".ws-line")).toContainText("Glivenko's translation");
 });
