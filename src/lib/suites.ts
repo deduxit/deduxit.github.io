@@ -3,8 +3,8 @@
 
 /**
  * The suites a tab proves in: each a family of logics with its own sequent syntax, rules and
- * calls of deduxit's module, proved by a method (the sequent calculus, the only one today), in
- * one of its calculi, named by the suite's parameter. A tab's choice is a `Calculus`: its
+ * calls of deduxit's module, proved by a method (the sequent calculus, and for ordinary logic
+ * natural deduction too), in one of its calculi, named by the suite's parameter. A tab's choice is a `Calculus`: its
  * suite, its method and the suite's parameter, as deduxit's `about` names them (`mode` for the
  * linear suite, `logic` for the ordinary one, `calculus` for a calculus given as a rule file);
  * `suites.test.ts` holds the registry to `about`.
@@ -17,8 +17,11 @@ import { modeWords } from "./words";
 /** The suites the page offers, by deduxit's names. */
 export type SuiteKey = "linear" | "ordinary" | "rules";
 
-/** How a suite's proofs are built: the sequent calculus, a tree grown from the goal upward. */
-export type Method = "sequent";
+/**
+ * How a suite's proofs are built: the sequent calculus, a tree grown from the goal upward, or
+ * natural deduction, built backwards from a goal and forwards from numbered lines.
+ */
+export type Method = "sequent" | "natural";
 
 /** A logic of the ordinary suite, as deduxit names it. */
 export type Logic = "classical" | "intuitionistic" | "minimal";
@@ -80,7 +83,7 @@ export const SUITES: readonly Suite[] = [
     key: "ordinary",
     name: "Ordinary",
     tip: "Ordinary propositional logic, proved in Gentzen's LK and LJ",
-    methods: ["sequent"],
+    methods: ["sequent", "natural"],
     parameter: "logic",
     values: LOGICS,
     segment: true,
@@ -108,12 +111,15 @@ export const suite = (key: SuiteKey): Suite => SUITES.find((s) => s.key === key)
 /** The calculus of a linear mode. */
 export const linear = (mode: Mode): Calculus => ({ suite: "linear", method: "sequent", mode });
 
-/** The calculus of an ordinary logic. */
-export const ordinary = (logic: Logic): Calculus => ({
+/** The calculus of an ordinary logic, by the sequent calculus unless another method is named. */
+export const ordinary = (logic: Logic, method: Method = "sequent"): Calculus => ({
   suite: "ordinary",
-  method: "sequent",
+  method,
   logic,
 });
+
+/** Whether a calculus proves its sequent by natural deduction. */
+export const isNatural = (c: Calculus): boolean => c.method === "natural";
 
 /** The calculus of a rule file, by its name. */
 export const custom = (calculus: string): Calculus => ({
@@ -150,14 +156,18 @@ export function calculusOf(
   if (s.key === "rules")
     return parameter?.trim() && parameter.length <= LONGEST_NAME ? custom(parameter) : undefined;
   if (!parameter || !s.values.includes(parameter)) return undefined;
-  return s.key === "linear" ? linear(parameter as Mode) : ordinary(parameter as Logic);
+  return s.key === "linear"
+    ? linear(parameter as Mode)
+    : ordinary(parameter as Logic, (method ?? "sequent") as Method);
 }
 
 /** The calculus's short mark on its tab. */
 export function markOf(c: Calculus): string {
   if (c.suite === "rules") return c.calculus;
   if (c.suite === "ordinary")
-    return { classical: "LK", intuitionistic: "LJ", minimal: "LM" }[c.logic];
+    return isNatural(c)
+      ? { classical: "NK", intuitionistic: "NJ", minimal: "NM" }[c.logic]
+      : { classical: "LK", intuitionistic: "LJ", minimal: "LM" }[c.logic];
   const names: Record<Mode, string> = {
     classical: "LL",
     affine: "LL+aff",
@@ -181,11 +191,17 @@ export function markLabel(c: Calculus): string {
 export function calculusWords(c: Calculus): string {
   if (c.suite === "rules") return `Custom calculus, ${c.calculus}`;
   if (c.suite === "ordinary")
-    return {
-      classical: "Ordinary, classical (LK)",
-      intuitionistic: "Ordinary, intuitionistic (LJ)",
-      minimal: "Ordinary, minimal (LM, LJ without ex falso)",
-    }[c.logic];
+    return isNatural(c)
+      ? {
+          classical: "Ordinary, classical, natural deduction (NK)",
+          intuitionistic: "Ordinary, intuitionistic, natural deduction (NJ)",
+          minimal: "Ordinary, minimal, natural deduction (NM)",
+        }[c.logic]
+      : {
+          classical: "Ordinary, classical (LK)",
+          intuitionistic: "Ordinary, intuitionistic (LJ)",
+          minimal: "Ordinary, minimal (LM, LJ without ex falso)",
+        }[c.logic];
   return modeWords(c.mode);
 }
 

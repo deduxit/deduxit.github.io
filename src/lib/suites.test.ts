@@ -39,6 +39,11 @@ describe("the suite registry", () => {
       }
     expect(calculusOf("linear", undefined, "mix")).toEqual(linear("mix"));
     expect(calculusOf("ordinary", "sequent", "minimal")).toEqual(ordinary("minimal"));
+    // Natural deduction is a method of ordinary logic alone.
+    expect(calculusOf("ordinary", "natural", "classical")).toEqual(
+      ordinary("classical", "natural"),
+    );
+    expect(calculusOf("linear", "natural", "classical")).toBeUndefined();
     expect(calculusOf("ordinary", "sequent", "mix")).toBeUndefined();
     expect(calculusOf("ordinary", "tableau", "classical")).toBeUndefined();
     expect(calculusOf("modal", "sequent", "K")).toBeUndefined();
@@ -54,6 +59,7 @@ describe("the tab's mark on a wide screen", () => {
     expect(markLabel(linear("classical"))).toBe("Linear (LL)");
     expect(markLabel(linear("intuitionistic-affine"))).toBe("Linear (ILL+aff)");
     expect(markLabel(ordinary("intuitionistic"))).toBe("Ordinary (LJ)");
+    expect(markLabel(ordinary("intuitionistic", "natural"))).toBe("Ordinary (NJ)");
     expect(markLabel(custom("tableau"))).toBe("Custom calculus (tableau)");
   });
 });

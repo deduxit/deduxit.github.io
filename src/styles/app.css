@@ -1060,9 +1060,30 @@ button.wordmark {
 }
 
 /* A calculus of one's own: the panel has no view tabs (the stage's Tree and Net draw the other
-   suites), its drawing in the stage's ink, its file and steps under it. */
-.stage[data-method="custom"] .stage-ctl {
+   suites), its drawing in the stage's ink, its file and steps under it. A proof by natural
+   deduction is drawn the same way, its own switch between the tree and Fitch's lines. */
+.stage:is([data-method="custom"], [data-method="natural"]) .stage-ctl {
   display: none;
+}
+.nd-bar,
+.nd-save {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-2);
+  margin: 0;
+}
+/* The lines in force, numbered as the Fitch drawing numbers them: what a forward step cites. */
+.nd-lines {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--spacing-1) var(--spacing-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.nd-lines li {
+  display: contents;
 }
 .custom-drawing {
   max-width: 100%;

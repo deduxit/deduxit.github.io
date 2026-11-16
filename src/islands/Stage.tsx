@@ -46,7 +46,7 @@ import {
 } from "../lib/deduxit";
 import { countermodelOf, isOrdinary, type OrdinaryOutcome } from "../lib/ordinary";
 import { goalAt, paths, searchMade, subtree } from "../lib/steps";
-import { intuitionistic } from "../lib/suites";
+import { intuitionistic, isNatural } from "../lib/suites";
 import {
   formulaText,
   lost,
@@ -71,6 +71,7 @@ import {
 import { ModelFigure } from "./Countermodel";
 import { CustomPanel } from "./Custom";
 import { type Method, MethodView } from "./Methods";
+import { NaturalView } from "./Natural";
 import { hinted, titled } from "./RuleHint";
 import { ladderKey, phone, token, type Ui, Why, Words } from "./ui";
 
@@ -1257,6 +1258,14 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
   /** The truth table or the tableau the stage shows in the drawing's place, or null. */
   const method = (): Method | null =>
     (ui.tab === "table" || ui.tab === "tableau") && decidable() ? ui.tab : null;
+  /**
+   * Whether the stage shows the proof by natural deduction in the drawing's place: a started
+   * ordinary sequent whose calculus's method the visitor set to natural deduction.
+   */
+  const deduced = () => {
+    const p = proof();
+    return !!p?.session && isNatural(p.calculus);
+  };
   // The table or the tableau gives way to the tree when the proof changes under it (a key or
   // the band acted on it: the visitor sees what changed) or when the proof shown has none.
   createEffect(
@@ -1278,7 +1287,13 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
       aria-label="The proof"
       ref={stage}
       data-dropping={dropping() ? "" : undefined}
-      data-method={proof()?.calculus.suite === "rules" ? "custom" : (method() ?? undefined)}
+      data-method={
+        proof()?.calculus.suite === "rules"
+          ? "custom"
+          : deduced()
+            ? "natural"
+            : (method() ?? undefined)
+      }
       onDragOver={(event) => {
         event.preventDefault();
         setDropping(true);
@@ -1377,7 +1392,12 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
         </div>
       </div>
 
-      <Show when={method()}>{(m) => <MethodView prover={props.prover} method={m()} />}</Show>
+      <Show when={!deduced() && method()}>
+        {(m) => <MethodView prover={props.prover} method={m()} />}
+      </Show>
+      <Show when={deduced()}>
+        <NaturalView prover={props.prover} />
+      </Show>
       <Show when={proof()?.calculus.suite === "rules"}>
         <CustomPanel prover={props.prover} />
       </Show>

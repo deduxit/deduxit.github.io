@@ -7,8 +7,9 @@
  * suite's own switches. Linear logic: a segmented control for classical or intuitionistic logic
  * and labelled switches for Mix, affine weakening and, in classical mode alone, the two-sided
  * presentation (intuitionistic derivations are two-sided already). Ordinary logic: a segmented
- * control for classical, intuitionistic and minimal logic (LK, LJ, and LJ without ex falso) and a
- * switch that draws the weakenings and contractions. A session is one sequent in one calculus, so
+ * control for classical, intuitionistic and minimal logic (LK, LJ, and LJ without ex falso), a
+ * button that proves the sequent by natural deduction instead (NK, NJ, NM: a method of its own,
+ * which the stage then shows), and a switch that draws the weakenings and contractions. A session is one sequent in one calculus, so
  * a change of the calculus restarts the proof, and the switches say so first when the proof has
  * steps; the presentation and the structural rules are settings of the tab, kept with the
  * others, and change only how a derivation is drawn. Under the suites, one button opens a
@@ -52,6 +53,7 @@ export function Calculus(props: { prover: Prover; ui: Ui }) {
     const c = calculus();
     return c.suite === "ordinary" ? c.logic : undefined;
   };
+  const method = () => calculus().method;
   const mode = () => linearMode(calculus());
   const intuitionistic = () => mode().startsWith("intuitionistic");
   const mix = () => mode().endsWith("mix");
@@ -107,13 +109,26 @@ export function Calculus(props: { prover: Prover; ui: Ui }) {
                       class="seg-b"
                       aria-pressed={logic() === each}
                       data-tip={LOGIC_WORDS[each].tip}
-                      onClick={() => ask(ordinary(each))}
+                      onClick={() => ask(ordinary(each, method()))}
                     >
                       {LOGIC_WORDS[each].name}
                     </button>
                   )}
                 </For>
               </fieldset>
+              {/* Natural deduction, a method of its own: one button, pressed where it is wanted. */}
+              <button
+                type="button"
+                class="btn btn-s"
+                aria-pressed={method() === "natural"}
+                data-tip="Prove the sequent by natural deduction (NK, NJ, NM): introduction and elimination rules, drawn as a tree or as Fitch's lines"
+                onClick={() => {
+                  const l = logic();
+                  if (l) ask(ordinary(l, method() === "natural" ? "sequent" : "natural"));
+                }}
+              >
+                Natural deduction
+              </button>
               <label
                 class="sw"
                 data-tip="Draw every weakening and contraction as an inference; off, they are left out where they are admissible, as in G3"

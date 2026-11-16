@@ -155,6 +155,28 @@ the page reads.
   `m=` the name, `d=` the session) and the shelf (`StoredProof.custom`) keep the calculus with
   the proof; reading either back runs `rules_view`, which checks every step again. A link
   without a session restores a built-in calculus's goal, not a file of one's own.
+- **Natural deduction is the ordinary suite's second method** (`Method` `"natural"`,
+  `src/lib/natural.ts`, `src/islands/Natural.tsx`): one button of the calculus popover,
+  "Natural deduction", pressed beside the logic, so a visitor who never presses it sees nothing
+  new (the author's rule). The proof's ordinary session still starts as before (it parses the
+  sequent and holds its form); with the method natural the stage shows `NaturalView` in the
+  drawing's place (`data-method="natural"`, its tabs hidden), and the bottom band's proof
+  actions and their keys stand aside (they would act on the sequent calculus proof the stage
+  does not show). The view starts a session of NK, NJ or NM (`CALCULI`, by the logic) on the
+  sequent (`problemOf`: the formulas left of ⊢ the assumptions, the one right of it the goal, ⊥
+  for none and the disjunction for several, said in a sentence), kept for the visit in a
+  module store by the tab and its sequent, never stored or linked: the link names no method
+  (`u=ordinary&m=LOGIC`), so a link of such a proof opens its sequent in the sequent calculus,
+  and the shelf keeps the ordinary session with the method, the natural deduction proof begun
+  afresh.
+  Steps go backwards (`rules_apply`, deduxit's list as in a calculus of one's own) or forwards
+  (`rules_derive`, a rule and lines cited by number), one direction shown at a time; a goal
+  equal to a line in force closes by it (`rules_cite`). **One numbering**: the session numbers
+  lines in the order its steps made them and the Fitch drawing top to bottom, so the view shows
+  each line by its `fitch` number (`shownNumbers`) and reads typed numbers back to the
+  session's (`citedLines`), refusing on the page a number no line in force is shown by; both
+  drawings come from one session (`rules_draw` with `view.layout`), and Save as writes the
+  drawing shown (`rules_export`).
 - **The linear suite's calls never get an ordinary session**: fill (`fillable`, `fill`), the
   invertible rules (`setInvertible`), the engine choice and the cut are kept to linear proofs.
 - **The registry reads every linear mode deduxit's `about` lists** (the switches build six; a

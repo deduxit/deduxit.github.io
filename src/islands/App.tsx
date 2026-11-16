@@ -19,7 +19,7 @@ import { prettyOrdinary } from "../lib/ordinary";
 import { paths } from "../lib/steps";
 import { failure } from "../lib/deduxit";
 import { Cancelled } from "../lib/protocol";
-import { calculusOf, parameterOf, SUITES } from "../lib/suites";
+import { calculusOf, isNatural, parameterOf, SUITES } from "../lib/suites";
 import { inputProblem, pretty } from "../lib/words";
 import type { Theme } from "../lib/theme";
 import type { Example, Lesson, Rule, Sample, Stop } from "../lib/content";
@@ -474,6 +474,10 @@ export default function App(props: {
       };
       const action = act[event.key];
       if (!action) return;
+      // A proof by natural deduction takes its steps in its own view: the sequent calculus's
+      // keys would act on a proof the stage does not show.
+      const calculus = prover.current()?.calculus;
+      if (calculus && isNatural(calculus) && "uUcCh[]es".includes(event.key)) return;
       if (event.key === "Escape" && ui.menu === null && !ui.pendingCalculus) return;
       event.preventDefault();
       action();

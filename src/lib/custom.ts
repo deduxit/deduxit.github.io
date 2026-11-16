@@ -58,6 +58,22 @@ export interface CustomGoal {
   readonly zones: readonly (readonly string[])[];
   /** The hypotheses in force, the innermost first. */
   readonly hypotheses: readonly string[];
+  /**
+   * The lines in force: `line` the number deduxit's calls take (from 1, fixed while the line
+   * stands), `fitch` its number in the proof's Fitch drawing, or null where none draws it.
+   */
+  readonly lines: readonly {
+    readonly line: number;
+    readonly fitch: number | null;
+    readonly sequent: string;
+  }[];
+}
+
+/** A forward step as deduxit's `rules_derive` takes it: a rule from lines, by their numbers. */
+export interface DeriveStep {
+  readonly rule: string;
+  readonly lines: readonly number[];
+  readonly given: Readonly<Record<string, string>>;
 }
 
 /** What `rules_view` and the calls that change a session answer as the view. */
@@ -69,7 +85,7 @@ export interface CustomView {
   readonly finished: boolean;
   readonly steps: number;
   readonly goals: readonly CustomGoal[];
-  /** For each inference `i<n>` of the drawing, its node in the session. */
+  /** For each inference `i<n>` of the tree's drawing, its node in the session. */
   readonly inferences: readonly number[];
 }
 

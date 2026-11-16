@@ -52,7 +52,7 @@ import {
   stepsOf,
 } from "../lib/ordinary";
 import { actions, goalAt, paths } from "../lib/steps";
-import { intuitionistic, parameterOf, suite } from "../lib/suites";
+import { intuitionistic, isNatural, parameterOf, suite } from "../lib/suites";
 import { noTerm, notTaken, pretty } from "../lib/words";
 import type { Theme } from "../lib/theme";
 import {
@@ -79,7 +79,7 @@ import { applyTheme } from "./TopBand";
 import type { Menu, Ui } from "./ui";
 
 /** Saves a file the page made. */
-function download(name: string, content: BlobPart, type: string) {
+export function download(name: string, content: BlobPart, type: string) {
   const url = URL.createObjectURL(new Blob([content], { type }));
   const a = document.createElement("a");
   a.href = url;
@@ -130,6 +130,12 @@ export function BottomBand(props: {
     </Show>
   );
 
+  /** Whether the proof is by natural deduction, whose own view takes its steps and saves it. */
+  const natural = () => {
+    const c = proof()?.calculus;
+    return !!c && isNatural(c);
+  };
+
   return (
     <>
       <footer class="band bottom">
@@ -143,7 +149,10 @@ export function BottomBand(props: {
             disabled={
               proof()?.custom
                 ? (proof()?.custom?.view?.steps ?? 0) === 0 || props.prover.busy()
-                : !proof()?.session || proof()?.view?.steps === 0 || props.prover.busy()
+                : !proof()?.session ||
+                  proof()?.view?.steps === 0 ||
+                  natural() ||
+                  props.prover.busy()
             }
             onClick={() => void props.prover.undo()}
             show={key}
@@ -154,7 +163,9 @@ export function BottomBand(props: {
             tip="Redo"
             keyName="⇧U"
             alone
-            disabled={!(proof()?.redo.length || proof()?.later.length) || props.prover.busy()}
+            disabled={
+              !(proof()?.redo.length || proof()?.later.length) || natural() || props.prover.busy()
+            }
             onClick={() => void props.prover.redo()}
             show={key}
           />
@@ -165,7 +176,7 @@ export function BottomBand(props: {
             keyName="S"
             wide
             expanded={ui.menu === "steps"}
-            disabled={!proof()?.session}
+            disabled={!proof()?.session || natural()}
             onClick={() => toggle("steps")}
             show={key}
             labelled={labelled}
@@ -175,7 +186,7 @@ export function BottomBand(props: {
             icon={<CheckCheck aria-hidden="true" />}
             tip="The search closes every open goal"
             keyName="⇧C"
-            disabled={!proof()?.view || proof()?.view?.complete || props.prover.busy()}
+            disabled={!proof()?.view || proof()?.view?.complete || natural() || props.prover.busy()}
             onClick={() => void props.prover.closeAll()}
             show={key}
             labelled={labelled}
@@ -185,7 +196,7 @@ export function BottomBand(props: {
             icon={<Lightbulb aria-hidden="true" />}
             tip="The next rung of the hint ladder"
             keyName="H"
-            disabled={!proof()?.view || proof()?.view?.complete || props.prover.busy()}
+            disabled={!proof()?.view || proof()?.view?.complete || natural() || props.prover.busy()}
             onClick={props.hint}
             show={key}
             labelled={labelled}
@@ -199,7 +210,7 @@ export function BottomBand(props: {
             keyName="E"
             wide
             expanded={ui.menu === "export"}
-            disabled={!proof()?.session}
+            disabled={!proof()?.session || natural()}
             onClick={() => toggle("export")}
             show={key}
             labelled={labelled}

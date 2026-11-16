@@ -68,6 +68,8 @@ const calls = {
   rules_view: deduxit.rules_view,
   rules_rules: deduxit.rules_rules,
   rules_apply: deduxit.rules_apply,
+  rules_derive: deduxit.rules_derive,
+  rules_cite: deduxit.rules_cite,
   rules_assume: deduxit.rules_assume,
   rules_undo: deduxit.rules_undo,
   rules_check: deduxit.rules_check,

@@ -34,6 +34,7 @@ import type {
   CustomSession,
   CustomStep,
   CustomView,
+  DeriveStep,
   Described,
 } from "./custom";
 import type { OrdinaryOutcome, OrdinarySession, OrdinaryStep, OrdinaryView } from "./ordinary";
@@ -261,10 +262,22 @@ export function createApi(changed: (pending: number) => void) {
           JSON.stringify(step),
           settings,
         ),
+      /** A forward step at a goal: from lines in force to a new line, numbered `line`. */
+      derive: (session: CustomSession, goal: number, step: DeriveStep, settings: string) =>
+        json<CustomPlayed & { line: number }>(
+          "rules_derive",
+          JSON.stringify(session),
+          goal,
+          JSON.stringify(step),
+          settings,
+        ),
+      /** A goal closed by a line in force at it, by the line's number. */
+      cite: (session: CustomSession, goal: number, line: number, settings: string) =>
+        json<CustomPlayed>("rules_cite", JSON.stringify(session), goal, line, settings),
       assume: (session: CustomSession, goal: number, settings: string) =>
         json<CustomPlayed>("rules_assume", JSON.stringify(session), goal, settings),
       undo: (session: CustomSession, settings: string) =>
-        json<CustomPlayed & { reopened: number | null }>(
+        json<CustomPlayed & { reopened: number | null; removed: number | null }>(
           "rules_undo",
           JSON.stringify(session),
           settings,
