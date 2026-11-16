@@ -580,7 +580,7 @@ export function createProver(say: (text: string) => void = () => undefined) {
    * the invertible rules applied by themselves when they are on, the derivation's sides, and
    * the first-order bounds where they are not the tab's.
    */
-  const json = (budget = settings().budget, invertible = settings().invertible) => {
+  const json = (budget = settings().budget, invertible = invertibleOn(current()?.id)) => {
     const s = settings();
     const search = {
       ...(s.engine ? { engine: s.engine } : {}),
@@ -637,6 +637,13 @@ export function createProver(say: (text: string) => void = () => undefined) {
    * again after each would leave the recorded ones no goal.
    */
   const replaying = () => json(settings().budget, false);
+
+  /**
+   * Whether deduxit applies the invertible rules by itself on proof `id`: the setting is on, and
+   * no course pack that bars the search holds the proof (it asks for every step by hand).
+   */
+  const invertibleOn = (id: string | undefined): boolean =>
+    settings().invertible && (id === undefined || limits().search(id) === null);
 
   const current = () => store.proofs.find((p) => p.id === store.active);
   const index = (id: string) => store.proofs.findIndex((p) => p.id === id);
@@ -1315,6 +1322,7 @@ export function createProver(say: (text: string) => void = () => undefined) {
     current,
     activeGoal,
     json,
+    invertibleOn,
 
     /**
      * Turns the invertible rules applied by themselves on or off; on, they are applied at once to
@@ -1324,8 +1332,9 @@ export function createProver(say: (text: string) => void = () => undefined) {
       actions.setSettings({ invertible: on });
       if (!on) return;
       for (const p of store.proofs) {
-        // The invertible rules are the linear suite's.
+        // The invertible rules are the linear suite's, and a pack that bars the search bars them.
         if (!p.session || p.view?.complete || p.calculus.suite !== "linear") continue;
+        if (!invertibleOn(p.id)) continue;
         const result = await attempt(() => api.invertAll(p.session as SessionDoc, replaying()));
         if (!result.ok || result.value.inverted === 0) continue;
         show(p.id, result.value, activeGoal({ ...p, ...result.value }));
@@ -2115,7 +2124,7 @@ export function createProver(say: (text: string) => void = () => undefined) {
       }
       // With the invertible rules on, undo takes back the visitor's last choice with the
       // invertible steps after it: taking back one of those alone, the page would apply it again.
-      const invertible = settings().invertible ? new Set(p.view?.invertible ?? []) : undefined;
+      const invertible = invertibleOn(p.id) ? new Set(p.view?.invertible ?? []) : undefined;
       const retracted = retract(
         p.session as SessionDoc,
         p.view?.complete ? undefined : activeGoal(p),

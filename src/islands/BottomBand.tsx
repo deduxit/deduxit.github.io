@@ -1060,6 +1060,14 @@ function SettingsPanel(props: {
         <p class="sub" id="invertible-sub">
           The page takes them after each of your steps, and undo takes them back with it.
         </p>
+        <Show
+          when={
+            props.prover.settings().invertible &&
+            !props.prover.invertibleOn(props.prover.current()?.id)
+          }
+        >
+          <p class="sub">This pack asks for every step by hand.</p>
+        </Show>
         <fieldset class="lbl col">
           <legend>Theme</legend>
           <fieldset class="seg" aria-label="Theme">

@@ -250,7 +250,12 @@ the page reads.
     with the reason as their tip, and the calculus popover says the reason in place of its
     switches. `modalSteps`, `customFrom` and `showModalStatement` ask `fixed` too (each would
     turn a pack's tab into another calculus). deduxit's table and tableau decide, so the stage's
-    Table and Tableau tabs are not offered where the search is barred (`decidable`). A modal
+    Table and Tableau tabs are not offered where the search is barred (`decidable`). The
+    invertible rules applied by themselves are barred with the search (the author, 2026-11-16):
+    `invertibleOn(id)` is the setting less a pack's bar, and every call's `json`, the undo's
+    grouping and `setInvertible`'s run read it, so the setting stays the visitor's elsewhere and
+    the Settings sheet says "This pack asks for every step by hand."; a hand-in whose session
+    holds such steps is still a proof, and the check view takes it. A modal
     problem with the search barred is not decided (`startModal`): the editor is open, empty, its
     tab's status "Undecided: find a model", and the model the student makes is the answer; a
     valid modal problem has none, so it is never done.
