@@ -44,6 +44,7 @@ import {
   type Termed,
 } from "../lib/deduxit";
 import { writeLink } from "../lib/link";
+import { isHandin, readHandin } from "../lib/pack";
 import {
   countermodelOf,
   isOrdinary,
@@ -74,6 +75,7 @@ import {
 import { Written } from "./Learn";
 import { Dictionary, Logo } from "./Logo";
 import { type Practice, PracticePlace } from "./Practice";
+import { CheckSheet, HandinSheet, PackSheet, usePacks } from "./Packs";
 import { InterpolateSheet, TranslateSheet } from "./Transforms";
 import { applyTheme } from "./TopBand";
 import type { Menu, Ui } from "./ui";
@@ -121,6 +123,12 @@ export function BottomBand(props: {
   tour: () => void;
 }) {
   const { ui, setUi } = props.ui;
+  const packs = usePacks();
+  /** Why a course pack bars the search on the shown proof, or null. */
+  const searchBarred = () => {
+    const p = proof();
+    return p ? props.prover.limits().search(p.id) : null;
+  };
   const proof = () => props.prover.current();
   const toggle = (menu: Menu) => setUi("menu", ui.menu === menu ? null : menu);
   const labelled = (label: string) => <span class="act-name">{label}</span>;
@@ -184,9 +192,15 @@ export function BottomBand(props: {
           <Action
             label="Close all"
             icon={<CheckCheck aria-hidden="true" />}
-            tip="The search closes every open goal"
+            tip={searchBarred() ?? "The search closes every open goal"}
             keyName="⇧C"
-            disabled={!proof()?.view || proof()?.view?.complete || natural() || props.prover.busy()}
+            disabled={
+              !proof()?.view ||
+              proof()?.view?.complete ||
+              natural() ||
+              props.prover.busy() ||
+              searchBarred() !== null
+            }
             onClick={() => void props.prover.closeAll()}
             show={key}
             labelled={labelled}
@@ -194,9 +208,15 @@ export function BottomBand(props: {
           <Action
             label="Hint"
             icon={<Lightbulb aria-hidden="true" />}
-            tip="The next rung of the hint ladder"
+            tip={searchBarred() ?? "The next rung of the hint ladder"}
             keyName="H"
-            disabled={!proof()?.view || proof()?.view?.complete || natural() || props.prover.busy()}
+            disabled={
+              !proof()?.view ||
+              proof()?.view?.complete ||
+              natural() ||
+              props.prover.busy() ||
+              searchBarred() !== null
+            }
             onClick={props.hint}
             show={key}
             labelled={labelled}
@@ -238,7 +258,7 @@ export function BottomBand(props: {
             labelled={labelled}
           />
         </div>
-        <div class="group">
+        <div class="group site">
           <Action
             label="Practice"
             icon={<Dumbbell aria-hidden="true" />}
@@ -326,6 +346,15 @@ export function BottomBand(props: {
       </Show>
       <Show when={ui.menu === "interpolate"}>
         <InterpolateSheet prover={props.prover} ui={props.ui} />
+      </Show>
+      <Show when={ui.menu === "pack"}>
+        <PackSheet prover={props.prover} ui={props.ui} />
+      </Show>
+      <Show when={ui.menu === "handin" && packs}>
+        {(p) => <HandinSheet packs={p()} prover={props.prover} />}
+      </Show>
+      <Show when={ui.menu === "check" && packs}>
+        {(p) => <CheckSheet packs={p()} prover={props.prover} ui={props.ui} />}
       </Show>
       <Show when={ui.menu === "more"}>
         <MoreSheet prover={props.prover} ui={props.ui} tour={props.tour} />
@@ -759,6 +788,19 @@ function ExportMenu(props: {
                   </span>
                 </button>
               </li>
+              <li role="none">
+                <button
+                  type="button"
+                  role="menuitem"
+                  class="mi"
+                  onClick={() => props.ui.setUi("menu", "pack")}
+                >
+                  <span class="fmt">Course pack</span>
+                  <span class="fn">
+                    The open tabs' problems as one link for students, who hand their answers back
+                  </span>
+                </button>
+              </li>
             </ul>
           </fieldset>
         </li>
@@ -795,7 +837,19 @@ function ImportPanel(props: { prover: Prover; ui: Ui }) {
   const [text, setText] = createSignal("");
   const [said, setSaid] = createSignal<{ text: string; tone: string } | null>(null);
 
+  const packs = usePacks();
   async function take(content: string, from: string) {
+    // A hand-in file opens in the check view, the open tabs left as they are.
+    if (isHandin(content) && packs) {
+      const handin = readHandin(content);
+      if ("problem" in handin)
+        setSaid({
+          text: `Not imported: no hand-in this page reads (${handin.problem}).`,
+          tone: "bad",
+        });
+      else await packs.check(handin);
+      return;
+    }
     const outcome = await props.prover.open(content);
     if ("kind" in outcome) {
       setSaid({ text: `Imported a ${outcome.kind}${from}.`, tone: "ok" });

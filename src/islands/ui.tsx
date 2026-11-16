@@ -54,6 +54,9 @@ export type Menu =
   | "interpolate"
   | "more"
   | "workspace"
+  | "pack"
+  | "handin"
+  | "check"
   | null;
 
 /** A step a lesson played, whose reason stands beside its inference on the stage. */

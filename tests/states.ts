@@ -6,6 +6,7 @@
 // controls in every state, tests/accessibility.spec.ts runs axe in every
 // state: a new control, popover or state gets a step here, and both see it.
 
+import { readFile } from "node:fs/promises";
 import { devices, expect, type Page } from "@playwright/test";
 import { calculus, goto, rule, start, switches } from "./prover";
 
@@ -609,4 +610,49 @@ export async function coursing(page: Page, visit: Visit) {
   await page.getByRole("button", { name: "Predict ∧E₂" }).click();
   await expect(page.getByRole("region", { name: "Natural deduction" })).toBeVisible();
   await visit("natural lesson's step");
+}
+
+/**
+ * Course packs: the teacher's sheet, a pack opened with its bar, its fixed calculus, the hand-in,
+ * the check view of a hand-in imported, and a pack embedded in a course's page.
+ */
+export async function packing(page: Page, visit: Visit) {
+  await start(page, "A * B |- B * A");
+  await band(page, "Export");
+  await page.getByRole("menuitem", { name: /^Course pack/ }).click();
+  const sheet = page.getByRole("dialog", { name: "Course pack" });
+  await sheet.getByRole("textbox", { name: "Title" }).fill("Week 3");
+  await expect(sheet.locator(".pk-code")).toBeVisible();
+  await visit("course pack");
+  const handout = (await page.locator(".pk-handout p").textContent()) ?? "";
+  const link = handout.match(/https?:\S+#v=4&k=\S+/)?.[0] ?? "";
+  await page.goto(link);
+  const bar = page.getByRole("region", { name: "Course pack" });
+  await expect(bar).toContainText("Week 3");
+  await visit("pack opened");
+  const pop = await switches(page);
+  await expect(pop).toContainText("problem 1 of the pack");
+  await visit("pack's fixed calculus");
+  await page.keyboard.press("Escape");
+  await bar.getByRole("button", { name: "Hand in" }).click();
+  const handin = page.getByRole("dialog", { name: "Hand in" });
+  await expect(handin.locator(".pk-code")).toBeVisible();
+  await visit("hand-in");
+  const download = page.waitForEvent("download");
+  await handin.getByRole("button", { name: "Download the file" }).click();
+  const text = await readFile(await (await download).path(), "utf8");
+  await page.keyboard.press("Escape");
+  await band(page, "Import");
+  await page.getByRole("dialog", { name: "Import" }).locator("textarea").fill(text);
+  await page
+    .getByRole("dialog", { name: "Import" })
+    .getByRole("button", { name: "Import" })
+    .click();
+  await expect(page.getByRole("dialog", { name: "Check a hand-in" }).locator(".kw")).toHaveCount(1);
+  await visit("check view");
+  // Only the fragment changes: a reload opens the link as a course's page would.
+  await page.goto(`${link}&e=1`);
+  await page.reload();
+  await expect(page.getByRole("link", { name: "Open in deduxit" })).toBeVisible();
+  await visit("pack embedded");
 }

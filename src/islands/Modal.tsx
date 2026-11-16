@@ -90,6 +90,11 @@ function Decided(props: { prover: Prover }) {
   const work = () => proof()?.modal ?? null;
   const outcome = () => work()?.outcome ?? null;
   const system = () => outcome()?.system ?? "";
+  /** The tab's system, decided or not. */
+  const chosen = () => {
+    const c = proof()?.calculus;
+    return c?.suite === "modal" ? c.system : "";
+  };
   const font = () => props.prover.settings().stageFont;
   const [drawing] = createResource(
     () => outcome() ?? undefined,
@@ -112,9 +117,26 @@ function Decided(props: { prover: Prover }) {
   };
   const tone = () =>
     outcome()?.verdict === "valid" ? "ok" : outcome()?.verdict === "not_valid" ? "bad" : "warn";
+  /** A course pack's problem with the search barred: deduxit decides nothing, the model is the visitor's. */
+  const barred = () => {
+    const p = proof();
+    return p ? props.prover.limits().search(p.id) !== null : false;
+  };
 
   return (
-    <>
+    <Show
+      when={!barred()}
+      fallback={
+        <>
+          <p class="method-verdict">
+            This problem is yours to decide: deduxit decides nothing here. Find a model where the
+            sequent fails, and check it.
+          </p>
+          <p class="method-verdict">{systemSentence(chosen())}</p>
+          <Editor prover={props.prover} open />
+        </>
+      }
+    >
       <p class="method-verdict" role="status">
         <Show when={verdict()} fallback={<>Deciding…</>}>
           {(said) => (
@@ -167,12 +189,12 @@ function Decided(props: { prover: Prover }) {
       <Show when={outcome() && outcome()?.verdict !== "unknown"}>
         <Editor prover={props.prover} />
       </Show>
-    </>
+    </Show>
   );
 }
 
 /** The model to change and check, drawn: its worlds, their atoms and arrows, the world to check at. */
-function Editor(props: { prover: Prover }) {
+function Editor(props: { prover: Prover; open?: boolean }) {
   const proof = () => props.prover.current();
   const work = () => proof()?.modal ?? null;
   const model = (): Model | null => work()?.model ?? null;
@@ -192,7 +214,7 @@ function Editor(props: { prover: Prover }) {
     };
   };
   return (
-    <details class="custom-file modal-editor">
+    <details class="custom-file modal-editor" open={props.open}>
       <summary>
         {work()?.outcome?.countermodel ? "Change the model and check it" : "Check a model"}
       </summary>

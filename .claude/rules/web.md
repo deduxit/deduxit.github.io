@@ -233,6 +233,46 @@ the page reads.
   `invalid_model` refusal is said as "No model of … logic" with deduxit's reason
   (`refusalWords`). A "Model" tab shows only while the view does; Tree, or another proof on
   the stage, leaves it.
+- **Course packs** (`src/lib/pack.ts` the formats, `src/islands/Packs.tsx` the runtime and its
+  sheets, `PacksContext`): a pack `{"pack": 1, "title", "search", "problems": [{"suite",
+  "parameter", "sequent"}]}` is `#v=4&k=…`, a hand-in `{"handin": 1, "pack", "answers"}` is
+  `#v=4&h=…` up to `HANDIN_LIMIT` characters and a file past it, each packed as `d` is
+  (`link.ts`). Nothing is sent anywhere: the answers are kept in the browser under
+  `deduxit-pack:<code>`, and the link and the file are the student's to send.
+  - Both are read key by key within bounds (`readPack`, `readHandin`: no key of its own, a
+    calculus the registry knows in the linear, ordinary or modal suite, at most `MOST_PROBLEMS`).
+    zod is not used here: its probe of `eval` is a CSP violation, and it would weigh on the
+    island's first load.
+  - The limits are the prover's (`Limits`, `prover.restrict`, `NO_LIMITS` without a pack): every
+    action that searches (`close`, `closeAll`, `fill`, `hint`, the hint ladder in `App.tsx`) or
+    changes a started problem's sequent or calculus (`submit`, `setCalculus`) asks first and says
+    the reason on the tab's banner, so a key does no more than a button; the buttons are greyed
+    with the reason as their tip, and the calculus popover says the reason in place of its
+    switches. A modal problem with the search barred is not decided (`startModal`): the editor
+    is open, empty, and the model the student makes is the answer.
+  - A pack opened holds the address (the linking effect writes no tab's link meanwhile), so a
+    reload opens it again with its kept answers: a kept session opens as its tab (its text the
+    problem's), a kept model is checked again.
+  - **The check view trusts nothing of a hand-in** (`checkAnswer`): a session is read again by
+    its suite's call (deduxit replays and checks every step of a session it reads), its mode or
+    logic held to the problem's and its sequent's text (`read_as`, `ordinary_read` on the
+    session's `sequent`) to the problem's; a finished linear proof is checked once more by
+    `proof`. A model is checked by `modal_evaluate` against the problem. The pack inside a
+    hand-in is the student's too: the view shows its code (`packCode`, 48 bits of SHA-256 of
+    `packText`), which the teacher compares with the code their own sheet showed.
+  - A hand-in imported (the Import panel, a file dropped on the stage, `isHandin` by its first
+    key) opens the check view and leaves the open tabs alone; "Open the answer" opens one on a
+    tab of its own.
+- **The embed**: `&e=1` on any link sets `data-embed` on the root: no earlier visit set aside,
+  the bottom band's site group (`.group.site`: Practice, Learn, the tour, the keys, About), the
+  restore bar and the new-tab button hidden, an "Open in deduxit" link, and the links the page
+  writes keep `&e=1`. GitHub Pages sets no header, and a `<meta>` CSP cannot carry
+  `frame-ancestors`, so any page may frame it; the page in a frame reads and keeps only its own
+  partitioned storage.
+- **Print** (`@media print` in `app.css`): the light scheme, no band, menu, pack bar or stage
+  controls; with the course pack's sheet open, its handout alone (`.pk-handout`, `print-only`:
+  the title, each problem and its calculus, the link and the code), shown through a page made
+  invisible around it.
 - **Proving a modal sequent step by step**: under a valid derivation, "Prove it step by step"
   (`modalSteps`) turns the tab into a calculus given as data: the rule file `modal_calculus`
   gives (`G3S4`), the sequent the root of the valid derivation (`rootSequent`, every compound

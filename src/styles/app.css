@@ -3043,3 +3043,146 @@ fieldset {
 .ws-card[data-stale] {
   border-style: dashed;
 }
+
+/* A course pack's bar, over the stage's top left: its title, a button per problem (done ones
+   ticked, the shown one outlined), how many are done, the hand-in. */
+.pack-bar {
+  position: absolute;
+  top: var(--spacing-2);
+  left: var(--spacing-2);
+  z-index: var(--layer-hud);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-2);
+  max-width: calc(100% - 2 * var(--spacing-2));
+  padding: var(--spacing-1-5) var(--spacing-3);
+  font-size: var(--text-small);
+}
+.pk-title {
+  font-weight: var(--font-weight-semibold);
+}
+.pk-problems {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.pk-problem {
+  min-width: var(--size-control-small);
+  min-height: var(--size-control-small);
+  padding: 0 var(--spacing-1);
+  border: var(--line) solid var(--color-line);
+  border-radius: var(--radius-control);
+  background: var(--color-panel);
+  color: var(--color-ink);
+  font: inherit;
+  cursor: pointer;
+}
+.pk-problem[aria-current="true"] {
+  border: var(--line-strong) solid var(--color-accent);
+}
+/* Done is a tick beside the number, not the colour alone. */
+.pk-problem[data-done] {
+  background: var(--color-ok-wash);
+}
+.pk-problem[data-done]::after {
+  content: "✓";
+  margin-left: var(--spacing-0-5);
+  color: var(--color-ok);
+}
+.pk-code {
+  font-family: var(--font-mono);
+}
+.pk-field .field {
+  width: min(var(--size-text), calc(100vw - var(--spacing-7)));
+}
+.pk-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.pk-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--spacing-2);
+}
+.pk-calc {
+  color: var(--color-dim);
+  font-size: var(--text-small);
+}
+.pk-checks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  margin: 0;
+  padding-left: var(--spacing-4);
+}
+.pk-check .row {
+  margin: 0;
+}
+.print-only {
+  display: none;
+}
+
+/* The page embedded in a course's own page: the proofs and their actions, without the site's
+   places (Practice, Learn, the tour, the keys, About), the restore bar or a new tab; a link
+   opens the whole page. */
+.embed-open {
+  position: absolute;
+  top: var(--spacing-2);
+  right: var(--spacing-2);
+  z-index: var(--layer-hud);
+}
+:root[data-embed] .band.bottom > .group.site,
+:root[data-embed] .restore,
+:root[data-embed] .pt-new {
+  display: none;
+}
+
+/* Print: a handout or the proof shown, on white, without the page's controls. With the course
+   pack's sheet open, its handout alone: the pack's title, its problems, its link. */
+@media print {
+  :root {
+    color-scheme: light;
+  }
+  .band,
+  .restore,
+  .pack-bar,
+  .embed-open,
+  .stage-ctl,
+  .menu {
+    display: none;
+  }
+  .print-only {
+    display: block;
+  }
+  /* The handout shows through a page made invisible around it: it lives in the sheet. */
+  .app:has(.pk-handout) .menu.pack-sheet {
+    display: block;
+  }
+  .app:has(.pk-handout) * {
+    visibility: hidden;
+  }
+  .app:has(.pk-handout) .pk-handout,
+  .app:has(.pk-handout) .pk-handout * {
+    visibility: visible;
+  }
+  .pk-handout {
+    position: fixed;
+    inset: 0;
+    padding: var(--spacing-6);
+    background: var(--color-panel);
+    font: var(--font-weight-normal) var(--text-panel) / var(--leading-normal) var(--font-text);
+    color: var(--color-ink);
+  }
+  .pk-handout li {
+    margin-bottom: var(--spacing-3);
+  }
+}

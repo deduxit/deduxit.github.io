@@ -13,7 +13,15 @@
 
 import { createEffect, createSignal, on, onCleanup, onMount, Show } from "solid-js";
 import { unwrap } from "solid-js/store";
-import { type LinkContent, readLink, writeLink, writeWorkspaceLink } from "../lib/link";
+import {
+  isEmbedded,
+  type LinkContent,
+  readLink,
+  readPackLink,
+  writeLink,
+  writeWorkspaceLink,
+} from "../lib/link";
+import { readHandin, readPack } from "../lib/pack";
 import { MATH_FONTS, type MathFont } from "../lib/deduxit";
 import { prettyModal } from "../lib/modal";
 import { prettyOrdinary } from "../lib/ordinary";
@@ -27,6 +35,7 @@ import type { Example, Lesson, OrdinaryCourse, Rule, Sample, Stop } from "../lib
 import { hintsFor } from "../lib/rules";
 import { migrate } from "../lib/storage";
 import { BottomBand } from "./BottomBand";
+import { createPacks, PackBar, PacksContext } from "./Packs";
 import { LearnFrame } from "./Learn";
 import { RuleHints } from "./RuleHint";
 import { createPractice } from "./Practice";
@@ -69,6 +78,9 @@ export default function App(props: {
   const prover = createProver((text) => setUi("live", text));
   const practice = createPractice(prover);
   const workspace = createWorkspace(prover, view);
+  const packs = createPacks(prover, view);
+  /** Whether the page is embedded in a course's own page: the stage, the rest left out. */
+  const embedded = isEmbedded(typeof location === "undefined" ? "" : location.hash);
   /** Whether the panel of linked tabs stands left of the stage. */
   const docked = () => workspace.linked() && workspace.docks() && workspace.state.shown;
   const [theme, setTheme] = createSignal<Theme>("system");
@@ -112,6 +124,44 @@ export default function App(props: {
     document.documentElement.dataset["mathFont"] = chosen;
     void font(chosen).catch(() => undefined);
   });
+
+  /**
+   * Opens a course pack's link (its problems, a tab each) or a hand-in's (the check view, the open
+   * tabs left as they are); false where the fragment holds neither.
+   */
+  async function openPack(hash: string, pasted = false): Promise<boolean> {
+    const link = await readPackLink(hash);
+    if (!link) return false;
+    const refused = (keyword: string, sentence: string) => {
+      const id = prover.add();
+      prover.banner(id, { keyword, sentence });
+    };
+    const keyword = link.kind === "pack" ? "Pack not opened" : "Hand-in not opened";
+    if ("problem" in link) {
+      refused(
+        keyword,
+        link.problem === "size"
+          ? "The link unpacks to more than a link may hold."
+          : "The link's document did not unpack: it may have been cut short when it was copied.",
+      );
+      return true;
+    }
+    if (link.kind === "handin") {
+      const handin = readHandin(link.text);
+      if ("problem" in handin)
+        refused(keyword, `The link holds no hand-in this page reads (${handin.problem}).`);
+      else await packs.check(handin);
+      return true;
+    }
+    const pack = readPack(link.text);
+    if ("problem" in pack) {
+      refused(keyword, `The link holds no course pack this page reads (${pack.problem}).`);
+      return true;
+    }
+    if (pasted) prover.leave();
+    await packs.arrive(pack);
+    return true;
+  }
 
   /** Opens the proof a link holds, or its sequent alone with the reason where the proof is not read. */
   async function openLink(link: LinkContent) {
@@ -174,6 +224,11 @@ export default function App(props: {
     opening = opening
       .catch(() => undefined)
       .then(async () => {
+        if (await openPack(hash, true)) {
+          prover.prune();
+          if (prover.store.proofs.length === 0) prover.add();
+          return;
+        }
         const link = await readLink(hash);
         if (!link) return;
         // Not `starting`: the old proof's menus and selection close as the active proof changes.
@@ -189,11 +244,15 @@ export default function App(props: {
     // The worker starts with the first call: this one, so that deduxit's
     // module loads after the first paint, before the visitor's first step.
     void prover.api.about().catch(() => undefined);
-    prover.begin();
+    if (embedded) document.documentElement.dataset["embed"] = "";
+    // An embedded page is a course page's exercise: it sets no earlier visit's proofs aside.
+    else prover.begin();
     const hash = location.hash;
     opening = (async () => {
-      const link = await readLink(hash);
-      if (link) await openLink(link);
+      if (!(await openPack(hash))) {
+        const link = await readLink(hash);
+        if (link) await openLink(link);
+      }
       prover.prune();
       if (prover.store.proofs.length === 0) prover.add();
       starting = false;
@@ -239,12 +298,14 @@ export default function App(props: {
       ([session, calculus, input, decided]) => {
         clearTimeout(linking);
         if (!calculus || !input) return;
+        // A pack's link stays in the address while it is open: it is what a reload opens again.
+        if (packs.open()) return;
         // A modal tab's link holds its sequent and system alone: it is decided again on arrival.
         if (calculus.suite === "modal") {
           if (!decided) return;
           linking = setTimeout(async () => {
             const written = await writeLink(prettyModal(input), "modal", parameterOf(calculus));
-            history.replaceState(null, "", written.hash);
+            history.replaceState(null, "", embedded ? `${written.hash}&e=1` : written.hash);
             wrote = location.hash;
             setLinkShort(!written.whole);
           }, 400);
@@ -276,7 +337,7 @@ export default function App(props: {
                 parameterOf(calculus),
                 JSON.stringify(unwrap(session)),
               );
-          history.replaceState(null, "", written.hash);
+          history.replaceState(null, "", embedded ? `${written.hash}&e=1` : written.hash);
           wrote = location.hash;
           setLinkShort(!written.whole);
         }, 400);
@@ -310,6 +371,11 @@ export default function App(props: {
     const p = prover.current();
     const goal = prover.activeGoal();
     if (!p?.session || goal === undefined) return;
+    const barred = prover.limits().search(p.id);
+    if (barred) {
+      prover.banner(p.id, { keyword: "Course pack", sentence: barred });
+      return;
+    }
     const key = ladderKey(p.id, paths(p.session).get(goal) ?? []);
     const ladder = ui.ladder?.key === key ? ui.ladder : null;
     if (!ladder) {
@@ -538,104 +604,121 @@ export default function App(props: {
   );
 
   return (
-    <WorkspaceContext.Provider value={workspace}>
-      <div
-        class="app"
-        data-keys={prover.settings().showKeys ? "" : undefined}
-        data-learn={ui.learn ? "" : undefined}
-      >
-        <div class="win">
-          <TopBand
-            prover={prover}
-            ui={view}
-            theme={theme}
-            setTheme={setTheme}
-            samples={props.samples}
-          />
-          <Show when={prover.aside()}>
-            {(shelf) => (
-              <section class="restore cluster" aria-label="Restore">
-                <span>
-                  {shelf().proofs.length} {shelf().proofs.length === 1 ? "proof" : "proofs"} from
-                  your last visit
-                </span>
-                <button type="button" class="btn btn-primary" onClick={() => prover.restore()}>
-                  Restore
-                </button>
-                <button type="button" class="btn" onClick={() => prover.discard()}>
-                  Discard
-                </button>
-              </section>
+    <PacksContext.Provider value={packs}>
+      <WorkspaceContext.Provider value={workspace}>
+        <div
+          class="app"
+          data-keys={prover.settings().showKeys ? "" : undefined}
+          data-learn={ui.learn ? "" : undefined}
+        >
+          <div class="win">
+            <TopBand
+              prover={prover}
+              ui={view}
+              theme={theme}
+              setTheme={setTheme}
+              samples={props.samples}
+            />
+            <Show when={prover.aside()}>
+              {(shelf) => (
+                <section class="restore cluster" aria-label="Restore">
+                  <span>
+                    {shelf().proofs.length} {shelf().proofs.length === 1 ? "proof" : "proofs"} from
+                    your last visit
+                  </span>
+                  <button type="button" class="btn btn-primary" onClick={() => prover.restore()}>
+                    Restore
+                  </button>
+                  <button type="button" class="btn" onClick={() => prover.discard()}>
+                    Discard
+                  </button>
+                </section>
+              )}
+            </Show>
+            <div class="ws-stage" data-docked={docked() ? "" : undefined}>
+              <Show when={docked()}>
+                <WorkspacePanel workspace={workspace} prover={prover} ui={view} docked={true} />
+              </Show>
+              <div class="ws-main">
+                <Stage prover={prover} ui={view} />
+                <PackBar packs={packs} prover={prover} ui={view} />
+                <Show when={embedded}>
+                  <a
+                    class="embed-open btn btn-s"
+                    href="/"
+                    target="_blank"
+                    // The address as it is when pressed: the proof shown, the embed's mark left out.
+                    onClick={(event) => {
+                      event.currentTarget.href = location.href.replace(/&e=1\b/, "");
+                    }}
+                    rel="noopener"
+                  >
+                    Open in deduxit
+                  </a>
+                </Show>
+                <Show when={workspace.linked() && workspace.state.graph}>
+                  <WorkspaceGraph workspace={workspace} prover={prover} />
+                </Show>
+              </div>
+            </div>
+            <Show when={ui.menu === "workspace" && workspace.linked()}>
+              <WorkspacePanel workspace={workspace} prover={prover} ui={view} docked={false} />
+            </Show>
+            <Show when={linkShort() && ui.menu === "export"}>
+              <p class="sr-only">The link holds the sequent alone.</p>
+            </Show>
+            <BottomBand
+              prover={prover}
+              ui={view}
+              hint={() => void hint()}
+              font={font}
+              practice={practice}
+              theme={theme}
+              setTheme={setTheme}
+              tour={() => {
+                setUi({ menu: null, tour: null });
+                setUi("tour", 0);
+              }}
+            />
+          </div>
+          <Show when={ui.learn}>
+            <LearnFrame
+              prover={prover}
+              ui={view}
+              examples={props.examples}
+              lessons={props.lessons}
+              ordinary={props.ordinary}
+              rules={props.rules}
+              tour={() => {
+                setUi({ tour: null });
+                setUi("tour", 0);
+              }}
+            />
+          </Show>
+          <Tour prover={prover} ui={view} stops={props.stops} />
+          <Show when={tip()}>
+            {(t) => (
+              <div class="tip" ref={tipBox} role="tooltip">
+                {t().text}
+                <Show when={t().key}>{(k) => <kbd>{k()}</kbd>}</Show>
+              </div>
             )}
           </Show>
-          <div class="ws-stage" data-docked={docked() ? "" : undefined}>
-            <Show when={docked()}>
-              <WorkspacePanel workspace={workspace} prover={prover} ui={view} docked={true} />
-            </Show>
-            <div class="ws-main">
-              <Stage prover={prover} ui={view} />
-              <Show when={workspace.linked() && workspace.state.graph}>
-                <WorkspaceGraph workspace={workspace} prover={prover} />
-              </Show>
-            </div>
+          <RuleHints
+            hints={(() => {
+              const calculus = prover.current()?.calculus;
+              return calculus ? hintsFor(props.rules, calculus, false) : [];
+            })()}
+            drawn={(() => {
+              const calculus = prover.current()?.calculus;
+              return calculus ? hintsFor(props.rules, calculus, prover.settings().twoSided) : [];
+            })()}
+          />
+          <div class="sr-only" aria-live="polite">
+            {ui.live}
           </div>
-          <Show when={ui.menu === "workspace" && workspace.linked()}>
-            <WorkspacePanel workspace={workspace} prover={prover} ui={view} docked={false} />
-          </Show>
-          <Show when={linkShort() && ui.menu === "export"}>
-            <p class="sr-only">The link holds the sequent alone.</p>
-          </Show>
-          <BottomBand
-            prover={prover}
-            ui={view}
-            hint={() => void hint()}
-            font={font}
-            practice={practice}
-            theme={theme}
-            setTheme={setTheme}
-            tour={() => {
-              setUi({ menu: null, tour: null });
-              setUi("tour", 0);
-            }}
-          />
         </div>
-        <Show when={ui.learn}>
-          <LearnFrame
-            prover={prover}
-            ui={view}
-            examples={props.examples}
-            lessons={props.lessons}
-            ordinary={props.ordinary}
-            rules={props.rules}
-            tour={() => {
-              setUi({ tour: null });
-              setUi("tour", 0);
-            }}
-          />
-        </Show>
-        <Tour prover={prover} ui={view} stops={props.stops} />
-        <Show when={tip()}>
-          {(t) => (
-            <div class="tip" ref={tipBox} role="tooltip">
-              {t().text}
-              <Show when={t().key}>{(k) => <kbd>{k()}</kbd>}</Show>
-            </div>
-          )}
-        </Show>
-        <RuleHints
-          hints={(() => {
-            const calculus = prover.current()?.calculus;
-            return calculus ? hintsFor(props.rules, calculus, false) : [];
-          })()}
-          drawn={(() => {
-            const calculus = prover.current()?.calculus;
-            return calculus ? hintsFor(props.rules, calculus, prover.settings().twoSided) : [];
-          })()}
-        />
-        <div class="sr-only" aria-live="polite">
-          {ui.live}
-        </div>
-      </div>
-    </WorkspaceContext.Provider>
+      </WorkspaceContext.Provider>
+    </PacksContext.Provider>
   );
 }

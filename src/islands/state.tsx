@@ -508,6 +508,20 @@ const eliminationProblem = (failed: Failure): Said => ({
   sentence: `${failed.message.charAt(0).toUpperCase()}${failed.message.slice(1)}.`,
 });
 
+/** What a course pack bars on a proof: each the reason said, or null where it is allowed. */
+export interface Limits {
+  /** The search: Close goal, Close all, a hint, a goal filled from another tab. */
+  readonly search: (id: string) => string | null;
+  /** A change of the proof's sequent or calculus. */
+  readonly fixed: (id: string) => string | null;
+}
+
+/** No pack open: nothing barred. */
+export const NO_LIMITS: Limits = { search: () => null, fixed: () => null };
+
+/** A pack's reason on a tab's banner. */
+const PACK_SAYS = (sentence: string): Said => ({ keyword: "Course pack", sentence });
+
 export function createProver(say: (text: string) => void = () => undefined) {
   const [pending, setPending] = createSignal(0);
   const api: Api = createApi(setPending);
@@ -522,6 +536,13 @@ export function createProver(say: (text: string) => void = () => undefined) {
   /** The calculus last chosen in this visit, which a new empty tab starts in. */
   const [lastCalculus, setLastCalculus] = createSignal<Calculus>(linear("classical"));
   const [busy, setBusy] = createSignal(false);
+  /**
+   * What a course pack bars, by proof: the search (Close goal, Close all, Hint, a goal filled
+   * from another tab) and a change of the sequent or the calculus, each the reason said, or null
+   * where it is allowed. Every action that would do one asks here, so a key does no more than a
+   * button.
+   */
+  const [limits, setLimits] = createSignal<Limits>(NO_LIMITS);
   /** This visit's key among the stored proofs; a link opened in the page starts a new one. */
   let visit = freshId();
 
@@ -864,6 +885,11 @@ export function createProver(say: (text: string) => void = () => undefined) {
       q.banner = null;
       q.verdict = null;
     });
+    // A pack that bars the search leaves the decision to the visitor: the model editor is theirs.
+    if (limits().search(id)) {
+      save();
+      return;
+    }
     const decided = await attempt(() => api.modal.decide(read.value, settings));
     update(id, (q) => {
       if (!q.modal || q.modal.statement !== read.value) return;
@@ -1088,7 +1114,20 @@ export function createProver(say: (text: string) => void = () => undefined) {
     return null;
   }
 
+  /** Says why a pack bars an action on proof `id`, on its tab's banner; true when it does. */
+  const barred = (id: string | undefined, why: (id: string) => string | null): boolean => {
+    const reason = id === undefined ? null : why(id);
+    if (reason && id !== undefined) update(id, (q) => (q.banner = PACK_SAYS(reason)));
+    return reason !== null;
+  };
+
   const actions = {
+    /** What a course pack bars, by proof. */
+    limits,
+    /** Sets what a course pack bars: `NO_LIMITS` when no pack is open. */
+    restrict(next: Limits) {
+      setLimits(() => next);
+    },
     /** Shows a statement on a modal tab, as the workspace holds it: its sequent and system, decided again. */
     async showModalStatement(id: string, statement: string) {
       const read = JSON.parse(statement) as { system?: string; text?: string };
@@ -1485,6 +1524,7 @@ export function createProver(say: (text: string) => void = () => undefined) {
      * opens a session pasted there); asked for while another action runs, it waits for that one.
      */
     submit: queued(async (id: string, calculus?: Calculus) => {
+      if (barred(id, limits().fixed)) return;
       const p = store.proofs.find((q) => q.id === id);
       if (p) await startText(id, p.input, calculus ?? p.calculus);
     }),
@@ -1494,6 +1534,7 @@ export function createProver(say: (text: string) => void = () => undefined) {
      * suite, from the field's text in another suite, whose parser reads it anew.
      */
     setCalculus: guard(async (id: string, calculus: Calculus) => {
+      if (barred(id, limits().fixed)) return;
       const p = store.proofs.find((q) => q.id === id);
       if (!p) return;
       setLastCalculus(calculus);
@@ -2373,6 +2414,7 @@ export function createProver(say: (text: string) => void = () => undefined) {
      * the goal.
      */
     fill: guard(async (goal: number, from: string) => {
+      if (barred(current()?.id, limits().search)) return;
       const p = current();
       const q = store.proofs.find((x) => x.id === from);
       if (!p?.session || !q?.session || p.calculus.suite !== "linear") return;
@@ -2401,6 +2443,7 @@ export function createProver(say: (text: string) => void = () => undefined) {
 
     /** Closes a goal by the search, within the budget (times `factor`). */
     close: guard(async (goal: number, factor: number = 1) => {
+      if (barred(current()?.id, limits().search)) return;
       const p = current();
       if (!p?.session) return;
       // A unit of work is whole: a fraction of a budget the visitor set rounds to one.
@@ -2460,6 +2503,7 @@ export function createProver(say: (text: string) => void = () => undefined) {
 
     /** Closes every open goal within one budget. */
     closeAll: guard(async () => {
+      if (barred(current()?.id, limits().search)) return;
       const p = current();
       if (!p?.session) return;
       const o = ordinaryOf(p);
@@ -2530,6 +2574,8 @@ export function createProver(say: (text: string) => void = () => undefined) {
      */
     async hint(goal: number): Promise<Hint> {
       const p = current();
+      const reason = p ? limits().search(p.id) : null;
+      if (reason) throw new Error(reason);
       const o = ordinaryOf(p);
       if (!o) return api.hint(p?.session as SessionDoc, goal, json());
       const formulas = p?.view?.goals.find((g) => g.goal === goal)?.formulas ?? [];

@@ -79,288 +79,298 @@ export function Calculus(props: { prover: Prover; ui: Ui }) {
   }
   const askMode = (next: Mode) => ask(linear(next));
 
+  /** Why the tab's calculus stays as it is: a course pack's problem, or null. */
+  const fixed = () => {
+    const p = proof();
+    return p ? props.prover.limits().fixed(p.id) : null;
+  };
+
   return (
-    <fieldset class="calc" aria-label="Calculus">
-      <fieldset class="seg" aria-label="Suite">
-        <For each={SUITES.filter((s) => s.segment)}>
-          {(s) => (
-            <button
-              type="button"
-              class="seg-b"
-              aria-pressed={calculus().suite === s.key}
-              data-tip={s.tip}
-              onClick={() => ask(calculus().suite === s.key ? calculus() : s.start)}
+    <Show when={!fixed()} fallback={<p class="method-verdict calc-fixed">{fixed()}</p>}>
+      <fieldset class="calc" aria-label="Calculus">
+        <fieldset class="seg" aria-label="Suite">
+          <For each={SUITES.filter((s) => s.segment)}>
+            {(s) => (
+              <button
+                type="button"
+                class="seg-b"
+                aria-pressed={calculus().suite === s.key}
+                data-tip={s.tip}
+                onClick={() => ask(calculus().suite === s.key ? calculus() : s.start)}
+              >
+                {s.name}
+              </button>
+            )}
+          </For>
+        </fieldset>
+        <button
+          type="button"
+          class="btn btn-s"
+          aria-pressed={calculus().suite === "rules"}
+          data-tip="A calculus written as a rule file: start from LJ or the tableau, or write your own rules"
+          onClick={() => {
+            if (calculus().suite !== "rules") ask(custom("LJ"));
+          }}
+        >
+          Your own calculus
+        </button>
+        <button
+          type="button"
+          class="btn btn-s"
+          aria-pressed={calculus().suite === "modal"}
+          data-tip="Modal logic: □ necessarily, ◇ possibly, decided in a system from K to S5 with a derivation or a countermodel"
+          onClick={() => {
+            if (calculus().suite !== "modal") ask(modal("K"));
+          }}
+        >
+          Modal logic
+        </button>
+        <Show when={calculus().suite === "modal"}>
+          <label class="custom-field" data-tip="The conditions every world's arrows meet">
+            <span>System</span>
+            <select
+              class="field"
+              aria-label="System"
+              value={(() => {
+                const c = calculus();
+                return c.suite === "modal" ? c.system : "K";
+              })()}
+              onChange={(event) => ask(modal(event.currentTarget.value))}
             >
-              {s.name}
-            </button>
-          )}
-        </For>
-      </fieldset>
-      <button
-        type="button"
-        class="btn btn-s"
-        aria-pressed={calculus().suite === "rules"}
-        data-tip="A calculus written as a rule file: start from LJ or the tableau, or write your own rules"
-        onClick={() => {
-          if (calculus().suite !== "rules") ask(custom("LJ"));
-        }}
-      >
-        Your own calculus
-      </button>
-      <button
-        type="button"
-        class="btn btn-s"
-        aria-pressed={calculus().suite === "modal"}
-        data-tip="Modal logic: □ necessarily, ◇ possibly, decided in a system from K to S5 with a derivation or a countermodel"
-        onClick={() => {
-          if (calculus().suite !== "modal") ask(modal("K"));
-        }}
-      >
-        Modal logic
-      </button>
-      <Show when={calculus().suite === "modal"}>
-        <label class="custom-field" data-tip="The conditions every world's arrows meet">
-          <span>System</span>
-          <select
-            class="field"
-            aria-label="System"
-            value={(() => {
+              <For each={SYSTEMS}>{(s) => <option value={s.name}>{s.name}</option>}</For>
+            </select>
+          </label>
+          <p class="sub">
+            {(() => {
               const c = calculus();
-              return c.suite === "modal" ? c.system : "K";
+              return systemWords(c.suite === "modal" ? c.system : "K");
             })()}
-            onChange={(event) => ask(modal(event.currentTarget.value))}
-          >
-            <For each={SYSTEMS}>{(s) => <option value={s.name}>{s.name}</option>}</For>
-          </select>
-        </label>
-        <p class="sub">
-          {(() => {
-            const c = calculus();
-            return systemWords(c.suite === "modal" ? c.system : "K");
-          })()}
-        </p>
-        <Show when={proof()?.modal?.outcome && useWorkspace()}>
-          {(ws) => (
-            <button
-              type="button"
-              class="btn btn-s"
-              onClick={() => {
-                const id = proof()?.id;
-                setUi("menu", null);
-                if (id) void ws().duplicate(id);
-              }}
-            >
-              Duplicate this proof
-            </button>
-          )}
-        </Show>
-      </Show>
-      <Show when={calculus().suite !== "rules" && calculus().suite !== "modal"}>
-        <Show
-          when={calculus().suite === "linear"}
-          fallback={
-            <>
-              <fieldset class="seg" aria-label="Logic">
-                <For each={LOGICS}>
-                  {(each) => (
-                    <button
-                      type="button"
-                      class="seg-b"
-                      aria-pressed={logic() === each}
-                      data-tip={LOGIC_WORDS[each].tip}
-                      onClick={() => ask(ordinary(each, method()))}
-                    >
-                      {LOGIC_WORDS[each].name}
-                    </button>
-                  )}
-                </For>
-              </fieldset>
-              {/* Natural deduction, a method of its own: one button, pressed where it is wanted. */}
+          </p>
+          <Show when={proof()?.modal?.outcome && useWorkspace()}>
+            {(ws) => (
               <button
                 type="button"
                 class="btn btn-s"
-                aria-pressed={method() === "natural"}
-                data-tip="Prove the sequent by natural deduction (NK, NJ, NM): introduction and elimination rules, drawn as a tree or as Fitch's lines"
                 onClick={() => {
-                  const l = logic();
-                  if (l) ask(ordinary(l, method() === "natural" ? "sequent" : "natural"));
+                  const id = proof()?.id;
+                  setUi("menu", null);
+                  if (id) void ws().duplicate(id);
                 }}
               >
-                Natural deduction
+                Duplicate this proof
               </button>
-              <label
-                class="sw"
-                data-tip="Draw every weakening and contraction as an inference; off, they are left out where they are admissible, as in G3"
-              >
-                <input
-                  type="checkbox"
-                  checked={props.prover.settings().structural === "explicit"}
-                  onChange={(event) =>
-                    void props.prover.setStructural(
-                      event.currentTarget.checked ? "explicit" : "admissible",
-                    )
-                  }
-                />
-                <span class="sw-t" aria-hidden="true" />
-                Structural rules
-              </label>
-              {/* A started classical sequent's translations and interpolants, each asked for. */}
-              <Show when={logic() === "classical" && proof()?.session}>
-                <div class="calc-more">
-                  <button
-                    type="button"
-                    class="btn btn-s"
-                    onClick={() => setUi("menu", "translate")}
-                  >
-                    Translate into intuitionistic logic
-                  </button>
-                  <button
-                    type="button"
-                    class="btn btn-s"
-                    onClick={() => setUi("menu", "interpolate")}
-                  >
-                    Find an interpolant
-                  </button>
-                </div>
-              </Show>
-              {/* A model of the started sequent's logic, to draw and check: asked for here. */}
-              <Show when={ordinarySequent()}>
-                {(sequent) => (
-                  <div class="calc-more">
-                    <button
-                      type="button"
-                      class="btn btn-s"
-                      onClick={() => {
-                        const l = logic();
-                        if (!l) return;
-                        setUi({
-                          modelSeed: {
-                            model: ONE_WORLD,
-                            sequent: sequent(),
-                            logic: l,
-                            found: false,
-                          },
-                          tab: "model",
-                          menu: null,
-                        });
-                      }}
-                    >
-                      Check a model
-                    </button>
-                  </div>
-                )}
-              </Show>
-              <Show when={proof()?.session && useWorkspace()}>
-                {(ws) => (
-                  <div class="calc-more">
-                    <button
-                      type="button"
-                      class="btn btn-s"
-                      onClick={() => {
-                        const id = proof()?.id;
-                        setUi("menu", null);
-                        if (id) void ws().duplicate(id);
-                      }}
-                    >
-                      Duplicate this proof
-                    </button>
-                  </div>
-                )}
-              </Show>
-            </>
-          }
-        >
-          <fieldset class="seg" aria-label="Logic">
-            <button
-              type="button"
-              class="seg-b"
-              aria-pressed={!intuitionistic()}
-              data-tip="One-sided classical linear logic"
-              onClick={() => askMode(modeOf(false, mix(), affine()))}
-            >
-              Classical
-            </button>
-            <button
-              type="button"
-              class="seg-b"
-              aria-pressed={intuitionistic()}
-              data-tip="Two-sided intuitionistic linear logic: one formula right of ⊢"
-              onClick={() => askMode(modeOf(true, false, affine()))}
-            >
-              Intuitionistic
-            </button>
-          </fieldset>
-          <label
-            class="sw"
-            data-tip={intuitionistic() ? "Mix is a rule of classical linear logic" : "The Mix rule"}
-          >
-            <input
-              type="checkbox"
-              checked={mix()}
-              disabled={intuitionistic()}
-              onChange={(event) => askMode(modeOf(false, event.currentTarget.checked, affine()))}
-            />
-            <span class="sw-t" aria-hidden="true" />
-            Mix
-          </label>
-          {/* Why the switch is greyed, in view: a tip follows no touch. */}
-          <Show when={intuitionistic()}>
-            <p class="said-why">Mix is a rule of classical linear logic.</p>
+            )}
           </Show>
-          <label class="sw" data-tip="Affine weakening: any formula may be dropped">
-            <input
-              type="checkbox"
-              checked={affine()}
-              onChange={(event) =>
-                askMode(modeOf(intuitionistic(), mix(), event.currentTarget.checked))
-              }
-            />
-            <span class="sw-t" aria-hidden="true" />
-            Affine
-          </label>
-          <Show when={!intuitionistic()}>
+        </Show>
+        <Show when={calculus().suite !== "rules" && calculus().suite !== "modal"}>
+          <Show
+            when={calculus().suite === "linear"}
+            fallback={
+              <>
+                <fieldset class="seg" aria-label="Logic">
+                  <For each={LOGICS}>
+                    {(each) => (
+                      <button
+                        type="button"
+                        class="seg-b"
+                        aria-pressed={logic() === each}
+                        data-tip={LOGIC_WORDS[each].tip}
+                        onClick={() => ask(ordinary(each, method()))}
+                      >
+                        {LOGIC_WORDS[each].name}
+                      </button>
+                    )}
+                  </For>
+                </fieldset>
+                {/* Natural deduction, a method of its own: one button, pressed where it is wanted. */}
+                <button
+                  type="button"
+                  class="btn btn-s"
+                  aria-pressed={method() === "natural"}
+                  data-tip="Prove the sequent by natural deduction (NK, NJ, NM): introduction and elimination rules, drawn as a tree or as Fitch's lines"
+                  onClick={() => {
+                    const l = logic();
+                    if (l) ask(ordinary(l, method() === "natural" ? "sequent" : "natural"));
+                  }}
+                >
+                  Natural deduction
+                </button>
+                <label
+                  class="sw"
+                  data-tip="Draw every weakening and contraction as an inference; off, they are left out where they are admissible, as in G3"
+                >
+                  <input
+                    type="checkbox"
+                    checked={props.prover.settings().structural === "explicit"}
+                    onChange={(event) =>
+                      void props.prover.setStructural(
+                        event.currentTarget.checked ? "explicit" : "admissible",
+                      )
+                    }
+                  />
+                  <span class="sw-t" aria-hidden="true" />
+                  Structural rules
+                </label>
+                {/* A started classical sequent's translations and interpolants, each asked for. */}
+                <Show when={logic() === "classical" && proof()?.session}>
+                  <div class="calc-more">
+                    <button
+                      type="button"
+                      class="btn btn-s"
+                      onClick={() => setUi("menu", "translate")}
+                    >
+                      Translate into intuitionistic logic
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-s"
+                      onClick={() => setUi("menu", "interpolate")}
+                    >
+                      Find an interpolant
+                    </button>
+                  </div>
+                </Show>
+                {/* A model of the started sequent's logic, to draw and check: asked for here. */}
+                <Show when={ordinarySequent()}>
+                  {(sequent) => (
+                    <div class="calc-more">
+                      <button
+                        type="button"
+                        class="btn btn-s"
+                        onClick={() => {
+                          const l = logic();
+                          if (!l) return;
+                          setUi({
+                            modelSeed: {
+                              model: ONE_WORLD,
+                              sequent: sequent(),
+                              logic: l,
+                              found: false,
+                            },
+                            tab: "model",
+                            menu: null,
+                          });
+                        }}
+                      >
+                        Check a model
+                      </button>
+                    </div>
+                  )}
+                </Show>
+                <Show when={proof()?.session && useWorkspace()}>
+                  {(ws) => (
+                    <div class="calc-more">
+                      <button
+                        type="button"
+                        class="btn btn-s"
+                        onClick={() => {
+                          const id = proof()?.id;
+                          setUi("menu", null);
+                          if (id) void ws().duplicate(id);
+                        }}
+                      >
+                        Duplicate this proof
+                      </button>
+                    </div>
+                  )}
+                </Show>
+              </>
+            }
+          >
+            <fieldset class="seg" aria-label="Logic">
+              <button
+                type="button"
+                class="seg-b"
+                aria-pressed={!intuitionistic()}
+                data-tip="One-sided classical linear logic"
+                onClick={() => askMode(modeOf(false, mix(), affine()))}
+              >
+                Classical
+              </button>
+              <button
+                type="button"
+                class="seg-b"
+                aria-pressed={intuitionistic()}
+                data-tip="Two-sided intuitionistic linear logic: one formula right of ⊢"
+                onClick={() => askMode(modeOf(true, false, affine()))}
+              >
+                Intuitionistic
+              </button>
+            </fieldset>
             <label
               class="sw"
-              data-tip="Draw the derivation two-sided, as the sequent was written: each formula on its side of ⊢, the rules named by side (⊗L, ⅋R, ⊸L), and a step ~L or ~R where a negation was written"
+              data-tip={
+                intuitionistic() ? "Mix is a rule of classical linear logic" : "The Mix rule"
+              }
             >
               <input
                 type="checkbox"
-                checked={props.prover.settings().twoSided}
+                checked={mix()}
+                disabled={intuitionistic()}
+                onChange={(event) => askMode(modeOf(false, event.currentTarget.checked, affine()))}
+              />
+              <span class="sw-t" aria-hidden="true" />
+              Mix
+            </label>
+            {/* Why the switch is greyed, in view: a tip follows no touch. */}
+            <Show when={intuitionistic()}>
+              <p class="said-why">Mix is a rule of classical linear logic.</p>
+            </Show>
+            <label class="sw" data-tip="Affine weakening: any formula may be dropped">
+              <input
+                type="checkbox"
+                checked={affine()}
                 onChange={(event) =>
-                  props.prover.setSettings({ twoSided: event.currentTarget.checked })
+                  askMode(modeOf(intuitionistic(), mix(), event.currentTarget.checked))
                 }
               />
               <span class="sw-t" aria-hidden="true" />
-              Two-sided
+              Affine
             </label>
+            <Show when={!intuitionistic()}>
+              <label
+                class="sw"
+                data-tip="Draw the derivation two-sided, as the sequent was written: each formula on its side of ⊢, the rules named by side (⊗L, ⅋R, ⊸L), and a step ~L or ~R where a negation was written"
+              >
+                <input
+                  type="checkbox"
+                  checked={props.prover.settings().twoSided}
+                  onChange={(event) =>
+                    props.prover.setSettings({ twoSided: event.currentTarget.checked })
+                  }
+                />
+                <span class="sw-t" aria-hidden="true" />
+                Two-sided
+              </label>
+            </Show>
           </Show>
         </Show>
-      </Show>
-      <Show when={ui.pendingCalculus}>
-        {(next) => (
-          <div class="cluster mode-warn" role="alertdialog" aria-label="Restart the proof">
-            <p>Changing the logic restarts this proof: its steps are lost.</p>
-            <p class="row">
-              <button
-                type="button"
-                class="btn btn-primary"
-                onClick={() => {
-                  // Read before the warning closes: its accessor goes stale with it.
-                  const chosen = next();
-                  const p = proof();
-                  setUi("pendingCalculus", null);
-                  if (p) void props.prover.setCalculus(p.id, chosen);
-                }}
-              >
-                Restart
-              </button>
-              <button type="button" class="btn" onClick={() => setUi("pendingCalculus", null)}>
-                Keep the proof
-              </button>
-            </p>
-          </div>
-        )}
-      </Show>
-    </fieldset>
+        <Show when={ui.pendingCalculus}>
+          {(next) => (
+            <div class="cluster mode-warn" role="alertdialog" aria-label="Restart the proof">
+              <p>Changing the logic restarts this proof: its steps are lost.</p>
+              <p class="row">
+                <button
+                  type="button"
+                  class="btn btn-primary"
+                  onClick={() => {
+                    // Read before the warning closes: its accessor goes stale with it.
+                    const chosen = next();
+                    const p = proof();
+                    setUi("pendingCalculus", null);
+                    if (p) void props.prover.setCalculus(p.id, chosen);
+                  }}
+                >
+                  Restart
+                </button>
+                <button type="button" class="btn" onClick={() => setUi("pendingCalculus", null)}>
+                  Keep the proof
+                </button>
+              </p>
+            </div>
+          )}
+        </Show>
+      </fieldset>
+    </Show>
   );
 }

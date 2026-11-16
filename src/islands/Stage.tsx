@@ -70,6 +70,8 @@ import {
 } from "./state";
 import { ModelFigure } from "./Countermodel";
 import { ModelView } from "./ModelCheck";
+import { usePacks } from "./Packs";
+import { isHandin, readHandin } from "../lib/pack";
 import { CustomPanel } from "./Custom";
 import { ModalPanel } from "./Modal";
 import { type Method, MethodView } from "./Methods";
@@ -158,6 +160,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
   const prover = () => props.prover;
   const proof = () => props.prover.current();
   const { ui, setUi, drawn, setDrawn } = props.ui;
+  const packs = usePacks();
   let stage!: HTMLElement;
   let world!: HTMLDivElement;
   let host!: HTMLDivElement;
@@ -979,7 +982,15 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
     setDropping(false);
     const file = event.dataTransfer?.files[0];
     if (!file) return;
-    const outcome = await props.prover.open(await file.text());
+    const content = await file.text();
+    // A hand-in opens in the check view, the open tabs left as they are.
+    if (isHandin(content) && packs) {
+      const handin = readHandin(content);
+      if ("problem" in handin) setUi("live", `Not imported: ${handin.problem}.`);
+      else await packs.check(handin);
+      return;
+    }
+    const outcome = await props.prover.open(content);
     setUi(
       "live",
       "kind" in outcome
@@ -1725,8 +1736,11 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
               <button
                 type="button"
                 class="btn btn-s"
-                data-tip="The search closes this goal"
+                data-tip={
+                  props.prover.limits().search(proof()?.id ?? "") ?? "The search closes this goal"
+                }
                 data-key="C"
+                disabled={props.prover.limits().search(proof()?.id ?? "") !== null}
                 onClick={() => {
                   const goal = active();
                   if (goal !== undefined) void props.prover.close(goal);
