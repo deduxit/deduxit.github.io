@@ -327,6 +327,56 @@ export async function transforms(page: Page, visit: Visit) {
   await page.keyboard.press("Escape");
 }
 
+/**
+ * The workspace of linked tabs: a translation proved on a new tab and linked, the panel (docked,
+ * or the sheet its button opens on a narrow screen), a tab out of date after its sequent changed,
+ * and the graph of three linked tabs.
+ */
+export async function linking(page: Page, visit: Visit) {
+  await goto(page);
+  await calculus(page, ["Ordinary", "Classical"]);
+  await page.getByRole("textbox", { name: "Sequent" }).fill("|- a \\/ ~a");
+  await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
+  let pop = await switches(page);
+  await pop.getByRole("button", { name: "Translate into intuitionistic logic" }).click();
+  const translation = page.getByRole("dialog", { name: "Translate into intuitionistic logic" });
+  await expect(translation.getByRole("status")).toContainText("Both valid");
+  await translation.getByRole("button", { name: "Prove it in intuitionistic logic" }).click();
+  await expect(page.locator(".ptab")).toHaveCount(2);
+  const button = page.getByRole("button", { name: /^Workspace, \d linked tabs/ });
+  await expect(button).toBeVisible();
+  /** The panel: docked where it fits, else the sheet its button opens. */
+  const panel = async () => {
+    const docked = page.getByRole("region", { name: "Workspace" });
+    if (await docked.isVisible()) return docked;
+    await button.click();
+    const sheet = page.getByRole("dialog", { name: "Workspace" });
+    await expect(sheet).toBeVisible();
+    return sheet;
+  };
+  let ws = await panel();
+  await expect(ws.locator(".ws-line")).toContainText("Both valid");
+  await visit("workspace, linked");
+  await ws.locator(".ws-row").first().locator(".ws-tab").click();
+  await page.keyboard.press("Escape");
+  await page.locator(".ptab").first().locator(".pt-go").click();
+  await page.getByRole("textbox", { name: "Sequent" }).fill("|- a -> b \\/ ~b");
+  await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
+  await expect(page.getByRole("button", { name: /1 out of date/ })).toBeVisible();
+  ws = await panel();
+  await expect(ws.getByText("Out of date")).toBeVisible();
+  await visit("workspace, out of date");
+  await page.keyboard.press("Escape");
+  pop = await switches(page);
+  await pop.getByRole("button", { name: "Duplicate this proof" }).click();
+  await expect(page.locator(".ptab")).toHaveCount(3);
+  ws = await panel();
+  await ws.getByRole("button", { name: "Show as graph" }).click();
+  await expect(page.getByRole("region", { name: "Workspace graph" })).toBeVisible();
+  await visit("workspace, graph");
+  await page.keyboard.press("Escape");
+}
+
 /** The witness chooser with a term typed, and its refusal. */
 export async function witnessing(page: Page, visit: Visit) {
   await start(page, "|- exists x. p(x), ~p(c)");

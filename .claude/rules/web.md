@@ -443,6 +443,44 @@ the page reads.
   the first replaces. An action asked for while one runs does nothing; the bottom band's
   buttons wait on `busy`, and the dock shows "Stop the search" instead of the close.
 
+## The workspace of linked tabs (`src/lib/workspace.ts`, `src/islands/Workspace.tsx`)
+
+- **Nothing of it before the first link**: no document, no call, no button. A link is made by
+  "Prove it in ⟨logic⟩" on the translation's sheet (`proveTranslation`: the shown tab joined,
+  `ordinary.translate` and `ordinary.start` on it, one action "translation", the line's check
+  made at once) and by "Duplicate this proof" in the Logic popover (`duplicate`, one action
+  "copy"). deduxit's design is `plan/notes/63g-design.md` (sections 12 to 15) in deduxit.
+- **A linked tab is a proof node** (`ordinary.start`, class `work`) of deduxit's workspace
+  document; its sequent is the node above it, given (a tab the visitor typed in) or made (a
+  translation). `state.tabs` maps a tab's id to its node; `rowsOf` reads the rows, each with the
+  line above it (`made` with the operation's name and the check, or `copy`), from
+  `workspace_view`.
+- **The document is a string handed back as it is** (`state.doc`, every answer's `workspace`):
+  parsed and written again, a value's keys could come out in another order, which is another
+  value to deduxit, and every result would drop.
+- **The tabs' sessions are laid in before each call** (`work()`, the bindings' `work`), but for a
+  node the workspace has just remade (`remade`: a restart, and the node of a tab whose sequent
+  changed, which keeps the earlier session so that the change's Undo brings it back) until its
+  tab shows the new session. Without that the view hands back the tab's old session.
+- **A typed tab's sequent changed** (an effect over the linked tabs' sequents, `seen`): one action
+  "sequent change", its given node set, its proof restarted and the tab's new session laid in;
+  what was made from it is out of date. A made tab's sequent changed by hand leaves the workspace
+  (its line would be false); the design's read-only field is not built.
+- **What needs no search is made again by itself** after every action (`remake`: the instant
+  derived nodes not current); a proof is started again only by Start again (Update when it has no
+  steps); a check by Check.
+- **The panel docks** left of the stage (`.ws-stage`, `--size-workspace`) where the window is at
+  least `DOCK_WIDTH` (960) wide and Learn is off, shown by itself at the visit's first link;
+  else it is the sheet `ui.menu === "workspace"` from the Workspace button, which names the count
+  and the tabs out of date and takes the warn style. Its Undo and Redo say the action's name.
+  "Show as graph" from three rows lays the rows in columns over the stage (`WorkspaceGraph`).
+- **The link** of a linked tab is version 3 (`writeWorkspaceLink`: the tab, the tab it was made
+  from and the tabs made from it, packed without results; `n` the shown node); past the limit the
+  tab's own link. Arriving (`arrive`) reads it as a claim (`workspace_open`), opens every linked
+  tab, shows the link's and says so in the tab's banner; the panel stays closed.
+- `tests/workspace.spec.ts` drives each; `linking` in `tests/states.ts` puts the page in each
+  state for axe and the target sizes.
+
 ## What holds the work
 
 - **The link** (`src/lib/link.ts`): `#v=2&u=<suite>&m=<parameter>&s=<sequent>&d=<session>` in

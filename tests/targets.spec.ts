@@ -31,6 +31,7 @@ import {
   restoring,
   touring,
   transforms,
+  linking,
   type Visit,
   witnessing,
 } from "./states";
@@ -168,6 +169,10 @@ test("a translation's and an interpolant's controls are targets of 24 by 24 pixe
   expect(await measured(page, 24, transforms)).toEqual([]);
 });
 
+test("the workspace's controls are targets of 24 by 24 pixels at least", async ({ page }) => {
+  expect(await measured(page, 24, linking)).toEqual([]);
+});
+
 test("a calculus of one's own's controls are targets of 24 by 24 pixels at least", async ({
   page,
 }) => {
@@ -207,6 +212,10 @@ test.describe("at a phone's width", () => {
     page,
   }) => {
     expect(await measured(page, 44, transforms)).toEqual([]);
+  });
+
+  test("the workspace's controls are 44 by 44 pixels at least", async ({ page }) => {
+    expect(await measured(page, 44, linking)).toEqual([]);
   });
 
   test("an ordinary tab's controls are 44 by 44 pixels at least", async ({ page }) => {
