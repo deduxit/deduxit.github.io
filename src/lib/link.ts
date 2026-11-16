@@ -23,6 +23,9 @@
  * `workspace_pack` writes it (the linked tabs' sequents, recipes and proofs,
  * no results), packed as `d` is; `n` the shown tab's node in it. A workspace
  * past `LINK_LIMIT` writes the version-2 link of the shown tab, and says so.
+ * A course pack is `#v=4&k=<pack>`, a hand-in `#v=4&h=<hand-in>`, each document packed as `d` is
+ * (`src/lib/pack.ts` says what they hold). `&e=1` on any link opens the page embedded: the stage
+ * and its proof, the rest of the page's chrome left out.
  * Reading a link unpacks at most `UNPACKED_LIMIT` bytes: a crafted link can
  * hold a document that inflates a thousandfold, in the visitor's own tab,
  * before deduxit's limits ever read it.
@@ -36,6 +39,15 @@ export const WORKSPACE_VERSION = "3";
 
 /** The version mark of the links written before suites, all of the linear suite. */
 const LINEAR_ONLY = "1";
+
+/** The version mark of a link that holds a course pack (`k`) or a hand-in (`h`). */
+export const PACK_LINK_VERSION = "4";
+
+/**
+ * The longest hand-in link the page writes: a mail or a learning platform keeps a link of this
+ * length whole; a longer hand-in is a file.
+ */
+export const HANDIN_LIMIT = 16_000;
 
 /** The longest link that carries the session; a longer one carries the sequent alone. */
 export const LINK_LIMIT = 2000;
@@ -205,3 +217,62 @@ export async function readLink(
     return { ...read, problem: thrown instanceof TooLarge ? "size" : "document" };
   }
 }
+
+/** A JSON document packed for a link: deflate-raw, then base64url. */
+export async function packed(text: string): Promise<string> {
+  return toBase64url(
+    await through(new TextEncoder().encode(text), new CompressionStream("deflate-raw")),
+  );
+}
+
+/** A packed document's text, unpacked to at most `limit` bytes; undefined where it does not unpack. */
+async function unpacked(text: string, limit: number): Promise<string | "size" | undefined> {
+  try {
+    const bytes = await inflate(fromBase64url(text), limit);
+    return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+  } catch (thrown) {
+    return thrown instanceof TooLarge ? "size" : undefined;
+  }
+}
+
+/** What a link of a pack or a hand-in holds: the document's JSON text, or why it did not unpack. */
+export type PackLink =
+  | { readonly kind: "pack" | "handin"; readonly text: string }
+  | { readonly kind: "pack" | "handin"; readonly problem: "document" | "size" };
+
+/** A course pack's fragment. */
+export async function writePackLink(pack: string, embed = false): Promise<string> {
+  const params = new URLSearchParams({ v: PACK_LINK_VERSION, k: await packed(pack) });
+  if (embed) params.set("e", "1");
+  return `#${params}`;
+}
+
+/** A hand-in's fragment, or null when it is longer than `limit`: then it is handed in as a file. */
+export async function writeHandinLink(
+  handin: string,
+  limit = HANDIN_LIMIT,
+): Promise<string | null> {
+  const hash = `#${new URLSearchParams({ v: PACK_LINK_VERSION, h: await packed(handin) })}`;
+  return hash.length <= limit ? hash : null;
+}
+
+/** The pack or hand-in a fragment holds, or undefined when it holds neither. */
+export async function readPackLink(
+  hash: string,
+  limit = UNPACKED_LIMIT,
+): Promise<PackLink | undefined> {
+  const params = new URLSearchParams(hash.replace(/^#/, ""));
+  if (params.get("v") !== PACK_LINK_VERSION) return undefined;
+  const pack = params.get("k");
+  const handin = params.get("h");
+  const kind = pack !== null ? "pack" : handin !== null ? "handin" : undefined;
+  if (!kind) return undefined;
+  const text = await unpacked((pack ?? handin) as string, limit);
+  if (text === undefined || text === "size")
+    return { kind, problem: text === "size" ? "size" : "document" };
+  return { kind, text };
+}
+
+/** Whether a fragment asks for the embedded page. */
+export const isEmbedded = (hash: string): boolean =>
+  new URLSearchParams(hash.replace(/^#/, "")).get("e") === "1";
