@@ -11,7 +11,7 @@
  * the check; what the check found is marked on the drawing, each mark said in words too.
  */
 
-import { createEffect, createSignal, createUniqueId, For, type JSX, Show } from "solid-js";
+import { batch, createEffect, createSignal, createUniqueId, For, type JSX, Show } from "solid-js";
 import {
   addWorld,
   arrowPath,
@@ -80,7 +80,8 @@ export function KripkeEditor(props: {
   const count = () => props.model.worlds.length;
   const [spots, setSpots] = createSignal<Point[]>(layout(props.model, props.reading));
   // A model from outside (a countermodel decided again) is laid out afresh; the editor's own
-  // additions and removals keep the places the visitor gave.
+  // additions and removals keep the places the visitor gave, the places and the model changed
+  // in one batch so that this sees them agree.
   createEffect(() => {
     if (spots().length !== count()) setSpots(layout(props.model, props.reading));
   });
@@ -107,15 +108,26 @@ export function KripkeEditor(props: {
   };
   const add = () => {
     const w = count();
-    setSpots([...spots(), freeSpot(spots())]);
-    change(addWorld(props.model), `World ${String(w)} is added.`);
-    setChosen(w);
+    batch(() => {
+      setSpots([...spots(), freeSpot(spots())]);
+      change(addWorld(props.model), `World ${String(w)} is added.`);
+      setChosen(w);
+    });
   };
   const remove = (w: number) => {
-    setSpots(spots().filter((_, i) => i !== w));
     const later = w < count() - 1 ? " The worlds after it are numbered one lower." : "";
-    change(removeWorld(props.model, w), `World ${String(w)} is removed.${later}`);
-    setChosen(Math.max(0, w - 1));
+    const at = props.world;
+    const next = Math.max(0, w - 1);
+    batch(() => {
+      // The world checked at follows its renumbering, and is every world once it is gone.
+      if (at !== null && at >= w) props.onWorld(at === w ? null : at - 1);
+      setSpots(spots().filter((_, i) => i !== w));
+      change(removeWorld(props.model, w), `World ${String(w)} is removed.${later}`);
+      setChosen(next);
+    });
+    // The removal button may be gone with the second-to-last world: the focus goes to the
+    // world selected now.
+    svg?.querySelector<SVGGElement>(`.kripke-world[data-world="${String(next)}"]`)?.focus();
   };
   const move = (w: number, to: Point) =>
     setSpots(spots().map((p, i) => (i === w ? inside(to, halves()[w] ?? 26) : p)));
@@ -155,7 +167,8 @@ export function KripkeEditor(props: {
     if (d.over === null) move(d.from, d.at);
     else if (props.reading === "classical") return;
     else if (d.over !== d.from) toggle(d.from, d.over);
-    else if (d.left) toggle(d.from, d.from);
+    // A loop is modal logic's: in ordinary logic every world is above itself already.
+    else if (d.left && !ordinary()) toggle(d.from, d.from);
   };
   const keyed = (w: number, event: KeyboardEvent) => {
     const step = event.shiftKey ? 2 : 12;
@@ -425,7 +438,9 @@ export function KripkeEditor(props: {
                 <span>{ordinary() ? "below" : "sees"}</span>
                 <For each={others()}>
                   {(to) => (
-                    <Show when={!ordinary() || to !== selected()}>
+                    <Show
+                      when={!ordinary() || to !== selected() || (w().arrows ?? []).includes(to)}
+                    >
                       <label class="chip">
                         <input
                           type="checkbox"

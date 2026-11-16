@@ -201,10 +201,17 @@ the page reads.
   (`kripkeJson`: the arrows as written, nothing closed; ⊥ in minimal logic alone, which no
   control sets elsewhere) and every change takes the last check and its marks away.
   - A drag from a world onto another toggles that arrow, back onto the world after leaving it
-    a loop, onto empty space moves the world; a press without moving selects it. The places
-    are the editor's own (`layout` as deduxit draws: rows top to bottom from the model's world
-    in modal logic, bottom to top by height in ordinary logic), kept across edits and laid
-    out afresh only when the number of worlds changes from outside.
+    a loop (modal logic alone: in ordinary logic every world is above itself already, and a
+    loop is refused as arrows that go round), onto empty space moves the world; a press
+    without moving selects it. The places are the editor's own (`layout` as deduxit draws:
+    rows top to bottom from the model's world in modal logic, bottom to top by height in
+    ordinary logic), kept across edits and laid out afresh only when the number of worlds
+    changes from outside: an addition or removal changes the places and the model in one
+    `batch`, or the effect that lays out a model from outside sees them disagree.
+  - A removal renumbers the world checked at with the worlds (`onWorld`), or sets every world
+    when it is that one, and hands the focus to the world selected next (its button may go
+    with the second-to-last world). An answer is dropped when the model or the world checked
+    at changed while deduxit checked (`modalCheck`, `ModelView`'s `check`).
   - Every drag has a control beside it (WCAG 2.5.7): the selected world's form has its atoms,
     its arrows as `label.chip` checkboxes ("World 0 sees world 1", "World 0 is below world
     1"), ⊥ in minimal logic and its removal. A world is a focusable `role="button"` whose

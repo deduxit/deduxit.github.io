@@ -344,6 +344,8 @@ export function worldWords(
       others.length === 0
         ? "has no world above it"
         : `has ${worldsWords(others)} directly above it`;
+    // No control of the editor makes one, but a model given may hold one: it is said.
+    if (own) points += ", and an arrow to itself";
   }
   const said = [
     marks?.failing === w ? "the sequent fails here" : "",

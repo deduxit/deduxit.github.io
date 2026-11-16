@@ -1125,12 +1125,14 @@ export function createProver(say: (text: string) => void = () => undefined) {
       if (!work?.statement || !work.model) return;
       const statement = work.statement;
       const json = modelJson(work.model);
+      const world = work.world;
       const checked = await attempt(() =>
-        api.modal.evaluate(statement, json, work.world ?? undefined, modalJson()),
+        api.modal.evaluate(statement, json, world ?? undefined, modalJson()),
       );
       update(id, (q) => {
-        // An answer for a model changed meanwhile is dropped: the check is the model's shown.
-        if (!q.modal?.model || modelJson(q.modal.model) !== json) return;
+        // An answer for a model or a world changed meanwhile is dropped: the check is the one
+        // shown.
+        if (!q.modal?.model || modelJson(q.modal.model) !== json || q.modal.world !== world) return;
         if (checked.ok) q.modal.evaluation = checked.value;
         else if (checked.failed) q.modal.problem = inputProblem(checked.failed);
       });

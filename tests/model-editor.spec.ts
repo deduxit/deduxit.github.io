@@ -187,3 +187,44 @@ test("in minimal logic a world of one's own model may force ⊥", async ({ page 
   // ¬¬a holds at a world that forces ⊥, and a does not: the sequent fails there.
   await expect(view.locator(".modal-check")).toContainText("Fails");
 });
+
+test("adding and removing worlds keeps the places, and the world checked at follows", async ({
+  page,
+}) => {
+  await modal(page, "K", "[]p -> [][]p");
+  await page.getByText("Change the model and check it").click();
+  const two = await centre(world(page, 2));
+  await drag(page, 2, { x: two.x + 150, y: two.y });
+  const places = async () =>
+    Promise.all([0, 1, 2].map((n) => world(page, n).getAttribute("transform")));
+  const before = await places();
+  await page.getByRole("button", { name: "Add a world" }).click();
+  expect(await places()).toEqual(before);
+  const check = page.getByRole("combobox", { name: "The world to check the sequent at" });
+  await check.selectOption("2");
+  // World 1 goes: world 2 is world 1 now, and the check goes with it.
+  await world(page, 1).click();
+  await page.getByRole("button", { name: "Remove world 1" }).click();
+  await expect(check).toHaveValue("1");
+  await expect(world(page, 1)).toHaveAttribute("transform", before[2] ?? "");
+  await world(page, 1).click();
+  await page.getByRole("button", { name: "Remove world 1" }).click();
+  await expect(check).toHaveValue("");
+  await page.getByRole("button", { name: "Check the model" }).click();
+  await expect(page.locator(".modal-check")).toContainText("at every world");
+});
+
+test("ordinary logic draws no loop, and a removal hands the focus to a world", async ({ page }) => {
+  await ordinary(page, "Intuitionistic", "|- a \\/ ~a");
+  await page.getByRole("button", { name: "Close goal" }).click();
+  await page.getByRole("button", { name: "Change this model and check it" }).click();
+  const zero = await centre(world(page, 0));
+  await drag(page, 0, { x: zero.x + 150, y: zero.y }, zero);
+  await expect(world(page, 0)).toHaveAccessibleName(
+    "World 0, forces no atom, has world 1 directly above it",
+  );
+  await expect(page.locator(".kripke-arrow")).toHaveCount(1);
+  await page.getByRole("button", { name: "Remove world 0" }).focus();
+  await page.keyboard.press("Enter");
+  await expect(world(page, 0)).toBeFocused();
+});
