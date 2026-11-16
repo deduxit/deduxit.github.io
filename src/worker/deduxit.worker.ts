@@ -75,6 +75,16 @@ const calls = {
   rules_check: deduxit.rules_check,
   rules_draw: deduxit.rules_draw,
   rules_export: deduxit.rules_export,
+  workspace_statement: deduxit.workspace_statement,
+  workspace_open: deduxit.workspace_open,
+  workspace_edit: deduxit.workspace_edit,
+  workspace_undo: deduxit.workspace_undo,
+  workspace_redo: deduxit.workspace_redo,
+  workspace_compute: deduxit.workspace_compute,
+  workspace_accept: deduxit.workspace_accept,
+  workspace_run: deduxit.workspace_run,
+  workspace_view: deduxit.workspace_view,
+  workspace_pack: deduxit.workspace_pack,
   replay: (session: string, todo: string, settings: string) =>
     JSON.stringify(
       replay(deduxit, JSON.parse(session) as SessionDoc, JSON.parse(todo) as Action[], settings),

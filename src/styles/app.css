@@ -2736,3 +2736,153 @@ fieldset {
   color: inherit;
   cursor: help;
 }
+
+/* The workspace of linked tabs: the stage's row with the panel docked left of
+   the stage, the panel's rows under their lines, and the graph in the
+   stage's place. */
+.ws-stage {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
+  min-height: 0;
+  min-width: 0;
+}
+.ws-stage[data-docked] {
+  grid-template-columns: var(--size-workspace) minmax(0, 1fr);
+}
+.ws-main {
+  position: relative;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
+  min-height: 0;
+  min-width: 0;
+}
+.ws-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  padding: var(--spacing-3);
+  overflow: auto;
+  background: var(--color-panel);
+}
+.ws-panel[data-docked] {
+  border-right: var(--line) solid var(--color-edge);
+}
+.ws-panel.menu {
+  left: var(--spacing-3);
+  transform: none;
+  width: min(var(--size-workspace), calc(100vw - var(--spacing-5)));
+}
+.ws-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-2);
+}
+.ws-rows,
+.ws-columns,
+.ws-cards {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--spacing-2);
+}
+.ws-row {
+  display: grid;
+  gap: var(--spacing-1);
+}
+.ws-row[data-depth="1"] {
+  padding-left: var(--spacing-3);
+}
+.ws-row[data-depth="2"] {
+  padding-left: var(--spacing-5);
+}
+.ws-row[data-depth="3"] {
+  padding-left: var(--spacing-6);
+}
+/* The line above a made tab, drawn as an inference line: a bar with the
+   operation's name at its end. Dashed while the tab below is out of date,
+   dotted for a copy; the words say the same. */
+.ws-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-1) var(--spacing-2);
+  border-top: var(--line-strong) solid var(--color-ink);
+  padding-top: var(--spacing-1);
+  font: var(--text-small) / var(--leading-snug) var(--font-text);
+}
+.ws-line[data-stale] {
+  border-top-style: dashed;
+}
+.ws-line[data-kind="copy"] {
+  border-top-style: dotted;
+}
+.ws-label {
+  font-weight: var(--font-weight-semibold);
+}
+.ws-check[data-shape="held"]::before {
+  content: "✓ ";
+}
+.ws-check[data-shape="failed"]::before {
+  content: "✗ ";
+}
+.ws-check[data-shape="open"]::before {
+  content: "? ";
+}
+.ws-tab {
+  display: grid;
+  gap: var(--spacing-0-5);
+  text-align: left;
+  min-height: var(--size-control);
+  padding: var(--spacing-1) var(--spacing-2);
+  border: var(--line) solid transparent;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.ws-tab[aria-current] {
+  border-color: var(--color-edge);
+  background: var(--color-field);
+}
+.ws-sequent {
+  overflow-wrap: anywhere;
+}
+.ws-stale {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-1);
+}
+.ws-button[data-warn] {
+  border-color: var(--color-warn);
+}
+.ws-count {
+  font-variant-numeric: tabular-nums;
+}
+.ws-graph {
+  position: absolute;
+  inset: 0;
+  overflow: auto;
+  padding: var(--spacing-4);
+  background: var(--color-field);
+}
+.ws-columns {
+  grid-auto-flow: column;
+  grid-auto-columns: var(--size-card);
+  align-items: start;
+}
+.ws-card {
+  display: grid;
+  gap: var(--spacing-1);
+  padding: var(--spacing-2);
+  border: var(--line) solid var(--color-edge);
+  border-radius: var(--radius-control);
+  background: var(--color-panel);
+}
+.ws-card[data-stale] {
+  border-style: dashed;
+}

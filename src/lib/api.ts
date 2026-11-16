@@ -39,6 +39,7 @@ import type {
 } from "./custom";
 import type { OrdinaryOutcome, OrdinarySession, OrdinaryStep, OrdinaryView } from "./ordinary";
 import type { Comparison, Interpolation } from "./transforms";
+import type { Action as WorkspaceAction, WorkspaceView } from "./workspace";
 import { type Client, createClient, type WorkerLike } from "./protocol";
 import type { Action, Replayed } from "./steps";
 
@@ -288,6 +289,59 @@ export function createApi(changed: (pending: number) => void) {
         client.call<string>("rules_draw", JSON.stringify(session), settings),
       exportAs: (session: CustomSession, format: string, settings: string) =>
         client.call<string>("rules_export", JSON.stringify(session), format, settings),
+    },
+    /**
+     * The workspace's calls (`workspace_…`): the linked tabs. `doc` is the workspace's document as
+     * the last answer gave it, a string handed back as it is; `work` maps a linked tab's proof node
+     * to its session as the tab holds it now.
+     */
+    workspace: {
+      statement: (suite: string, text: string, parameter: string, settings: string) =>
+        client.call<string>("workspace_statement", suite, text, parameter, settings),
+      open: (doc: string, settings: string) => client.call<string>("workspace_open", doc, settings),
+      edit: (doc: string, action: WorkspaceAction, work: string, settings: string) =>
+        json<{ workspace: string; made: (number | number[] | null)[] }>(
+          "workspace_edit",
+          doc,
+          JSON.stringify(action),
+          work,
+          settings,
+        ),
+      undo: (doc: string, work: string, settings: string, forward: boolean) =>
+        json<{ workspace: string; name: string | null; sessions: Record<string, OrdinarySession> }>(
+          forward ? "workspace_redo" : "workspace_undo",
+          doc,
+          work,
+          settings,
+        ),
+      compute: (
+        doc: string,
+        node: number,
+        what: "output" | "check",
+        work: string,
+        settings: string,
+      ) => client.call<string>("workspace_compute", doc, node, what, work, settings),
+      accept: (doc: string, computed: string, work: string, settings: string) =>
+        json<{ workspace: string; accepted: boolean }>(
+          "workspace_accept",
+          doc,
+          computed,
+          work,
+          settings,
+        ),
+      run: (doc: string, nodes: readonly number[], work: string, settings: string) =>
+        json<{ workspace: string; ran: number[] }>(
+          "workspace_run",
+          doc,
+          JSON.stringify(nodes),
+          "output",
+          work,
+          settings,
+        ),
+      view: (doc: string, work: string, settings: string) =>
+        json<WorkspaceView>("workspace_view", doc, work, settings),
+      pack: (doc: string, nodes: readonly number[], work: string, settings: string) =>
+        client.call<string>("workspace_pack", doc, JSON.stringify(nodes), work, settings),
     },
     replay: (session: SessionDoc, todo: readonly Action[], settings: string) =>
       json<Replayed>("replay", doc(session), JSON.stringify(todo), settings),

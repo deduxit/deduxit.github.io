@@ -30,6 +30,7 @@ import {
   sameCalculus,
 } from "../lib/suites";
 import type { Prover } from "./state";
+import { useWorkspace } from "./Workspace";
 import type { Ui } from "./ui";
 
 /** The mode the linear switches make. */
@@ -163,6 +164,23 @@ export function Calculus(props: { prover: Prover; ui: Ui }) {
                     Find an interpolant
                   </button>
                 </div>
+              </Show>
+              <Show when={proof()?.session && useWorkspace()}>
+                {(ws) => (
+                  <div class="calc-more">
+                    <button
+                      type="button"
+                      class="btn btn-s"
+                      onClick={() => {
+                        const id = proof()?.id;
+                        setUi("menu", null);
+                        if (id) void ws().duplicate(id);
+                      }}
+                    >
+                      Duplicate this proof
+                    </button>
+                  </div>
+                )}
               </Show>
             </>
           }

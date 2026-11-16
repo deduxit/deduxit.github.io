@@ -159,6 +159,10 @@
   --size-control-small: 28px;
   --size-chip: 24px;
   --size-band: 48px;
+  /* The panel of linked tabs where it docks left of the stage, and a tab's
+     card in the workspace's graph. */
+  --size-workspace: 320px;
+  --size-card: 240px;
   /* The word mark's height (about its em) in the top band, larger than the
      band's 18-pixel words so that the ring reads as a ring, and on About and
      the 404 page. */

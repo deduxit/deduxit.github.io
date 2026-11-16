@@ -44,6 +44,7 @@ import {
 import { displayed } from "../lib/words";
 import { ModelFigure } from "./Countermodel";
 import type { Prover } from "./state";
+import { useWorkspace } from "./Workspace";
 import type { Ui } from "./ui";
 
 /** deduxit's answer: what it gave, or what it refused. */
@@ -123,9 +124,16 @@ export function TranslateSheet(props: { prover: Prover; ui: Ui }) {
   );
   const comparison = () => given<Comparison>(answer());
 
+  const workspace = useWorkspace();
   const prove = async (c: Comparison) => {
     const text = translatedText(c);
     setUi("menu", null);
+    const tab = props.prover.current()?.id;
+    // The new tab is linked to this one: the line above it says how it was made.
+    if (workspace && tab) {
+      await workspace.proveTranslation(tab, c.translation, c.target);
+      return;
+    }
     const opened = await props.prover.open(text, ordinary(c.target));
     if ("problem" in opened) return;
     setUi("live", `${displayed(text)}: opened on a new tab in ${logicName(c.target)}.`);

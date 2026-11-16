@@ -32,6 +32,7 @@ import { createPractice } from "./Practice";
 import { Stage } from "./Stage";
 import { createProver } from "./state";
 import { TopBand } from "./TopBand";
+import { createWorkspace, WorkspaceContext, WorkspaceGraph, WorkspacePanel } from "./Workspace";
 import { Tour } from "./Tour";
 import { createUi, ladderKey } from "./ui";
 
@@ -66,6 +67,9 @@ export default function App(props: {
   const { ui, setUi } = view;
   const prover = createProver((text) => setUi("live", text));
   const practice = createPractice(prover);
+  const workspace = createWorkspace(prover, view);
+  /** Whether the panel of linked tabs stands left of the stage. */
+  const docked = () => workspace.linked() && workspace.docks() && workspace.state.shown;
   const [theme, setTheme] = createSignal<Theme>("system");
   const [tip, setTip] = createSignal<{
     text: string;
@@ -500,89 +504,104 @@ export default function App(props: {
   );
 
   return (
-    <div
-      class="app"
-      data-keys={prover.settings().showKeys ? "" : undefined}
-      data-learn={ui.learn ? "" : undefined}
-    >
-      <div class="win">
-        <TopBand
-          prover={prover}
-          ui={view}
-          theme={theme}
-          setTheme={setTheme}
-          samples={props.samples}
-        />
-        <Show when={prover.aside()}>
-          {(shelf) => (
-            <section class="restore cluster" aria-label="Restore">
-              <span>
-                {shelf().proofs.length} {shelf().proofs.length === 1 ? "proof" : "proofs"} from your
-                last visit
-              </span>
-              <button type="button" class="btn btn-primary" onClick={() => prover.restore()}>
-                Restore
-              </button>
-              <button type="button" class="btn" onClick={() => prover.discard()}>
-                Discard
-              </button>
-            </section>
+    <WorkspaceContext.Provider value={workspace}>
+      <div
+        class="app"
+        data-keys={prover.settings().showKeys ? "" : undefined}
+        data-learn={ui.learn ? "" : undefined}
+      >
+        <div class="win">
+          <TopBand
+            prover={prover}
+            ui={view}
+            theme={theme}
+            setTheme={setTheme}
+            samples={props.samples}
+          />
+          <Show when={prover.aside()}>
+            {(shelf) => (
+              <section class="restore cluster" aria-label="Restore">
+                <span>
+                  {shelf().proofs.length} {shelf().proofs.length === 1 ? "proof" : "proofs"} from
+                  your last visit
+                </span>
+                <button type="button" class="btn btn-primary" onClick={() => prover.restore()}>
+                  Restore
+                </button>
+                <button type="button" class="btn" onClick={() => prover.discard()}>
+                  Discard
+                </button>
+              </section>
+            )}
+          </Show>
+          <div class="ws-stage" data-docked={docked() ? "" : undefined}>
+            <Show when={docked()}>
+              <WorkspacePanel workspace={workspace} prover={prover} ui={view} docked={true} />
+            </Show>
+            <div class="ws-main">
+              <Stage prover={prover} ui={view} />
+              <Show when={workspace.linked() && workspace.state.graph}>
+                <WorkspaceGraph workspace={workspace} prover={prover} />
+              </Show>
+            </div>
+          </div>
+          <Show when={ui.menu === "workspace" && workspace.linked()}>
+            <WorkspacePanel workspace={workspace} prover={prover} ui={view} docked={false} />
+          </Show>
+          <Show when={linkShort() && ui.menu === "export"}>
+            <p class="sr-only">The link holds the sequent alone.</p>
+          </Show>
+          <BottomBand
+            prover={prover}
+            ui={view}
+            hint={() => void hint()}
+            font={font}
+            practice={practice}
+            theme={theme}
+            setTheme={setTheme}
+            tour={() => {
+              setUi({ menu: null, tour: null });
+              setUi("tour", 0);
+            }}
+          />
+        </div>
+        <Show when={ui.learn}>
+          <LearnFrame
+            prover={prover}
+            ui={view}
+            examples={props.examples}
+            lessons={props.lessons}
+            ordinary={props.ordinary}
+            rules={props.rules}
+            tour={() => {
+              setUi({ tour: null });
+              setUi("tour", 0);
+            }}
+          />
+        </Show>
+        <Tour prover={prover} ui={view} stops={props.stops} />
+        <Show when={tip()}>
+          {(t) => (
+            <div class="tip" ref={tipBox} role="tooltip">
+              {t().text}
+              <Show when={t().key}>{(k) => <kbd>{k()}</kbd>}</Show>
+            </div>
           )}
         </Show>
-        <Stage prover={prover} ui={view} />
-        <Show when={linkShort() && ui.menu === "export"}>
-          <p class="sr-only">The link holds the sequent alone.</p>
-        </Show>
-        <BottomBand
-          prover={prover}
-          ui={view}
-          hint={() => void hint()}
-          font={font}
-          practice={practice}
-          theme={theme}
-          setTheme={setTheme}
-          tour={() => {
-            setUi({ menu: null, tour: null });
-            setUi("tour", 0);
-          }}
+        <RuleHints
+          hints={(() => {
+            const calculus = prover.current()?.calculus;
+            return calculus ? hintsFor(props.rules, calculus, false) : [];
+          })()}
+          drawn={(() => {
+            const calculus = prover.current()?.calculus;
+            return calculus ? hintsFor(props.rules, calculus, prover.settings().twoSided) : [];
+          })()}
         />
+        <div class="sr-only" aria-live="polite">
+          {ui.live}
+        </div>
       </div>
-      <Show when={ui.learn}>
-        <LearnFrame
-          prover={prover}
-          ui={view}
-          examples={props.examples}
-          lessons={props.lessons}
-          ordinary={props.ordinary}
-          rules={props.rules}
-          tour={() => {
-            setUi({ tour: null });
-            setUi("tour", 0);
-          }}
-        />
-      </Show>
-      <Tour prover={prover} ui={view} stops={props.stops} />
-      <Show when={tip()}>
-        {(t) => (
-          <div class="tip" ref={tipBox} role="tooltip">
-            {t().text}
-            <Show when={t().key}>{(k) => <kbd>{k()}</kbd>}</Show>
-          </div>
-        )}
-      </Show>
-      <RuleHints
-        hints={(() => {
-          const calculus = prover.current()?.calculus;
-          return calculus ? hintsFor(props.rules, calculus, false) : [];
-        })()}
-        drawn={(() => {
-          const calculus = prover.current()?.calculus;
-          return calculus ? hintsFor(props.rules, calculus, prover.settings().twoSided) : [];
-        })()}
-      />
-      <div class="sr-only" aria-live="polite">
-        {ui.live}
-      </div>
-    </div>
+    </WorkspaceContext.Provider>
   );
 }

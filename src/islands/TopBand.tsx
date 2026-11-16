@@ -31,6 +31,7 @@ import type { Sample } from "../lib/content";
 import { calculusWords, markLabel, markOf, ordinary } from "../lib/suites";
 import { displayed } from "../lib/words";
 import { Calculus } from "./Calculus";
+import { useWorkspace, WorkspaceButton } from "./Workspace";
 import { BandMark } from "./Logo";
 import type { Proof, Prover } from "./state";
 import { token, type Ui, Why } from "./ui";
@@ -120,6 +121,9 @@ export function TopBand(props: {
   return (
     <header class="band top">
       <BandMark />
+      <Show when={useWorkspace()}>
+        {(ws) => <WorkspaceButton workspace={ws()} ui={props.ui} />}
+      </Show>
       <nav class="proofs" aria-label="Open proofs">
         <For each={props.prover.store.proofs}>
           {(proof) => (
