@@ -51,7 +51,7 @@ the tour.
   an app. No cookies and no tracking; the privacy page (`/privacy/`) says what GitHub logs
   and what the browser keeps.
 
-Every one of the 452 problems in `src/content/problems/` is decided by deduxit's command,
+Every one of the 452 problems in `src/content/linear/problems/` is decided by deduxit's command,
 which a flake check runs over them all; a provable one comes with a proof deduxit accepts.
 
 ## Building

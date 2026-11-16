@@ -555,7 +555,13 @@ the page reads.
   opens, so the first load carries none of the 400. The `licence` template is the CC BY
   line, shown with the content (Learn's frame, Practice); every page with a `data-written`
   element must link CC BY 4.0 (the `licences` check).
-- **Every problem is decided by the command, and checked twice**: `src/content/problems.test.ts`
+- **The linear suite's content lives under `src/content/linear/`** (its `problems/`,
+  `lessons/` and `rules/`, with `problems.test.ts` and `lessons.test.ts`), moved there
+  unchanged when the content was keyed by suite: the collections keep their names and every
+  id (an id is the path under the collection's base), and `moved.test.ts` holds every moved
+  file to its SHA-256 in `moved.json`, taken before the move. A deliberate edit of a linear
+  lesson, problem or rule updates `moved.json` in the same commit, which then says why.
+- **Every problem is decided by the command, and checked twice**: `src/content/linear/problems.test.ts`
   (each verdict and fragment by the module, each session to its sequent, mode and a
   finished proof, the categories to the sequent's connectives and mode, no sequent twice in
   one calculus, the lessons' mix) and the flake's `problems` check

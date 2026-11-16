@@ -23,10 +23,10 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { parse } from "yaml";
-import type { SessionDoc } from "../lib/deduxit";
-import { actions, goalAt } from "../lib/steps";
-import { deduxit } from "../lib/testing";
-import { READINGS } from "../lib/words";
+import type { SessionDoc } from "../../lib/deduxit";
+import { actions, goalAt } from "../../lib/steps";
+import { deduxit } from "../../lib/testing";
+import { READINGS } from "../../lib/words";
 
 const read = (dir: string) =>
   readdirSync(new URL(dir, import.meta.url))
@@ -292,7 +292,7 @@ describe("Learn's lessons", () => {
 });
 
 describe("the reference", () => {
-  const reference = readFileSync(new URL("./texts/reference.md", import.meta.url), "utf8");
+  const reference = readFileSync(new URL("../texts/reference.md", import.meta.url), "utf8");
 
   it("draws each two-sided rule as the one-sided rule it names, which lists it among its two-sided names", () => {
     expect(reference).toContain("<div data-rules-two></div>");

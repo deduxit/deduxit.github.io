@@ -10,7 +10,7 @@
 
 import { readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { deduxit } from "../lib/testing";
+import { deduxit } from "../../lib/testing";
 
 const here = new URL("./problems/", import.meta.url);
 const entries = readdirSync(here)

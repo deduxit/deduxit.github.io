@@ -5,7 +5,7 @@
  * What a rule label means, for the hint every label carries (the rule popover, the derivation's
  * labels, Learn's steps): the rule's full name, its form (the premises over the conclusion) and
  * one plain sentence. The one-sided rules and the two-sided rules of intuitionistic linear logic
- * are the reference's (`src/content/rules/`); the rules the reference does not draw are here.
+ * are the reference's (`src/content/linear/rules/`); the rules the reference does not draw are here.
  */
 
 import type { Calculus } from "./suites";

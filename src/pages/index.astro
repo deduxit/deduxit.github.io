@@ -27,7 +27,7 @@ import examplesFile from "../content/examples.json";
 import type { Example, Lesson, Rule, Sample, Stop } from "../lib/content";
 import Base from "../layouts/Base.astro";
 
-const sessions = import.meta.glob<string>("../content/problems/*.session.json", {
+const sessions = import.meta.glob<string>("../content/linear/problems/*.session.json", {
   query: "?raw",
   import: "default",
   eager: true,
@@ -59,7 +59,7 @@ const exampleData: Example[] = examples.map((e) => ({
   level: e.data.level,
   lesson: e.data.lesson ?? 0,
   verdict: e.data.verdict,
-  session: sessions[`../content/problems/${e.id}.session.json`] ?? null,
+  session: sessions[`../content/linear/problems/${e.id}.session.json`] ?? null,
 }));
 const stopData: Stop[] = stops.map((s) => ({
   id: s.id,
@@ -67,22 +67,22 @@ const stopData: Stop[] = stops.map((s) => ({
   target: s.data.target,
   act: s.data.act,
 }));
-const attempts = import.meta.glob<string>("../content/lessons/*.attempt.json", {
+const attempts = import.meta.glob<string>("../content/linear/lessons/*.attempt.json", {
   query: "?raw",
   import: "default",
   eager: true,
 });
-const refusals = import.meta.glob<string>("../content/lessons/*.refusal.json", {
+const refusals = import.meta.glob<string>("../content/linear/lessons/*.refusal.json", {
   query: "?raw",
   import: "default",
   eager: true,
 });
 const lessonData: Lesson[] = lessons.map((l) => {
   const attempt = l.data.attempt;
-  const session = attempts[`../content/lessons/${l.id}.attempt.json`];
+  const session = attempts[`../content/linear/lessons/${l.id}.attempt.json`];
   if (attempt && !session) throw new Error(`lesson ${l.id}: its attempt has no session beside it`);
   const refusal = l.data.refusal;
-  const refused = refusals[`../content/lessons/${l.id}.refusal.json`];
+  const refused = refusals[`../content/linear/lessons/${l.id}.refusal.json`];
   if (refusal && !refused) throw new Error(`lesson ${l.id}: its refusal has no session beside it`);
   return {
     id: l.id,

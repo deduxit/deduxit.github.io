@@ -12,11 +12,11 @@ import type { Mode } from "./deduxit";
 import { hintId, hintNamed, hintsFor, inReference, REFERENCE } from "./rules";
 import type { Calculus, Logic } from "./suites";
 
-const written = readdirSync(new URL("../content/rules/", import.meta.url))
+const written = readdirSync(new URL("../content/linear/rules/", import.meta.url))
   .filter((name) => name.endsWith(".md"))
   .map((name) =>
     parse(
-      readFileSync(new URL(`../content/rules/${name}`, import.meta.url), "utf8").split(
+      readFileSync(new URL(`../content/linear/rules/${name}`, import.meta.url), "utf8").split(
         "---\n",
       )[1] ?? "",
     ),

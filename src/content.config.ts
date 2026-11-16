@@ -2,7 +2,8 @@
 // Licensed under the EUPL
 
 /**
- * The written content, under CC BY 4.0, in src/content/:
+ * The written content, under CC BY 4.0, in src/content/, the linear suite's
+ * course (problems, lessons, rules) under src/content/linear/:
  *   problems  problems/<id>.md, the one store of problems Practice and Learn
  *             draw from: a sequent, its mode, deduxit's verdict, its level of
  *             difficulty, the categories it is found under and the fragment
@@ -12,7 +13,7 @@
  *             lesson's practice in Learn, in its `order` (provable and not
  *             mixed); every unprovable problem is Learn's, and Practice
  *             offers the provable ones. One from the literature names its
- *             `source` and `url`. src/content/problems.test.ts holds every
+ *             `source` and `url`. linear/problems.test.ts holds every
  *             entry to deduxit's verdict and every session to its sequent,
  *             and the flake's `problems` check holds them to deduxit's command.
  *   tour      tour/<n>-<name>.md, the tour's stops in order: what each stop
@@ -85,7 +86,7 @@ export const CATEGORIES = [
 ] as const;
 
 const problems = defineCollection({
-  loader: glob({ pattern: "*.md", base: "./src/content/problems" }),
+  loader: glob({ pattern: "*.md", base: "./src/content/linear/problems" }),
   schema: z
     .object({
       /** A name, for the problems Learn shows and those from the literature. */
@@ -135,7 +136,7 @@ const texts = defineCollection({
 const words = z.string().min(1);
 
 const lessons = defineCollection({
-  loader: glob({ pattern: "*.md", base: "./src/content/lessons" }),
+  loader: glob({ pattern: "*.md", base: "./src/content/linear/lessons" }),
   schema: z.object({
     lesson: z.number().int().min(1),
     title: words,
@@ -248,7 +249,7 @@ const lessons = defineCollection({
 });
 
 const rules = defineCollection({
-  loader: glob({ pattern: "*.md", base: "./src/content/rules" }),
+  loader: glob({ pattern: "*.md", base: "./src/content/linear/rules" }),
   schema: z
     .object({
       /** As deduxit names the rule on the stage. */

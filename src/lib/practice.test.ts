@@ -34,7 +34,7 @@ describe("Practice", () => {
   });
 
   it("offers every provable problem of the store and none of its unprovable ones", () => {
-    const here = new URL("../content/problems/", import.meta.url);
+    const here = new URL("../content/linear/problems/", import.meta.url);
     const entries = readdirSync(here)
       .filter((name) => name.endsWith(".md"))
       .map((name) => {
