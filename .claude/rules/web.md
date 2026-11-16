@@ -1019,6 +1019,12 @@ the page reads.
 - **On a phone** the bottom band keeps undo, redo, close all, hint, Practice and Learn;
   `wide-only` actions move to More's sheet. Tips follow a mouse or a keyboard, never a
   touch (`App.tsx`).
+- **The bottom band's labels** are `.act-name`, beside the icon at a desktop's width (D54),
+  under it with Learn on, hidden on a phone. `app.css` styles classes globally, so a class
+  is one component's: the band's labels were `.lb` until 2026-11-16, and the drawing's rule
+  label buttons `.lb` (absolute, over the drawing) laid every label over its icon. The
+  target-size walks measure buttons only and missed it; `page.spec.ts`'s band test holds
+  each action's icon and label inside its button and apart, from 320 to 2560 pixels.
 - **The calculus is each tab's** (`Proof.calculus`, kept in the shelf; a new empty tab starts
   in `lastCalculus`, the calculus last chosen in this visit, classical linear logic at a
   visit's start). A change of suite reads the field's text anew in the other suite's syntax. A tab's
