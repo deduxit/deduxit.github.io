@@ -97,19 +97,32 @@ export function createWorkspace(prover: Prover, ui: Ui) {
 
   /** The proof nodes the workspace remade whose tabs do not show the new session yet. */
   const remade = new Set<number>();
+  /**
+   * Each linked tab's latest session of the sequent the workspace knows it by, steps included:
+   * what a change of its sequent or its closing keeps for Undo, since the tab no longer holds it.
+   */
+  const latest = new Map<string, OrdinarySession>();
+  /** The tabs the workspace opened (a translation's proof, a copy, a link's), which its Undo closes. */
+  const opened = new Set<string>();
+  /** The tabs an Undo or a change unlinked but left open, by their node: a Redo links them again. */
+  const parked = new Map<number, string>();
 
   /**
    * The sessions of the linked tabs as they are now, by node: laid in before each call, but for a
-   * node just remade, whose tab still shows the session before.
+   * node just remade, whose tab still shows the session before, and with `kept` laid over.
    */
-  const work = () => {
+  const work = (kept: ReadonlyMap<number, OrdinarySession> = new Map()) => {
     const sessions: Record<string, OrdinarySession> = {};
     for (const [tab, node] of Object.entries(state.tabs)) {
       const session = sessionOf(tab);
       if (session && !remade.has(node)) sessions[String(node)] = session;
     }
+    for (const [node, session] of kept) sessions[String(node)] = session;
     return JSON.stringify(sessions);
   };
+
+  /** What the workspace compares of a tab: its logic and its sequent. */
+  const keyOf = (session: OrdinarySession) => `${session.logic}\n${sequentText(session)}`;
 
   /** Runs `step` after the calls before it, keeping the queue alive past a failure. */
   const queued = <T,>(step: () => Promise<T>): Promise<T> => {
@@ -149,9 +162,12 @@ export function createWorkspace(prover: Prover, ui: Ui) {
     await look();
   }
 
-  /** Makes one action, then what needs no search, and reads the view; returns what each edit made. */
-  async function act(action: Action) {
-    const answer = await prover.api.workspace.edit(state.doc ?? "", action, work(), settings());
+  /**
+   * Makes one action, then what needs no search, and reads the view; returns what each edit made.
+   * `kept` lays sessions in for nodes whose tabs no longer hold them.
+   */
+  async function act(action: Action, kept?: ReadonlyMap<number, OrdinarySession>) {
+    const answer = await prover.api.workspace.edit(state.doc ?? "", action, work(kept), settings());
     setState("doc", answer.workspace);
     await look();
     await remake();
@@ -195,8 +211,18 @@ export function createWorkspace(prover: Prover, ui: Ui) {
   function link(tab: string, node: number) {
     // Seen first: the write below runs the effects that compare a tab's sequent with it.
     const session = sessionOf(tab);
-    if (session) seen.set(tab, sequentText(session));
+    if (session) {
+      seen.set(tab, keyOf(session));
+      latest.set(tab, session);
+    }
     setState("tabs", tab, node);
+  }
+
+  /** Forgets a tab's link, leaving the tab as it is. */
+  function unlink(tab: string) {
+    setState("tabs", tab, undefined as unknown as number);
+    seen.delete(tab);
+    latest.delete(tab);
   }
 
   /** Shows the panel by itself at the visit's first link, where it docks. */
@@ -210,10 +236,13 @@ export function createWorkspace(prover: Prover, ui: Ui) {
   async function openNode(node: number, logic: Logic): Promise<string | null> {
     const value = state.view?.nodes.find((n) => n.node === node)?.value;
     if (!value) return null;
-    const opened = await prover.open(JSON.stringify(value), ordinary(logic));
-    if ("problem" in opened) return null;
+    const done = await prover.open(JSON.stringify(value), ordinary(logic));
+    if ("problem" in done) return null;
     const tab = prover.current()?.id ?? null;
-    if (tab) link(tab, node);
+    if (tab) {
+      opened.add(tab);
+      link(tab, node);
+    }
     return tab;
   }
 
@@ -231,16 +260,22 @@ export function createWorkspace(prover: Prover, ui: Ui) {
         const gone = Object.keys(state.tabs).filter((tab) => !open.includes(tab));
         if (gone.length === 0) return;
         void queued(async () => {
-          const edits: Edit[] = gone.map((tab) => ({
-            remove: { node: state.tabs[tab] as number },
-          }));
+          const edits: Edit[] = [];
+          // The closed tab's last session is what its node keeps, so that Undo reopens it so.
+          const kept = new Map<number, OrdinarySession>();
+          for (const tab of gone) {
+            const node = state.tabs[tab] as number;
+            edits.push({ remove: { node } });
+            const session = latest.get(tab);
+            if (session) kept.set(node, session);
+          }
           batch(() => {
             for (const tab of gone) {
-              setState("tabs", tab, undefined as unknown as number);
-              seen.delete(tab);
+              unlink(tab);
+              opened.delete(tab);
             }
           });
-          await act({ name: "closing", edits });
+          await act({ name: "closing", edits }, kept);
         }).catch(said);
       },
       { defer: true },
@@ -248,59 +283,71 @@ export function createWorkspace(prover: Prover, ui: Ui) {
   );
 
   /**
-   * A linked tab's sequent changed by the visitor (a new sequent typed and started): a tab the
-   * visitor typed in changes its given sequent, which puts what was made from it out of date; a
-   * tab made from another is no longer linked, since its sequent is that other tab's to change.
+   * A linked tab's sequent or logic changed by the visitor (a new sequent typed and started, the
+   * logic switched): the tab that owns its sequent (no line above it) changes that given sequent,
+   * which puts what was made from it out of date; a tab made from another, or a copy, leaves the
+   * workspace, since its sequent is another tab's to change. Steps keep the tab's latest session.
    */
   createEffect(
     on(
       () =>
         Object.keys(state.tabs).map((tab) => {
           const session = sessionOf(tab);
-          return [tab, session ? sequentText(session) : null] as const;
+          return [tab, session] as const;
         }),
       (tabs) => {
-        for (const [tab, text] of tabs) {
-          if (text === null || seen.get(tab) === text) continue;
-          seen.set(tab, text);
+        for (const [tab, session] of tabs) {
+          if (!session) continue;
+          const key = keyOf(session);
+          if (seen.get(tab) === key) {
+            latest.set(tab, session);
+            continue;
+          }
+          const before = latest.get(tab);
+          seen.set(tab, key);
+          latest.set(tab, session);
           const node = state.tabs[tab];
           const view = state.view;
           if (node === undefined || !view) continue;
           const row = rows().find((r) => r.tab === tab);
           const input = sequentNode(view, node);
-          const given = view.nodes.find((n) => n.node === input)?.class == null;
-          if (!row || !given) {
+          const owns =
+            row !== undefined &&
+            row.line === null &&
+            view.nodes.find((n) => n.node === input)?.class == null;
+          const text = sequentText(session);
+          if (!owns || input === null) {
             void queued(async () => {
-              setState("tabs", tab, undefined as unknown as number);
-              await act({ name: "closing", edits: [{ remove: { node } }] });
+              unlink(tab);
+              parked.set(node, tab);
+              await act(
+                { name: "unlinking", edits: [{ remove: { node } }] },
+                before ? new Map([[node, before]]) : undefined,
+              );
               setUi(
                 "live",
-                `${displayed(text)} is no longer linked: its sequent was made from another tab.`,
+                `${displayed(text)} is no longer linked: its sequent was made from another tab. Workspace has Undo unlinking.`,
               );
             }).catch(said);
             continue;
           }
-          const session = sessionOf(tab);
-          if (!session || input === null) continue;
+          const logicChanged = before !== undefined && before.logic !== session.logic;
           void queued(async () => {
             const value = await statement(session);
-            // The node keeps the session the document last held, the earlier sequent's, so that
-            // the change's Undo brings that proof back; the edit lays the new one in.
-            remade.add(node);
-            try {
-              await act({
-                name: "sequent change",
+            await act(
+              {
+                name: logicChanged ? "logic change" : "sequent change",
                 // The tab's proof starts on the new sequent, as the tab's own did: restarted,
-                // then the tab's session laid in, so that it is current.
+                // then the tab's session laid in, so that it is current. The node holds the
+                // earlier proof before the action, so that its Undo brings that proof back.
                 edits: [
                   { set: { node: input, value } },
                   { restart: { node } },
                   { work: { node, session: JSON.stringify(session) } },
                 ],
-              });
-            } finally {
-              remade.delete(node);
-            }
+              },
+              before ? new Map([[node, before]]) : undefined,
+            );
             const stale = outOfDate(rows());
             if (stale > 0) setUi("live", changeWords(stale, state.view?.undo ?? null));
           }).catch(said);
@@ -319,19 +366,45 @@ export function createWorkspace(prover: Prover, ui: Ui) {
       if (doc === null) return;
       const answer = await prover.api.workspace.undo(doc, work(), settings(), forward);
       setState("doc", answer.workspace);
+      // A tab parked by an earlier Undo or change whose node is back is linked again.
+      const open = new Set(prover.store.proofs.map((p) => p.id));
+      for (const [key, session] of Object.entries(answer.sessions)) {
+        const node = Number(key);
+        const tab = parked.get(node);
+        if (tab === undefined) continue;
+        parked.delete(node);
+        if (!open.has(tab)) continue;
+        // The tab shows the session back first, and is seen so: the write runs the change's
+        // effect, which would read the tab's own sequent as a new change.
+        await prover.showOrdinarySession(tab, session);
+        seen.set(tab, keyOf(session));
+        latest.set(tab, session);
+        setState("tabs", tab, node);
+      }
       // Each tab first shows the session the change brought back, then the view is read with it.
       const byNode = new Map(Object.entries(state.tabs).map(([tab, node]) => [node, tab]));
       for (const [node, session] of Object.entries(answer.sessions)) {
         const tab = byNode.get(Number(node));
         if (tab) {
-          seen.set(tab, sequentText(session));
+          seen.set(tab, keyOf(session));
+          latest.set(tab, session);
           await prover.showOrdinarySession(tab, session);
         }
       }
       await look();
+      // A tab whose node the change took away: closed if the workspace opened it, else unlinked.
+      const alive = new Set((state.view?.nodes ?? []).map((n) => n.node));
+      for (const [node, tab] of Array.from(byNode.entries())) {
+        if (alive.has(node)) continue;
+        unlink(tab);
+        parked.set(node, tab);
+        if (opened.delete(tab)) prover.remove(tab);
+      }
       // A proof whose tab was closed comes back on a tab of its own.
+      const linked = new Set(Object.values(state.tabs));
       for (const n of state.view?.nodes ?? []) {
-        if (n.class !== "work" || byNode.has(n.node) || !isOrdinary(n.value)) continue;
+        if (n.class !== "work" || linked.has(n.node) || !isOrdinary(n.value)) continue;
+        parked.delete(n.node);
         await openNode(n.node, (n.value as OrdinarySession).logic);
       }
       if (answer.name) setUi("live", `${forward ? "Redone" : "Undone"}: ${answer.name}.`);
@@ -344,6 +417,9 @@ export function createWorkspace(prover: Prover, ui: Ui) {
       setState({ doc: null, tabs: {}, view: null, shown: false, graph: false, running: null });
     });
     seen.clear();
+    latest.clear();
+    opened.clear();
+    parked.clear();
   }
 
   return {
@@ -433,7 +509,8 @@ export function createWorkspace(prover: Prover, ui: Ui) {
           await act({ name: "restart", edits: [{ restart: { node: row.node } }] });
           const value = state.view?.nodes.find((n) => n.node === row.node)?.value;
           if (isOrdinary(value)) {
-            seen.set(row.tab, sequentText(value));
+            seen.set(row.tab, keyOf(value));
+            latest.set(row.tab, value);
             await prover.showOrdinarySession(row.tab, value);
           }
           prover.activate(row.tab);
@@ -454,15 +531,17 @@ export function createWorkspace(prover: Prover, ui: Ui) {
         const node = state.tabs[tab];
         const doc = state.doc;
         if (node === undefined || doc === null) return null;
-        // The tab, the tab it was made from, and the tabs made from it.
-        const from = rows().find((r) => r.node === node)?.line?.from;
-        const nodes = [
-          node,
-          ...(from == null ? [] : [from]),
-          ...rows()
-            .filter((r) => r.line?.from === node)
-            .map((r) => r.node),
-        ];
+        // The tab's linked group: every tab joined to it by lines, either way.
+        const all = rows();
+        const nodes = [node];
+        for (let at = 0; at < nodes.length; at++) {
+          const here = nodes[at];
+          for (const r of all) {
+            const next =
+              r.node === here ? r.line?.from : r.line?.from === here ? r.node : undefined;
+            if (next != null && !nodes.includes(next)) nodes.push(next);
+          }
+        }
         const document = await prover.api.workspace.pack(doc, nodes, work(), settings());
         return { document, node };
       }),

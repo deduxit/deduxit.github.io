@@ -133,3 +133,80 @@ test("a link of a linked tab opens its linked tabs, the shown one shown, the pan
   const ws = fresh.getByRole("region", { name: "Workspace" });
   await expect(ws.locator(".ws-line")).toContainText("Glivenko's translation");
 });
+
+test("Undo of a link closes the tab it opened, and Redo brings it back", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await classical(page, "|- a \\/ ~a");
+  await proveTranslation(page);
+  const ws = panel(page);
+  await ws.getByRole("button", { name: "Undo translation" }).click();
+  await expect(page.locator(".ptab")).toHaveCount(1);
+  await expect(page.getByRole("button", { name: /^Workspace/ })).toHaveCount(0);
+  await expect(page.locator(".ptab").first()).toContainText("a ∨ ¬a");
+});
+
+test("Undo of a sequent change brings back the proof with its steps", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await classical(page, "|- a \\/ ~a");
+  await proveTranslation(page);
+  const ws = panel(page);
+  await ws.locator(".ws-row").first().locator(".ws-tab").click();
+  await page.getByRole("button", { name: "Close goal" }).click();
+  await expect(ws.locator(".ws-row").first()).toContainText("Proved");
+  await page.locator(".ptab[aria-current=true] .pt-go").click();
+  await page.getByRole("textbox", { name: "Sequent" }).fill("|- a -> b \\/ ~b");
+  await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
+  await expect(ws.locator(".ws-row").nth(1)).toContainText("Out of date");
+  await ws.getByRole("button", { name: "Undo sequent change" }).click();
+  await expect(ws.locator(".ws-row").first()).toContainText("Proved");
+  await expect(page.locator(".ptab").first()).toContainText("a ∨ ¬a");
+});
+
+test("a copy's or a made tab's own sequent unlinks it, which Undo takes back", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await classical(page, "|- a \\/ ~a");
+  const pop = await switches(page);
+  await pop.getByRole("button", { name: "Duplicate this proof" }).click();
+  await expect(page.locator(".ptab")).toHaveCount(2);
+  const ws = panel(page);
+  await page.locator(".ptab[aria-current=true] .pt-go").click();
+  await page.getByRole("textbox", { name: "Sequent" }).fill("|- b -> b");
+  await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
+  // The copy leaves the workspace; the tab it was copied from is not out of date.
+  await expect(page.getByRole("button", { name: "Workspace, 1 linked tab" })).toBeVisible();
+  await expect(ws.locator(".ws-row")).toHaveCount(1);
+  await expect(ws).not.toContainText("Out of date");
+  await expect(page.locator(".ptab").first()).toContainText("a ∨ ¬a");
+  await ws.getByRole("button", { name: "Undo unlinking" }).click();
+  await expect(ws.locator(".ws-row")).toHaveCount(2);
+  await expect(page.locator(".ptab")).toHaveCount(2);
+  await expect(page.locator(".ptab").nth(1)).toContainText("a ∨ ¬a");
+});
+
+test("a link holds the shown tab's whole linked group", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await classical(page, "|- a \\/ ~a");
+  await proveTranslation(page);
+  await page.locator(".ptab").first().click();
+  const pop = await switches(page);
+  await pop.getByRole("button", { name: "Duplicate this proof" }).click();
+  await expect(page.locator(".ptab")).toHaveCount(3);
+  await expect.poll(() => page.evaluate(() => location.hash)).toMatch(/^#v=3&/);
+  await page.waitForTimeout(600);
+  const hash = await page.evaluate(() => location.hash);
+  const fresh = await page.context().newPage();
+  await fresh.setViewportSize({ width: 1280, height: 800 });
+  await fresh.goto(`/${hash}`);
+  await expect(fresh.locator(".ptab")).toHaveCount(3);
+});
+
+test("a typed tab's change of logic is a workspace change", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await classical(page, "|- a \\/ ~a");
+  await proveTranslation(page);
+  await page.locator(".ptab").first().click();
+  await calculus(page, ["Intuitionistic"]);
+  const ws = panel(page);
+  await expect(ws.getByRole("button", { name: "Undo logic change" })).toBeVisible();
+  await expect(ws.locator(".ws-line")).not.toContainText("Both valid, so the verdicts agree.");
+});
