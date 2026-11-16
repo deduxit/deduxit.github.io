@@ -587,6 +587,17 @@ the page reads.
   the linear store as before, a calculus of one's own having none. The browser keeps each
   store's filters and proved problems apart (`practiceKey`: the linear one's key is the old
   `deduxit-practice`), and an ordinary problem counts as proved in the sequent calculus.
+- **Learn's tutorial follows the current tab's suite**: an ordinary tab's is the ordinary
+  course (`src/islands/Course.tsx`, `ORDINARY_LESSONS` in `content.ts`, a lesson not written
+  yet "to come" as in the linear list); a linear tab's is the linear course as it was, with
+  one line at its end that opens a new ordinary tab; a custom-calculus tab's says in one
+  sentence that it has no course. An ordinary lesson (the collection `ordinaryLessons`,
+  passed as the island's `ordinary` with each worked session's text) plays its worked proof
+  from the finished session alone: `ordinary_undo` takes it back step by step, the states are
+  kept, and step `k` is shown on the lesson's tab (`showOrdinarySession`); a step's rule is the
+  session's history's, which `src/content/ordinary/lessons.test.ts` holds to the lesson's
+  steps. Only the `sequent` method plays today. Zod stays out of the island (`course.ts` is
+  the content config's and the tests'): Zod 4 probes `new Function`, which the CSP reports.
 - **Every problem is decided by the command, and checked twice**: `src/content/linear/problems.test.ts`
   (each verdict and fragment by the module, each session to its sequent, mode and a
   finished proof, the categories to the sequent's connectives and mode, no sequent twice in

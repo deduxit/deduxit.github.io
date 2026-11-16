@@ -3,10 +3,11 @@
 
 # The ordinary suite's store against deduxit's command at the flake's pinned input:
 # every problem's verdict in its logic is the one `deduxit prove --logic` gives
-# (exit 0 valid, 1 not valid), and every session beside a problem (its worked
-# proof in natural deduction or as a tableau, `<id>.natural.json`,
-# `<id>.tableau.json`) is a derivation of a calculus given as data that
-# `deduxit check --calculus` accepts (exit 0). A problem whose verdict a later
+# (exit 0 valid, 1 not valid), and every session beside a problem is a finished
+# proof the command accepts: a worked proof in the sequent calculus
+# (`<id>.sequent.json`) one that `deduxit interact --state` resumes and `proof`
+# accepts, one in natural deduction or as a tableau (`<id>.natural.json`,
+# `<id>.tableau.json`) a derivation that `deduxit check --calculus` accepts. A problem whose verdict a later
 # deduxit changes fails the check, which names it.
 # Usage: python3 ordinary_problems.py PROBLEMS_DIR DEDUXIT
 import json
@@ -42,6 +43,16 @@ def main(store, deduxit):
         ).returncode
         if decided != VERDICT[meta["verdict"]]:
             wrong.append(f"{path.stem}: {meta['verdict']}, the command exits {decided}")
+    sequents = sorted(pathlib.Path(store).glob("*.sequent.json"))
+    for path in sequents:
+        proved = subprocess.run(
+            [deduxit, "interact", "--state", str(path)],
+            input=b"proof\n",
+            capture_output=True,
+            check=False,
+        ).returncode
+        if proved != 0:
+            wrong.append(f"{path.name}: `interact --state` and `proof` exit {proved}")
     sessions = sorted(pathlib.Path(store).glob("*.natural.json")) + sorted(
         pathlib.Path(store).glob("*.tableau.json")
     )
@@ -59,7 +70,8 @@ def main(store, deduxit):
     if wrong:
         sys.exit("\n".join(wrong))
     print(
-        f"{len(problems)} problems and {len(sessions)} sessions as deduxit decides them"
+        f"{len(problems)} problems and {len(sequents) + len(sessions)} sessions"
+        " as deduxit decides them"
     )
 
 

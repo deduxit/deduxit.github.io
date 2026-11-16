@@ -17,6 +17,7 @@
  * templates, with their licence.
  */
 
+import { OrdinaryCourseView } from "./Course";
 import { hinted, RuleName } from "./RuleHint";
 import { ArrowLeft, Compass, Play, X } from "lucide-solid";
 import {
@@ -31,9 +32,17 @@ import {
   Switch,
 } from "solid-js";
 import { Portal } from "solid-js/web";
-import { type Example, type Lesson, type Level, type Rule, written } from "../lib/content";
+import {
+  type Example,
+  type Lesson,
+  type Level,
+  type OrdinaryCourse,
+  type Rule,
+  written,
+} from "../lib/content";
 import type { SessionDoc } from "../lib/deduxit";
 import { LEVEL_NAMES } from "../lib/practice";
+import { ordinary } from "../lib/suites";
 import {
   hintId,
   REFERENCE,
@@ -219,6 +228,7 @@ export function LearnFrame(props: {
   ui: Ui;
   examples: readonly Example[];
   lessons: readonly Lesson[];
+  ordinary: OrdinaryCourse;
   rules: readonly Rule[];
   tour: () => void;
 }) {
@@ -228,6 +238,13 @@ export function LearnFrame(props: {
   /** Where each part of the reference taken from the hints' tables goes, by its key. */
   const [partsAt, setPartsAt] = createSignal<ReadonlyMap<string, HTMLElement>>(new Map());
   const open = (lesson: number | null) => setUi({ lesson, reason: null });
+  /** The current tab's suite, whose course the tutorial shows. */
+  const suite = () => props.prover.current()?.calculus.suite ?? "linear";
+  /** Opens a new tab of ordinary logic, whose tutorial is the ordinary course. */
+  const toOrdinary = async () => {
+    const id = props.prover.add();
+    await props.prover.setCalculus(id, ordinary("classical"));
+  };
   const opened = () => props.lessons.find((l) => l.lesson === ui.lesson);
   return (
     <aside class="frame" aria-label="Learn">
@@ -263,6 +280,10 @@ export function LearnFrame(props: {
       </div>
       <div class="frame-body" id="frame-panel" role="tabpanel" aria-labelledby={`ftab-${ui.learn}`}>
         <Switch>
+          {/* An ordinary tab's tutorial is the ordinary suite's course. */}
+          <Match when={ui.learn === "tutorial" && suite() === "ordinary"}>
+            <OrdinaryCourseView course={props.ordinary} prover={props.prover} ui={props.ui} />
+          </Match>
           <Match when={ui.learn === "tutorial" && opened()}>
             {(lesson) => (
               <Show when={lesson()} keyed>
@@ -280,6 +301,12 @@ export function LearnFrame(props: {
             )}
           </Match>
           <Match when={ui.learn === "tutorial"}>
+            <Show when={suite() === "rules"}>
+              <p>
+                A calculus of your own has no course: its rules are yours. Learn's lessons below are
+                linear logic's.
+              </p>
+            </Show>
             <Written name="texts/tutorial" />
             <button type="button" class="btn" onClick={() => props.tour()}>
               <Compass aria-hidden="true" />
@@ -330,6 +357,13 @@ export function LearnFrame(props: {
                 )}
               </For>
             </ol>
+            {/* The other suite's course, one line at the end of this one. */}
+            <p class="sub">
+              Ordinary logic has a course of its own.{" "}
+              <button type="button" class="linkish" onClick={() => void toOrdinary()}>
+                Open it on a new tab
+              </button>
+            </p>
           </Match>
           <Match when={ui.learn === "reference"}>
             <Written
@@ -1401,7 +1435,7 @@ function Refusal(props: {
 const lower = (text: string) => text.charAt(0).toLowerCase() + text.slice(1);
 
 /** The self-explanation prompt: the visitor writes an answer, kept nowhere, then compares it with the model one. */
-function Explain(props: {
+export function Explain(props: {
   explain: Lesson["explain"];
   compared: boolean;
   compare: (on: boolean) => void;

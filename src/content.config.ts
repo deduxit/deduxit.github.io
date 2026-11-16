@@ -56,7 +56,7 @@
 import { defineCollection } from "astro:content";
 import { file, glob } from "astro/loaders";
 import { z } from "astro/zod";
-import { linearLesson, linearProblem, ordinaryProblem, words } from "./lib/course";
+import { linearLesson, linearProblem, ordinaryLesson, ordinaryProblem, words } from "./lib/course";
 
 const problems = defineCollection({
   loader: glob({ pattern: "*.md", base: "./src/content/linear/problems" }),
@@ -136,6 +136,12 @@ const ordinaryProblems = defineCollection({
   schema: ordinaryProblem,
 });
 
+/** The ordinary suite's course: src/content/ordinary/lessons/<n>-<name>.md. */
+const ordinaryLessons = defineCollection({
+  loader: glob({ pattern: "*.md", base: "./src/content/ordinary/lessons" }),
+  schema: ordinaryLesson,
+});
+
 export const collections = {
   problems,
   tour,
@@ -144,4 +150,5 @@ export const collections = {
   rules,
   examples,
   ordinaryProblems,
+  ordinaryLessons,
 };

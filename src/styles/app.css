@@ -2217,6 +2217,11 @@ button.wordmark {
   color: var(--color-dim);
   margin-top: auto;
 }
+/* The licence's link stands in its sentence: underlined, as a link in running text must be. */
+.frame-licence a {
+  text-decoration: underline;
+  text-underline-offset: var(--spacing-0-5);
+}
 
 /* The tour's caption, beside what it points at. */
 .tour {

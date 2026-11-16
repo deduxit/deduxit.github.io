@@ -1487,6 +1487,11 @@ export function createProver(say: (text: string) => void = () => undefined) {
       },
     ),
 
+    /** Shows an ordinary session on the proof `id`: a step of an ordinary lesson's worked proof. */
+    async showOrdinarySession(id: string, session: OrdinarySession) {
+      await showOrdinary(id, session);
+    },
+
     /**
      * Opens a sequent in a calculus as a proof of its own, in place of the page's empty one if
      * that is shown: a problem of a suite's store. Nothing open is replaced.

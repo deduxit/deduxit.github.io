@@ -22,7 +22,7 @@ import { Cancelled } from "../lib/protocol";
 import { calculusOf, isNatural, parameterOf, SUITES } from "../lib/suites";
 import { inputProblem, pretty } from "../lib/words";
 import type { Theme } from "../lib/theme";
-import type { Example, Lesson, Rule, Sample, Stop } from "../lib/content";
+import type { Example, Lesson, OrdinaryCourse, Rule, Sample, Stop } from "../lib/content";
 import { hintsFor } from "../lib/rules";
 import { migrate } from "../lib/storage";
 import { BottomBand } from "./BottomBand";
@@ -55,6 +55,8 @@ export default function App(props: {
   stops: readonly Stop[];
   /** Learn's written lessons, in their order. */
   lessons: readonly Lesson[];
+  /** The ordinary suite's course: its lessons and the problems they practise. */
+  ordinary: OrdinaryCourse;
   /** The one-sided rules, as the reference draws them. */
   rules: readonly Rule[];
 }) {
@@ -551,6 +553,7 @@ export default function App(props: {
           ui={view}
           examples={props.examples}
           lessons={props.lessons}
+          ordinary={props.ordinary}
           rules={props.rules}
           tour={() => {
             setUi({ tour: null });

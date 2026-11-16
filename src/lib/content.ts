@@ -172,3 +172,51 @@ export function written(key: string): DocumentFragment {
     (template?.content.cloneNode(true) as DocumentFragment | undefined) ?? new DocumentFragment()
   );
 }
+
+/** A problem of the ordinary store that a lesson of the ordinary course practises. */
+export interface OrdinaryExample {
+  readonly id: string;
+  readonly title: string;
+  /** In the ordinary syntax, as it is typed in the field. */
+  readonly sequent: string;
+  readonly logic: "classical" | "intuitionistic" | "minimal";
+  readonly lesson: number;
+}
+
+/**
+ * A lesson of the ordinary course (src/lib/course.ts says what each part is), with its worked
+ * proof's session, the document beside its problem for the lesson's method.
+ */
+export interface OrdinaryLesson {
+  readonly id: string;
+  readonly lesson: number;
+  readonly title: string;
+  readonly worked: string;
+  /** The worked problem's sequent, in the ordinary syntax. */
+  readonly sequent: string;
+  readonly method: "sequent" | "natural" | "tableau" | "table";
+  readonly logic: "classical" | "intuitionistic" | "minimal";
+  readonly choices: readonly string[];
+  readonly steps: readonly Reason[];
+  readonly faded: number;
+  readonly explain: { readonly after: number; readonly prompt: string; readonly answer: string };
+  readonly hinge: { readonly question: string; readonly options: readonly Option[] };
+  /** The worked proof's session, as deduxit wrote it. */
+  readonly session: string;
+}
+
+/** The ordinary course: its lessons, and the problems they practise. */
+export interface OrdinaryCourse {
+  readonly lessons: readonly OrdinaryLesson[];
+  readonly problems: readonly OrdinaryExample[];
+}
+
+/** The ordinary course's lessons in their order, written or to come: the places of its list. */
+export const ORDINARY_LESSONS = [
+  "Valid, by the truth table",
+  "Signed tableaux",
+  "The sequent calculus LK",
+  "Natural deduction, backwards",
+  "Natural deduction, forwards",
+  "Classical, intuitionistic, minimal",
+] as const;

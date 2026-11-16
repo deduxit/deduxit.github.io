@@ -24,7 +24,14 @@ import stix from "deduxit-fonts/STIXTwoMath-Regular.otf?url";
 import { getCollection, render } from "astro:content";
 import App from "../islands/App";
 import examplesFile from "../content/examples.json";
-import type { Example, Lesson, Rule, Sample, Stop } from "../lib/content";
+import type {
+  Example,
+  Lesson,
+  OrdinaryCourse,
+  Rule,
+  Sample,
+  Stop,
+} from "../lib/content";
 import Base from "../layouts/Base.astro";
 
 const sessions = import.meta.glob<string>("../content/linear/problems/*.session.json", {
@@ -97,8 +104,52 @@ const lessonData: Lesson[] = lessons.map((l) => {
   };
 });
 const ruleData: Rule[] = rules.map((r) => ({ id: r.id, ...r.data }));
+
+// The ordinary course: each lesson with its worked proof's session, the file beside its
+// problem for the lesson's method, and the store's problems a lesson practises.
+const ordinarySessions = import.meta.glob<string>("../content/ordinary/problems/*.json", {
+  query: "?raw",
+  import: "default",
+  eager: true,
+});
+const ordinaryProblems = await getCollection("ordinaryProblems");
+const ordinaryLessons = (await getCollection("ordinaryLessons")).sort(
+  (a, b) => a.data.lesson - b.data.lesson,
+);
+const ordinaryCourse: OrdinaryCourse = {
+  lessons: ordinaryLessons.map((l) => {
+    const session = ordinarySessions[`../content/ordinary/problems/${l.data.worked}.${l.data.method}.json`];
+    const problem = ordinaryProblems.find((p) => p.id === l.data.worked);
+    if (!session || !problem) throw new Error(`lesson ${l.id}: no worked proof beside its problem`);
+    return {
+      id: l.id,
+      lesson: l.data.lesson,
+      title: l.data.title,
+      worked: l.data.worked,
+      sequent: problem.data.sequent,
+      method: l.data.method,
+      logic: l.data.logic,
+      choices: l.data.choices,
+      steps: l.data.steps,
+      faded: l.data.faded,
+      explain: l.data.explain,
+      hinge: l.data.hinge,
+      session,
+    };
+  }),
+  problems: ordinaryProblems
+    .filter((p) => p.data.lesson !== undefined)
+    .sort((a, b) => (a.data.order ?? 0) - (b.data.order ?? 0))
+    .map((p) => ({
+      id: p.id,
+      title: p.data.title ?? p.data.sequent,
+      sequent: p.data.sequent,
+      logic: p.data.logic,
+      lesson: p.data.lesson ?? 0,
+    })),
+};
 const rendered = await Promise.all(
-  [...examples, ...stops, ...texts, ...lessons].map(async (entry) => ({
+  [...examples, ...stops, ...texts, ...lessons, ...ordinaryLessons].map(async (entry) => ({
     key: `${entry.collection}/${entry.id}`,
     Content: (await render(entry)).Content,
   })),
@@ -115,6 +166,7 @@ const rendered = await Promise.all(
       samples={samples}
       stops={stopData}
       lessons={lessonData}
+      ordinary={ordinaryCourse}
       rules={ruleData}
     >
       <p slot="fallback" class="noscript">
