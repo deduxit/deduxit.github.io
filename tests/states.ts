@@ -482,4 +482,15 @@ export async function coursing(page: Page, visit: Visit) {
   await expect(page.locator(".lesson-view .kw.ok").filter({ hasText: "Proved" })).toBeVisible();
   await page.getByRole("region", { name: "Check" }).getByRole("radio").nth(1).check();
   await visit("ordinary lesson's check");
+  await page.getByRole("button", { name: "All lessons" }).click();
+  await page.getByRole("button", { name: /^Lesson 1: Valid, by the truth table/ }).click();
+  await page.getByRole("button", { name: "Start with the first row" }).click();
+  await page.getByRole("button", { name: "Predict falsifies" }).click();
+  await visit("table lesson's row");
+  await page.getByRole("button", { name: "All lessons" }).click();
+  await page.getByRole("button", { name: /^Lesson 5: Natural deduction, forwards/ }).click();
+  await page.getByRole("button", { name: "Start the worked proof" }).click();
+  await page.getByRole("button", { name: "Predict ∧E₂" }).click();
+  await expect(page.getByRole("region", { name: "Natural deduction" })).toBeVisible();
+  await visit("natural lesson's step");
 }

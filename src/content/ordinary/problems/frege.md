@@ -5,5 +5,7 @@ logic: "minimal"
 verdict: "valid"
 level: 3
 categories: [implication, minimal]
+lesson: 4
+order: 1
 ---
 An implication distributes over another.

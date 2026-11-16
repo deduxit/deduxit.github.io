@@ -5,5 +5,7 @@ logic: "classical"
 verdict: "not_valid"
 level: 2
 categories: [implication, negation]
+lesson: 1
+order: 1
 ---
 A fallacy: without `a`, `b` may still hold.

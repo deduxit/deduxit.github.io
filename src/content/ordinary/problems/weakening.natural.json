@@ -1,0 +1,106 @@
+{
+  "version": 17,
+  "calculus": {
+    "name": "NJ",
+    "description": "Gentzen's natural deduction for intuitionistic propositional logic (Untersuchungen über das logische Schließen, 1935), with ¬I and ¬E as rules of their own and ex falso as ⊥E; ↔ has the rules of forall x: Calgary (Magnus, Button and others, 2019). A judgement is one formula, and a hypothesis is a node of its own: a rule that discharges one takes its premise from a subproof whose hypotheses it names. Every elimination takes its major premise first.",
+    "connectives": [
+      { "name": "⊤", "arity": 0 },
+      { "name": "⊥", "arity": 0 },
+      { "name": "¬", "arity": 1, "fixity": "prefix", "precedence": 5 },
+      { "name": "∧", "arity": 2, "fixity": "infix", "precedence": 4, "associativity": "right" },
+      { "name": "∨", "arity": 2, "fixity": "infix", "precedence": 3, "associativity": "right" },
+      { "name": "→", "arity": 2, "fixity": "infix", "precedence": 2, "associativity": "right" },
+      { "name": "↔", "arity": 2, "fixity": "infix", "precedence": 1, "associativity": "none" }
+    ],
+    "sequent": [{ "name": "formula", "discipline": "multiset", "least": 1, "most": 1 }],
+    "variables": { "formula": ["A", "B", "C"] },
+    "rules": [
+      { "name": "⊤I", "conclusion": { "formula": ["⊤"] } },
+      {
+        "name": "∧I",
+        "premises": [{ "formula": ["A"] }, { "formula": ["B"] }],
+        "conclusion": { "formula": [["∧", "A", "B"]] }
+      },
+      {
+        "name": "∧E₁",
+        "premises": [{ "formula": [["∧", "A", "B"]] }],
+        "conclusion": { "formula": ["A"] }
+      },
+      {
+        "name": "∧E₂",
+        "premises": [{ "formula": [["∧", "A", "B"]] }],
+        "conclusion": { "formula": ["B"] }
+      },
+      {
+        "name": "∨I₁",
+        "premises": [{ "formula": ["A"] }],
+        "conclusion": { "formula": [["∨", "A", "B"]] }
+      },
+      {
+        "name": "∨I₂",
+        "premises": [{ "formula": ["B"] }],
+        "conclusion": { "formula": [["∨", "A", "B"]] }
+      },
+      {
+        "name": "∨E",
+        "premises": [
+          { "formula": [["∨", "A", "B"]] },
+          { "formula": ["C"], "discharges": [{ "formula": ["A"] }] },
+          { "formula": ["C"], "discharges": [{ "formula": ["B"] }] }
+        ],
+        "conclusion": { "formula": ["C"] }
+      },
+      {
+        "name": "→I",
+        "premises": [{ "formula": ["B"], "discharges": [{ "formula": ["A"] }] }],
+        "conclusion": { "formula": [["→", "A", "B"]] }
+      },
+      {
+        "name": "→E",
+        "premises": [{ "formula": [["→", "A", "B"]] }, { "formula": ["A"] }],
+        "conclusion": { "formula": ["B"] }
+      },
+      {
+        "name": "¬I",
+        "premises": [{ "formula": ["⊥"], "discharges": [{ "formula": ["A"] }] }],
+        "conclusion": { "formula": [["¬", "A"]] }
+      },
+      {
+        "name": "¬E",
+        "premises": [{ "formula": [["¬", "A"]] }, { "formula": ["A"] }],
+        "conclusion": { "formula": ["⊥"] }
+      },
+      {
+        "name": "↔I",
+        "premises": [
+          { "formula": ["B"], "discharges": [{ "formula": ["A"] }] },
+          { "formula": ["A"], "discharges": [{ "formula": ["B"] }] }
+        ],
+        "conclusion": { "formula": [["↔", "A", "B"]] }
+      },
+      {
+        "name": "↔E₁",
+        "premises": [{ "formula": [["↔", "A", "B"]] }, { "formula": ["A"] }],
+        "conclusion": { "formula": ["B"] }
+      },
+      {
+        "name": "↔E₂",
+        "premises": [{ "formula": [["↔", "A", "B"]] }, { "formula": ["B"] }],
+        "conclusion": { "formula": ["A"] }
+      },
+      { "name": "⊥E", "premises": [{ "formula": ["⊥"] }], "conclusion": { "formula": ["A"] } }
+    ]
+  },
+  "terms": ["a", "b", ["→", 1, 0], ["→", 0, 2]],
+  "scopes": [
+    {},
+    { "owner": [0, 0], "hypotheses": [[[0]]] },
+    { "parent": 1, "owner": [1, 0], "hypotheses": [[[1]]] }
+  ],
+  "nodes": [
+    { "sequent": [[3]], "rule": "→I", "premises": [1] },
+    { "sequent": [[2]], "rule": "→I", "premises": [2], "scope": 1 },
+    { "sequent": [[0]], "hypothesis": true, "scope": 1, "opened": 2 }
+  ],
+  "history": [0, 1, 2]
+}

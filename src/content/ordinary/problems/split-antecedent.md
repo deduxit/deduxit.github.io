@@ -5,5 +5,7 @@ logic: "classical"
 verdict: "valid"
 level: 4
 categories: [conjunction, disjunction, implication, classical]
+lesson: 2
+order: 2
 ---
 Splitting a conjunction's implication is classical.

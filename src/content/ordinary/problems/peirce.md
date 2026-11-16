@@ -5,5 +5,7 @@ logic: "classical"
 verdict: "valid"
 level: 3
 categories: [implication, classical]
+lesson: 6
+order: 3
 ---
 An implication-only law that holds classically alone.
