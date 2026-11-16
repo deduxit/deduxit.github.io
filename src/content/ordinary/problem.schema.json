@@ -10,11 +10,18 @@
     },
     "logic": {
       "type": "string",
-      "enum": ["classical", "intuitionistic", "minimal"]
+      "enum": [
+        "classical",
+        "intuitionistic",
+        "minimal"
+      ]
     },
     "verdict": {
       "type": "string",
-      "enum": ["valid", "not_valid"]
+      "enum": [
+        "valid",
+        "not_valid"
+      ]
     },
     "level": {
       "anyOf": [
@@ -44,6 +51,7 @@
         "enum": [
           "conjunction",
           "disjunction",
+          "equivalence",
           "implication",
           "negation",
           "constants",
@@ -72,5 +80,11 @@
       "format": "uri"
     }
   },
-  "required": ["sequent", "logic", "verdict", "level", "categories"]
+  "required": [
+    "sequent",
+    "logic",
+    "verdict",
+    "level",
+    "categories"
+  ]
 }

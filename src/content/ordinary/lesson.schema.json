@@ -35,7 +35,10 @@
             "minLength": 1
           }
         },
-        "required": ["rule", "reason"]
+        "required": [
+          "rule",
+          "reason"
+        ]
       }
     },
     "faded": {
@@ -60,7 +63,11 @@
           "minLength": 1
         }
       },
-      "required": ["after", "prompt", "answer"]
+      "required": [
+        "after",
+        "prompt",
+        "answer"
+      ]
     },
     "hinge": {
       "type": "object",
@@ -91,23 +98,41 @@
                 "minLength": 1
               }
             },
-            "required": ["text", "why"]
+            "required": [
+              "text",
+              "why"
+            ]
           }
         }
       },
-      "required": ["question", "options"]
+      "required": [
+        "question",
+        "options"
+      ]
     },
     "method": {
       "type": "string",
-      "enum": ["sequent", "natural", "tableau", "table"]
+      "enum": [
+        "sequent",
+        "natural",
+        "tableau",
+        "table"
+      ]
     },
     "logic": {
       "type": "string",
-      "enum": ["classical", "intuitionistic", "minimal"]
+      "enum": [
+        "classical",
+        "intuitionistic",
+        "minimal"
+      ]
     },
     "layout": {
       "type": "string",
-      "enum": ["tree", "fitch"]
+      "enum": [
+        "tree",
+        "fitch"
+      ]
     },
     "model": {
       "type": "string"

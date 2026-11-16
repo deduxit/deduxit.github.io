@@ -205,6 +205,7 @@ export const ORDINARY_METHODS = ["sequent", "natural", "tableau", "table"] as co
 export const ORDINARY_CATEGORIES = [
   "conjunction",
   "disjunction",
+  "equivalence",
   "implication",
   "negation",
   "constants",

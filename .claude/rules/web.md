@@ -569,6 +569,16 @@ the page reads.
   them, and `src/content/<suite>/lesson.schema.json` and `problem.schema.json` are their JSON
   Schemas (`z.toJSONSchema`, input side) for other tools, which `course.test.ts` holds equal;
   `DEDUXIT_WRITE_SCHEMAS=1` writes them after a schema changes on purpose.
+- **The ordinary suite's store** (`src/content/ordinary/problems/`, the collection
+  `ordinaryProblems`): each law of a list (identity to Dummett's law and seven fallacies) a
+  valid problem in the weakest logic that proves it and a not-valid one in the strongest logic
+  where it fails, so the store teaches where each logic stops; `logic`, `verdict` (`valid`,
+  `not_valid`), `level`, `categories` (the connectives, and the weakest logic that proves it).
+  `src/content/ordinary/problems.test.ts` holds every verdict to `ordinary_start` and
+  `ordinary_close` within a hundredth of the page's budget and the categories to the sequent
+  and to deduxit; the flake's `ordinary-problems` check (`modules/_checks/ordinary_problems.py`)
+  holds the verdicts to `deduxit prove --logic` and every worked session beside a problem
+  (`<id>.natural.json`, `<id>.tableau.json`) to `deduxit check --calculus`.
 - **Every problem is decided by the command, and checked twice**: `src/content/linear/problems.test.ts`
   (each verdict and fragment by the module, each session to its sequent, mode and a
   finished proof, the categories to the sequent's connectives and mode, no sequent twice in

@@ -40,6 +40,10 @@
 #               command's, every provable problem with a session of its
 #               sequent that `proof' accepts, no unprovable one with a session
 #               (modules/_checks/problems.py)
+#   ordinary-problems  the ordinary suite's store (src/content/ordinary/problems/)
+#               against deduxit's command: every verdict in its logic `prove
+#               --logic`'s, every worked session one `check --calculus` accepts
+#               (modules/_checks/ordinary_problems.py)
 #   pages-paths the site as Pages publishes it: a 404.html at its root;
 #               nothing at /deduxit or /rocq-deduxit or under them, where
 #               the Pages sites of deduxit's repository (the rustdoc and the
@@ -290,6 +294,12 @@
           problems = pkgs.runCommand "check-problems" { } ''
             ${pkgs.python3}/bin/python3 ${./_checks/problems.py} ${../src/content/linear/problems} \
               ${config.deduxitCli}/bin/deduxit
+            touch $out
+          '';
+
+          ordinary-problems = pkgs.runCommand "check-ordinary-problems" { } ''
+            ${pkgs.python3}/bin/python3 ${./_checks/ordinary_problems.py} \
+              ${../src/content/ordinary/problems} ${config.deduxitCli}/bin/deduxit
             touch $out
           '';
 

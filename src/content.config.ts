@@ -3,7 +3,9 @@
 
 /**
  * The written content, under CC BY 4.0, in src/content/, the linear suite's
- * course (problems, lessons, rules) under src/content/linear/:
+ * course (problems, lessons, rules) under src/content/linear/, the ordinary suite's under
+ * src/content/ordinary/ (ordinaryProblems: a sequent, its logic, deduxit's verdict there, its
+ * level and categories, read with src/lib/course.ts's schemas):
  *   problems  problems/<id>.md, the one store of problems Practice and Learn
  *             draw from: a sequent, its mode, deduxit's verdict, its level of
  *             difficulty, the categories it is found under and the fragment
@@ -54,7 +56,7 @@
 import { defineCollection } from "astro:content";
 import { file, glob } from "astro/loaders";
 import { z } from "astro/zod";
-import { linearLesson, linearProblem, words } from "./lib/course";
+import { linearLesson, linearProblem, ordinaryProblem, words } from "./lib/course";
 
 const problems = defineCollection({
   loader: glob({ pattern: "*.md", base: "./src/content/linear/problems" }),
@@ -128,4 +130,18 @@ const examples = defineCollection({
   }),
 });
 
-export const collections = { problems, tour, texts, lessons, rules, examples };
+/** The ordinary suite's store: src/content/ordinary/problems/<id>.md. */
+const ordinaryProblems = defineCollection({
+  loader: glob({ pattern: "*.md", base: "./src/content/ordinary/problems" }),
+  schema: ordinaryProblem,
+});
+
+export const collections = {
+  problems,
+  tour,
+  texts,
+  lessons,
+  rules,
+  examples,
+  ordinaryProblems,
+};
