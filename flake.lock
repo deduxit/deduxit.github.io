@@ -29,11 +29,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1794847910,
-        "narHash": "sha256-bb9pdnCsp6GVnhWZe2nLxoRm44e30rDuYc6fDMeWdfY=",
+        "lastModified": 1794851937,
+        "narHash": "sha256-ZTgqjKwVYANga5jDXb7O9nZq3iKoo59X96SCdN9cwFw=",
         "owner": "deduxit",
         "repo": "deduxit",
-        "rev": "336c7f95a253fc953eae2b35574ad0922b39ea1d",
+        "rev": "a50d6995031091eed0a26ba11e9674d476f7a2e1",
         "type": "github"
       },
       "original": {
@@ -171,11 +171,11 @@
         "yalla": "yalla"
       },
       "locked": {
-        "lastModified": 1794751871,
-        "narHash": "sha256-OyztYl/0TE0I48WtN6Ta/UueaT5DINOitNcBHkA41kM=",
+        "lastModified": 1794851006,
+        "narHash": "sha256-RsGB3iZuEIvlOMpvj2wMKPuSxpPNHGlvt3UiPTkJ7ko=",
         "owner": "deduxit",
         "repo": "rocq-deduxit",
-        "rev": "ef979655f775ada5eaf613c5c0240fee553f9553",
+        "rev": "051675d0dedbc4e301817f815650160e5b4bcb50",
         "type": "github"
       },
       "original": {
