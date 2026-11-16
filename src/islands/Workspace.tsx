@@ -73,7 +73,18 @@ export function createWorkspace(prover: Prover, ui: Ui) {
     graph: boolean;
     /** The row whose action runs. */
     running: number | null;
-  }>({ doc: null, tabs: {}, view: null, shown: false, told: false, graph: false, running: null });
+    /** An Undo or a Redo asked for and not yet shown, which can take seconds, and its action. */
+    undoing: { readonly redo: boolean; readonly name: string } | null;
+  }>({
+    doc: null,
+    tabs: {},
+    view: null,
+    shown: false,
+    told: false,
+    graph: false,
+    running: null,
+    undoing: null,
+  });
   /** The window's width, which decides whether the panel docks. */
   const [width, setWidth] = createSignal(window.innerWidth);
   onMount(() => {
@@ -359,9 +370,16 @@ export function createWorkspace(prover: Prover, ui: Ui) {
 
   const rows = createMemo((): Row[] => (state.view ? rowsOf(state.view, state.tabs) : []));
 
-  /** Takes back or brings back the workspace's last change, its tabs' proofs as they were. */
-  const undo = (forward: boolean) =>
-    queued(async () => {
+  /**
+   * Takes back or brings back the workspace's last change, its tabs' proofs as they were. The
+   * buttons say so until it is shown, and a second press meanwhile does nothing.
+   */
+  const undo = async (forward: boolean) => {
+    if (state.undoing !== null) return;
+    // The name as pressed: the view names the next action once the change is read.
+    const name = (forward ? state.view?.redo : state.view?.undo) ?? "";
+    setState("undoing", { redo: forward, name });
+    await queued(async () => {
       const doc = state.doc;
       if (doc === null) return;
       const answer = await prover.api.workspace.undo(doc, work(), settings(), forward);
@@ -409,12 +427,23 @@ export function createWorkspace(prover: Prover, ui: Ui) {
       }
       if (answer.name) setUi("live", `${forward ? "Redone" : "Undone"}: ${answer.name}.`);
       if (rows().length === 0) reset();
-    }).catch(said);
+    })
+      .catch(said)
+      .finally(() => setState("undoing", null));
+  };
 
   /** Forgets the workspace when no linked tab is left: the page is as before the first link. */
   function reset() {
     batch(() => {
-      setState({ doc: null, tabs: {}, view: null, shown: false, graph: false, running: null });
+      setState({
+        doc: null,
+        tabs: {},
+        view: null,
+        shown: false,
+        graph: false,
+        running: null,
+        undoing: null,
+      });
     });
     seen.clear();
     latest.clear();
@@ -661,15 +690,31 @@ export function WorkspacePanel(props: {
         <p class="row ws-undo">
           <Show when={view()?.undo}>
             {(name) => (
-              <button type="button" class="btn btn-small" onClick={() => void ws().undo()}>
-                Undo {name()}
+              <button
+                type="button"
+                class="btn btn-small"
+                disabled={ws().state.undoing !== null}
+                aria-busy={ws().state.undoing?.redo === false}
+                onClick={() => void ws().undo()}
+              >
+                {ws().state.undoing?.redo === false
+                  ? `Undoing ${ws().state.undoing?.name}…`
+                  : `Undo ${name()}`}
               </button>
             )}
           </Show>
           <Show when={view()?.redo}>
             {(name) => (
-              <button type="button" class="btn btn-small" onClick={() => void ws().redo()}>
-                Redo {name()}
+              <button
+                type="button"
+                class="btn btn-small"
+                disabled={ws().state.undoing !== null}
+                aria-busy={ws().state.undoing?.redo === true}
+                onClick={() => void ws().redo()}
+              >
+                {ws().state.undoing?.redo === true
+                  ? `Redoing ${ws().state.undoing?.name}…`
+                  : `Redo ${name()}`}
               </button>
             )}
           </Show>

@@ -482,7 +482,10 @@ the page reads.
 - **The panel docks** left of the stage (`.ws-stage`, `--size-workspace`) where the window is at
   least `DOCK_WIDTH` (960) wide and Learn is off, shown by itself at the visit's first link;
   else it is the sheet `ui.menu === "workspace"` from the Workspace button, which names the count
-  and the tabs out of date and takes the warn style. Its Undo and Redo say the action's name.
+  and the tabs out of date and takes the warn style. Its Undo and Redo say the action's name,
+  and "Undoing …" (`undoing`, both disabled, the pressed one `aria-busy`) until the tabs show the
+  change: the call, the tabs' sessions shown again and the view read can take seconds. The name
+  is kept as pressed, since the view names the next action as soon as it is read again.
   "Show as graph" from three rows lays the rows in columns over the stage (`WorkspaceGraph`).
 - **The link** of a linked tab is version 3 (`writeWorkspaceLink`: the tab's whole linked group,
   every tab joined to it by lines either way, packed without results; `n` the shown node); past the limit the
