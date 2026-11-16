@@ -411,3 +411,47 @@ export async function customising(page: Page, visit: Visit) {
   await expect(page.getByRole("status").filter({ hasText: "in the calculus given" })).toBeVisible();
   await visit("custom valid");
 }
+
+/** Starts `sequent` in the tab's calculus, set to natural deduction, and waits for its goal. */
+export async function deduce(page: Page, sequent: string) {
+  await page.getByRole("textbox", { name: "Sequent" }).fill(sequent);
+  await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
+  await expect(page.getByRole("list", { name: "Steps that apply" })).toBeVisible();
+}
+
+/** Derives a line from lines in force, by the rule's name and the lines' numbers as typed. */
+export async function deriveLine(page: Page, rule: string, lines: string) {
+  const form = page.getByRole("form", { name: "A step from lines" });
+  await form.getByRole("combobox", { name: "Rule" }).selectOption(rule);
+  await form.getByRole("textbox", { name: "From lines" }).fill(lines);
+  await form.getByRole("button", { name: "Derive a line" }).click();
+}
+
+/**
+ * Natural deduction, a method of the ordinary tab: the calculus popover's button, a proof begun
+ * backwards, a line derived forwards, a refused citation, both drawings, and the verdict.
+ */
+export async function deducing(page: Page, visit: Visit) {
+  await goto(page);
+  await calculus(page, ["Ordinary", "Intuitionistic"]);
+  const pop = await switches(page);
+  await pop.getByRole("button", { name: "Natural deduction" }).click();
+  await visit("natural calculus");
+  await page.keyboard.press("Escape");
+  await deduce(page, "a ∧ b ⊢ b ∧ a");
+  await visit("natural start");
+  await customStep(page, "∧I");
+  await page.getByRole("button", { name: "From lines" }).click();
+  await deriveLine(page, "∧E₂", "9");
+  await expect(page.getByRole("alert")).toContainText("Line 9 is not in force here");
+  await visit("natural refused");
+  await deriveLine(page, "∧E₂", "1");
+  await page.getByRole("button", { name: "Close the goal by line 2" }).click();
+  await deriveLine(page, "∧E₁", "1");
+  await page.getByRole("button", { name: "Close the goal by line 3" }).click();
+  await page.getByRole("button", { name: "Fitch" }).click();
+  await expect(page.locator(".custom-drawing svg #l3")).toBeAttached();
+  await page.getByRole("button", { name: "Check the proof" }).click();
+  await expect(page.getByRole("status").filter({ hasText: "Valid in NJ" })).toBeVisible();
+  await visit("natural valid");
+}

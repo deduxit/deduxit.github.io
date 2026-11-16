@@ -21,6 +21,7 @@ import {
   menus,
   methods,
   customising,
+  deducing,
   ordinary,
   pixel,
   practising,
@@ -172,8 +173,16 @@ test("a calculus of one's own's controls are targets of 24 by 24 pixels at least
   expect(await measured(page, 24, customising)).toEqual([]);
 });
 
+test("natural deduction's controls are targets of 24 by 24 pixels at least", async ({ page }) => {
+  expect(await measured(page, 24, deducing)).toEqual([]);
+});
+
 test.describe("at a phone's width", () => {
   test.use(pixel);
+
+  test("natural deduction's controls are 44 by 44 pixels at least", async ({ page }) => {
+    expect(await measured(page, 44, deducing)).toEqual([]);
+  });
 
   test("a calculus of one's own's controls are 44 by 44 pixels at least", async ({ page }) => {
     expect(await measured(page, 44, customising)).toEqual([]);
