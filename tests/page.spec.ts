@@ -1,8 +1,9 @@
 // deduxit © Fabian Lukas Grubmüller 2026
 // Licensed under the EUPL
 
-import type { Locator } from "@playwright/test";
+import type { Locator, Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
+import { goto } from "./prover";
 
 test("the page loads without an error in both schemes", async ({ page }) => {
   for (const colorScheme of ["light", "dark"] as const) {
@@ -169,6 +170,62 @@ test("the pictograms are Lucide's, hidden from a screen reader, each action name
   }
   await page.getByRole("button", { name: "New proof" }).focus();
   await expect(page.getByRole("tooltip")).toHaveText(/A new proof/);
+});
+
+/**
+ * Each of the bottom band's actions that overlaps another, or whose icon, label or key is drawn
+ * outside it or over another of its parts, described.
+ */
+async function bandClashes(page: Page): Promise<string[]> {
+  return page.evaluate(() => {
+    const name = (b: Element) => b.getAttribute("aria-label") ?? b.textContent?.trim() ?? "";
+    const across = (a: number, b: number, c: number, d: number) => Math.min(b, d) - Math.max(a, c);
+    const overlap = (r: DOMRect, q: DOMRect) =>
+      across(r.left, r.right, q.left, q.right) > 0.5 &&
+      across(r.top, r.bottom, q.top, q.bottom) > 0.5;
+    const actions = [...document.querySelectorAll(".band.bottom :is(button, a[href])")]
+      .filter((b) => b.checkVisibility({ visibilityProperty: true }))
+      .map((b) => ({ b, r: b.getBoundingClientRect() }));
+    const clashes: string[] = [];
+    for (const { b, r } of actions) {
+      // A label kept for a screen reader alone is clipped away and draws nothing.
+      const parts = [...b.children]
+        .filter(
+          (p) =>
+            p.checkVisibility({ visibilityProperty: true }) &&
+            getComputedStyle(p).clipPath === "none",
+        )
+        .map((p) => ({ p, q: p.getBoundingClientRect() }));
+      for (const [i, { p, q }] of parts.entries()) {
+        const part = `${p.tagName.toLowerCase()}.${p.getAttribute("class")} of ${name(b)}`;
+        if (q.left < r.left - 0.5 || q.right > r.right + 0.5) clashes.push(`${part} outside it`);
+        for (const { p: o, q: s } of parts.slice(i + 1))
+          if (overlap(q, s)) clashes.push(`${part} over its ${o.tagName.toLowerCase()}`);
+      }
+      for (const { b: o, r: q } of actions)
+        if (o !== b && !b.contains(o) && !o.contains(b) && overlap(r, q))
+          clashes.push(`${name(b)} over ${name(o)}`);
+    }
+    return clashes;
+  });
+}
+
+test("the bottom band's actions and their labels stand apart at every width, Learn off and on", async ({
+  page,
+}) => {
+  const widths = [320, 412, 641, 800, 1024, 1280, 1920, 2560];
+  await goto(page);
+  for (const learn of [false, true]) {
+    if (learn) {
+      await page.setViewportSize({ width: 1280, height: 800 });
+      await page.getByRole("button", { name: "Learn" }).click();
+      await expect(page.getByRole("complementary", { name: "Learn" })).toBeVisible();
+    }
+    for (const width of widths) {
+      await page.setViewportSize({ width, height: 800 });
+      expect(await bandClashes(page), `${width}, Learn ${learn ? "on" : "off"}`).toEqual([]);
+    }
+  }
 });
 
 test("the privacy page is served, names who is responsible, cites a source for each statement, and About and the band link it", async ({
