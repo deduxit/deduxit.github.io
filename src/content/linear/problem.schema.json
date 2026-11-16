@@ -21,10 +21,7 @@
     },
     "verdict": {
       "type": "string",
-      "enum": [
-        "provable",
-        "unprovable"
-      ]
+      "enum": ["provable", "unprovable"]
     },
     "level": {
       "anyOf": [
@@ -85,12 +82,5 @@
       "format": "uri"
     }
   },
-  "required": [
-    "sequent",
-    "mode",
-    "verdict",
-    "level",
-    "categories",
-    "fragment"
-  ]
+  "required": ["sequent", "mode", "verdict", "level", "categories", "fragment"]
 }

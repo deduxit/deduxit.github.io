@@ -579,6 +579,14 @@ the page reads.
   and to deduxit; the flake's `ordinary-problems` check (`modules/_checks/ordinary_problems.py`)
   holds the verdicts to `deduxit prove --logic` and every worked session beside a problem
   (`<id>.natural.json`, `<id>.tableau.json`) to `deduxit check --calculus`.
+- **Practice follows the current tab's suite** (`createPractice`'s `store`): an ordinary tab's
+  Practice is the ordinary store (`/ordinary-problems.json`, `offeredOrdinary`: every problem,
+  valid or not, to decide), filtered by `ORDINARY_GROUPS` (its connectives and the logic it
+  is posed in, never a verdict), written in the ordinary signs (`prettyOrdinary`; the linear
+  `displayed` writes `~a` as `a⊥`), opening in its logic (`openProblem`); every other tab's is
+  the linear store as before, a calculus of one's own having none. The browser keeps each
+  store's filters and proved problems apart (`practiceKey`: the linear one's key is the old
+  `deduxit-practice`), and an ordinary problem counts as proved in the sequent calculus.
 - **Every problem is decided by the command, and checked twice**: `src/content/linear/problems.test.ts`
   (each verdict and fragment by the module, each session to its sequent, mode and a
   finished proof, the categories to the sequent's connectives and mode, no sequent twice in

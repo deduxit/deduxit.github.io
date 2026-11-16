@@ -35,10 +35,7 @@
             "minLength": 1
           }
         },
-        "required": [
-          "rule",
-          "reason"
-        ]
+        "required": ["rule", "reason"]
       }
     },
     "faded": {
@@ -63,11 +60,7 @@
           "minLength": 1
         }
       },
-      "required": [
-        "after",
-        "prompt",
-        "answer"
-      ]
+      "required": ["after", "prompt", "answer"]
     },
     "hinge": {
       "type": "object",
@@ -98,17 +91,11 @@
                 "minLength": 1
               }
             },
-            "required": [
-              "text",
-              "why"
-            ]
+            "required": ["text", "why"]
           }
         }
       },
-      "required": [
-        "question",
-        "options"
-      ]
+      "required": ["question", "options"]
     },
     "detour": {
       "type": "object",
@@ -131,11 +118,7 @@
           "minLength": 1
         }
       },
-      "required": [
-        "before",
-        "left",
-        "text"
-      ]
+      "required": ["before", "left", "text"]
     },
     "net": {
       "default": false,
@@ -174,18 +157,11 @@
                 "minLength": 1
               }
             },
-            "required": [
-              "rule",
-              "reason",
-              "why"
-            ]
+            "required": ["rule", "reason", "why"]
           }
         }
       },
-      "required": [
-        "text",
-        "steps"
-      ]
+      "required": ["text", "steps"]
     },
     "unknown": {
       "type": "object",
@@ -214,12 +190,7 @@
           "minLength": 1
         }
       },
-      "required": [
-        "sequent",
-        "mode",
-        "budget",
-        "text"
-      ]
+      "required": ["sequent", "mode", "budget", "text"]
     },
     "eliminate": {
       "type": "object",
@@ -239,10 +210,7 @@
           }
         }
       },
-      "required": [
-        "text",
-        "cases"
-      ]
+      "required": ["text", "cases"]
     },
     "counts": {
       "default": [],
@@ -267,12 +235,7 @@
             "maximum": 9007199254740991
           }
         },
-        "required": [
-          "problem",
-          "formula",
-          "with",
-          "without"
-        ]
+        "required": ["problem", "formula", "with", "without"]
       }
     },
     "refusal": {
@@ -299,10 +262,7 @@
                 "minLength": 1
               }
             },
-            "required": [
-              "rule",
-              "reason"
-            ]
+            "required": ["rule", "reason"]
           }
         },
         "refused": {
@@ -321,24 +281,14 @@
               "minLength": 1
             }
           },
-          "required": [
-            "rule",
-            "position",
-            "reason"
-          ]
+          "required": ["rule", "position", "reason"]
         },
         "why": {
           "type": "string",
           "minLength": 1
         }
       },
-      "required": [
-        "problem",
-        "text",
-        "steps",
-        "refused",
-        "why"
-      ]
+      "required": ["problem", "text", "steps", "refused", "why"]
     },
     "gallery": {
       "type": "object",
@@ -349,10 +299,7 @@
         },
         "act": {
           "type": "string",
-          "enum": [
-            "ask",
-            "net"
-          ]
+          "enum": ["ask", "net"]
         },
         "items": {
           "minItems": 1,
@@ -368,28 +315,12 @@
                 "minLength": 1
               }
             },
-            "required": [
-              "problem",
-              "text"
-            ]
+            "required": ["problem", "text"]
           }
         }
       },
-      "required": [
-        "title",
-        "act",
-        "items"
-      ]
+      "required": ["title", "act", "items"]
     }
   },
-  "required": [
-    "lesson",
-    "title",
-    "worked",
-    "choices",
-    "steps",
-    "faded",
-    "explain",
-    "hinge"
-  ]
+  "required": ["lesson", "title", "worked", "choices", "steps", "faded", "explain", "hinge"]
 }

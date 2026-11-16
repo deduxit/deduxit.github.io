@@ -58,7 +58,9 @@ def main(store, deduxit):
             wrong.append(f"{path.name}: `check --calculus` exits {checked}")
     if wrong:
         sys.exit("\n".join(wrong))
-    print(f"{len(problems)} problems and {len(sessions)} sessions as deduxit decides them")
+    print(
+        f"{len(problems)} problems and {len(sessions)} sessions as deduxit decides them"
+    )
 
 
 if __name__ == "__main__":

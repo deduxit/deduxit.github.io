@@ -260,6 +260,11 @@ export async function ordinary(page: Page, visit: Visit) {
   await page.getByRole("button", { name: "Close goal" }).click();
   await expect(page.getByRole("img", { name: /^A countermodel of/ })).toBeVisible();
   await visit("ordinary countermodel");
+  await band(page, "Practice", visit);
+  const practice = page.getByRole("dialog", { name: "Practice" });
+  await expect(practice.getByRole("checkbox", { name: "Minimal" })).toBeVisible();
+  await visit("ordinary practice");
+  await page.keyboard.press("Escape");
 }
 
 /**

@@ -6,7 +6,7 @@
 
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
-import { goto, rule, start } from "./prover";
+import { calculus, goto, rule, start } from "./prover";
 
 interface Problem {
   id: string;
@@ -172,4 +172,35 @@ test("Practice is in the bottom band at every desktop width", async ({ page }) =
     );
     expect(overflow, `${width}`).toBe(0);
   }
+});
+
+test("an ordinary tab's Practice offers the ordinary store, each problem opening in its logic", async ({
+  page,
+  request,
+}) => {
+  await goto(page);
+  await calculus(page, ["Ordinary", "Minimal"]);
+  const practice = await openPractice(page);
+  const offered = (await (await request.get("/ordinary-problems.json")).json()) as Problem[];
+  expect(offered.length).toBeGreaterThanOrEqual(60);
+  await expect(practice.locator(".pr-row")).toHaveCount(offered.length);
+  await expect(practice).toContainText("decide in its logic");
+  // The filters are the suite's: connectives and the logic posed, never a verdict.
+  await expect(practice.getByRole("checkbox", { name: "Additives" })).toHaveCount(0);
+  await practice.getByRole("checkbox", { name: "Minimal" }).check();
+  await practice.getByRole("checkbox", { name: "Negation" }).check();
+  const shown = await shownIds(page);
+  expect(shown.length).toBeGreaterThan(0);
+  for (const id of shown) {
+    const problem = offered.find((p) => p.id === id);
+    expect(problem?.categories).toContain("minimal");
+    expect(problem?.categories).toContain("negation");
+  }
+  await practice.getByRole("button", { name: /^Decide ¬¬¬a ⊢ ¬a,/ }).click();
+  await expect(page.locator(".ptab[aria-current=true] .pt-mark")).toContainText("LM");
+  // The linear tab's Practice is as it was.
+  await page.getByRole("button", { name: "New proof" }).click();
+  await calculus(page, ["Linear"]);
+  const linear = await openPractice(page);
+  await expect(linear.getByRole("checkbox", { name: "Additives" })).toBeVisible();
 });

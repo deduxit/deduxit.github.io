@@ -1488,6 +1488,19 @@ export function createProver(say: (text: string) => void = () => undefined) {
     ),
 
     /**
+     * Opens a sequent in a calculus as a proof of its own, in place of the page's empty one if
+     * that is shown: a problem of a suite's store. Nothing open is replaced.
+     */
+    openProblem: guard(async (sequent: string, calculus: Calculus) => {
+      const empty = current();
+      const blankId = empty && !empty.session && !empty.input.trim() ? empty.id : null;
+      const opened = await actions.open(sequent, calculus);
+      if ("problem" in opened) return;
+      const p = current();
+      if (blankId && blankId !== p?.id) actions.remove(blankId);
+    }),
+
+    /**
      * Shows a lesson's worked proof after its first `played` steps, on the tab `tab` while
      * that tab still holds the problem's sequent, else on a new tab as `example` opens one.
      * With `watch` the steps after are on the redo stack, each by itself, so that Redo plays

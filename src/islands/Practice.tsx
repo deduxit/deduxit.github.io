@@ -2,31 +2,49 @@
 // Licensed under the EUPL
 
 /**
- * Practice: a place of its own, opened from the bottom band, with the
- * store's provable problems, filtered by category and level, one at random
- * within the filters, each opening as a proof on a new tab. The browser
- * keeps the filters and which problems the visitor has proved (a problem is
- * proved when the tab it opened on finishes its proof with no goal closed by
- * the search).
+ * Practice: a place of its own, opened from the bottom band, with the store
+ * of the current tab's suite: the linear store's provable problems (in a
+ * linear tab, and in a tab of a calculus of one's own, which has no store),
+ * or the ordinary store's problems to decide, each in its logic. Filtered by
+ * category and level, one at random within the filters, each opening as a
+ * proof on a new tab. The browser keeps, per suite, the filters and which
+ * problems the visitor has proved (a problem is proved when the tab it opened
+ * on finishes its proof with no goal closed by the search).
  */
 
 import { CircleCheck, Dice5 } from "lucide-solid";
 import { createEffect, createResource, createSignal, For, Show } from "solid-js";
-import type { Problem } from "../lib/content";
 import {
   type Filters,
-  GROUPS,
+  groupsOf,
+  isOrdinaryProblem,
+  type Kept,
   LEVEL_NAMES,
   loadKept,
   NO_FILTERS,
+  type Offered,
   passes,
   pick,
+  type Store,
   saveKept,
 } from "../lib/practice";
+import { prettyOrdinary } from "../lib/ordinary";
+import { ordinary } from "../lib/suites";
 import { displayed } from "../lib/words";
 import { Stairs, Written } from "./Learn";
 import type { Prover } from "./state";
 import type { Ui } from "./ui";
+
+/** A problem's sequent in signs, in its suite's notation. */
+const signs = (problem: Offered) =>
+  isOrdinaryProblem(problem) ? prettyOrdinary(problem.sequent) : displayed(problem.sequent);
+
+/** Each ordinary logic's name in a problem's line. */
+const LOGIC_NAMES = {
+  classical: "Classical",
+  intuitionistic: "Intuitionistic",
+  minimal: "Minimal",
+};
 
 const storage = (): Storage | null => {
   try {
@@ -36,53 +54,82 @@ const storage = (): Storage | null => {
   }
 };
 
-const keyOf = (mode: string, sequent: string) => `${mode}\n${sequent.trim()}`;
+const keyOf = (parameter: string, sequent: string) => `${parameter}\n${sequent.trim()}`;
+
+/** Each store's file of the problems Practice offers. */
+const FILES: Record<Store, string> = {
+  linear: "/problems.json",
+  ordinary: "/ordinary-problems.json",
+};
 
 /** Practice's state, for the island's life: the problems once asked for, the filters, the problems proved. */
 export function createPractice(prover: Prover) {
+  /** The store of the current tab's suite. */
+  const store = (): Store =>
+    prover.current()?.calculus.suite === "ordinary" ? "ordinary" : "linear";
   const [wanted, setWanted] = createSignal(false);
-  const [problems] = createResource(wanted, async () => {
-    const response = await fetch("/problems.json");
-    if (!response.ok) throw new Error(`${response.status}`);
-    return (await response.json()) as Problem[];
+  const [problems] = createResource(
+    () => (wanted() ? store() : undefined),
+    async (which) => {
+      const response = await fetch(FILES[which]);
+      if (!response.ok) throw new Error(`${response.status}`);
+      return (await response.json()) as Offered[];
+    },
+  );
+  const [kepts, setKepts] = createSignal<Record<Store, Kept>>({
+    linear: loadKept(storage(), "linear"),
+    ordinary: loadKept(storage(), "ordinary"),
   });
-  const [kept, setKept] = createSignal(loadKept(storage()));
-  const keep = (change: Partial<{ filters: Filters; proved: readonly string[] }>) => {
-    setKept({ ...kept(), ...change });
-    saveKept(storage(), kept());
+  const kept = () => kepts()[store()];
+  const keep = (
+    change: Partial<{ filters: Filters; proved: readonly string[] }>,
+    which = store(),
+  ) => {
+    const next = { ...kepts()[which], ...change };
+    setKepts({ ...kepts(), [which]: next });
+    saveKept(storage(), next, which);
   };
 
   /** The problem each tab opened from Practice holds, by the tab's proof's id. */
-  const opened = new Map<string, Problem>();
+  const opened = new Map<string, Offered>();
 
   // A problem is proved when its tab finishes the proof of its sequent in its calculus
   // by the visitor's own steps: a goal the search closed (Close, Close all) is in `engines`.
   createEffect(() => {
-    const proved = new Set(kept().proved);
-    let added = false;
-    for (const proof of prover.store.proofs) {
-      if (!proof.view?.complete || Object.keys(proof.engines).length > 0) continue;
-      const problem = opened.get(proof.id);
-      if (
-        !problem ||
-        proof.calculus.suite !== "linear" ||
-        keyOf(problem.mode, problem.sequent) !== keyOf(proof.calculus.mode, proof.input)
-      )
-        continue;
-      const id = problem.id;
-      if (!proved.has(id)) {
-        proved.add(id);
-        added = true;
+    for (const which of ["linear", "ordinary"] as const) {
+      const proved = new Set(kepts()[which].proved);
+      let added = false;
+      for (const proof of prover.store.proofs) {
+        if (!proof.view?.complete || Object.keys(proof.engines).length > 0) continue;
+        const problem = opened.get(proof.id);
+        const c = proof.calculus;
+        const same =
+          problem &&
+          (isOrdinaryProblem(problem)
+            ? which === "ordinary" &&
+              c.suite === "ordinary" &&
+              c.method === "sequent" &&
+              keyOf(problem.logic, problem.sequent) === keyOf(c.logic, proof.input)
+            : which === "linear" &&
+              c.suite === "linear" &&
+              keyOf(problem.mode, problem.sequent) === keyOf(c.mode, proof.input));
+        if (!problem || !same) continue;
+        if (!proved.has(problem.id)) {
+          proved.add(problem.id);
+          added = true;
+        }
       }
+      if (added) keep({ proved: [...proved] }, which);
     }
-    if (added) keep({ proved: [...proved] });
   });
 
   return {
     /** Asks for the problems, once. */
     want: () => setWanted(true),
     /** Notes that a tab's proof holds a problem opened from Practice. */
-    opened: (proof: string, problem: Problem) => opened.set(proof, problem),
+    opened: (proof: string, problem: Offered) => opened.set(proof, problem),
+    /** The store of the current tab's suite. */
+    store,
     problems,
     kept,
     keep,
@@ -102,15 +149,18 @@ export function PracticePlace(props: { prover: Prover; ui: Ui; practice: Practic
   const toggle = <T,>(list: readonly T[], item: T) =>
     list.includes(item) ? list.filter((x) => x !== item) : [...list, item];
 
-  const open = async (problem: Problem) => {
+  const open = async (problem: Offered) => {
     setUi("menu", null);
-    await props.prover.example(
-      { sequent: problem.sequent, mode: problem.mode, session: null },
-      false,
-    );
+    if (isOrdinaryProblem(problem))
+      await props.prover.openProblem(problem.sequent, ordinary(problem.logic));
+    else
+      await props.prover.example(
+        { sequent: problem.sequent, mode: problem.mode, session: null },
+        false,
+      );
     const tab = props.prover.current();
     if (tab) props.practice.opened(tab.id, problem);
-    setUi("live", `${displayed(problem.sequent)}: opened on a new tab.`);
+    setUi("live", `${signs(problem)}: opened on a new tab.`);
   };
 
   return (
@@ -136,9 +186,14 @@ export function PracticePlace(props: { prover: Prover; ui: Ui; practice: Practic
           <Dice5 aria-hidden="true" />A random problem
         </button>
       </div>
-      <Written name="texts/practice" class="sub pr-intro" />
+      <Show
+        when={props.practice.store() === "ordinary"}
+        fallback={<Written name="texts/practice" class="sub pr-intro" />}
+      >
+        <Written name="texts/practice-ordinary" class="sub pr-intro" />
+      </Show>
       <div class="pr-filters">
-        <For each={GROUPS}>
+        <For each={groupsOf(props.practice.store())}>
           {(group) => (
             <fieldset class="pr-group">
               <legend class="kw-label">{group.name}</legend>
@@ -207,15 +262,17 @@ export function PracticePlace(props: { prover: Prover; ui: Ui; practice: Practic
                 type="button"
                 class="pr-item"
                 disabled={props.prover.busy()}
-                aria-label={`Prove ${displayed(problem.sequent)}, ${LEVEL_NAMES[problem.level]}, ${problem.fragment}${proved().has(problem.id) ? ", proved before" : ""}`}
+                aria-label={`${isOrdinaryProblem(problem) ? "Decide" : "Prove"} ${signs(problem)}, ${LEVEL_NAMES[problem.level]}, ${isOrdinaryProblem(problem) ? LOGIC_NAMES[problem.logic] : problem.fragment}${proved().has(problem.id) ? ", proved before" : ""}`}
                 onClick={() => void open(problem)}
               >
                 {/* Spaces between the parts, so that their text reads as words. */}
-                <span class="m pr-seq">{displayed(problem.sequent)}</span>{" "}
+                <span class="m pr-seq">{signs(problem)}</span>{" "}
                 <span class="pr-meta">
                   <Stairs level={problem.level} />
                   <span>{LEVEL_NAMES[problem.level]}</span>{" "}
-                  <span class="pr-frag">{problem.fragment}</span>{" "}
+                  <span class="pr-frag">
+                    {isOrdinaryProblem(problem) ? LOGIC_NAMES[problem.logic] : problem.fragment}
+                  </span>{" "}
                   <Show when={proved().has(problem.id)}>
                     <span class="kw ok pr-done">
                       <CircleCheck aria-hidden="true" />
@@ -224,7 +281,7 @@ export function PracticePlace(props: { prover: Prover; ui: Ui; practice: Practic
                   </Show>
                 </span>
               </button>
-              <Show when={problem.source}>
+              <Show when={!isOrdinaryProblem(problem) && problem.source}>
                 {(source) => (
                   <p class="pr-source sub">
                     <Show when={problem.title}>{(title) => <span>{title()}: </span>}</Show>
