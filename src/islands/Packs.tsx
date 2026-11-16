@@ -23,6 +23,7 @@ import {
   Show,
   useContext,
 } from "solid-js";
+import { Portal } from "solid-js/web";
 import { unwrap } from "solid-js/store";
 import { failure } from "../lib/deduxit";
 import { kripkeJson } from "../lib/kripke";
@@ -88,17 +89,17 @@ function answerOf(proof: Proof): Answer {
   return proof.session ? { session: unwrap(proof.session) } : null;
 }
 
-/** Whether a proof answers its problem: a finished proof, or a model where the sequent fails. */
+/**
+ * Whether a proof answers its problem: a finished proof, or a model where the sequent fails (the
+ * countermodel deduxit found, or one the check found failing). A valid modal sequent has no
+ * model to hand in, so it is never done.
+ */
 function finished(proof: Proof | undefined): boolean {
   if (!proof) return false;
   if (proof.calculus.suite === "modal") {
     const e = proof.modal?.evaluation;
-    const decided = proof.modal?.outcome?.verdict;
-    return (
-      decided === "valid" ||
-      decided === "not_valid" ||
-      (!!e && !e.frame && !e.holds && e.failing !== undefined)
-    );
+    const found = proof.modal?.outcome?.verdict === "not_valid" && !!proof.modal?.model;
+    return found || (!!e && !e.frame && !e.holds && e.failing !== undefined);
   }
   return proof.view?.complete === true;
 }
@@ -495,23 +496,25 @@ export function PackSheet(props: { prover: Prover; ui: Ui }) {
 /** The pack's problems as a handout: shown in print alone. */
 function Handout(props: { pack: Pack; link: string; code: string }) {
   return (
-    <section class="pk-handout print-only" aria-hidden="true">
-      <h1>{props.pack.title || "Course pack"}</h1>
-      <ol>
-        <For each={props.pack.problems}>
-          {(p) => {
-            return (
-              <li>
-                <span class="m">{p.sequent}</span> <span>({calculusLabel(p)})</span>
-              </li>
-            );
-          }}
-        </For>
-      </ol>
-      <p>
-        Open the problems on deduxit: {props.link} (pack code {props.code}).
-      </p>
-    </section>
+    <Portal>
+      <section class="pk-handout print-only" aria-hidden="true">
+        <h1>{props.pack.title || "Course pack"}</h1>
+        <ol>
+          <For each={props.pack.problems}>
+            {(p) => {
+              return (
+                <li>
+                  <span class="m">{p.sequent}</span> <span>({calculusLabel(p)})</span>
+                </li>
+              );
+            }}
+          </For>
+        </ol>
+        <p>
+          Open the problems on deduxit: {props.link} (pack code {props.code}).
+        </p>
+      </section>
+    </Portal>
   );
 }
 

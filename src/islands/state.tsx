@@ -1130,6 +1130,7 @@ export function createProver(say: (text: string) => void = () => undefined) {
     },
     /** Shows a statement on a modal tab, as the workspace holds it: its sequent and system, decided again. */
     async showModalStatement(id: string, statement: string) {
+      if (barred(id, limits().fixed)) return;
       const read = JSON.parse(statement) as { system?: string; text?: string };
       const text = read.text;
       if (!text) return;
@@ -1202,6 +1203,7 @@ export function createProver(say: (text: string) => void = () => undefined) {
 
     /** Starts a custom proof's rule file afresh from a built-in calculus, with its example goal. */
     customFrom: guard(async (id: string, name: string, example: string) => {
+      if (barred(id, limits().fixed)) return;
       const file = await attempt(() => api.custom.calculus(name));
       if (!file.ok) return;
       update(id, (q) => {
@@ -1218,6 +1220,7 @@ export function createProver(say: (text: string) => void = () => undefined) {
      * labelled calculus (`G3S4`), every formula at world w0, built as a calculus given as data.
      */
     modalSteps: guard(async (id: string) => {
+      if (barred(id, limits().fixed)) return;
       const p = store.proofs.find((q) => q.id === id);
       const statement = p?.modal?.statement;
       const text = rootSequent(p?.modal?.outcome?.derivation);

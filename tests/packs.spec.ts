@@ -192,3 +192,44 @@ test("a visitor without a pack sees nothing of it", async ({ page }) => {
   await expect(bar(page)).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Open in deduxit" })).toHaveCount(0);
 });
+
+test("with the search barred, deduxit's table and tableau are barred too", async ({ page }) => {
+  await page.goto(
+    packLink({
+      ...BY_HAND,
+      problems: [{ suite: "ordinary", parameter: "classical", sequent: "⊢ a ∨ ¬a" }],
+    }),
+  );
+  await expect(bar(page)).toContainText("0 of 1 done");
+  await expect(page.getByRole("tab", { name: "Tree" })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Tableau" })).toHaveCount(0);
+  await expect(page.getByRole("tab", { name: "Table" })).toHaveCount(0);
+});
+
+test("a modal problem keeps its calculus, and a valid one is never done", async ({ page }) => {
+  await page.goto(
+    packLink({
+      ...BY_HAND,
+      search: true,
+      problems: [{ suite: "modal", parameter: "K", sequent: "□(p → q) ⊢ □p → □q" }],
+    }),
+  );
+  await expect(page.locator(".modal .kw.ok")).toHaveText("Valid");
+  await expect(bar(page)).toContainText("0 of 1 done");
+  await page.getByRole("button", { name: "Prove it step by step" }).click();
+  await expect(page.locator(".stage .kw", { hasText: "Course pack" }).first()).toBeVisible();
+  await expect(page.locator(".ptab[aria-current=true] .pt-mark")).toContainText("Modal (K)");
+});
+
+test("print leaves the bands out, and prints light in the dark theme", async ({ page }) => {
+  await goto(page);
+  await page.evaluate(() => {
+    document.documentElement.dataset["theme"] = "dark";
+  });
+  await page.emulateMedia({ media: "print" });
+  await expect(page.locator(".band.bottom")).toBeHidden();
+  await expect(page.locator(".band.top")).toBeHidden();
+  expect(await page.evaluate(() => getComputedStyle(document.documentElement).colorScheme)).toBe(
+    "light",
+  );
+});

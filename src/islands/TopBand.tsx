@@ -26,7 +26,7 @@ import {
 import { createEffect, createSignal, For, on, onMount, Show } from "solid-js";
 import { Dynamic } from "solid-js/web";
 import { effective, parseTheme, THEME_KEY, type Theme, toggled } from "../lib/theme";
-import { EXAMPLE as MODAL_EXAMPLE, prettyModal, verdictWords } from "../lib/modal";
+import { EXAMPLE as MODAL_EXAMPLE, evaluationWords, prettyModal, verdictWords } from "../lib/modal";
 import { prettyOrdinary } from "../lib/ordinary";
 import type { Sample } from "../lib/content";
 import { calculusWords, markLabel, markOf, ordinary } from "../lib/suites";
@@ -468,7 +468,13 @@ function ProofTab(props: { proof: Proof; prover: Prover; ui: Ui; samples: readon
 /** A modal proof's state in words, for its dot and its status. */
 function modalWords(proof: Proof): string {
   const outcome = proof.modal?.outcome;
-  if (!outcome) return proof.modal?.statement ? "Deciding" : "Not started";
+  if (!outcome) {
+    if (!proof.modal?.statement) return "Not started";
+    // A course pack's problem with the search barred is the visitor's to decide.
+    const e = proof.modal.evaluation;
+    if (proof.modal.model === null || !e) return "Undecided: find a model";
+    return evaluationWords(e).keyword;
+  }
   const verdict = verdictWords(outcome);
   return `${verdict.keyword} in ${outcome.system}`;
 }
