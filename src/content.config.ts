@@ -54,64 +54,11 @@
 import { defineCollection } from "astro:content";
 import { file, glob } from "astro/loaders";
 import { z } from "astro/zod";
-
-/** The modes deduxit's `start` takes. */
-export const MODES = [
-  "classical",
-  "affine",
-  "mix",
-  "affine-mix",
-  "intuitionistic",
-  "intuitionistic-affine",
-] as const;
-
-/** The levels of difficulty, from 1, easy, to 4, very hard. */
-export const LEVELS = [1, 2, 3, 4] as const;
-
-/**
- * The categories a problem is found under: the connectives it uses, its
- * logic (classical, intuitionistic, and with weakening or Mix), and whether
- * it comes from the literature.
- */
-export const CATEGORIES = [
-  "multiplicatives",
-  "additives",
-  "units",
-  "exponentials",
-  "quantifiers",
-  "classical",
-  "intuitionistic",
-  "structural",
-  "literature",
-] as const;
+import { linearLesson, linearProblem, words } from "./lib/course";
 
 const problems = defineCollection({
   loader: glob({ pattern: "*.md", base: "./src/content/linear/problems" }),
-  schema: z
-    .object({
-      /** A name, for the problems Learn shows and those from the literature. */
-      title: z.string().optional(),
-      /** As it is typed in the field. */
-      sequent: z.string(),
-      mode: z.enum(MODES),
-      verdict: z.enum(["provable", "unprovable"]),
-      level: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]),
-      categories: z.array(z.enum(CATEGORIES)).min(1),
-      /** The fragment deduxit detects, as `seq fragment` names it in the mode. */
-      fragment: z.string(),
-      /** The lesson of the progression whose practice it is, from 1, and its place there. */
-      lesson: z.number().int().min(1).optional(),
-      order: z.number().int().optional(),
-      /** The work that states it, with the place in it, and where to read it. */
-      source: z.string().optional(),
-      url: z.url().optional(),
-    })
-    .refine((p) => (p.lesson === undefined) === (p.order === undefined), "a lesson needs its order")
-    .refine(
-      (p) => p.verdict === "provable" || p.lesson !== undefined,
-      "an unprovable problem is Learn's",
-    )
-    .refine((p) => (p.source === undefined) === (p.url === undefined), "a source needs its url"),
+  schema: linearProblem,
 });
 
 /** What a stop of the tour points at, and the step it performs. */
@@ -132,120 +79,9 @@ const texts = defineCollection({
   schema: z.object({ title: z.string() }),
 });
 
-/** Text of the lessons and the rules: plain words, formulas between backticks. */
-const words = z.string().min(1);
-
 const lessons = defineCollection({
   loader: glob({ pattern: "*.md", base: "./src/content/linear/lessons" }),
-  schema: z.object({
-    lesson: z.number().int().min(1),
-    title: words,
-    /** The store problem whose session is the worked proof. */
-    worked: z.string(),
-    /** The rules the student predicts among, as deduxit names them. */
-    choices: z.array(z.string()).min(2),
-    /** One per step of the worked proof's session, in its order. */
-    steps: z.array(z.object({ rule: z.string(), reason: words })).min(1),
-    /** A legal split that leads nowhere, shown before the step `before`: its left premise's formulas. */
-    detour: z
-      .object({ before: z.number().int().min(0), left: z.array(z.number().int()), text: words })
-      .optional(),
-    /** The steps the faded proof plays before the student takes over. */
-    faded: z.number().int().min(0),
-    /** The self-explanation prompt, after the step `after` (from 0), and a model answer. */
-    explain: z.object({ after: z.number().int().min(0), prompt: words, answer: words }),
-    hinge: z.object({
-      question: words,
-      /** The right answer has no misconception; each wrong one names the one it reveals. */
-      options: z
-        .array(
-          z.object({
-            text: words,
-            problem: z.string().optional(),
-            misconception: words.optional(),
-            why: words,
-          }),
-        )
-        .min(3),
-    }),
-    /** Whether the finished worked proof offers its net. */
-    net: z.boolean().default(false),
-    /**
-     * One sentence on how the worked proof's sequent, typed two-sided, is written one-sided; the
-     * lesson then shows it with the Two-sided switch on, and off again.
-     */
-    rewrite: words.optional(),
-    /**
-     * An attempt at the worked proof's sequent that goes wrong, played before it from the
-     * unfinished session beside the lesson: a plausible reason per step, then "which step
-     * went wrong?", the wrong step the one without a misconception.
-     */
-    attempt: z
-      .object({
-        text: words,
-        steps: z
-          .array(
-            z.object({
-              rule: z.string(),
-              reason: words,
-              misconception: words.optional(),
-              why: words,
-            }),
-          )
-          .min(2),
-      })
-      .optional(),
-    /** A sequent the page searches with a budget too small to decide it, and what a larger one decides. */
-    unknown: z
-      .object({
-        sequent: z.string(),
-        mode: z.enum(MODES),
-        budget: z.number().int().min(1),
-        text: words,
-      })
-      .optional(),
-    /**
-     * The worked proof's cuts eliminated on the stage, on the derivation and on the net: what to
-     * do, and a reason for each case of a step, by deduxit's name of the case.
-     */
-    eliminate: z.object({ text: words, cases: z.record(z.string(), words) }).optional(),
-    /**
-     * Problems of the lesson proved with a cut: the cut formula, and the inferences of the proof
-     * with that cut (the problem's session) and of the cut-free proof its elimination reaches.
-     */
-    counts: z
-      .array(
-        z.object({
-          problem: z.string(),
-          formula: z.string(),
-          with: z.number().int().min(1),
-          without: z.number().int().min(1),
-        }),
-      )
-      .default([]),
-    /**
-     * An attempt at a store problem of the lesson that has no proof, played from the unfinished
-     * session beside the lesson (lessons/<n>-<name>.refusal.json), a reason per step, and then
-     * the step `refused` at its last open goal, which deduxit refuses; `why` says why.
-     */
-    refusal: z
-      .object({
-        problem: z.string(),
-        text: words,
-        steps: z.array(z.object({ rule: z.string(), reason: words })).min(1),
-        refused: z.object({ rule: z.string(), position: z.number().int().min(0), reason: words }),
-        why: words,
-      })
-      .optional(),
-    /** Problems of the lesson to ask deduxit about (`ask`) or to draw the net of (`net`), each with a line. */
-    gallery: z
-      .object({
-        title: words,
-        act: z.enum(["ask", "net"]),
-        items: z.array(z.object({ problem: z.string(), text: words })).min(1),
-      })
-      .optional(),
-  }),
+  schema: linearLesson,
 });
 
 const rules = defineCollection({

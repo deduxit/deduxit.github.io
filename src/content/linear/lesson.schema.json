@@ -1,0 +1,326 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "lesson": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "worked": {
+      "type": "string"
+    },
+    "choices": {
+      "minItems": 2,
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "steps": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "rule": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": ["rule", "reason"]
+      }
+    },
+    "faded": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "explain": {
+      "type": "object",
+      "properties": {
+        "after": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "prompt": {
+          "type": "string",
+          "minLength": 1
+        },
+        "answer": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": ["after", "prompt", "answer"]
+    },
+    "hinge": {
+      "type": "object",
+      "properties": {
+        "question": {
+          "type": "string",
+          "minLength": 1
+        },
+        "options": {
+          "minItems": 3,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "text": {
+                "type": "string",
+                "minLength": 1
+              },
+              "problem": {
+                "type": "string"
+              },
+              "misconception": {
+                "type": "string",
+                "minLength": 1
+              },
+              "why": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": ["text", "why"]
+          }
+        }
+      },
+      "required": ["question", "options"]
+    },
+    "detour": {
+      "type": "object",
+      "properties": {
+        "before": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "left": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          }
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": ["before", "left", "text"]
+    },
+    "net": {
+      "default": false,
+      "type": "boolean"
+    },
+    "rewrite": {
+      "type": "string",
+      "minLength": 1
+    },
+    "attempt": {
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "steps": {
+          "minItems": 2,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "rule": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string",
+                "minLength": 1
+              },
+              "misconception": {
+                "type": "string",
+                "minLength": 1
+              },
+              "why": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": ["rule", "reason", "why"]
+          }
+        }
+      },
+      "required": ["text", "steps"]
+    },
+    "unknown": {
+      "type": "object",
+      "properties": {
+        "sequent": {
+          "type": "string"
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "classical",
+            "affine",
+            "mix",
+            "affine-mix",
+            "intuitionistic",
+            "intuitionistic-affine"
+          ]
+        },
+        "budget": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": ["sequent", "mode", "budget", "text"]
+    },
+    "eliminate": {
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "cases": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "required": ["text", "cases"]
+    },
+    "counts": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "problem": {
+            "type": "string"
+          },
+          "formula": {
+            "type": "string"
+          },
+          "with": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "without": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": ["problem", "formula", "with", "without"]
+      }
+    },
+    "refusal": {
+      "type": "object",
+      "properties": {
+        "problem": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "steps": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "rule": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": ["rule", "reason"]
+          }
+        },
+        "refused": {
+          "type": "object",
+          "properties": {
+            "rule": {
+              "type": "string"
+            },
+            "position": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": ["rule", "position", "reason"]
+        },
+        "why": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": ["problem", "text", "steps", "refused", "why"]
+    },
+    "gallery": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "act": {
+          "type": "string",
+          "enum": ["ask", "net"]
+        },
+        "items": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "problem": {
+                "type": "string"
+              },
+              "text": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": ["problem", "text"]
+          }
+        }
+      },
+      "required": ["title", "act", "items"]
+    }
+  },
+  "required": ["lesson", "title", "worked", "choices", "steps", "faded", "explain", "hinge"]
+}

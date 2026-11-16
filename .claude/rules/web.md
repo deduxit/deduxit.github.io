@@ -561,6 +561,14 @@ the page reads.
   id (an id is the path under the collection's base), and `moved.test.ts` holds every moved
   file to its SHA-256 in `moved.json`, taken before the move. A deliberate edit of a linear
   lesson, problem or rule updates `moved.json` in the same commit, which then says why.
+- **The course format is data** (`src/lib/course.ts`): a lesson's core every suite shares
+  (`lesson`, `title`, `worked`, `choices`, `steps`, `faded`, `explain`, `hinge`, D56), and each
+  suite's schemas built from it (`linearLesson` the core and the linear parts, field for field
+  the schema the lessons had; `ordinaryLesson` the core, `method`, `logic`, `layout`, `model`;
+  `linearProblem`, `ordinaryProblem`). `content.config.ts` reads each suite's folder with
+  them, and `src/content/<suite>/lesson.schema.json` and `problem.schema.json` are their JSON
+  Schemas (`z.toJSONSchema`, input side) for other tools, which `course.test.ts` holds equal;
+  `DEDUXIT_WRITE_SCHEMAS=1` writes them after a schema changes on purpose.
 - **Every problem is decided by the command, and checked twice**: `src/content/linear/problems.test.ts`
   (each verdict and fragment by the module, each session to its sequent, mode and a
   finished proof, the categories to the sequent's connectives and mode, no sequent twice in
