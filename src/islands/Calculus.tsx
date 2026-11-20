@@ -21,12 +21,14 @@
 import { For, Show } from "solid-js";
 import type { Mode } from "../lib/deduxit";
 import { ONE_WORLD } from "../lib/kripke";
+import { CALCULUS_WORDS, LAMBDA_CALCULI, type LambdaCalculus } from "../lib/lambda";
 import { SYSTEMS, systemWords } from "../lib/modal";
 import { isOrdinary, sequentText } from "../lib/ordinary";
 import {
   type Calculus as Chosen,
   custom,
   LOGICS,
+  lambda,
   linear,
   modal,
   modeOf as linearMode,
@@ -162,7 +164,42 @@ export function Calculus(props: { prover: Prover; ui: Ui }) {
             )}
           </Show>
         </Show>
-        <Show when={calculus().suite !== "rules" && calculus().suite !== "modal"}>
+        <button
+          type="button"
+          class="btn btn-s"
+          aria-pressed={calculus().suite === "lambda"}
+          data-tip="Lambda-terms: check a term and see its typing derivation, or find the terms of a type"
+          onClick={() => {
+            if (calculus().suite !== "lambda") ask(lambda("simple"));
+          }}
+        >
+          Lambda-terms
+        </button>
+        <Show when={calculus().suite === "lambda"}>
+          <label class="custom-field" data-tip="How often a term may use each variable">
+            <span>Calculus</span>
+            <select
+              class="field"
+              aria-label="Lambda calculus"
+              value={(() => {
+                const c = calculus();
+                return c.suite === "lambda" ? c.calculus : "simple";
+              })()}
+              onChange={(event) => ask(lambda(event.currentTarget.value as LambdaCalculus))}
+            >
+              <For each={LAMBDA_CALCULI}>
+                {(each) => <option value={each}>{CALCULUS_WORDS[each]}</option>}
+              </For>
+            </select>
+          </label>
+        </Show>
+        <Show
+          when={
+            calculus().suite !== "rules" &&
+            calculus().suite !== "modal" &&
+            calculus().suite !== "lambda"
+          }
+        >
           <Show
             when={calculus().suite === "linear"}
             fallback={

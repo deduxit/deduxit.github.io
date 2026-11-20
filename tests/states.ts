@@ -540,6 +540,36 @@ export async function customising(page: Page, visit: Visit) {
  * K, the model checked where it fails and where it holds, a valid sequent's derivation in S4, a
  * model that is none of S4, a linked copy in the workspace, and a parse error.
  */
+/**
+ * Lambda-terms: the popover's button and its calculus select, the setup, a term checked with its
+ * typing derivation, a type's term found and its terms listed, and an ill-typed term.
+ */
+export async function lambdaing(page: Page, visit: Visit) {
+  await goto(page);
+  const pop = await switches(page);
+  await pop.getByRole("button", { name: "Lambda-terms" }).click();
+  await expect(pop.getByRole("combobox", { name: "Lambda calculus" })).toHaveValue("simple");
+  await visit("lambda entry");
+  await page.keyboard.press("Escape");
+  await expect(page.getByText(/A λ-term is a small program/)).toBeVisible();
+  await visit("lambda start");
+  await page.getByRole("button", { name: /^Try \\f:a/ }).click();
+  await expect(page.locator(".lambda .kw.ok", { hasText: "Well typed" })).toBeVisible();
+  await expect(page.locator(".lambda .custom-drawing svg")).toBeVisible();
+  await visit("lambda term checked");
+  await page.getByRole("button", { name: "New proof" }).click();
+  await page.getByRole("button", { name: "Try a -> a -> a" }).click();
+  await expect(page.locator(".lambda .kw.ok", { hasText: "Has a term" })).toBeVisible();
+  await page.getByRole("button", { name: "List its terms" }).click();
+  await expect(page.locator(".lambda-terms li")).toHaveCount(2);
+  await visit("lambda terms listed");
+  await page.getByRole("button", { name: "New proof" }).click();
+  await page.getByRole("textbox", { name: "Sequent" }).fill(String.raw`\x:a. x x`);
+  await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
+  await expect(page.locator(".lambda .kw.bad", { hasText: "Not well typed" })).toBeVisible();
+  await visit("lambda ill typed");
+}
+
 export async function modalising(page: Page, visit: Visit) {
   await goto(page);
   const pop = await switches(page);

@@ -174,7 +174,7 @@ export default function App(props: {
     }
     // A suite or parameter this page does not know opens in the suite's first calculus.
     const calculus =
-      calculusOf(link.suite, "sequent", link.parameter) ??
+      calculusOf(link.suite, undefined, link.parameter) ??
       SUITES.find((s) => s.key === link.suite)?.start ??
       SUITES[0]?.start;
     const restored = link.session !== undefined ? await prover.open(link.session) : null;
@@ -293,18 +293,20 @@ export default function App(props: {
           prover.current()?.session ?? prover.current()?.custom?.session,
           prover.current()?.calculus,
           prover.current()?.input,
-          prover.current()?.modal?.outcome,
+          prover.current()?.modal?.outcome ?? prover.current()?.lambda?.statement,
         ] as const,
       ([session, calculus, input, decided]) => {
         clearTimeout(linking);
         if (!calculus || !input) return;
         // A pack's link stays in the address while it is open: it is what a reload opens again.
         if (packs.open()) return;
-        // A modal tab's link holds its sequent and system alone: it is decided again on arrival.
-        if (calculus.suite === "modal") {
+        // A modal tab's link holds its sequent and system alone, a lambda tab's its term or type
+        // and calculus: each is decided again on arrival.
+        if (calculus.suite === "modal" || calculus.suite === "lambda") {
           if (!decided) return;
           linking = setTimeout(async () => {
-            const written = await writeLink(prettyModal(input), "modal", parameterOf(calculus));
+            const text = calculus.suite === "modal" ? prettyModal(input) : input;
+            const written = await writeLink(text, calculus.suite, parameterOf(calculus));
             history.replaceState(null, "", embedded ? `${written.hash}&e=1` : written.hash);
             wrote = location.hash;
             setLinkShort(!written.whole);

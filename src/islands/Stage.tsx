@@ -74,6 +74,7 @@ import { TableauCheckView } from "./TableauCheck";
 import { usePacks } from "./Packs";
 import { isHandin, readHandin } from "../lib/pack";
 import { CustomPanel } from "./Custom";
+import { LambdaPanel } from "./Lambda";
 import { ModalPanel } from "./Modal";
 import { type Method, MethodView } from "./Methods";
 import { NaturalView } from "./Natural";
@@ -1289,7 +1290,11 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
   /** The Kripke model the stage shows in the drawing's place, to change and check, or null. */
   const modelShown = () => {
     const suite = proof()?.calculus.suite;
-    return ui.tab === "model" && suite !== "rules" && suite !== "modal" && !deduced()
+    return ui.tab === "model" &&
+      suite !== "rules" &&
+      suite !== "modal" &&
+      suite !== "lambda" &&
+      !deduced()
       ? ui.modelSeed
       : null;
   };
@@ -1336,13 +1341,15 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
           ? "custom"
           : proof()?.calculus.suite === "modal"
             ? "modal"
-            : deduced()
-              ? "natural"
-              : modelShown()
-                ? "model"
-                : writtenShown()
-                  ? "written"
-                  : (method() ?? undefined)
+            : proof()?.calculus.suite === "lambda"
+              ? "lambda"
+              : deduced()
+                ? "natural"
+                : modelShown()
+                  ? "model"
+                  : writtenShown()
+                    ? "written"
+                    : (method() ?? undefined)
       }
       onDragOver={(event) => {
         event.preventDefault();
@@ -1458,6 +1465,9 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
       <Show when={proof()?.calculus.suite === "modal"}>
         <ModalPanel prover={props.prover} />
       </Show>
+      <Show when={proof()?.calculus.suite === "lambda"}>
+        <LambdaPanel prover={props.prover} />
+      </Show>
 
       <Show when={proof()?.banner}>
         {(banner) => (
@@ -1476,7 +1486,8 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
         when={
           !proof()?.session &&
           proof()?.calculus.suite !== "rules" &&
-          proof()?.calculus.suite !== "modal"
+          proof()?.calculus.suite !== "modal" &&
+          proof()?.calculus.suite !== "lambda"
         }
       >
         <div class="empty">

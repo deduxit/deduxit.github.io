@@ -23,6 +23,7 @@ import {
   coursing,
   customising,
   deducing,
+  lambdaing,
   modalising,
   packing,
   ordinary,
@@ -192,6 +193,10 @@ test("modal logic's controls are targets of 24 by 24 pixels at least", async ({ 
   expect(await measured(page, 24, modalising)).toEqual([]);
 });
 
+test("lambda-terms' controls are targets of 24 by 24 pixels at least", async ({ page }) => {
+  expect(await measured(page, 24, lambdaing)).toEqual([]);
+});
+
 test("course packs' controls are targets of 24 by 24 pixels at least", async ({ page }) => {
   expect(await measured(page, 24, packing)).toEqual([]);
 });
@@ -225,6 +230,10 @@ test.describe("at a phone's width", () => {
 
   test("modal logic's controls are 44 by 44 pixels at least", async ({ page }) => {
     expect(await measured(page, 44, modalising)).toEqual([]);
+  });
+
+  test("lambda-terms' controls are 44 by 44 pixels at least", async ({ page }) => {
+    expect(await measured(page, 44, lambdaing)).toEqual([]);
   });
 
   test("a truth table's and a tableau's controls are 44 by 44 pixels at least", async ({

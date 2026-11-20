@@ -26,6 +26,7 @@ import {
 import { createEffect, createSignal, For, on, onMount, Show } from "solid-js";
 import { Dynamic } from "solid-js/web";
 import { effective, parseTheme, THEME_KEY, type Theme, toggled } from "../lib/theme";
+import { lambdaState, prettyLambda, TERM_EXAMPLE } from "../lib/lambda";
 import { EXAMPLE as MODAL_EXAMPLE, evaluationWords, prettyModal, verdictWords } from "../lib/modal";
 import { prettyOrdinary } from "../lib/ordinary";
 import type { Sample } from "../lib/content";
@@ -52,6 +53,7 @@ function underTab(pop: HTMLElement, inset: number) {
 
 /** A proof's state as its dot shows it. */
 export function tone(proof: Proof): "ok" | "bad" | "warn" | "open" | "none" {
+  if (proof.lambda) return lambdaState(proof.lambda).tone;
   if (proof.modal) {
     const verdict = proof.modal.outcome?.verdict;
     return verdict === "valid" ? "ok" : verdict === "not_valid" ? "bad" : verdict ? "warn" : "none";
@@ -88,7 +90,9 @@ export const tabText = (proof: Proof): string =>
       ? proof.input
       : proof.calculus.suite === "modal"
         ? prettyModal(proof.input)
-        : displayed(proof.input);
+        : proof.calculus.suite === "lambda"
+          ? prettyLambda(proof.input)
+          : displayed(proof.input);
 
 const storage = () => {
   try {
@@ -250,6 +254,7 @@ function ProofTab(props: { proof: Proof; prover: Prover; ui: Ui; samples: readon
     const p = props.proof;
     if (p.custom) return customWords(p);
     if (p.modal) return modalWords(p);
+    if (p.lambda) return lambdaState(p.lambda).words;
     if (!p.view) return "Not started";
     if (p.view.complete) return "Proved, checked step by step";
     if (p.verdict) return p.verdict.keyword;
@@ -310,7 +315,9 @@ function ProofTab(props: { proof: Proof; prover: Prover; ui: Ui; samples: readon
                 ? (EXAMPLES[props.proof.calculus.calculus] ?? "a ⊢ a")
                 : props.proof.calculus.suite === "modal"
                   ? MODAL_EXAMPLE
-                  : "A * B |- B * A"
+                  : props.proof.calculus.suite === "lambda"
+                    ? TERM_EXAMPLE
+                    : "A * B |- B * A"
           }
           spellcheck={false}
           autocomplete="off"
@@ -452,7 +459,9 @@ function ProofTab(props: { proof: Proof; prover: Prover; ui: Ui; samples: readon
                 Typed with{" "}
                 {props.proof.calculus.suite === "modal"
                   ? "[] <> -> /\\ \\/ ~ <-> true false"
-                  : "-> /\\ \\/ ~ <-> true false"}
+                  : props.proof.calculus.suite === "lambda"
+                    ? "\\ for λ, -> /\\ \\/ in types"
+                    : "-> /\\ \\/ ~ <-> true false"}
                 , or their signs.
               </p>
             }
@@ -505,7 +514,11 @@ function StatusDetails(props: { proof: Proof; prover: Prover; close: () => void 
               ? `${customWords(props.proof)}.`
               : props.proof.modal?.statement
                 ? `${modalWords(props.proof)}.`
-                : "Not started: type a sequent and press Enter."}
+                : props.proof.lambda?.kind
+                  ? `${lambdaState(props.proof.lambda).words}.`
+                  : props.proof.lambda
+                    ? "Not started: type a term or a type and press Enter."
+                    : "Not started: type a sequent and press Enter."}
           </p>
         }
       >

@@ -7,23 +7,25 @@
  * natural deduction too), in one of its calculi, named by the suite's parameter. A tab's choice is a `Calculus`: its
  * suite, its method and the suite's parameter, as deduxit's `about` names them (`mode` for the
  * linear suite, `logic` for the ordinary one, `calculus` for a calculus given as a rule file,
- * `system` for modal logic);
+ * `system` for modal logic, `calculus` for a lambda calculus);
  * `suites.test.ts` holds the registry to `about`.
  */
 
 import { BUILT_IN } from "./custom";
 import { MODES, type Mode } from "./deduxit";
+import { CALCULUS_WORDS, LAMBDA_CALCULI, type LambdaCalculus } from "./lambda";
 import { SYSTEM_NAMES, SYSTEMS } from "./modal";
 import { modeWords } from "./words";
 
 /** The suites the page offers, by deduxit's names. */
-export type SuiteKey = "linear" | "ordinary" | "rules" | "modal";
+export type SuiteKey = "linear" | "ordinary" | "rules" | "modal" | "lambda";
 
 /**
  * How a suite's proofs are built: the sequent calculus, a tree grown from the goal upward, or
- * natural deduction, built backwards from a goal and forwards from numbered lines.
+ * natural deduction, built backwards from a goal and forwards from numbered lines; or, for a
+ * lambda-term, its typing derivation, which deduxit draws from the term.
  */
-export type Method = "sequent" | "natural";
+export type Method = "sequent" | "natural" | "typing";
 
 /** A logic of the ordinary suite, as deduxit names it. */
 export type Logic = "classical" | "intuitionistic" | "minimal";
@@ -38,7 +40,9 @@ export type Calculus =
   /** A calculus given as a rule file, named by the file's `name`: a built-in one or the visitor's. */
   | { readonly suite: "rules"; readonly method: Method; readonly calculus: string }
   /** Modal logic in a normal system, decided by deduxit in the system's labelled calculus. */
-  | { readonly suite: "modal"; readonly method: Method; readonly system: string };
+  | { readonly suite: "modal"; readonly method: Method; readonly system: string }
+  /** Lambda-terms checked and a type's terms found, in a lambda calculus. */
+  | { readonly suite: "lambda"; readonly method: Method; readonly calculus: LambdaCalculus };
 
 /** A suite as the page offers it. */
 export interface Suite {
@@ -119,6 +123,18 @@ export const SUITES: readonly Suite[] = [
     calls: "modal_",
     term: null,
   },
+  {
+    key: "lambda",
+    name: "Lambda-terms",
+    tip: "Lambda-terms: a term checked with its typing derivation, or a type's terms found",
+    methods: ["typing"],
+    parameter: "calculus",
+    values: LAMBDA_CALCULI,
+    segment: false,
+    start: { suite: "lambda", method: "typing", calculus: "simple" },
+    calls: "lambda_",
+    term: null,
+  },
 ];
 
 /** The registry's entry of a suite. */
@@ -147,6 +163,13 @@ export const custom = (calculus: string): Calculus => ({
 /** The calculus of a modal system. */
 export const modal = (system: string): Calculus => ({ suite: "modal", method: "sequent", system });
 
+/** A lambda calculus. */
+export const lambda = (calculus: LambdaCalculus): Calculus => ({
+  suite: "lambda",
+  method: "typing",
+  calculus,
+});
+
 /** The longest rule file's name a link or the shelf reads. */
 const LONGEST_NAME = 64;
 
@@ -169,7 +192,7 @@ export const sameCalculus = (a: Calculus, b: Calculus) =>
 
 /**
  * The calculus a suite's name, method and parameter make, or undefined where the registry has
- * none of them: what a link and a stored proof are read back by.
+ * none of them: what a link and a stored proof are read back by. No method is the suite's first.
  */
 export function calculusOf(
   key: string | null | undefined,
@@ -177,20 +200,22 @@ export function calculusOf(
   parameter: string | null | undefined,
 ): Calculus | undefined {
   const s = SUITES.find((x) => x.key === key);
-  if (!s?.methods.includes((method ?? "sequent") as Method)) return undefined;
+  if (!s) return undefined;
+  const how = (method ?? s.methods[0]) as Method;
+  if (!s.methods.includes(how)) return undefined;
   if (s.key === "rules")
     return parameter?.trim() && parameter.length <= LONGEST_NAME ? custom(parameter) : undefined;
   if (!parameter || !s.values.includes(parameter)) return undefined;
   if (s.key === "modal") return modal(parameter);
-  return s.key === "linear"
-    ? linear(parameter as Mode)
-    : ordinary(parameter as Logic, (method ?? "sequent") as Method);
+  if (s.key === "lambda") return lambda(parameter as LambdaCalculus);
+  return s.key === "linear" ? linear(parameter as Mode) : ordinary(parameter as Logic, how);
 }
 
 /** The calculus's short mark on its tab. */
 export function markOf(c: Calculus): string {
   if (c.suite === "rules") return c.calculus;
   if (c.suite === "modal") return c.system;
+  if (c.suite === "lambda") return { simple: "λ→", linear: "λ⊸", affine: "λ⊸+aff" }[c.calculus];
   if (c.suite === "ordinary")
     return isNatural(c)
       ? { classical: "NK", intuitionistic: "NJ", minimal: "NM" }[c.logic]
@@ -217,6 +242,7 @@ export function markLabel(c: Calculus): string {
 /** The calculus in the switches' words, for the status and the mark's name. */
 export function calculusWords(c: Calculus): string {
   if (c.suite === "rules") return `Custom calculus, ${c.calculus}`;
+  if (c.suite === "lambda") return `Lambda-terms, ${CALCULUS_WORDS[c.calculus].toLowerCase()}`;
   if (c.suite === "modal") {
     const conditions = SYSTEMS.find((s) => s.name === c.system)?.conditions ?? [];
     return conditions.length

@@ -38,6 +38,7 @@ import type {
   Described,
 } from "./custom";
 import type { Forcing } from "./kripke";
+import type { Inhabitants, Inhabitation } from "./lambda";
 import type { TableauReview } from "./written";
 import type { Evaluation, ModalOutcome } from "./modal";
 import type { OrdinaryOutcome, OrdinarySession, OrdinaryStep, OrdinaryView } from "./ordinary";
@@ -367,6 +368,31 @@ export function createApi(changed: (pending: number) => void) {
       /** A model checked against the statement, at `world` or at every world. */
       evaluate: (statement: string, model: string, world: number | undefined, settings: string) =>
         json<Evaluation>("modal_evaluate", statement, model, world, settings),
+    },
+    /**
+     * The lambda suite's calls (`lambda_…`): a term is read and checked, its typing derivation
+     * drawn; a type, a formula of intuitionistic logic, gets its terms found and counted.
+     */
+    lambda: {
+      /** A term typed as `--lambda-types` prints terms, as a statement in `calculus`. */
+      read: (text: string, calculus: string, settings: string) =>
+        client.call<string>("lambda_read", text, calculus, settings),
+      /** The term checked: the type of every subterm and its judgement. */
+      check: (term: string, settings: string) =>
+        client.call<string>("lambda_check", term, settings),
+      /** A checked term's typing derivation as SVG. */
+      draw: (typing: string, settings: string) =>
+        client.call<string>("lambda_draw", typing, settings),
+      exportAs: (typing: string, format: string, settings: string) =>
+        client.call<string>("lambda_export", typing, format, settings),
+      /** A type typed as a formula of ordinary logic, as a statement in intuitionistic logic. */
+      readType: (text: string, settings: string) =>
+        client.call<string>("lambda_read_type", text, settings),
+      inhabit: (type: string, settings: string) =>
+        json<Inhabitation>("lambda_inhabit", type, settings),
+      /** The type's terms, listed and counted; `options` `{"depth", "max_terms"}` or `""`. */
+      enumerate: (type: string, options: string, settings: string) =>
+        json<Inhabitants>("lambda_enumerate", type, options, settings),
     },
     /**
      * The workspace's calls (`workspace_…`): the linked tabs. `doc` is the workspace's document as

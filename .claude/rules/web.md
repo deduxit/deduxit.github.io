@@ -222,6 +222,25 @@ the page reads.
   and its worlds, or holds, or the failing world with each formula's value and witness, marked
   on the editor's drawing). A change of the system is no restart warning: the tab holds no
   steps.
+- **Lambda-terms** (deduxit's `lambda_…` calls, `src/lib/lambda.ts`, `src/islands/Lambda.tsx`)
+  are the registry's suite `lambda`, its parameter `calculus` (`simple`, the default, `linear`,
+  `affine`), the method `typing` (deduxit draws the typing derivation from the term; nobody
+  builds it), which a link writes by leaving the method out (`calculusOf` takes the suite's first
+  method where none is named). No segment: the popover's button "Lambda-terms" opens it, with a
+  select of the calculi; a visitor who never presses it sees nothing of it (the author's rule).
+  The field's text is a term or a type (`isTerm`: a `λ`, a `\` that is no half of `/\` or `\/`, a
+  `:`, or a pair's bracket that is no `<->`); a term is read (`lambda_read`) and checked
+  (`lambda_check`), a type read (`lambda_read_type`) and its term found (`lambda_inhabit`), then
+  checked so its derivation draws. An ill-typed term is the panel's verdict ("Not well typed",
+  deduxit's reason), a text deduxit cannot read is the field's problem with its place. Its proof
+  keeps its work in `Proof.lambda`, never in `Proof.session`; only the text and the calculus are
+  stored and linked (`u=lambda&m=simple&s=…`), read again on arrival (`restore`'s `submit`). The
+  stage shows `LambdaPanel` (`data-method="lambda"`): before anything is read two sentences and
+  "Try" buttons (a term, and in the simple calculus a type), after it the verdict, the
+  derivation (`lambda_draw`, `.custom-drawing`) and for a type "List its terms"
+  (`lambda_enumerate`, `max_terms` 12, the bindings adding each term's `text`). Every call's
+  settings set `lambda.types`, so a term's text shows its binders' types and reads back. A
+  lambda tab takes no rule hints.
 - **The model editor** (`src/islands/KripkeEditor.tsx`, its data, geometry and words in
   `src/lib/kripke.ts`) draws a Kripke model of either suite on an SVG canvas and changes it;
   deduxit's check of what was drawn is the only judge, so the editor sends the model as drawn

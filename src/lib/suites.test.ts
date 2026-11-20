@@ -6,6 +6,7 @@ import {
   calculusOf,
   calculusWords,
   custom,
+  lambda,
   linear,
   markLabel,
   modal,
@@ -44,7 +45,7 @@ describe("the suite registry", () => {
   it("reads back a calculus by its suite, method and parameter, and nothing else", () => {
     for (const suite of SUITES)
       for (const value of suite.values) {
-        const c = calculusOf(suite.key, "sequent", value);
+        const c = calculusOf(suite.key, suite.methods[0], value);
         expect(c && parameterOf(c)).toBe(value);
       }
     expect(calculusOf("linear", undefined, "mix")).toEqual(linear("mix"));
@@ -58,6 +59,10 @@ describe("the suite registry", () => {
     expect(calculusOf("ordinary", "tableau", "classical")).toBeUndefined();
     expect(calculusOf("modal", "sequent", "S4")).toEqual(modal("S4"));
     expect(calculusOf("modal", "sequent", "S6")).toBeUndefined();
+    // A lambda calculus is checked by typing, which a link names by leaving the method out.
+    expect(calculusOf("lambda", undefined, "linear")).toEqual(lambda("linear"));
+    expect(calculusOf("lambda", "sequent", "simple")).toBeUndefined();
+    expect(calculusOf("lambda", undefined, "system-f")).toBeUndefined();
     expect(calculusOf("modal", "natural", "K")).toBeUndefined();
     // A rule file of one's own is named by the file: any name up to a bound.
     expect(calculusOf("rules", "sequent", "Mini")).toEqual(custom("Mini"));
@@ -76,5 +81,7 @@ describe("the tab's mark on a wide screen", () => {
     expect(markLabel(modal("S4"))).toBe("Modal (S4)");
     expect(calculusWords(modal("S4"))).toBe("Modal, S4 (reflexive, transitive)");
     expect(calculusWords(modal("K"))).toBe("Modal, K (no condition)");
+    expect(markLabel(lambda("simple"))).toBe("Lambda-terms (λ→)");
+    expect(calculusWords(lambda("affine"))).toBe("Lambda-terms, affine");
   });
 });

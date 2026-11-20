@@ -61,6 +61,7 @@ import {
   modelJson,
   rootSequent,
 } from "../lib/modal";
+import { type Inhabitants, type Inhabitation, isTerm } from "../lib/lambda";
 import { Cancelled } from "../lib/protocol";
 import {
   type Shelf,
@@ -201,6 +202,30 @@ export interface ModalWork {
   problem: Said | null;
 }
 
+/**
+ * The work of a lambda tab: the field's text read as a term, checked, or as a type, with the term
+ * deduxit found and, when asked for, the type's terms listed. Only the text and the calculus are
+ * stored: the rest is made again when the proof is read back.
+ */
+export interface LambdaWork {
+  /** What the field's text was read as, or null before it is read. */
+  kind: "term" | "type" | null;
+  /** The term's statement, as deduxit wrote it, or the type's. */
+  statement: string | null;
+  /** The checked term: its document with `typing` and `judgement`, as deduxit wrote it. */
+  typing: string | null;
+  /** The judgement of the checked term, with every type. */
+  judgement: string | null;
+  /** Why the term is not well typed, as deduxit says it. */
+  illTyped: string | null;
+  /** Whether the type has a term. */
+  found: Inhabitation | null;
+  /** The type's terms, listed and counted, once asked for. */
+  listed: Inhabitants | null;
+  /** What deduxit said of the last call, shown in the panel. */
+  problem: Said | null;
+}
+
 /** One open proof. */
 export interface Proof {
   readonly id: string;
@@ -240,6 +265,8 @@ export interface Proof {
   custom: CustomWork | null;
   /** The work of a proof of modal logic; null in the other suites. */
   modal: ModalWork | null;
+  /** The work of a lambda tab; null in the other suites. */
+  lambda: LambdaWork | null;
 }
 
 /** The visitor's settings, kept in the browser but for the engine, which holds for the visit. */
@@ -437,6 +464,21 @@ const modalWork = (calculus: Calculus): ModalWork | null =>
     ? { statement: null, outcome: null, model: null, world: null, evaluation: null, problem: null }
     : null;
 
+/** The work of a new lambda tab, nothing read yet. */
+const lambdaWork = (calculus: Calculus): LambdaWork | null =>
+  calculus.suite === "lambda"
+    ? {
+        kind: null,
+        statement: null,
+        typing: null,
+        judgement: null,
+        illTyped: null,
+        found: null,
+        listed: null,
+        problem: null,
+      }
+    : null;
+
 const blank = (calculus: Calculus): Proof => ({
   id: freshId(),
   input: "",
@@ -457,6 +499,7 @@ const blank = (calculus: Calculus): Proof => ({
   elim: { tree: null, net: null },
   custom: customWork(calculus),
   modal: modalWork(calculus),
+  lambda: lambdaWork(calculus),
 });
 
 /** A goal's formulas as a key, equal for the same formulas in any order: how two tabs' sequents are compared. */
@@ -617,6 +660,12 @@ export function createProver(say: (text: string) => void = () => undefined) {
     ordinaryJson(undefined, undefined, invertibleOn(id));
   /** The settings of a modal call: the budget alone, the tab's defaults for the rest. */
   const modalJson = () => JSON.stringify({ limits: { work: settings().budget } });
+  /**
+   * The settings of a lambda call: the budget, and every λ with its variable's type, as deduxit
+   * reads a term back.
+   */
+  const lambdaJson = () =>
+    JSON.stringify({ limits: { work: settings().budget }, lambda: { types: true } });
   /**
    * The engines of the grafts a session still holds: an entry whose goal undo reopened, or took
    * back with the step below it, goes with it.
@@ -918,6 +967,83 @@ export function createProver(say: (text: string) => void = () => undefined) {
   }
 
   /**
+   * Reads the field's text in a lambda calculus: a term, checked, or a type, whose term deduxit
+   * looks for. A text deduxit cannot read is marked in the field; an ill-typed term is the
+   * panel's verdict.
+   */
+  async function startLambda(id: string, text: string, calculus: Calculus) {
+    if (calculus.suite !== "lambda") return;
+    const settings = lambdaJson();
+    const kind = isTerm(text) ? "term" : "type";
+    const read = await attempt(() =>
+      kind === "term"
+        ? api.lambda.read(text, calculus.calculus, settings)
+        : api.lambda.readType(text, settings),
+    );
+    const illTyped = (failed: Failure | null) =>
+      failed?.code === "ill_typed" ? String(failed.details?.["reason"] ?? failed.message) : null;
+    if (!read.ok && !illTyped(read.failed)) {
+      const failed = read.failed;
+      if (failed) update(id, (q) => (q.inputProblem = problemAt(failed)));
+      return;
+    }
+    setLastCalculus(calculus);
+    update(id, (q) => {
+      q.calculus = calculus;
+      q.lambda = {
+        ...(lambdaWork(calculus) as LambdaWork),
+        kind,
+        statement: read.ok ? read.value : null,
+        illTyped: read.ok ? null : illTyped(read.failed),
+      };
+      // A tab that held another suite's proof holds none now: no call of that suite gets it.
+      q.session = null;
+      q.view = null;
+      q.custom = null;
+      q.modal = null;
+      q.redo = [];
+      q.later = [];
+      q.editing = false;
+      q.inputProblem = null;
+      q.note = null;
+      q.banner = null;
+      q.verdict = null;
+    });
+    if (!read.ok) {
+      save();
+      return;
+    }
+    const statement = read.value;
+    if (kind === "term") {
+      const checked = await attempt(() => api.lambda.check(statement, settings));
+      update(id, (q) => {
+        if (!q.lambda || q.lambda.statement !== statement) return;
+        if (checked.ok) {
+          q.lambda.typing = checked.value;
+          q.lambda.judgement = (JSON.parse(checked.value) as { judgement: string }).judgement;
+        } else if (illTyped(checked.failed)) q.lambda.illTyped = illTyped(checked.failed);
+        else if (checked.failed) q.lambda.problem = inputProblem(checked.failed);
+      });
+    } else {
+      const found = await attempt(() => api.lambda.inhabit(statement, settings));
+      update(id, (q) => {
+        if (!q.lambda || q.lambda.statement !== statement) return;
+        if (found.ok) q.lambda.found = found.value;
+        else if (found.failed) q.lambda.problem = inputProblem(found.failed);
+      });
+      const term = found.ok ? found.value.term : undefined;
+      if (term) {
+        const checked = await attempt(() => api.lambda.check(JSON.stringify(term), settings));
+        update(id, (q) => {
+          if (!q.lambda || q.lambda.statement !== statement) return;
+          if (checked.ok) q.lambda.typing = checked.value;
+        });
+      }
+    }
+    save();
+  }
+
+  /**
    * Reads a text into a proof in a calculus and starts it: the field's text in the suite's own
    * syntax, a sequent's JSON, or a session pasted there, an ordinary one in its own logic.
    */
@@ -939,6 +1065,10 @@ export function createProver(say: (text: string) => void = () => undefined) {
     }
     if (calculus.suite === "modal") {
       await startModal(id, text, calculus.system);
+      return;
+    }
+    if (calculus.suite === "lambda") {
+      await startLambda(id, text, calculus);
       return;
     }
     if (isOrdinary(doc)) {
@@ -1200,6 +1330,23 @@ export function createProver(say: (text: string) => void = () => undefined) {
 
     /** The settings of a modal call, for the panel's drawings. */
     modalJson,
+
+    /** The settings of a lambda call, for the panel's drawing. */
+    lambdaJson,
+
+    /** Lists and counts a lambda tab's type's terms, within the page's bounds. */
+    lambdaList: guard(async (id: string) => {
+      const statement = store.proofs.find((q) => q.id === id)?.lambda?.statement;
+      if (!statement) return;
+      const listed = await attempt(() =>
+        api.lambda.enumerate(statement, JSON.stringify({ max_terms: 12 }), lambdaJson()),
+      );
+      update(id, (q) => {
+        if (!q.lambda || q.lambda.statement !== statement) return;
+        if (listed.ok) q.lambda.listed = listed.value;
+        else if (listed.failed) q.lambda.problem = inputProblem(listed.failed);
+      });
+    }),
 
     /** Changes a custom proof's rule file as typed; the calculus is named by the file's name. */
     setCustomFile(id: string, file: string) {
@@ -1463,7 +1610,12 @@ export function createProver(say: (text: string) => void = () => undefined) {
       for (const p of store.proofs)
         if ((p.session && !p.view) || (p.custom?.session && !p.custom.view))
           void actions.refresh(p.id);
-        else if (p.modal && !p.modal.statement && p.input.trim()) void actions.submit(p.id);
+        else if (
+          ((p.modal && !p.modal.statement) ||
+            (p.lambda && !p.lambda.statement && !p.lambda.illTyped)) &&
+          p.input.trim()
+        )
+          void actions.submit(p.id);
       save();
     },
 
@@ -1573,7 +1725,12 @@ export function createProver(say: (text: string) => void = () => undefined) {
       const p = store.proofs.find((q) => q.id === id);
       if (!p) return;
       setLastCalculus(calculus);
-      if (calculus.suite === "modal" || p.calculus.suite === "modal") {
+      if (
+        calculus.suite === "modal" ||
+        p.calculus.suite === "modal" ||
+        calculus.suite === "lambda" ||
+        p.calculus.suite === "lambda"
+      ) {
         // A modal sequent is decided again in the system chosen; one of another suite is read
         // again from the field's text, which the modal syntax reads as ordinary logic's.
         update(id, (q) => {
@@ -1590,6 +1747,7 @@ export function createProver(say: (text: string) => void = () => undefined) {
           q.editing = true;
           q.custom = customWork(calculus);
           q.modal = modalWork(calculus);
+          q.lambda = lambdaWork(calculus);
         });
         if (p.input.trim()) await startText(id, p.input, calculus);
         return;
@@ -1677,6 +1835,16 @@ export function createProver(say: (text: string) => void = () => undefined) {
           q.input = text;
         });
         await startModal(id, text, into.system);
+        return { kind: "sequent" };
+      }
+      if (doc === undefined && into.suite === "lambda") {
+        const id = actions.add();
+        update(id, (q) => {
+          q.calculus = into;
+          q.lambda = lambdaWork(into);
+          q.input = text;
+        });
+        await startLambda(id, text, into);
         return { kind: "sequent" };
       }
       if (doc === undefined && into.suite === "rules") {
