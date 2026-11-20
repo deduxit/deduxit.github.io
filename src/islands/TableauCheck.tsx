@@ -23,6 +23,9 @@ export function TableauCheckView(props: { prover: Prover; ui: Ui; sequent: strin
   const [answer, setAnswer] = createSignal<Answer | null>(null);
   const [busy, setBusy] = createSignal(false);
   let field: HTMLTextAreaElement | undefined;
+  // Whether the student typed since the sequent was set: the start lines arrive later and must
+  // not overwrite what they typed.
+  let typed = false;
 
   // The sequent's own lines, numbered and signed, as a tableau starts: deduxit's tableau gives
   // them, and nothing past them.
@@ -31,12 +34,14 @@ export function TableauCheckView(props: { prover: Prover; ui: Ui; sequent: strin
       () => props.sequent,
       async (sequent) => {
         setAnswer(null);
+        typed = false;
+        let lines = "";
         try {
-          const outcome = await props.prover.api.ordinary.tableau(sequent, "{}");
-          setText(startLines(outcome));
+          lines = startLines(await props.prover.api.ordinary.tableau(sequent, "{}"));
         } catch {
-          setText("");
+          lines = "";
         }
+        if (!typed) setText(lines);
       },
     ),
   );
@@ -114,6 +119,7 @@ export function TableauCheckView(props: { prover: Prover; ui: Ui; sequent: strin
         rows={12}
         value={text()}
         onInput={(event) => {
+          typed = true;
           setText(event.currentTarget.value);
           setAnswer(null);
         }}
