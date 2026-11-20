@@ -1487,9 +1487,10 @@ export function createProver(say: (text: string) => void = () => undefined) {
 
     /**
      * Turns the invertible rules applied by themselves on or off; on, they are applied at once to
-     * every open goal of every proof, as they would have been after each step.
+     * every open goal of every proof, as they would have been after each step. Asked for while
+     * another action runs, it waits for that one: the switch never shows a setting the page lacks.
      */
-    setInvertible: guard(async (on: boolean) => {
+    setInvertible: queued(async (on: boolean) => {
       actions.setSettings({ invertible: on });
       if (!on) return;
       for (const p of store.proofs) {
