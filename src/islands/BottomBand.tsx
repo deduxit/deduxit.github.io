@@ -76,6 +76,7 @@ import { Written } from "./Learn";
 import { Dictionary, Logo } from "./Logo";
 import { type Practice, PracticePlace } from "./Practice";
 import { CheckSheet, HandinSheet, PackSheet, usePacks } from "./Packs";
+import { NormalizeSheet, ResolveSheet } from "./Clausal";
 import { InterpolateSheet, TranslateSheet } from "./Transforms";
 import { applyTheme } from "./TopBand";
 import type { Menu, Ui } from "./ui";
@@ -346,6 +347,12 @@ export function BottomBand(props: {
       </Show>
       <Show when={ui.menu === "interpolate"}>
         <InterpolateSheet prover={props.prover} ui={props.ui} />
+      </Show>
+      <Show when={ui.menu === "normalize"}>
+        <NormalizeSheet prover={props.prover} ui={props.ui} />
+      </Show>
+      <Show when={ui.menu === "resolve"}>
+        <ResolveSheet prover={props.prover} ui={props.ui} />
       </Show>
       <Show when={ui.menu === "pack"}>
         <PackSheet prover={props.prover} ui={props.ui} />

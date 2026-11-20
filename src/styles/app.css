@@ -2242,6 +2242,137 @@ button.wordmark {
 .tf-check .m {
   overflow-wrap: anywhere;
 }
+/* A normal form's steps, one at a time: the law, where it acts, the sequent after it. */
+.cl-stepper,
+.cl-graph {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.cl-stepper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+  width: 100%;
+}
+.cl-stepper .row {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+.cl-step p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.cl-law {
+  font-size: var(--text-math);
+}
+.cl-after {
+  font-size: var(--text-math);
+}
+/* A refutation's clauses as a list and as a graph, and DPLL's steps. */
+.cl-h {
+  margin: 0;
+  font: var(--font-weight-semibold) var(--text-small) / var(--leading-none) var(--font-text);
+  color: var(--color-dim);
+}
+.cl-trace {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-small);
+}
+.cl-trace li[data-depth="1"] {
+  padding-left: var(--spacing-3);
+}
+.cl-trace li[data-depth="2"] {
+  padding-left: calc(2 * var(--spacing-3));
+}
+.cl-trace li[data-depth="3"] {
+  padding-left: calc(3 * var(--spacing-3));
+}
+.cl-trace li[data-depth="4"],
+.cl-trace li[data-depth="5"],
+.cl-trace li[data-depth="6"] {
+  padding-left: calc(4 * var(--spacing-3));
+}
+.cl-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+  width: 100%;
+}
+.cl-item {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-1-5);
+  width: 100%;
+  min-height: var(--size-control);
+  padding: 0 var(--spacing-2);
+  border: var(--line) solid var(--color-edge);
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.cl-item .m {
+  font-size: var(--text-math);
+}
+:is(.cl-item, .cl-node)[aria-pressed="true"] {
+  border-color: var(--color-accent);
+  background: var(--color-accent-wash);
+}
+.cl-n {
+  font: var(--font-weight-semibold) var(--text-small) / var(--leading-none) var(--font-text);
+  color: var(--color-dim);
+}
+.cl-scroll {
+  width: 100%;
+  overflow-x: auto;
+}
+.cl-graph {
+  position: relative;
+}
+.cl-edges {
+  position: absolute;
+  inset: 0;
+}
+.cl-edges line {
+  stroke: var(--color-line);
+  stroke-width: var(--line-arrow);
+}
+.cl-edges line[data-on] {
+  stroke: var(--color-accent);
+  stroke-width: var(--line-strong);
+}
+/* Its place and size come from the graph's layout, through the CSSOM. */
+.cl-node {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-1);
+  padding: 0 var(--spacing-1);
+  border: var(--line) solid var(--color-line);
+  background: var(--color-panel);
+  font-size: var(--text-small);
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+/* A clause too long for its node ends in an ellipsis; the list and the name hold it whole. */
+.cl-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cl-node[data-empty] {
+  font-weight: var(--font-weight-semibold);
+}
+
 /* The Logic popover's way to them: under the switches, apart from them. */
 .calc-more {
   display: flex;

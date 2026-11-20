@@ -134,6 +134,33 @@ the page reads.
   the partition is a toggle per formula (`aria-pressed` for part 1, its number written before it,
   part 2 dashed), Craig's split (the formulas left of ⊢) at the start and again for each new
   sequent. Both calls are sent `{}` as settings, as the table's are.
+- **A classical proof's normal forms and resolution are two more sheets from the Logic popover**
+  (`Clausal.tsx`, `src/lib/clausal.ts`), beside the translation's and the interpolant's and
+  built from their parts (`Sheet`, `Verdict`, `Refused`, `answered`, `classicalSequent`, exported
+  by `Transforms.tsx`): "Rewrite into a normal form" and "Refute by resolution" set `ui.menu` to
+  `normalize` or `resolve`. Nothing of them shows before a visitor presses one (the author's
+  rule: not overwhelming).
+  - The normal form (`ordinary_normalize`): the forms CNF, NNF, DNF, Tseitin, Plaisted–Greenbaum
+    (CNF first, a first course's; `FORMS` holds `about`'s names), the check's keyword first
+    (`Equivalent`, `Same verdict`, `Not checked`), the result large, then a stepper from the
+    sequent as typed (step 0) through each step's law, where it acts, and the sequent after it
+    (`stepTexts`: a step's `left` with the clauses `added` by it and every earlier step). The
+    last step's sequent is the result, which `clausal.test.ts` holds for every form.
+  - Resolution: Search (saturation), DPLL (its steps indented by their decisions, words in the
+    text font, the refutation read off) and By hand, the worked example first. Search and DPLL
+    call `ordinary_resolve`; By hand starts with `ordinary_clauses` and adds each resolvent
+    with `ordinary_resolve_step`, which checks the steps the page sends before it adds one, so a
+    document the page changed is refused. The page keeps the refutations made so far and undo
+    drops the last; nothing is accepted that deduxit did not add. Two clauses are chosen (a
+    third replaces the older), the atoms they clash on (`clashes`) are the buttons "Resolve on
+    p"; none means the two share no atom to resolve on, said in the status.
+  - **The graph view** (`Graph`): the given clauses on the top row, each resolvent one row
+    below its deeper parent (`layout`), the edges an `aria-hidden` SVG and each clause an HTML
+    button over it (44 by 44 pixels: a phone's target), placed through the CSSOM. The list and
+    the graph share one choice: a clause chosen in either is pressed in both, and the edges into
+    a chosen resolvent are marked (`data-on`). Each button's name starts "Clause N", hidden
+    words before and after the visible number and clause (SC 2.5.3). The graph scrolls
+    sideways where it is wider than the sheet.
 - **A calculus of one's own** (deduxit's `rules_…` calls, `src/lib/custom.ts`,
   `src/islands/Custom.tsx`) is the registry's suite `rules`, its parameter the rule file's
   `name` (any name of at most 64 characters: `calculusOf` takes it, the built-in names are its

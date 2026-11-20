@@ -228,6 +228,20 @@ export function Calculus(props: { prover: Prover; ui: Ui }) {
                     >
                       Find an interpolant
                     </button>
+                    <button
+                      type="button"
+                      class="btn btn-s"
+                      onClick={() => setUi("menu", "normalize")}
+                    >
+                      Rewrite into a normal form
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-s"
+                      onClick={() => setUi("menu", "resolve")}
+                    >
+                      Refute by resolution
+                    </button>
                   </div>
                 </Show>
                 {/* A model of the started sequent's logic, to draw and check: asked for here. */}

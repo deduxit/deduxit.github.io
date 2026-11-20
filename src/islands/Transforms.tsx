@@ -48,15 +48,16 @@ import { useWorkspace } from "./Workspace";
 import type { Ui } from "./ui";
 
 /** deduxit's answer: what it gave, or what it refused. */
-type Answer<T> = { readonly value: T } | { readonly failure: Failure };
+export type Answer<T> = { readonly value: T } | { readonly failure: Failure };
 
 /** The answer's value, or undefined while it loads or where deduxit refused. */
-const given = <T,>(a: Answer<T> | undefined) => (a && "value" in a ? a.value : undefined);
+export const given = <T,>(a: Answer<T> | undefined) => (a && "value" in a ? a.value : undefined);
 /** What deduxit refused, or undefined. */
-const failureIn = <T,>(a: Answer<T> | undefined) => (a && "failure" in a ? a.failure : undefined);
+export const failureIn = <T,>(a: Answer<T> | undefined) =>
+  a && "failure" in a ? a.failure : undefined;
 
 /** Calls deduxit and keeps a refusal as the answer, so that the sheet can say it. */
-async function answered<T>(call: () => Promise<T>): Promise<Answer<T>> {
+export async function answered<T>(call: () => Promise<T>): Promise<Answer<T>> {
   try {
     return { value: await call() };
   } catch (thrown) {
@@ -65,7 +66,7 @@ async function answered<T>(call: () => Promise<T>): Promise<Answer<T>> {
 }
 
 /** The started classical proof's sequent: its text and its JSON, or undefined for any other proof. */
-function classicalSequent(prover: Prover) {
+export function classicalSequent(prover: Prover) {
   return () => {
     const p = prover.current();
     const session = p?.session;
@@ -76,7 +77,7 @@ function classicalSequent(prover: Prover) {
 }
 
 /** A sheet over the stage with its title, which takes the focus when the sheet opens. */
-function Sheet(props: { ui: Ui; title: string; intro: string; children: JSX.Element }) {
+export function Sheet(props: { ui: Ui; title: string; intro: string; children: JSX.Element }) {
   let title: HTMLHeadingElement | undefined;
   onMount(() => title?.focus());
   return (
@@ -91,7 +92,11 @@ function Sheet(props: { ui: Ui; title: string; intro: string; children: JSX.Elem
 }
 
 /** The keyword and sentence that open an answer. */
-function Verdict(props: { keyword: string; tone: "ok" | "bad" | "warn"; children: JSX.Element }) {
+export function Verdict(props: {
+  keyword: string;
+  tone: "ok" | "bad" | "warn";
+  children: JSX.Element;
+}) {
   return (
     <p class="method-verdict" role="status">
       <span class={`kw ${props.tone}`}>{props.keyword}</span> {props.children}
@@ -100,7 +105,7 @@ function Verdict(props: { keyword: string; tone: "ok" | "bad" | "warn"; children
 }
 
 /** What deduxit refused, in its words: no wording of the page's covers these calls' refusals. */
-function Refused(props: { failure: Failure }) {
+export function Refused(props: { failure: Failure }) {
   return <p class="method-verdict said-why">{props.failure.message}</p>;
 }
 

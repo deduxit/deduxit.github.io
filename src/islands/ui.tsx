@@ -52,6 +52,8 @@ export type Menu =
   | "practice"
   | "translate"
   | "interpolate"
+  | "normalize"
+  | "resolve"
   | "more"
   | "workspace"
   | "pack"
