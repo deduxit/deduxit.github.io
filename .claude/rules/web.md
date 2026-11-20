@@ -238,8 +238,11 @@ the page reads.
   stage shows `LambdaPanel` (`data-method="lambda"`): before anything is read two sentences and
   "Try" buttons (a term, and in the simple calculus a type), after it the verdict, the
   derivation (`lambda_draw`, `.custom-drawing`) and for a type "List its terms"
-  (`lambda_enumerate`, `max_terms` 12, the bindings adding each term's `text`). Every call's
-  settings set `lambda.types`, so a term's text shows its binders' types and reads back. A
+  (`lambda_enumerate`, `max_terms` 12, the bindings adding each term's `text`). Every call
+  but the drawing's sets `lambda.types`, so a term's text shows its binders' types and reads back;
+  the drawing's contexts show them. In the linear and the affine calculus every text is a term:
+  terms of a type are found in the simple calculus alone. The drawing shows only while the tab
+  holds a checked term (`typing`), since a resource keeps its last value when its source goes. A
   lambda tab takes no rule hints.
 - **The model editor** (`src/islands/KripkeEditor.tsx`, its data, geometry and words in
   `src/lib/kripke.ts`) draws a Kripke model of either suite on an SVG canvas and changes it;

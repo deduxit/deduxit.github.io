@@ -29,11 +29,16 @@ export const TYPE_EXAMPLE = "a -> a -> a";
 export const LINEAR_EXAMPLE = String.raw`\x:a * b. let x be y * z in z * y`;
 
 /**
- * Whether the field's text is a term rather than a type: a term has a λ (`\` where no `/` stands
- * beside it, since `/\` and `\/` are a type's ∧ and ∨), a variable's type after `:`, or a pair's
- * bracket (`<` where no `-` follows, since `<->` is a type's ↔), and a type has none of them.
+ * Whether the field's text is a term rather than a type. A term has a λ (`\\` where no `/` stands
+ * beside it, since `/\\` and `\\/` are a type's ∧ and ∨), a variable's type after `:`, a pair's
+ * bracket (`<` where no `-` follows, since `<->` is a type's ↔), a unit (`()`, `∗`), or a
+ * keyword of the terms' syntax (`let`, `case`, `fst`, `true(`, `false_`, …); a type has none of
+ * them, `true` and `false` being its constants.
  */
-export const isTerm = (text: string): boolean => /[λ:⟨]|<(?!-)|(?<!\/)\\(?!\/)/u.test(text);
+export const isTerm = (text: string): boolean =>
+  /[λ:⟨∗]|<(?!-)|(?<!\/)\\(?!\/)|\(\s*\)|\b(?:let|case|fst|snd|inl|inr|abort|promote|derelict|discard|copy)\b|\b(?:inl|inr|abort)_|\b(?:true|false)\s*[_(]/u.test(
+    text,
+  );
 
 /** A term as deduxit writes it, with what the page shows of it. */
 export interface Term {

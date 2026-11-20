@@ -156,7 +156,7 @@ function Read(props: { prover: Prover }) {
       </Show>
       <Show when={work()?.problem}>{(said) => <Why said={said()} class="custom-problem" />}</Show>
       <Show
-        when={drawing()}
+        when={work()?.typing && drawing()}
         fallback={
           <Show when={found()?.term?.judgement}>
             {(judgement) => <p class="method-verdict m">{judgement()}</p>}

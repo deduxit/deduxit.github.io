@@ -22,6 +22,18 @@ describe("a lambda tab's text", () => {
     expect(isTerm(TYPE_EXAMPLE)).toBe(false);
     expect(isTerm("a /\\ b -> b")).toBe(false);
     expect(isTerm("a \\/ b <-> b \\/ a")).toBe(false);
+    expect(isTerm("true -> false")).toBe(false);
+    // Closed terms of the linear calculi need no λ.
+    for (const term of [
+      "()",
+      "true()",
+      "() * ()",
+      "∗",
+      "promote for in ()",
+      "let () be () in ()",
+      "inl_(1 + 1)(())",
+    ])
+      expect(isTerm(term), term).toBe(true);
   });
 
   it("is shown in signs", () => {

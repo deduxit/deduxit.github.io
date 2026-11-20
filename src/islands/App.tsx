@@ -293,7 +293,9 @@ export default function App(props: {
           prover.current()?.session ?? prover.current()?.custom?.session,
           prover.current()?.calculus,
           prover.current()?.input,
-          prover.current()?.modal?.outcome ?? prover.current()?.lambda?.statement,
+          prover.current()?.modal?.outcome ??
+            prover.current()?.lambda?.statement ??
+            prover.current()?.lambda?.illTyped,
         ] as const,
       ([session, calculus, input, decided]) => {
         clearTimeout(linking);

@@ -974,7 +974,8 @@ export function createProver(say: (text: string) => void = () => undefined) {
   async function startLambda(id: string, text: string, calculus: Calculus) {
     if (calculus.suite !== "lambda") return;
     const settings = lambdaJson();
-    const kind = isTerm(text) ? "term" : "type";
+    // Terms of a type are found in the simple calculus alone: there every text is a term.
+    const kind = calculus.calculus !== "simple" || isTerm(text) ? "term" : "type";
     const read = await attempt(() =>
       kind === "term"
         ? api.lambda.read(text, calculus.calculus, settings)
