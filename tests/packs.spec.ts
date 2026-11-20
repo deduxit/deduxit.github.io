@@ -241,23 +241,26 @@ test("with the search barred, the invertible rules wait for the student too", as
       problems: [
         { suite: "linear", parameter: "classical", sequent: "⊢ (A ⊗ B) ⊸ (A ⊗ B)" },
         { suite: "linear", parameter: "classical", sequent: "⊢ A ⊸ A" },
+        { suite: "ordinary", parameter: "intuitionistic", sequent: "a ∧ b ⊢ b ∧ a" },
       ],
     }),
   );
-  await expect(bar(page)).toContainText("0 of 2 done");
+  await expect(bar(page)).toContainText("0 of 3 done");
   await page.getByRole("button", { name: "Settings" }).click();
   const settings = page.getByRole("dialog", { name: "Settings" });
   await settings.getByRole("checkbox", { name: "Apply invertible rules by themselves" }).check();
   await expect(settings).toContainText("This pack asks for every step by hand.");
   await page.keyboard.press("Escape");
-  await bar(page)
-    .getByRole("button", { name: /^Problem 2/ })
-    .click();
-  await expect(bar(page)).toContainText("0 of 2 done");
-  await expect(page.getByText("Open goal 1 of 1")).toBeVisible();
-  // Outside the pack the setting holds: a tab of one's own is finished by the rules alone.
+  // In linear logic and in LJ alike.
+  for (const problem of [/^Problem 2/, /^Problem 3/]) {
+    await bar(page).getByRole("button", { name: problem }).click();
+    await expect(bar(page)).toContainText("0 of 3 done");
+    await expect(page.getByText("Open goal 1 of 1")).toBeVisible();
+  }
+  // Outside the pack the setting holds: a tab of one's own (in LJ, the calculus last started)
+  // is finished by the rules alone.
   await page.getByRole("button", { name: "New proof" }).click();
-  await page.getByRole("textbox", { name: "Sequent" }).fill("|- A -o A");
+  await page.getByRole("textbox", { name: "Sequent" }).fill("|- a -> a");
   await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
   await expect(page.locator(".ptab[aria-current=true] .dot[data-tone=ok]")).toBeVisible();
 });

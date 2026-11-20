@@ -202,6 +202,13 @@ export function createApi(changed: (pending: number) => void) {
           JSON.stringify(step),
           settings,
         ),
+      /** Applies every invertible rule to every open goal, whatever the settings say. */
+      invertAll: (session: OrdinarySession, settings: string) =>
+        json<OrdinaryPlayed & { inverted: number; inverted_refused?: Failure }>(
+          "ordinary_invert_all",
+          JSON.stringify(session),
+          settings,
+        ),
       undo: (session: OrdinarySession, settings: string) =>
         json<OrdinaryPlayed & { reopened: number | null }>(
           "ordinary_undo",

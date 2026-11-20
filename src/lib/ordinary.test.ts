@@ -107,6 +107,37 @@ describe("the ordinary suite", () => {
     expect(leftGoal).toBeDefined();
   });
 
+  it("with the invertible rules on, undoes the visitor's choice with the steps after it", () => {
+    const on = JSON.stringify({ interactive: { invertible: true } });
+    // ∨R₁ is the visitor's choice in LJ; →R and the axiom follow by themselves.
+    const started: Played = JSON.parse(
+      deduxit.ordinary_start("|- (a -> a) \\/ b", "intuitionistic", on),
+    );
+    expect(started.session.history).toEqual([]);
+    const p: Played = JSON.parse(
+      deduxit.ordinary_apply(
+        JSON.stringify(started.session),
+        0,
+        JSON.stringify({ side: "right", position: 0, rule: "∨R₁" }),
+        on,
+      ),
+    );
+    expect(p.view.complete).toBe(true);
+    const invertible = new Set(p.view.invertible);
+    const back = retract(p.session, undefined, invertible);
+    expect(back?.reopened).toBe(0);
+    expect(view(back?.session as OrdinarySession).steps).toBe(0);
+    // Without the set, undo takes back the axiom alone.
+    expect(view(retract(p.session, undefined)?.session as OrdinarySession).steps).toBe(2);
+    // Where every step was the page's, there is nothing to take back.
+    const all: Played = JSON.parse(
+      deduxit.ordinary_start("a /\\ b |- b /\\ a", "intuitionistic", on),
+    );
+    expect(all.view.complete).toBe(true);
+    expect(retract(all.session, undefined, new Set(all.view.invertible))).toBeUndefined();
+    expect(retract(all.session, undefined)).toBeDefined();
+  });
+
   it("retracts what deduxit's reader accepts, as its undo does for the last step", () => {
     const sequents = [
       ["a /\\ (b \\/ c) |- (a /\\ b) \\/ (a /\\ c)", "intuitionistic"],

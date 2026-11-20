@@ -595,17 +595,26 @@ export function createProver(say: (text: string) => void = () => undefined) {
     });
   };
   /**
-   * The settings of an ordinary call: the budget, the terms where they are not the tab's, and
-   * the structural rules drawn when asked. A forced engine and the invertible rules are the
-   * linear suite's: the ordinary search runs on deduxit's translation with its own choice.
+   * The settings of an ordinary call: the budget, the terms where they are not the tab's, the
+   * structural rules drawn when asked, and the invertible rules applied by themselves where a
+   * start or a step asks for them. A forced engine is the linear suite's: the ordinary search
+   * runs on deduxit's translation with its own choice.
    */
-  const ordinaryJson = (budget = settings().budget, structural = settings().structural) => {
+  const ordinaryJson = (
+    budget = settings().budget,
+    structural = settings().structural,
+    invertible = false,
+  ) => {
     const s = { ...settings(), structural };
     return JSON.stringify({
       limits: { work: budget, ...(s.terms !== DEFAULT_TERMS ? { terms: s.terms } : {}) },
+      ...(invertible ? { interactive: { invertible } } : {}),
       ...viewJson(s, ordinary("classical")),
     });
   };
+  /** The settings of an ordinary start or step on proof `id`: the invertible rules as it has them. */
+  const ordinaryStepping = (id: string | undefined) =>
+    ordinaryJson(undefined, undefined, invertibleOn(id));
   /** The settings of a modal call: the budget alone, the tab's defaults for the rest. */
   const modalJson = () => JSON.stringify({ limits: { work: settings().budget } });
   /**
@@ -938,7 +947,9 @@ export function createProver(say: (text: string) => void = () => undefined) {
       return;
     }
     if (calculus.suite === "ordinary") {
-      const started = await attempt(() => api.ordinary.start(text, calculus.logic, ordinaryJson()));
+      const started = await attempt(() =>
+        api.ordinary.start(text, calculus.logic, ordinaryStepping(id)),
+      );
       if (!started.ok) {
         if (started.failed)
           update(id, (q) => (q.inputProblem = problemAt(started.failed as Failure)));
@@ -1015,7 +1026,9 @@ export function createProver(say: (text: string) => void = () => undefined) {
           : "intuitionistic";
     // The method chosen stays: a sequent opened for natural deduction is proved by it.
     const method = into.suite === "ordinary" ? into.method : "sequent";
-    const started = await attempt(() => api.ordinary.start(text, logic, ordinaryJson()));
+    const started = await attempt(() =>
+      api.ordinary.start(text, logic, ordinaryStepping(undefined)),
+    );
     if (!started.ok) {
       const failed = started.failed;
       if (!failed) return { problem: { keyword: "Stopped", sentence: "" } };
@@ -1332,9 +1345,19 @@ export function createProver(say: (text: string) => void = () => undefined) {
       actions.setSettings({ invertible: on });
       if (!on) return;
       for (const p of store.proofs) {
-        // The invertible rules are the linear suite's, and a pack that bars the search bars them.
-        if (!p.session || p.view?.complete || p.calculus.suite !== "linear") continue;
-        if (!invertibleOn(p.id)) continue;
+        // A pack that bars the search bars them.
+        if (!p.session || p.view?.complete || !invertibleOn(p.id)) continue;
+        const o = ordinaryOf(p);
+        if (o) {
+          const done = await attempt(() => api.ordinary.invertAll(o.session, ordinaryJson()));
+          if (!done.ok || done.value.inverted === 0) continue;
+          const played = { session: done.value.session, view: asView(done.value.view) };
+          // The sessions redo would bring back lack these steps.
+          update(p.id, (q) => (q.later = []));
+          show(p.id, played, activeGoal({ ...p, ...played }));
+          continue;
+        }
+        if (p.calculus.suite !== "linear") continue;
         const result = await attempt(() => api.invertAll(p.session as SessionDoc, replaying()));
         if (!result.ok || result.value.inverted === 0) continue;
         show(p.id, result.value, activeGoal({ ...p, ...result.value }));
@@ -1618,7 +1641,7 @@ export function createProver(say: (text: string) => void = () => undefined) {
               const played = await api.ordinary.start(
                 JSON.stringify(session.sequent),
                 calculus.logic,
-                ordinaryJson(),
+                ordinaryStepping(id),
               );
               return { session: played.session, view: asView(played.view) };
             })
@@ -1878,7 +1901,7 @@ export function createProver(say: (text: string) => void = () => undefined) {
       if (o) {
         const formulas = p.view?.goals.find((g) => g.goal === goal)?.formulas ?? [];
         const done = await attempt(() =>
-          api.ordinary.apply(o.session, goal, ordinaryStep(formulas, step), ordinaryJson()),
+          api.ordinary.apply(o.session, goal, ordinaryStep(formulas, step), ordinaryStepping(p.id)),
         );
         if (!done.ok) {
           if (done.failed) {
@@ -2088,15 +2111,31 @@ export function createProver(say: (text: string) => void = () => undefined) {
       if (!p?.session) return;
       const o = ordinaryOf(p);
       if (o) {
-        // Undo on the active goal's branch; on a finished proof, its last step.
-        const back = retractOrdinary(o.session, p.view?.complete ? undefined : activeGoal(p));
+        // Undo on the active goal's branch; on a finished proof, its last step. With the
+        // invertible rules on, it goes past the steps they took to the visitor's last choice; a
+        // search's graft is the visitor's choice whatever rule its derivation starts with.
+        const goal = p.view?.complete ? undefined : activeGoal(p);
+        let invertible: Set<number> | undefined;
+        if (invertibleOn(p.id)) {
+          invertible = new Set(p.view?.invertible ?? []);
+          for (const key of Object.keys(p.engines)) {
+            const at = goalAt(o.session, key === "" ? [] : key.split(".").map(Number));
+            if (at !== undefined) invertible.delete(at);
+          }
+        }
+        const back = retractOrdinary(o.session, goal, invertible);
         if (!back) {
+          // Steps there are, but each one the page applied by itself.
+          const automatic =
+            invertible !== undefined && retractOrdinary(o.session, goal) !== undefined;
           update(p.id, (q) => {
             q.note = {
               path: [],
               said: {
                 keyword: "Nothing to undo on this branch",
-                sentence: "This goal is the sequent itself, with no step on it yet.",
+                sentence: automatic
+                  ? "Every step on this branch is an invertible rule the page applied by itself."
+                  : "This goal is the sequent itself, with no step on it yet.",
               },
               tone: "plain",
             };

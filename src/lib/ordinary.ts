@@ -48,6 +48,8 @@ export interface OrdinaryView {
     readonly right: readonly string[];
   }[];
   readonly inferences: readonly number[];
+  /** The goals the steps closed by a rule invertible in the session's logic, in order. */
+  readonly invertible: readonly number[];
 }
 
 /** A Kripke model as deduxit writes it: each world's atoms and arrows up, and the model's world. */
@@ -182,22 +184,34 @@ export const sequentText = (session: OrdinarySession): string =>
  * goal's, so taking the subtree out and numbering the rest anew in their order leaves the session
  * the other steps would have made; deduxit's reader checks it again on the next call. Undefined
  * where the branch has no step.
+ *
+ * With `invertible`, the goals an invertible rule closed (the view's), as when the page applies
+ * those rules by itself: the step taken back is the nearest on the branch that is not one, so
+ * that undo takes back the visitor's last choice with the invertible steps after it. Undefined
+ * when every step on the branch is one.
  */
 export function retract(
   doc: OrdinarySession,
   goal: number | undefined,
+  invertible?: ReadonlySet<number>,
 ): { session: OrdinarySession; reopened: number } | undefined {
   const steps = new Set(doc.history);
   const parent = new Map<number, number>();
   doc.inferences.forEach((inference, i) => {
     for (const premise of inference.premises ?? []) parent.set(premise, i);
   });
-  let step: number | undefined;
-  if (goal === undefined) step = doc.history.at(-1);
-  else {
-    step = parent.get(goal);
-    // Up through the step's own run (the contractions below a shared rule, or a graft).
+  // The step whose run holds inference `at`: up through the contractions below a shared rule,
+  // or a graft.
+  const below = (at: number | undefined) => {
+    let step = at;
     while (step !== undefined && !steps.has(step)) step = parent.get(step);
+    return step;
+  };
+  let step: number | undefined;
+  if (goal === undefined) step = doc.history.findLast((g) => !invertible?.has(g));
+  else {
+    step = below(parent.get(goal));
+    while (step !== undefined && invertible?.has(step)) step = below(parent.get(step));
   }
   if (step === undefined) return undefined;
   const gone = new Set(subtree(doc, step));
@@ -273,7 +287,7 @@ export function asView(v: OrdinaryView): View {
       ],
     })),
     inferences: v.inferences,
-    invertible: [],
+    invertible: v.invertible,
     net: NO_NET,
     cuts: [],
   };

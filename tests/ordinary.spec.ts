@@ -145,6 +145,29 @@ test("undo in an ordinary proof is per branch, and past a split takes the split 
   await expect(page.getByRole("button", { name: /^a → a, formula/ })).toBeVisible();
 });
 
+test("the invertible rules apply by themselves in LJ, and undo takes them back with a choice", async ({
+  page,
+}) => {
+  await ordinary(page, "intuitionistic", "|- b -> (a -> a) \\/ b");
+  await page.locator("footer").getByRole("button", { name: "Settings", exact: true }).click();
+  await page
+    .getByRole("dialog", { name: "Settings" })
+    .getByRole("checkbox", { name: "Apply invertible rules by themselves" })
+    .check();
+  await page.keyboard.press("Escape");
+  // Turned on, they apply at once: →R took the implication apart.
+  await expect(page.getByRole("button", { name: /^\(a → a\) ∨ b, formula/ })).toBeVisible();
+  // ∨R₁ is a choice, LJ's to leave to the visitor; →R and the axiom follow it.
+  await rule(page, /^\(a → a\) ∨ b, formula/, "∨R₁");
+  await expect(
+    page.getByRole("status").filter({ hasText: "Proved: every goal is closed" }),
+  ).toBeVisible();
+  // Undo takes back the choice with the steps after it, not the →R before it.
+  await page.getByRole("button", { name: "Undo", exact: true }).click();
+  await expect(page.getByRole("button", { name: /^\(a → a\) ∨ b, formula/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /^b, formula 1 of goal/ })).toBeVisible();
+});
+
 test("the structural rules are drawn on request, and the exports are the derivation's", async ({
   page,
 }) => {

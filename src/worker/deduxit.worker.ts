@@ -50,6 +50,7 @@ const calls = {
   ordinary_view: deduxit.ordinary_view,
   ordinary_rules: deduxit.ordinary_rules,
   ordinary_apply: deduxit.ordinary_apply,
+  ordinary_invert_all: deduxit.ordinary_invert_all,
   ordinary_undo: deduxit.ordinary_undo,
   ordinary_close: deduxit.ordinary_close,
   ordinary_hint: deduxit.ordinary_hint,

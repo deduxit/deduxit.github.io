@@ -53,7 +53,7 @@ the page reads.
   drawing's `i<n>-<p>` ids do; `ordinaryStep` turns a place back into a side and position, and
   a hint's later steps carry their `side` (each acts on the goal the one before opened). A
   rule of two premises is applied shared (G3's form, deduxit's default): the page offers no
-  split in an ordinary proof. No net, no cut, no fill, no engine choice, no invertible rules;
+  split in an ordinary proof. No net, no cut, no fill, no engine choice;
   the drawing and the exports are the ordinary calls', never the linear image.
 - **Undo on a branch in an ordinary proof cuts the step's subtree out of the session
   document** (`retract`): it depends on deduxit's layout of an ordinary session at wire level 8,
@@ -318,7 +318,8 @@ the page reads.
   into or out of modal logic (`leaveForSuite`: its node is the other suite's); Undo of either
   links the parked modal tab again and shows its statement.
 - **The linear suite's calls never get an ordinary session**: fill (`fillable`, `fill`), the
-  invertible rules (`setInvertible`), the engine choice and the cut are kept to linear proofs.
+  engine choice and the cut are kept to linear proofs; `setInvertible` calls
+  `ordinary_invert_all` for an ordinary one.
 - **The registry reads every linear mode deduxit's `about` lists** (the switches build six; a
   session pasted in cyclic linear logic or the Lambek calculus opens and is stored as one), and
   `parseShelf` leaves out a proof it cannot read alone, never the whole shelf.
@@ -566,7 +567,11 @@ the page reads.
   after Budget (the proving behaviours), off by default, stored with the other settings;
   `json()` adds `interactive.invertible` while it is on, so `start` and `apply` apply them.
   Turning it on applies them at once to every open goal of every proof (`setInvertible`,
-  deduxit's `invert_all`). Its tip (`INVERTIBLE_TIP`) says what an invertible rule is and why
+  deduxit's `invert_all`). An ordinary tab follows it too (LK's and LJ's invertible rules,
+  deduxit's set): `ordinaryStepping(id)` adds the key to `ordinary_start` and `ordinary_apply`
+  alone, `ordinary_invert_all` runs when it is turned on (and empties `later`, whose sessions
+  lack those steps), and undo passes the view's `invertible` to `retract` of `ordinary.ts`
+  less the goals a search grafted (the visitor's choice whatever rule the graft starts with). Its tip (`INVERTIBLE_TIP`) says what an invertible rule is and why
   applying one loses no proof; tips never follow a touch, so the line under it says what the
   page does. The hint ladder's first rung reads deduxit's judgement of the hinted rule
   (`Hint.invertible`), not a list of names, and with the switch on says that the invertible

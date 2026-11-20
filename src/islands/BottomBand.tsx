@@ -911,7 +911,7 @@ function ImportPanel(props: { prover: Prover; ui: Ui }) {
 
 /** What an invertible rule is and why applying one never loses a proof: the switch's tip. */
 export const INVERTIBLE_TIP =
-  "An invertible rule never loses a proof: when its goal has a proof, so do its premises. ⅋, ⊥, & and ⊤ are always invertible; ! is when every other formula is under ?; 1, ⊗ and the axiom are when their formulas are the whole goal.";
+  "An invertible rule never loses a proof: when its goal has a proof, so do its premises. ⅋, ⊥, & and ⊤ are always invertible; ! is when every other formula is under ?; 1, ⊗ and the axiom are when their formulas are the whole goal. In LK every rule of a connective is; in LJ all but →L, ¬L and the two ∨R.";
 
 /**
  * A row of Settings' net drawing: a field of the net's look (`styles.svg.net_look`) and its
