@@ -8,7 +8,7 @@
 #                and type declarations from the wasm-bindgen CLI, LICENSE and
 #                THIRD-PARTY-NOTICES.txt, the Rust crates' notices. Built by
 #                deduxit's flake (and fetched from the Cachix cache
-#                `linlog-prover' where its CI pushed it), never here.
+#                `deduxit' where its CI pushed it), never here.
 #   deduxitFonts deduxit's math fonts and their licences, every file of
 #                deduxit's cli/fonts/, where the prover keeps the fonts its
 #                drawings are measured with: Euler Math (Euler-Math.otf,

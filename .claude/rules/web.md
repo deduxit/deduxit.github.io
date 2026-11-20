@@ -726,7 +726,7 @@ the page reads.
   theme; the worker's activation deletes every `linlog-site-*` cache. Then remove the three
   together. A key renamed again needs the same move; the privacy page lists the keys as they
   are. `storage.test.ts` and `prover.spec.ts` load old keys, `offline.spec.ts` an old cache.
-  What else keeps the old name: the Cachix cache `linlog-prover`, this repository
+  What else keeps the old name: this repository
   and its directory (`linlog-prover.github.io`), the prover's local checkout
   (`~/Projects/own/linlog`) and the Rocq library's old address `/rocq-linlog/`, forwarded:
   the path itself by its page, any page under it by the 404 page's script to the same name

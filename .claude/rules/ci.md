@@ -8,7 +8,8 @@ paths:
 - **`ci.yml` runs `nix flake check`** on every push to `main`, every pull request and by
   hand, with nothing installed but Nix, then builds `ci-cache` (`modules/ci.nix`), which
   roots everything the checks need.
-- **Two caches, for two kinds of path.** The public Cachix cache `linlog-prover` is the
+- **Two caches, for two kinds of path.** The public Cachix cache `deduxit` (until 2026-11-20
+  `linlog-prover`) is the
   organization's and must receive only its projects' own outputs, never third-party files:
   so the run reads it (deduxit's CI pushes `deduxit-web` there, and this CI never builds
   Rust) and pushes to it only the built site (`nix build .#default | cachix push`, a
