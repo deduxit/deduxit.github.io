@@ -42,6 +42,7 @@ import type { TableauReview } from "./written";
 import type { Evaluation, ModalOutcome } from "./modal";
 import type { OrdinaryOutcome, OrdinarySession, OrdinaryStep, OrdinaryView } from "./ordinary";
 import type { Comparison, Interpolation } from "./transforms";
+import type { NormalForm, Refutation, Resolution, Stepped as ResolvedStep } from "./clausal";
 import type { Action as WorkspaceAction, WorkspaceView } from "./workspace";
 import { type Client, createClient, type WorkerLike } from "./protocol";
 import type { Action, Replayed } from "./steps";
@@ -271,6 +272,31 @@ export function createApi(changed: (pending: number) => void) {
       /** A sequent decided in `logic` and its interpolant for `partition`, the halves checked. */
       interpolate: (sequent: string, logic: string, partition: string, settings: string) =>
         json<Interpolation>("ordinary_interpolate", sequent, logic, partition, settings),
+      /** A classical sequent rewritten into a normal form step by step, its promise checked. */
+      normalize: (sequent: string, options: string, settings: string) =>
+        json<NormalForm>("ordinary_normalize", sequent, options, settings),
+      /** The clauses of a classical sequent's negation decided by resolution or DPLL. */
+      resolve: (sequent: string, options: string, settings: string) =>
+        json<Resolution>("ordinary_resolve", sequent, options, settings),
+      /** A refutation by hand started: the clauses of a sequent's negation, no resolvent yet. */
+      clauses: (sequent: string, form: string, settings: string) =>
+        json<Refutation>("ordinary_clauses", sequent, form, settings),
+      /** A resolvent added to a refutation by hand: clauses by number from 0, the atom from 1. */
+      resolveStep: (
+        refutation: Refutation,
+        first: number,
+        second: number,
+        atom: number,
+        settings: string,
+      ) =>
+        json<ResolvedStep>(
+          "ordinary_resolve_step",
+          JSON.stringify(refutation),
+          first,
+          second,
+          atom,
+          settings,
+        ),
     },
     /** The custom calculus's calls (`rules_…`): derivations in a calculus given as a rule file. */
     custom: {
