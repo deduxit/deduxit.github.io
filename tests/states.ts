@@ -350,6 +350,52 @@ export async function transforms(page: Page, visit: Visit) {
 }
 
 /**
+ * A classical proof's normal form stepped through, and its clauses refuted: by search with the
+ * graph, by DPLL with its steps, and by hand to □.
+ */
+export async function clausal(page: Page, visit: Visit) {
+  await goto(page);
+  await calculus(page, ["Ordinary", "Classical"]);
+  await page.getByRole("textbox", { name: "Sequent" }).fill("a -> b, b -> c |- a -> c");
+  await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
+  let pop = await switches(page);
+  await pop.getByRole("button", { name: "Rewrite into a normal form" }).click();
+  const normal = page.getByRole("dialog", { name: "Rewrite into a normal form" });
+  await expect(normal.getByRole("status")).toContainText("Equivalent");
+  await visit("normal form");
+  await normal.getByRole("button", { name: "Next step" }).click();
+  await visit("normal form, a step");
+  await normal.getByRole("button", { name: "Tseitin" }).click();
+  await expect(normal.getByRole("status")).toContainText("Same verdict");
+  await visit("normal form, Tseitin's clauses");
+  await page.keyboard.press("Escape");
+  pop = await switches(page);
+  await pop.getByRole("button", { name: "Refute by resolution" }).click();
+  const resolution = page.getByRole("dialog", { name: "Refute by resolution" });
+  await expect(resolution.getByRole("status")).toContainText("Valid");
+  await resolution.locator(".cl-graph").getByRole("button").first().click();
+  await visit("resolution, a clause chosen");
+  await resolution.getByRole("button", { name: "DPLL", exact: true }).click();
+  await expect(resolution.getByText("DPLL's steps")).toBeVisible();
+  await visit("resolution, DPLL");
+  await resolution.getByRole("button", { name: "By hand" }).click();
+  const list = resolution.locator(".cl-list");
+  const clause = (n: number) => list.getByRole("button", { name: new RegExp(`^Clause ${n}\\.`) });
+  // The clauses are ¬a ∨ b, ¬b ∨ c, a and ¬c; each resolvent stays chosen after its step.
+  await clause(1).click();
+  await clause(3).click();
+  await resolution.getByRole("button", { name: "Resolve on a" }).click();
+  await visit("by hand, a step");
+  await clause(2).click();
+  await resolution.getByRole("button", { name: "Resolve on b" }).click();
+  await clause(4).click();
+  await resolution.getByRole("button", { name: "Resolve on c" }).click();
+  await expect(resolution.getByRole("status")).toContainText("You derived □");
+  await visit("by hand, □ derived");
+  await page.keyboard.press("Escape");
+}
+
+/**
  * The workspace of linked tabs: a translation proved on a new tab and linked, the panel (docked,
  * or the sheet its button opens on a narrow screen), a tab out of date after its sequent changed,
  * and the graph of three linked tabs.

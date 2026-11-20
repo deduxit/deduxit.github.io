@@ -33,6 +33,7 @@ import {
   restoring,
   touring,
   transforms,
+  clausal,
   linking,
   type Visit,
   witnessing,
@@ -171,6 +172,12 @@ test("a translation's and an interpolant's controls are targets of 24 by 24 pixe
   expect(await measured(page, 24, transforms)).toEqual([]);
 });
 
+test("the normal forms' and resolution's controls are targets of 24 by 24 pixels at least", async ({
+  page,
+}) => {
+  expect(await measured(page, 24, clausal)).toEqual([]);
+});
+
 test("the workspace's controls are targets of 24 by 24 pixels at least", async ({ page }) => {
   expect(await measured(page, 24, linking)).toEqual([]);
 });
@@ -230,6 +237,12 @@ test.describe("at a phone's width", () => {
     page,
   }) => {
     expect(await measured(page, 44, transforms)).toEqual([]);
+  });
+
+  test("the normal forms' and resolution's controls are 44 by 44 pixels at least", async ({
+    page,
+  }) => {
+    expect(await measured(page, 44, clausal)).toEqual([]);
   });
 
   test("the workspace's controls are 44 by 44 pixels at least", async ({ page }) => {
