@@ -5,7 +5,8 @@
 // visit. The build (src/integrations/offline.ts) writes it to /sw.js with
 // the three constants below filled in: FILES, every file of the site by its
 // path but LATER's, LATER, the math fonts a visitor may choose besides Euler
-// Math (fetched when chosen, not before), and VERSION, a hash of all their
+// Math (fetched when chosen, not before) and deduxit's PNG and PDF renderers
+// (fetched on the first such export), and VERSION, a hash of all their
 // contents, so that a new deployment is a new worker.
 //
 // Its scope is the whole origin, since the page it serves is at / and a
@@ -24,7 +25,7 @@
 // waits until no page of the old one is open: a page and the files it asks
 // for later (the module, its worker, the fonts) always come from one
 // deployment. A file of LATER is cached the first time the page asks for
-// it, so a font chosen once works offline too, from the worker's deployment
+// it, so a font chosen once, or the renderers used once, work offline too, from the worker's deployment
 // alone: the cache is the worker's own, deleted with it.
 
 const FILES = [];

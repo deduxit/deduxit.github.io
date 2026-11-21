@@ -9,7 +9,7 @@
 #   time (package.json's dependencies, at the version package-lock.json
 #   locks) but the font packages, each with its licence's text;
 # - licenses/THIRD-PARTY-NOTICES.txt is deduxit-web's, the Rust crates inside
-#   the module, byte for byte, and licenses/LICENSE.txt this repository's;
+#   its two modules, byte for byte, and licenses/LICENSE.txt this repository's;
 # - every font file of the site is under fonts/, beside its family's
 #   <Family>-OFL.txt, an SIL Open Font License text, or New Computer Modern
 #   Math's <Family>-LICENSE.txt, the GUST Font License's, deduxit's math

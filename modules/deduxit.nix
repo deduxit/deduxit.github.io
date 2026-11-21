@@ -4,8 +4,10 @@
 # What the site takes from deduxit, through the pinned flake input `deduxit':
 #
 #   deduxitWeb   the package `deduxit-web' of deduxit's flake: the library
-#                compiled to wasm32 (deduxit_web_bg.wasm), its JavaScript glue
-#                and type declarations from the wasm-bindgen CLI, LICENSE and
+#                compiled to wasm32 (deduxit_web_bg.wasm), the PNG and PDF
+#                renderers as a module of their own (deduxit_web_render_bg.wasm),
+#                their JavaScript glue and type declarations from the
+#                wasm-bindgen CLI, LICENSE and
 #                THIRD-PARTY-NOTICES.txt, the Rust crates' notices. Built by
 #                deduxit's flake (and fetched from the Cachix cache
 #                `deduxit' where its CI pushed it), never here.

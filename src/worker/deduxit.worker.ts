@@ -7,12 +7,18 @@
  * the module's calls, plus the step tree's two that a replay is made of
  * (src/lib/steps.ts), run here so that one request rebuilds a session and
  * one terminate() stops it. The module keeps nothing between calls.
+ *
+ * `render`, PNG and PDF from a drawing, is the call of a second module,
+ * deduxit's renderers, loaded on the first such request and kept for the
+ * next: most visitors never export a PNG or a PDF, and the renderers are
+ * two fifths of what the two modules weigh.
  */
 
 import init, * as deduxit from "deduxit-web/deduxit_web.js";
 import wasm from "deduxit-web/deduxit_web_bg.wasm?url";
+import renderWasm from "deduxit-web/deduxit_web_render_bg.wasm?url";
 import type { Played, SessionDoc } from "../lib/deduxit";
-import { answer, type Request } from "../lib/protocol";
+import { answer, type Request, type Response } from "../lib/protocol";
 import { type Action, play, replay } from "../lib/steps";
 
 const calls = {
@@ -44,7 +50,6 @@ const calls = {
   draw: deduxit.draw,
   draw_net: deduxit.draw_net,
   export_as: deduxit.export_as,
-  render: deduxit.render,
   certificate: deduxit.certificate,
   ordinary_start: deduxit.ordinary_start,
   ordinary_view: deduxit.ordinary_view,
@@ -130,7 +135,42 @@ const ready = init({ module_or_path: wasm }).catch(() =>
   init({ module_or_path: fetch(wasm, { cache: "no-store" }) }),
 );
 
+type Renderers = typeof import("deduxit-web/deduxit_web_render.js");
+let renderers: Promise<Renderers> | undefined;
+
+/**
+ * The renderers' module, loaded on the first call and kept. One that failed to load is tried
+ * again at the next call; a browser may keep a failed import of the glue for this worker's life.
+ */
+function loadRenderers(): Promise<Renderers> {
+  renderers ??= import("deduxit-web/deduxit_web_render.js").then(async (module) => {
+    await module
+      .default({ module_or_path: renderWasm })
+      .catch(() => module.default({ module_or_path: fetch(renderWasm, { cache: "no-store" }) }));
+    return module;
+  });
+  renderers.catch(() => {
+    renderers = undefined;
+  });
+  return renderers;
+}
+
 scope.onmessage = async (event) => {
+  if (event.data.call === "render") {
+    let module: Renderers;
+    try {
+      module = await loadRenderers();
+    } catch (thrown) {
+      scope.postMessage({
+        id: event.data.id,
+        ok: false,
+        error: `the PNG and PDF renderers did not load: ${String(thrown)}`,
+      });
+      return;
+    }
+    reply(answer({ render: module.render }, event.data));
+    return;
+  }
   try {
     await ready;
   } catch (thrown) {
@@ -141,10 +181,14 @@ scope.onmessage = async (event) => {
     });
     return;
   }
-  const response = answer(calls, event.data);
+  reply(answer(calls, event.data));
+};
+
+/** Posts an answer to the page, a render's bytes transferred, not copied. */
+function reply(response: Response) {
   const transfer =
     response.ok && response.value instanceof Uint8Array
       ? [response.value.buffer as ArrayBuffer]
       : [];
   scope.postMessage(response, transfer);
-};
+}

@@ -29,6 +29,14 @@ the page reads.
   never on its own: one that fails as it loads (a chunk gone after a redeploy) would
   otherwise be restarted in a loop; the island makes one call on mount, so the module
   loads after the first paint.
+- **`render` runs in a second module**, deduxit's renderers (`deduxit_web_render.js`, 1.6
+  MB at gzip), which the worker imports on the first `render` request and keeps for the next
+  (`loadRenderers`): the main module every visitor waits for is 2.4 MB without it, where
+  it was 3.9. A failure to load it answers that request with an error the export menu shows,
+  and the next export tries again: the module's file always, its glue only where the
+  browser does not keep a failed `import()` for the worker's life (some do), else from the
+  next worker on. `offline.spec.ts` holds that a session without a PNG or
+  PDF export fetches neither of its files and that the first fetches each once.
 - **Requests carry ids**; answers may come in any order. A call rejects with what it
   threw: deduxit's error JSON as a string, which `failure()` reads. The page branches on
   `code`, `kind` and `details.kind` and words the message itself (`src/lib/words.ts`);
@@ -780,7 +788,10 @@ the page reads.
 - **The service worker caches the four other math fonts when first fetched** (`LATER` in
   `sw.js`, filled by `offline.ts` by their file names, and the build fails unless there
   are four), not at install: a visitor who never chooses one never downloads it (0.4 to 1.3
-  MB each), and one chosen once works offline. Every other file is cached at install.
+  MB each), and one chosen once works offline. deduxit's renderers' module and its glue
+  (`deduxit_web_render`) are in `LATER` too, two files or the build fails: a visitor who
+  never exports a PNG or a PDF never downloads them (1.6 MB at gzip). Every other file is
+  cached at install.
 
 ## The written content (`src/content/`, CC BY 4.0)
 

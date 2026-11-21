@@ -1393,7 +1393,7 @@ const LICENCES: readonly (readonly [string, string, string])[] = [
   ["Figtree, the text's font", "SIL OFL 1.1", "/fonts/Figtree-OFL.txt"],
   ["Space Mono, the field's font", "SIL OFL 1.1", "/fonts/SpaceMono-OFL.txt"],
   ["The JavaScript's packages, Lucide's icons among them", "notices", "/licenses/bundle.txt"],
-  ["The Rust crates inside deduxit's module", "notices", "/licenses/THIRD-PARTY-NOTICES.txt"],
+  ["The Rust crates inside deduxit's modules", "notices", "/licenses/THIRD-PARTY-NOTICES.txt"],
 ];
 
 function AboutPane(props: { prover: Prover }) {

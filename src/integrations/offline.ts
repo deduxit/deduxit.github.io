@@ -91,11 +91,17 @@ export function offline(): AstroIntegration {
         }
         const urls = paths.map((path) => (path === "index.html" ? "/" : `/${path}`));
         // deduxit's math fonts but Euler Math: fetched when a visitor chooses one.
-        const later = urls.filter((url) =>
+        const fonts = urls.filter((url) =>
           /^\/fonts\/(STIXTwoMath-Regular|Garamond-Math|Asana-Math|NewCMMath-Book)\.[^/]*\.otf$/.test(
             url,
           ),
         );
+        // deduxit's PNG and PDF renderers, their module and its glue: fetched on a
+        // visitor's first PNG or PDF export.
+        const renderers = urls.filter((url) =>
+          /^\/_astro\/deduxit_web_render(_bg)?-[^/]*\.(wasm|js)$/.test(url),
+        );
+        const later = [...fonts, ...renderers];
         for (const root of ["/deduxit", "/rocq-deduxit"]) {
           if (urls.some((url) => url === root || url.startsWith(`${root}/`))) {
             throw new Error(`a file at ${root}, a project's own Pages site`);
@@ -119,9 +125,12 @@ export function offline(): AstroIntegration {
           .replace("const LATER = [];", `const LATER = ${JSON.stringify(later)};`)
           .replace('const VERSION = "";', `const VERSION = "${hash.digest("hex").slice(0, 16)}";`);
         await writeFile(new URL("sw.js", dir), worker);
-        if (later.length !== 4) throw new Error(`${later.length} math fonts to fetch later, not 4`);
+        if (fonts.length !== 4) throw new Error(`${fonts.length} math fonts to fetch later, not 4`);
+        if (renderers.length !== 2) {
+          throw new Error(`${renderers.length} files of the renderers to fetch later, not 2`);
+        }
         logger.info(
-          `the service worker caches ${urls.length - later.length} files, and ${later.length} fonts when chosen; the manifest has its icons`,
+          `the service worker caches ${urls.length - later.length} files, ${fonts.length} fonts when chosen and the renderers when first used; the manifest has its icons`,
         );
       },
     },

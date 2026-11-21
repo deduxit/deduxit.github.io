@@ -7,7 +7,7 @@
 
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
-import { goto } from "./prover";
+import { goto, start } from "./prover";
 
 /** Opens the page and waits until the service worker controls it, its cache written. */
 async function controlled(page: Page) {
@@ -32,6 +32,48 @@ test("after one visit the page proves a sequent with no network", async ({ page,
   await expect(
     page.getByRole("status").filter({ hasText: "Proved: every goal is closed" }),
   ).toBeVisible();
+});
+
+test("a session without a PNG or PDF export never fetches the renderers, and the first such export fetches them once", async ({
+  page,
+  context,
+}) => {
+  // The page's and its worker's requests, not the service worker's own fetches.
+  const fetched: string[] = [];
+  context.on("request", (request) => {
+    if (!request.serviceWorker() && /deduxit_web_render/.test(request.url())) {
+      fetched.push(new URL(request.url()).pathname);
+    }
+  });
+  const cachedRenderers = () =>
+    page.evaluate(async () => {
+      const urls: string[] = [];
+      for (const key of await caches.keys()) {
+        for (const request of await (await caches.open(key)).keys()) urls.push(request.url);
+      }
+      return urls.filter((url) => url.includes("deduxit_web_render"));
+    });
+  const exported = async (label: string) => {
+    await page.getByRole("button", { name: "Export" }).click();
+    const download = page.waitForEvent("download");
+    await page.getByRole("menuitem", { name: new RegExp(`^${label}`) }).click();
+    await download;
+    await page.keyboard.press("Escape");
+  };
+  await controlled(page);
+  await start(page, "A * B |- B * A", false);
+  await page.getByRole("button", { name: "Close goal" }).click();
+  await expect(
+    page.getByRole("status").filter({ hasText: "Proved: every goal is closed" }),
+  ).toBeVisible();
+  for (const label of ["SVG", "LaTeX", "Text", "Session"]) await exported(label);
+  expect(fetched).toEqual([]);
+  expect(await cachedRenderers()).toEqual([]);
+  for (const label of ["PNG", "PDF", "PNG"]) await exported(label);
+  expect(fetched.filter((path) => path.endsWith(".wasm"))).toHaveLength(1);
+  expect(fetched.filter((path) => path.endsWith(".js"))).toHaveLength(1);
+  // Fetched once, they are cached for offline use like a chosen font.
+  await expect.poll(async () => (await cachedRenderers()).length).toBe(2);
 });
 
 test("the service worker fetches what it caches past the HTTP cache", async ({ page }) => {
