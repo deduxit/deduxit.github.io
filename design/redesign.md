@@ -195,12 +195,13 @@ that is not needed. D is A's colours and type with those changes.
   - Three full bars were drawn first: along the bottom, along the top and
     down the right. The author chose the right, and those drawings are
     gone from the canvas.
-- **The new tab view** has no heading and no descriptions: five symbols,
+- **The new tab view** has no heading and no descriptions: four symbols,
   each over a line with the logic's name, then "Open a file" and "Restore
   3 proofs". Four symbol sets were drawn: signs, small formulas, figures,
   and a collage of four signs. The author chose the signs: ⅋ for linear
   logic (not ⊗), ∧ for ordinary logic, □ for modal logic, λ for
-  lambda-terms, ⊢ for your own rules.
+  lambda-terms. A fifth, ⊢ for "Your own rules", was drawn until the
+  author left that function out (see "What goes").
   - Ordinary logic comes first (the author), and is the default: it has
     the focus when the view opens, so Enter chooses it. Linear logic is
     second.
@@ -387,7 +388,7 @@ boards as we go (the author).
 
 Boards may respond (the author asked): a board marked playable has a
 Play button on the canvas, and in Play its controls work. D1 is the
-first: the guide's switch, the five logics, the toggles of ordinary and
+first: the guide's switch, the four logics, the toggles of ordinary and
 linear logic (the view's cell in the rail follows them: LK to NM, LL or
 ILL), the examples, typing and Enter. A playable board is a scripted
 drawing. deduxit does not run in it: nothing is parsed, proved or
@@ -399,7 +400,7 @@ refused, which is what the prototype in the real page is for.
 |---|---|---|---|
 | Type a sequent | The field in each tab | A logic chosen, the stage opens empty with the bottom box; Enter makes the sequent the first goal | Proposed (D1, playable) |
 | Start another sequent | "+" in the row of tabs | "+" after the sequents; the new tab view | Settled (D1) |
-| Choose the logic | The tab's Logic popover, three of five behind buttons | Five symbols on the new tab view, ordinary logic first | Settled (D1) |
+| Choose the logic | The tab's Logic popover, three of five behind buttons | Four symbols on the new tab view, ordinary logic first | Settled (D1) |
 | Try an example | A menu beside the field | With the guide on and a logic chosen, a sentence and that logic's examples over the bottom box; a press puts one in the box | Proposed (D1, playable) |
 | Open a file, or drop one on the page | Import, and a drop on the stage | "Open a file" on the new tab view; Import among the view's tools | Settled (D1); the drop not drawn |
 | Paste a session or a sequent as JSON | Import's panel | The bottom box takes it | Proposed |
@@ -450,7 +451,7 @@ refused, which is what the prototype in the real page is for.
 | Prove in natural deduction, backwards or forwards | Its own panel: goals, numbered lines, two step lists | "Nat" or "Fit"; a proof under way not drawn | Open |
 | Decide a modal sequent | A button in the popover, then a panel | A symbol on the new tab view; its fifteen systems as a chooser where the toggles are | Open |
 | Check or find a lambda-term | A button in the popover, then a panel | A symbol on the new tab view; its three calculi as a toggle | Open |
-| Prove in rules of one's own | A button in the popover, then a panel | A symbol on the new tab view; the rule file's editor not placed | Open |
+| Prove in rules of one's own | A button in the popover, then a panel | Left out, at least for now (the author) | Left out |
 
 ### 5. Look at a sequent in another way
 
@@ -525,6 +526,13 @@ refused, which is what the prototype in the real page is for.
   (all in "+ view" and the toggles).
 - The bottom band (its actions are the view's tools, the rest is in the
   menu).
+- **A calculus of one's own**, "at least for now" (the author): no symbol
+  on the new tab view, no rule file to edit, no starters. The current
+  page builds two other things on the same part of deduxit, and both
+  stay: natural deduction, and proving a valid modal sequent step by
+  step. A link or a stored proof of the current page that holds a
+  calculus of one's own would have nowhere to open; what the page says
+  then is not decided.
 
 ## What the drawings do not show yet
 
