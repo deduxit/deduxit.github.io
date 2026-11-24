@@ -207,8 +207,9 @@ that is not needed. D is A's colours and type with those changes.
   - The signs are Euler Math, thickened, and fixed (the author, "for
     now"): drawings made once from the font's outlines with a stroke of 26
     font units around them, so they stay the same when a visitor changes
-    the font of the formulas in Settings. A sheet shows the five signs in
-    each of the page's five math fonts, for comparison.
+    the font of the formulas in Settings. Two sheets, the symbol sets and
+    the signs in each of the page's five math fonts, served the choice
+    and are gone from the canvas.
 - **The bottom box holds the sequent's text box and an enter button**,
   nothing else (the author). With the guide on the button also says
   "Enter".
