@@ -485,21 +485,22 @@ to its button instead.
 
 ### 2. Prove by hand
 
-D2 plays the first eight rows and the search's part of group 3, on two
-sequents of implications: `p → q, q → r ⊢ p → r` and Peirce's law,
-`⊢ ((p → q) → p) → p`. Its prover is a script of the board's own with
-three rules (`→R`, `→L`, `ax`), not deduxit.
+D2 plays the first rows and the search's part of group 3, on three
+sequents: `p → q, q → r ⊢ p → r`; `p ⊢ q ∨ p`, whose disjunction has two
+rules in LJ; and Peirce's law, `⊢ ((p → q) → p) → p`. Its prover is a
+script of the board's own for `→`, `∧`, `∨` and `ax`, not deduxit.
 
 | A visitor wants to | Now | New design | State |
 |---|---|---|---|
 | Apply a rule to a formula | Press the formula, choose in the popover | The same; the popover shows the rule's sign alone, a press applies it | Settled (D2) |
+| Choose among several rules | The popover lists them; the keys 1 to 9 pick | The popover holds one button per rule, side by side, the ones that do not apply greyed among them. With the guide on each rule has its name and its drawing under its own button, so the rules can be compared | Proposed (D2); the keys not drawn |
 | See the rule explained | A hint on every rule label | With the guide on, the popover has the rule's name beside its sign and the rule drawn under it, premises over conclusion; no sentence (the author) | Settled (D2, D4); the label's hover not drawn |
 | Learn that a rule does not apply | The rule is offered; applying it leaves a note at the goal, with "Other rules" | The rule is greyed in the popover and cannot be pressed; its hover says why (the author). On a touch screen, which has no hover, a press on the greyed rule shows the reason as a note over the goal | Settled (D2); the touch part is my addition |
 | See which goals are open | The goal bar, "Open goal 1 of 2" | A dashed lapis line over each open goal; a ring on the view's cell while any is open, a check on the sequent once none is | Proposed (D2); the count not drawn |
 | Go to another open goal | The keys `[` and `]`, or a press | A press on any formula of it | Proposed (D2); the keys not drawn |
 | Undo, redo | The bottom band | The view's tools, greyed when there is nothing to undo or redo | Settled (D2) |
 | Go back to an earlier step | "Steps", a list | "Steps" opens a list beside the tools: 0 for the start, then each step by its rule and formula; a press goes back to it and Redo goes forward again | Proposed (D2) |
-| Be told what to do next | The hint ladder at the goal | "Hint" rings the formula to press; with the guide on a line over the bottom box says it in words | Proposed (D2); the ladder's later rungs not drawn |
+| Be told what to do next | The hint ladder at the goal | "Hint" rings the formula to press, and once it is pressed the rule to take; with the guide on a line over the bottom box says it in words. Where no rule leads on, a line says so and to undo | Proposed (D2); the ladder's later rungs not drawn |
 | Give a witness (`∃R`, `∀L`) | A second popover | A small box in the rule's popover | Settled (D8) |
 | Split the context (linear `⊗`) | A chooser under the goal | The same place | Open, not drawn |
 | Cut (linear) | "Cut" beside the goal | A tool of a linear view, with a small box at the goal as for a witness | Open |
