@@ -187,12 +187,19 @@ that is not needed. D is A's colours and type with those changes.
     height. Against: a switch or a chooser has little room in 52 pixels.
 - **The new tab view** has no heading and no descriptions: five symbols,
   each over a line with the logic's name, then "Open a file" and "Restore
-  3 proofs". Three symbol sets are drawn to choose from: signs, small
-  formulas, figures. D1 uses the figures.
+  3 proofs". Four symbol sets are drawn to choose from: signs, small
+  formulas, figures, and the author's idea, a collage of four panels with
+  four signs of the logic. D1 uses the collage.
+  - A panel is a rail cell (44 pixels, radius 12), so the symbol and the
+    rail are made of the same piece. The first panel holds the logic's
+    lead sign, white on ink; under the pointer it turns lapis.
+  - Linear logic: ⊗ ⅋ ⊸ !. Ordinary logic: ∧ ∨ → ∀. Modal logic: □ ◇ ⊩
+    and one world that sees another. Lambda-terms: λ : → ⊸. Your own
+    rules: ⊢ and three empty panels.
 - Radii: 8 to 10 for a control, 12 for a rail cell, 14 to 16 for the
   popover and the bottom box, 18 for a logic's button.
 
-Open with the author: which symbol set; whether "?" reads as the guide's
+Open with the author: the four signs of each collage; whether "?" reads as the guide's
 switch; where the view's bar goes; whether its buttons carry words when
 the guide is off.
 
