@@ -281,6 +281,11 @@ that is not needed. D is A's colours and type with those changes.
   "Prove" the tableau and resolution, then the truth table, the
   translations and what is read off a proof. The sequent calculus and
   natural deduction are not in it; the toggles open them.
+- **Every sequent and rule name is set in Euler Math** (the author), the
+  page's default math font, on all seven boards. The canvas loads the
+  font from a copy uploaded to it (Euler Math 0.75, SIL Open Font
+  License), as the page loads its own. The first drafts used Noto Sans
+  Math, which the canvas could link without an upload.
 - Radii: 8 to 10 for a control, 12 for a rail cell, 14 to 16 for the
   popover and the bottom box, 18 for a logic's button.
 
