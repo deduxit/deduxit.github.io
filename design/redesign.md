@@ -185,7 +185,7 @@ that is not needed. D is A's colours and type with those changes.
     than its buttons, with the dotted field around it (the author: on the
     right, and not a full bar). Each button is a drawing, with its name on
     hover.
-  - With the guide on, each button has its name beside it, and Lessons,
+  - With the guide on, each button has its name beside it, and Learn,
     Practice and the tour join the group.
   - Three full bars were drawn first: along the bottom, along the top and
     down the right. The author chose the right, and those drawings are
@@ -225,9 +225,11 @@ The author asked how learning fits the split into sequents and views.
 - A practice problem opens as a new sequent, as it does now. The check on
   its chip says "proved".
 - The lists of lessons and of practice problems open from the new tab
-  view (D1: "Lessons" and "Practice" under the logics, after "Open a
+  view (D1: "Learn" and "Practice" under the logics, after "Open a
   file" and "Restore 3 proofs", which the author ranks higher) and, with
-  the guide on, from the view's tools. The frame the
+  the guide on, from the view's tools. The button is "Learn", the
+  current page's word, not "Lessons": it also leads to the tour and the
+  reference, and it reads as a verb beside "Practice". The frame the
   current page puts around the window for Learn goes.
 - The reference (connectives, rules as schemas) opens from the rule
   popover and from the menu.
