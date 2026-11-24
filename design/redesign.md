@@ -222,29 +222,31 @@ that is not needed. D is A's colours and type with those changes.
     standard, NK and NJ are his too, LM and NM are formed like them and
     rarer; LL and ILL are standard. (CL, IL, ML and SC, ND were tried and
     dropped: papers do not use them in one fixed way.)
-  - Ordinary logic has two toggles side by side (the author, after a
-    draft that put the six calculi in one grid, and one with the single
-    letters L, N and K, J, M): the proof method, "Seq", "Nat" or "Fit",
-    then the logic, "Cla", "Int" or "Min" (the author's short names;
-    "Seq" and "Nat" are mine and the author agreed). "Fit" is natural
+  - Ordinary logic has two toggles side by side, in whole words (the
+    author): the proof method, "Sequent", "Natural" or "Fitch", then the
+    logic, "Classical", "Intuitionistic" or "Minimal". "Fitch" is natural
     deduction drawn as Fitch's lines, which was a switch among the view's
     tools before. A cell says its whole name on hover ("Sequent
     calculus", "Natural deduction, drawn as a tree", "Intuitionistic
-    logic");
-    The hover was drawn on "Int" on the lesson board, which is gone. The
-    view's cell in the rail shows the
-    calculus the two give, by its name: LK for Seq and Cla, NM for Nat and
-    Min (the author); "Fit" has the calculus of "Nat", so NJ or NK or
-    NM. deduxit has no Hilbert calculus; one would be a fourth choice of
-    method.
+    logic").
+  - The toggles' labels took five rounds: one grid of the six calculi;
+    single letters (L, N and K, J, M); CL, IL, ML with SC, ND; "Seq",
+    "Nat", "Fit" with "Cla", "Int", "Min"; and the whole words, which the
+    author settled on.
+  - The view's cell in the rail shows the calculus the two give, by the
+    literature's name: LK for Sequent and Classical, NM for Natural and
+    Minimal (the author); "Fitch" has the calculus of "Natural", so NK,
+    NJ or NM. deduxit has no Hilbert calculus; one would be a fourth
+    choice of method.
   - D7 draws a finished NJ proof of `p → q, q → r ⊢ p → r` as Gentzen's
-    tree: "Nat" and "Int" pressed, the rail's cell NJ beside the LK view,
-    which keeps its open goal (the rule below).
-  - Linear logic has one toggle between LL (classical) and ILL
-    (intuitionistic), and two rules that are each on or off: Mix and
-    Affine (weakening). Mix is greyed in ILL, as on the current page.
-    Each says its whole name on hover. D6 draws them over a finished
-    proof of `A ⊗ B ⊢ B ⊗ A`.
+    tree: "Natural" and "Intuitionistic" pressed, the rail's cell NJ
+    beside the LK view, which keeps its open goal (the rule below).
+  - Linear logic has one toggle, "Classical" or "Intuitionistic" (my
+    reading of the author's change; it read LL, ILL before), and two
+    rules that are each on or off: Mix and Affine (weakening). The rail's
+    cell reads LL or ILL. Mix is greyed in intuitionistic linear logic, as
+    on the current page. Each says its whole name on hover. D6 draws them
+    over a finished proof of `A ⊗ B ⊢ B ⊗ A`.
   - With the guide on, the cells show whole words ("Sequent calculus",
     "Natural deduction", "Fitch's lines"; "Classical", "Intuitionistic",
     "Minimal") (D4).
@@ -252,7 +254,7 @@ that is not needed. D is A's colours and type with those changes.
     opens a view beside it otherwise** (the author). The current page's
     warning "Changing the logic restarts this proof" goes. What that
     means for each toggle, as deduxit 0.8.0 stands:
-    - "Nat" and "Fit" are one proof drawn two ways (deduxit checks one
+    - "Natural" and "Fitch" are one proof drawn two ways (deduxit checks one
       derivation and lays it out as a tree or as Fitch's lines), so the
       view stays. A line that Fitch's proof cites twice stands twice in
       the tree.
@@ -261,7 +263,7 @@ that is not needed. D is A's colours and type with those changes.
       If every step is accepted the view stays, which holds whenever the
       logic grows (minimal to intuitionistic to classical); if one is
       refused, a view opens beside it. To be tried in the prototype.
-    - "Seq" to "Nat" or back opens a view beside the proof, or goes to it
+    - "Sequent" to "Natural" or back opens a view beside the proof, or goes to it
       if it is there. deduxit has no conversion between the two for a
       proof under way. It reads a finished LJ or LM proof as a
       lambda-term and draws that term's typing by natural deduction's
@@ -370,7 +372,7 @@ valid by a finite structure.
   linear proof. Its cell in the rail reads `⊭`, "does not satisfy", in
   Euler Math. The first draft read "M", which the author accepted and
   offered `⊭` beside; `⊭` is taken because M already stands for minimal
-  logic in LM, NM and "Min". The sequent's chip and the LK cell carry a
+  logic in LM and NM. The sequent's chip and the LK cell carry a
   cross for "not valid" (the author agreed).
 - **The view draws the structure and what it does to the sequent**: a
   table with a column per element and a row per predicate, a filled dot
@@ -468,7 +470,7 @@ Not decided in this group:
 | Change the logic or the proof method | The Logic popover, with a restart warning | The toggles at the stage's top left; the proof stays or a view opens | Settled (D2, D6, D7) |
 | Draw weakenings and contractions | A switch in the popover | A switch among the view's tools | Settled (D2) |
 | Draw a classical linear proof two-sided | A switch in the popover | A switch among the view's tools | Settled (D6) |
-| Prove in natural deduction, backwards or forwards | Its own panel: goals, numbered lines, two step lists | "Nat" or "Fit"; a proof under way not drawn | Open |
+| Prove in natural deduction, backwards or forwards | Its own panel: goals, numbered lines, two step lists | "Natural" or "Fitch"; a proof under way not drawn | Open |
 | Decide a modal sequent | A button in the popover, then a panel | A symbol on the new tab view; its fifteen systems as a chooser where the toggles are | Open |
 | Check or find a lambda-term | A button in the popover, then a panel | A symbol on the new tab view; its three calculi as a toggle | Open |
 | Prove in rules of one's own | A button in the popover, then a panel | Left out, at least for now (the author) | Left out |
