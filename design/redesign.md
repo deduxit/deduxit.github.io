@@ -76,6 +76,10 @@ Each lays the groups and views out differently and has a look of its own.
 The first is drawn as a whole flow, the others as one screen in the same
 state, so that they compare.
 
+The author chose D below, which grew out of A. The drawings of A, B and C
+are no longer on the canvas; its version history keeps them (up to version
+`1795533673-ce9c`).
+
 ### A. Two shelves
 
 Sequents on a top row, the views of the chosen sequent on a row below.
@@ -183,8 +187,9 @@ that is not needed. D is A's colours and type with those changes.
     hover.
   - With the guide on, each button has its name beside it, and Lessons,
     Practice and the tour join the group.
-  - Three full bars were drawn first: along the bottom, along the top (D5)
-    and down the right (D6). The author chose the right.
+  - Three full bars were drawn first: along the bottom, along the top and
+    down the right. The author chose the right, and those drawings are
+    gone from the canvas.
 - **The new tab view** has no heading and no descriptions: five symbols,
   each over a line with the logic's name, then "Open a file" and "Restore
   3 proofs". Four symbol sets were drawn: signs, small formulas, figures,
