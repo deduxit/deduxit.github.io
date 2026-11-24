@@ -494,7 +494,7 @@ three rules (`→R`, `→L`, `ax`), not deduxit.
 |---|---|---|---|
 | Apply a rule to a formula | Press the formula, choose in the popover | The same; the popover shows the rule's sign alone, a press applies it | Settled (D2) |
 | See the rule explained | A hint on every rule label | With the guide on, the popover has the rule's name beside its sign and the rule drawn under it, premises over conclusion; no sentence (the author) | Settled (D2, D4); the label's hover not drawn |
-| Read why a step was refused | A note at the goal, with "Other rules" | A red-framed note over the goal: the keyword alone ("ax refused"), and the sentence with the guide on. A press elsewhere takes it away | Proposed (D2) |
+| Learn that a rule does not apply | The rule is offered; applying it leaves a note at the goal, with "Other rules" | The rule is greyed in the popover and cannot be pressed; its hover says why (the author). On a touch screen, which has no hover, a press on the greyed rule shows the reason as a note over the goal | Settled (D2); the touch part is my addition |
 | See which goals are open | The goal bar, "Open goal 1 of 2" | A dashed lapis line over each open goal; a ring on the view's cell while any is open, a check on the sequent once none is | Proposed (D2); the count not drawn |
 | Go to another open goal | The keys `[` and `]`, or a press | A press on any formula of it | Proposed (D2); the keys not drawn |
 | Undo, redo | The bottom band | The view's tools, greyed when there is nothing to undo or redo | Settled (D2) |
@@ -507,6 +507,20 @@ three rules (`→R`, `→L`, `ax`), not deduxit.
 | Close a goal by a proof made apart | "Fill from" a finished tab | Offered at the goal when a finished sequent fits | Open |
 | Have the invertible rules applied | A switch in Settings | The same switch, in the menu | Proposed |
 | Use the keyboard for all of it | The keys in the Keys list | The same keys | Proposed, not drawn |
+
+A rule that does not apply is never offered as if it did (the author):
+it stands greyed in the popover with its reason on hover. A refusal after
+the fact is left for what the page cannot know before trying: a witness
+that breaks the eigenvariable condition, a typed term or cut formula that
+does not parse, a split of the context that closes nothing. Those are
+said in the popover where the typing happened, as D8 notes for a witness.
+
+For this the page must know, for a formula, every rule of the calculus
+that could act on it and for each whether it applies and why not. The
+current page shows what deduxit offers and learns of a refusal by
+applying. Whether deduxit 0.8.0 gives the reasons without a step being
+tried is to be asked; if it does not, that is a wish for the library,
+which goes to the author.
 
 D2 also plays the rule for a change of logic. On the first sequent a
 proof in LK replays in LJ step for step, so "Intuitionistic" renames the
