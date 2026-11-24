@@ -337,7 +337,9 @@ deduxit 0.8.0 reads first-order sequents of ordinary logic, proves them
 in LK, LJ and LM with the quantifier rules, and refutes one that is not
 valid by a finite structure.
 
-- **A witness is typed in the rule's popover** (D8, on
+- **Where a witness is typed is open**; two boards draw the two places
+  for the author to choose (D8 and, under it, D8b).
+- **Option 1, in the rule's popover** (D8, on
   `∀x. (p(x) → q(x)), p(a) ⊢ ∃y. q(y)`). `∃R` and `∀L` need a term.
   With the formula chosen, the popover shows the rule and beside it a
   small box of the bottom box's kind: the bound variable and an equals
@@ -347,6 +349,13 @@ valid by a finite structure.
   with a sentence, a hint and three buttons (Apply, Leave open, Cancel);
   here Escape or a press outside cancels, and the guide brings the
   sentence back.
+- **Option 2, in the bottom box** (D8b): the popover shows the rule and
+  `$1` alone. The bottom box asks for the term in the sequent's place:
+  its border turns lapis, the rule and `y =` stand before the text as its
+  label, and its enter button applies the rule. The sequent stays in its
+  chip at the top. The eye goes from the formula to the bottom of the
+  stage and back, which option 1 avoids; option 2 keeps one place for all
+  typing.
 - **A refusal of the term is said in the popover**, under the box, as the
   current page says it (the eigenvariable condition above all). Not drawn.
 - **`∀R` and `∃L` need nothing typed**: deduxit names a fresh
@@ -374,6 +383,10 @@ valid by a finite structure.
 
 - The formulas are text in Euler Math. The page draws a derivation with
   deduxit, in the math font chosen in Settings.
+- The word mark in every board's header is the logo's own drawing
+  (`src/logo/wordmark-band.svg`, 28 pixels high, its letters in the
+  boards' ink). The first drafts set the word in Gentium with two drawn
+  lines, which was not the mark (the author).
 - The translations written out (the linear one above all) are examples,
   not deduxit's output.
 - The keys in B (`1`, `h`, `c`, `u`, `/`) are a proposal.
