@@ -331,12 +331,46 @@ the second step of its worked proof of `⊢ a ∨ ¬a`:
   title, its four parts (Watch, Finish it, Practice, Check), the
   explanation, the step count and a link to all lessons.
 
+## First-order logic (proposal, drawn in D8 and D9)
+
+deduxit 0.8.0 reads first-order sequents of ordinary logic, proves them
+in LK, LJ and LM with the quantifier rules, and refutes one that is not
+valid by a finite structure.
+
+- **A witness is typed in the rule's popover** (D8, on
+  `∀x. (p(x) → q(x)), p(a) ⊢ ∃y. q(y)`). `∃R` and `∀L` need a term.
+  With the formula chosen, the popover shows the rule and beside it a
+  small box of the bottom box's kind: the bound variable and an equals
+  sign as its label (`y =`), the term, and an enter button. A second
+  button, `$1`, leaves the witness open, for an axiom or the search to
+  fill; it says so on hover. The current page asks in a second popover
+  with a sentence, a hint and three buttons (Apply, Leave open, Cancel);
+  here Escape or a press outside cancels, and the guide brings the
+  sentence back.
+- **A refusal of the term is said in the popover**, under the box, as the
+  current page says it (the eigenvariable condition above all). Not drawn.
+- **`∀R` and `∃L` need nothing typed**: deduxit names a fresh
+  eigenvariable. Not drawn.
+- **A countermodel is a view** (D9, on `∃x. p(x), q ⊢ ∀x. p(x)`): it
+  shares a capsule with the proof view it refutes, as a net does with its
+  linear proof. Its cell in the rail reads "M" (to be settled). The
+  sequent's chip and the LK cell carry a cross for "not valid".
+- **The view draws the structure and what it does to the sequent**: a
+  table with a column per element and a row per predicate, a filled dot
+  where the predicate holds and a ring where it does not; under it the
+  sequent, each formula with a check or a cross for its value in the
+  structure. Every formula left of ⊢ true and every one right of it false
+  is what "refutes" means, shown without a sentence. Constants and
+  function symbols would be further rows (`a = 0`, `f: 0 ↦ 1`).
+- **Its tools** are Export and Import alone; the calculus toggles do not
+  show, since a structure refutes the sequent in every logic. The current
+  page's "Change this model and check it" is not drawn.
+
 ## What the drawings do not show yet
 
-- The formulas are set in a stand-in font. The page draws them with
+- The formulas are text in Euler Math. The page draws a derivation with
   deduxit, in the math font chosen in Settings.
 - The translations written out (the linear one above all) are examples,
   not deduxit's output.
 - The keys in B (`1`, `h`, `c`, `u`, `/`) are a proposal.
-- Dark for A and C, light for B, a phone's width, and the first-order
-  features (witnesses, countermodels).
+- Dark for D and a phone's width.
