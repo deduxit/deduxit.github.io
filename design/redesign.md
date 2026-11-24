@@ -402,16 +402,30 @@ refused, which is what the prototype in the real page is for.
 
 ### 1. Start
 
+All of it plays on D1.
+
 | A visitor wants to | Now | New design | State |
 |---|---|---|---|
-| Type a sequent | The field in each tab | A logic chosen, the stage opens empty with the bottom box; Enter makes the sequent the first goal | Proposed (D1, playable) |
 | Start another sequent | "+" in the row of tabs | "+" after the sequents; the new tab view | Settled (D1) |
 | Choose the logic | The tab's Logic popover, three of five behind buttons | Four symbols on the new tab view, ordinary logic first | Settled (D1) |
-| Try an example | A menu beside the field | With the guide on and a logic chosen, a sentence and that logic's examples over the bottom box; a press puts one in the box | Proposed (D1, playable) |
-| Open a file, or drop one on the page | Import, and a drop on the stage | "Open a file" on the new tab view; Import among the view's tools | Settled (D1); the drop not drawn |
-| Paste a session or a sequent as JSON | Import's panel | The bottom box takes it | Proposed |
-| Get the last visit's proofs back | A bar over the stage | "Restore 3 proofs" on the new tab view | Settled (D1) |
-| Open a link someone sent | The page reads it and opens a tab | It opens as a sequent with its views | Proposed, not drawn |
+| Type a sequent | The field in each tab | A logic chosen, the stage opens empty with the bottom box; Enter makes the sequent the first goal and a chip at the top | Proposed (D1) |
+| Type with a plain keyboard | `->`, `\|-`, `forall` and the like are read; the tab shows signs | The same: on Enter the text in the box and in the chip is written in signs | Proposed (D1) |
+| Learn that the text is not a sequent | The field marks the place and says the problem under it | The bottom box's border turns red and a line over it says the problem, a keyword first; typing takes it away. Nothing else changes | Proposed (D1); the place in the text not marked |
+| Try an example | A menu beside the field | With the guide on and a logic chosen, a sentence and that logic's examples over the bottom box; a press puts one in the box | Proposed (D1) |
+| Open a file | Import, in the bottom band | "Open a file" on the new tab view; the file's sequent opens with its proof, and a line over the bottom box names the file. Import among a view's tools does the same | Settled as a button (D1); what follows proposed |
+| Drop a file on the page | A drop on the stage | Anywhere under the top row: a dashed frame says "Drop the file to open it" | Proposed (D1) |
+| Paste a session or a sequent as JSON | Import's panel | The bottom box takes it: Enter opens it, or says it is not deduxit's JSON | Proposed (D1) |
+| Get the last visit's proofs back | A bar over the stage | "Restore 3 proofs" on the new tab view: they join the sequents at the top and the button goes | Settled as a button (D1); what follows proposed |
+| Open a link someone sent | The page reads it and opens a tab | It opens as a sequent with its views, the linked view shown | Proposed, not drawn |
+
+Not decided in this group:
+
+- Which logic a file, a pasted session or a link opens in when the new
+  tab view has none chosen yet. The board assumes the file says it.
+- Whether a restored proof opens at once or waits as a chip until
+  pressed. The board adds chips and opens none.
+- Whether the new tab view needs "Restore" at all once the page restores
+  by itself, as a browser does its tabs.
 
 ### 2. Prove by hand
 
