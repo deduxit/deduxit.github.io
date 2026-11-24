@@ -225,6 +225,10 @@ that is not needed. D is A's colours and type with those changes.
     calculus the two give, by its name: LK for Seq and Cla, NM for Nat and
     Min (the author). deduxit has no Hilbert calculus; one would be a
     third choice of method.
+  - D7 draws a finished NJ proof of `p → q, q → r ⊢ p → r` as Gentzen's
+    tree: "Nat" and "Int" pressed, the rail's cell NJ beside the LK view,
+    which keeps its open goal (the proposal below), and the switch
+    "Fitch" among the view's tools.
   - Linear logic has one toggle between LL (classical) and ILL
     (intuitionistic), and two rules that are each on or off: Mix and
     Affine (weakening). Mix is greyed in ILL, as on the current page.
