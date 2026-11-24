@@ -519,8 +519,9 @@ For this the page must know, for a formula, every rule of the calculus
 that could act on it and for each whether it applies and why not. The
 current page shows what deduxit offers and learns of a refusal by
 applying. Whether deduxit 0.8.0 gives the reasons without a step being
-tried is to be asked; if it does not, that is a wish for the library,
-which goes to the author.
+tried is asked of the session that plans deduxit (the author had me ask;
+no answer yet). If it does not, that is a wish for the library, which
+goes to the author.
 
 D2 also plays the rule for a change of logic. On the first sequent a
 proof in LK replays in LJ step for step, so "Intuitionistic" renames the
