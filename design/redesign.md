@@ -431,29 +431,41 @@ Not decided in this group:
 
 ### 2. Prove by hand
 
+D2 plays the first eight rows and the search's part of group 3, on two
+sequents of implications: `p → q, q → r ⊢ p → r` and Peirce's law,
+`⊢ ((p → q) → p) → p`. Its prover is a script of the board's own with
+three rules (`→R`, `→L`, `ax`), not deduxit.
+
 | A visitor wants to | Now | New design | State |
 |---|---|---|---|
-| Apply a rule to a formula | Press the formula, choose in the popover | The same; the popover shows the rule's sign alone | Settled (D2) |
-| See the rule explained | A hint on every rule label | With the guide on, the popover has the name, the schema and a sentence | Settled (D4); the label's hover not drawn |
+| Apply a rule to a formula | Press the formula, choose in the popover | The same; the popover shows the rule's sign alone, a press applies it | Settled (D2) |
+| See the rule explained | A hint on every rule label | With the guide on, the popover has the rule's name and one sentence under its sign | Settled (D2, D4); the schema and the label's hover not drawn |
+| Read why a step was refused | A note at the goal, with "Other rules" | A red-framed note over the goal: the keyword alone ("ax refused"), and the sentence with the guide on. A press elsewhere takes it away | Proposed (D2) |
+| See which goals are open | The goal bar, "Open goal 1 of 2" | A dashed lapis line over each open goal; a ring on the view's cell while any is open, a check on the sequent once none is | Proposed (D2); the count not drawn |
+| Go to another open goal | The keys `[` and `]`, or a press | A press on any formula of it | Proposed (D2); the keys not drawn |
+| Undo, redo | The bottom band | The view's tools, greyed when there is nothing to undo or redo | Settled (D2) |
+| Go back to an earlier step | "Steps", a list | "Steps" opens a list beside the tools: 0 for the start, then each step by its rule and formula; a press goes back to it and Redo goes forward again | Proposed (D2) |
+| Be told what to do next | The hint ladder at the goal | "Hint" rings the formula to press; with the guide on a line over the bottom box says it in words | Proposed (D2); the ladder's later rungs not drawn |
 | Give a witness (`∃R`, `∀L`) | A second popover | A small box in the rule's popover | Settled (D8) |
 | Split the context (linear `⊗`) | A chooser under the goal | The same place | Open, not drawn |
 | Cut (linear) | "Cut" beside the goal | A tool of a linear view, with a small box at the goal as for a witness | Open |
-| Read why a step was refused | A note at the goal, with "Other rules" | A note at the goal; one keyword without the guide, the sentence with it | Open, not drawn |
-| See which goals are open | The goal bar, "Open goal 1 of 2" | The active goal's dashed line; a ring on the view's cell | Proposed (D2); the count not drawn |
-| Go to the next open goal | The keys `[` and `]`, or a press | The same | Proposed |
-| Undo, redo | The bottom band | The view's tools | Settled (D2) |
-| Go back to an earlier step | "Steps", a list | "Steps" among the view's tools | Proposed; the list not drawn |
 | Prove a goal apart | "Open this goal in a new tab" | A new sequent beside this one, linked to the goal | Open |
 | Close a goal by a proof made apart | "Fill from" a finished tab | Offered at the goal when a finished sequent fits | Open |
 | Have the invertible rules applied | A switch in Settings | The same switch, in the menu | Proposed |
-| Use the keyboard for all of it | The keys in the Keys list | The same keys | Proposed |
+| Use the keyboard for all of it | The keys in the Keys list | The same keys | Proposed, not drawn |
+
+D2 also plays the rule for a change of logic. On the first sequent a
+proof in LK replays in LJ step for step, so "Intuitionistic" renames the
+view and keeps the proof. On Peirce's law the LK proof's fourth step does
+not hold in LJ, so LJ opens as a view of its own beside LK, a line over
+the bottom box says why, and LK keeps its proof.
 
 ### 3. Let the search help
 
 | A visitor wants to | Now | New design | State |
 |---|---|---|---|
 | Close the goal worked on | "Close" beside the goal | Not placed: the view's tools hold "Close all" alone | Open |
-| Close every goal | "Close all" in the bottom band | The view's tools | Settled (D2) |
+| Close every goal | "Close all" in the bottom band | The view's tools; the search's steps carry a grey rule name in the drawing and "search" in the list of steps. What it cannot close stays open, and a line over the bottom box says so | Settled as a tool (D2); the rest proposed |
 | Stop a search | "Stop the search" in the tool's place | The same | Proposed, not drawn |
 | Get a hint, a little at a time | "Hint", three rungs at the goal | "Hint" among the tools; with the guide on, the next step stands above the bottom box | Proposed (D4); the rungs not drawn |
 | Read a verdict and its reason | A note at the goal and the tab's status | A check or a cross on the sequent and on the view's cell; the reason at the goal | Proposed (D6, D9); the reason not drawn |
