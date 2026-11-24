@@ -158,6 +158,12 @@ that is not needed. D is A's colours and type with those changes.
 
 - **Sequents across the top**, each a rounded chip. A check stands for
   "proved" or "valid".
+  - When the row is too narrow, it behaves as a browser's tabs do: each
+    chip shrinks and cuts its sequent with an ellipsis, down to 84
+    pixels; past that the row scrolls sideways. A chip's hover says its
+    whole sequent. "+", the guide's switch and the menu keep their size
+    and place. The first boards let the chips run under those buttons
+    (the author found it).
 - **Views down a rail 60 pixels wide**, each a 44-pixel cell that shows
   its calculus by the name logicians use (LK, NM, LL), or a drawing (the
   net). The net's drawing is a knotted diamond: one cell of netting, a
