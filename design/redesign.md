@@ -382,16 +382,25 @@ valid by a finite structure.
 What a visitor can do on the current page, by what they want, and its
 place in the new design. "Settled" is drawn and agreed with the author.
 "Proposed" is my proposal, drawn or not. "Open" has no place yet. The
-author and I go through the groups one by one.
+author and I go through the groups one by one, and each group gets its
+boards as we go (the author).
+
+Boards may respond (the author asked): a board marked playable has a
+Play button on the canvas, and in Play its controls work. D1 is the
+first: the guide's switch, the five logics, the toggles of ordinary and
+linear logic (the view's cell in the rail follows them: LK to NM, LL or
+ILL), the examples, typing and Enter. A playable board is a scripted
+drawing. deduxit does not run in it: nothing is parsed, proved or
+refused, which is what the prototype in the real page is for.
 
 ### 1. Start
 
 | A visitor wants to | Now | New design | State |
 |---|---|---|---|
-| Type a sequent | The field in each tab | The bottom box and its enter button | Settled (D1, D2) |
+| Type a sequent | The field in each tab | A logic chosen, the stage opens empty with the bottom box; Enter makes the sequent the first goal | Proposed (D1, playable) |
 | Start another sequent | "+" in the row of tabs | "+" after the sequents; the new tab view | Settled (D1) |
 | Choose the logic | The tab's Logic popover, three of five behind buttons | Five symbols on the new tab view, ordinary logic first | Settled (D1) |
-| Try an example | A menu beside the field | Examples under the symbols when the guide is on | Open |
+| Try an example | A menu beside the field | With the guide on and a logic chosen, a sentence and that logic's examples over the bottom box; a press puts one in the box | Proposed (D1, playable) |
 | Open a file, or drop one on the page | Import, and a drop on the stage | "Open a file" on the new tab view; Import among the view's tools | Settled (D1); the drop not drawn |
 | Paste a session or a sequent as JSON | Import's panel | The bottom box takes it | Proposed |
 | Get the last visit's proofs back | A bar over the stage | "Restore 3 proofs" on the new tab view | Settled (D1) |
