@@ -211,19 +211,23 @@ that is not needed. D is A's colours and type with those changes.
   ordinary and for linear logic). They are not in the bottom box (the
   author): they float at the stage's top left, across from the view's
   tools, each a small white group like them. They offer what deduxit has.
-  - Ordinary logic has two. The first says how to prove: SC, the sequent
-    calculus, or ND, natural deduction. The second says in which logic:
-    CL classical, IL intuitionistic, ML minimal (the author's names: the
-    first draft's L, N and K, J, M were harder to understand). deduxit
-    has no Hilbert calculus; one would be a third choice of the first
-    toggle.
-  - Linear logic has one toggle between CLL (classical) and ILL
+  - Their names are the literature's (the author, after a round with CL,
+    IL, ML and SC, ND, which papers do not use in one fixed way). LK and
+    LJ are Gentzen's and standard, NK and NJ are his too, LM and NM are
+    formed like them and rarer; LL and ILL are standard.
+  - Ordinary logic has one grid of its six calculi: a row for the sequent
+    calculus (LK, LJ, LM) and a row for natural deduction (NK, NJ, NM), a
+    column each for classical, intuitionistic and minimal logic. One
+    press chooses both. deduxit has no Hilbert calculus; one would be a
+    third row.
+  - Linear logic has one toggle between LL (classical) and ILL
     (intuitionistic), and two rules that are each on or off: Mix and
     Affine (weakening). Mix is greyed in ILL, as on the current page. D6
     draws them over a finished proof of `A ⊗ B ⊢ B ⊗ A`.
-  - With the guide on, the toggles are spelt out ("Sequent calculus",
-    "Natural deduction", "Classical", "Intuitionistic", "Minimal"), in
-    the same place (D4).
+  - With the guide on, the grid's rows and columns carry their names
+    ("Sequent calculus", "Natural deduction"; "Classical",
+    "Intuitionistic", "Minimal"), so it says what LK and the others mean
+    (D4).
   - Proposal: a toggle changes the view shown while that view has no
     steps. Once it has steps, the toggle opens the other calculus as a
     view beside it, and the proof stays. The current page's warning
@@ -239,8 +243,7 @@ Open with the author:
 
 - whether "?" reads as the guide's switch;
 - whether the toggles sit well at the stage's top left;
-- whether a rail cell keeps the logicians' name (LK, NM, LL) or follows
-  the toggles (SC over CL);
+- whether one grid serves in place of the two toggles first asked for;
 - whether "+ view" still lists LK and NK under "Prove", now that the
   toggles reach them.
 
