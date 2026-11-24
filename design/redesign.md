@@ -377,6 +377,146 @@ valid by a finite structure.
   agreed). The current
   page's "Change this model and check it" is not drawn.
 
+## Every function, and where it goes
+
+What a visitor can do on the current page, by what they want, and its
+place in the new design. "Settled" is drawn and agreed with the author.
+"Proposed" is my proposal, drawn or not. "Open" has no place yet. The
+author and I go through the groups one by one.
+
+### 1. Start
+
+| A visitor wants to | Now | New design | State |
+|---|---|---|---|
+| Type a sequent | The field in each tab | The bottom box and its enter button | Settled (D1, D2) |
+| Start another sequent | "+" in the row of tabs | "+" after the sequents; the new tab view | Settled (D1) |
+| Choose the logic | The tab's Logic popover, three of five behind buttons | Five symbols on the new tab view, ordinary logic first | Settled (D1) |
+| Try an example | A menu beside the field | Examples under the symbols when the guide is on | Open |
+| Open a file, or drop one on the page | Import, and a drop on the stage | "Open a file" on the new tab view; Import among the view's tools | Settled (D1); the drop not drawn |
+| Paste a session or a sequent as JSON | Import's panel | The bottom box takes it | Proposed |
+| Get the last visit's proofs back | A bar over the stage | "Restore 3 proofs" on the new tab view | Settled (D1) |
+| Open a link someone sent | The page reads it and opens a tab | It opens as a sequent with its views | Proposed, not drawn |
+
+### 2. Prove by hand
+
+| A visitor wants to | Now | New design | State |
+|---|---|---|---|
+| Apply a rule to a formula | Press the formula, choose in the popover | The same; the popover shows the rule's sign alone | Settled (D2) |
+| See the rule explained | A hint on every rule label | With the guide on, the popover has the name, the schema and a sentence | Settled (D4); the label's hover not drawn |
+| Give a witness (`∃R`, `∀L`) | A second popover | A small box in the rule's popover | Settled (D8) |
+| Split the context (linear `⊗`) | A chooser under the goal | The same place | Open, not drawn |
+| Cut (linear) | "Cut" beside the goal | A tool of a linear view, with a small box at the goal as for a witness | Open |
+| Read why a step was refused | A note at the goal, with "Other rules" | A note at the goal; one keyword without the guide, the sentence with it | Open, not drawn |
+| See which goals are open | The goal bar, "Open goal 1 of 2" | The active goal's dashed line; a ring on the view's cell | Proposed (D2); the count not drawn |
+| Go to the next open goal | The keys `[` and `]`, or a press | The same | Proposed |
+| Undo, redo | The bottom band | The view's tools | Settled (D2) |
+| Go back to an earlier step | "Steps", a list | "Steps" among the view's tools | Proposed; the list not drawn |
+| Prove a goal apart | "Open this goal in a new tab" | A new sequent beside this one, linked to the goal | Open |
+| Close a goal by a proof made apart | "Fill from" a finished tab | Offered at the goal when a finished sequent fits | Open |
+| Have the invertible rules applied | A switch in Settings | The same switch, in the menu | Proposed |
+| Use the keyboard for all of it | The keys in the Keys list | The same keys | Proposed |
+
+### 3. Let the search help
+
+| A visitor wants to | Now | New design | State |
+|---|---|---|---|
+| Close the goal worked on | "Close" beside the goal | Not placed: the view's tools hold "Close all" alone | Open |
+| Close every goal | "Close all" in the bottom band | The view's tools | Settled (D2) |
+| Stop a search | "Stop the search" in the tool's place | The same | Proposed, not drawn |
+| Get a hint, a little at a time | "Hint", three rungs at the goal | "Hint" among the tools; with the guide on, the next step stands above the bottom box | Proposed (D4); the rungs not drawn |
+| Read a verdict and its reason | A note at the goal and the tab's status | A check or a cross on the sequent and on the view's cell; the reason at the goal | Proposed (D6, D9); the reason not drawn |
+| Search longer after "Unknown" | "Try N units" in the note | The same, at the goal | Open |
+| Go back to where a proof still exists | "Go back" beside the verdict | The same, at the goal | Open |
+| See a countermodel | A figure under the note | A view of its own, `⊭` | Settled (D9) |
+| Change the model and check it again | The model editor in the drawing's place | The countermodel's view, made editable | Open |
+| See or choose the engine | A chip by the note; Settings | Settings in the menu; the engine named with the reason | Proposed |
+
+### 4. Choose the calculus
+
+| A visitor wants to | Now | New design | State |
+|---|---|---|---|
+| Change the logic or the proof method | The Logic popover, with a restart warning | The toggles at the stage's top left; the proof stays or a view opens | Settled (D2, D6, D7) |
+| Draw weakenings and contractions | A switch in the popover | A switch among the view's tools | Settled (D2) |
+| Draw a classical linear proof two-sided | A switch in the popover | A switch among the view's tools | Settled (D6) |
+| Prove in natural deduction, backwards or forwards | Its own panel: goals, numbered lines, two step lists | "Nat" or "Fit"; a proof under way not drawn | Open |
+| Decide a modal sequent | A button in the popover, then a panel | A symbol on the new tab view; its fifteen systems as a chooser where the toggles are | Open |
+| Check or find a lambda-term | A button in the popover, then a panel | A symbol on the new tab view; its three calculi as a toggle | Open |
+| Prove in rules of one's own | A button in the popover, then a panel | A symbol on the new tab view; the rule file's editor not placed | Open |
+
+### 5. Look at a sequent in another way
+
+| A visitor wants to | Now | New design | State |
+|---|---|---|---|
+| See what else can be done with a sequent | Spread over tabs of the stage, the popover and four sheets | "+ view", one list | Settled (D3) |
+| See a linear proof's net | The stage's Net tab | A view in one capsule with its proof | Settled (D6) |
+| Truth table, tableau, resolution | Two tabs of the stage and a sheet | Views from "+ view" | Settled as entries (D3); the views not drawn |
+| Translate into another logic and prove it there | A sheet, then "Prove it in" on a new tab | A view from "+ view", marked with how it was made | Settled as entries (D2, D3) |
+| Interpolant, normal form | Two sheets | Views from "+ view" | Settled as entries (D3) |
+| Eliminate a proof's cuts | A cluster on the stage, on the tree and on the net | A view made from the proof | Open |
+| Read a finished proof as a lambda-term | The last item of Export | A view under "Read off" | Open |
+| Check a tableau written by hand | A button in the popover | A way of the tableau view | Open |
+| Check a model of one's own | A button in the popover | "+ view" | Open |
+| Work on a copy of a proof | "Duplicate this proof" | "+ view", the same calculus again | Open |
+| See how the views depend on each other | The Workspace panel and its graph | The rail: a sign for how a view was made, a capsule for views that depend on each other | Proposed (D2) |
+| Bring a view up to date after its source changed | "Update", "Start again", "Check" in the panel | A mark on the view's cell and one action there | Open |
+
+### 6. Look at the drawing
+
+| A visitor wants to | Now | New design | State |
+|---|---|---|---|
+| Pan and zoom, fit to the window | Drag, pinch, the wheel, `+` `−` `F`, buttons on the stage | The same gestures and keys; the buttons not placed | Open |
+| Choose the font of the formulas | Settings | The menu | Proposed |
+| Light or dark | Settings | The menu; dark not drawn | Open |
+| Choose how a net is drawn | Settings, "Net drawing" | A switch among the net view's tools | Proposed |
+
+### 7. Keep and share
+
+| A visitor wants to | Now | New design | State |
+|---|---|---|---|
+| Keep the work without doing anything | Saved in the browser | The same | Unchanged |
+| Save a proof in a format (LaTeX, Typst, SVG, PNG, PDF, Rocq, JSON) | Export's menu | "Export" among the view's tools; it exports the view shown | Proposed (D2); the menu not drawn |
+| Share a link, with the proof or the sequent alone | Export's menu | The same menu | Proposed |
+| Embed the page, print | A link's `e=1`; the browser's print | The same | Unchanged, not drawn |
+
+### 8. Learn
+
+| A visitor wants to | Now | New design | State |
+|---|---|---|---|
+| Have the page explain itself | Learn on: a frame, every label | The guide's switch, "?" | Settled (D4); whether "?" reads as that is open |
+| Follow a lesson | Learn's panel beside the stage | A lesson is a sequent with its views, its text in a panel | Proposed (D5), "sounds good" |
+| Open the lessons, practice, the tour | The bottom band | The view's tools while the guide is on | Proposed (D4); their lists not drawn |
+| Look a rule or an engine up | Learn's Reference | Not placed | Open |
+| Pick a practice problem | Practice, a sheet with filters | Not drawn | Open |
+| Take the tour | The bottom band, and a button on the empty stage | "Tour" with the guide on | Proposed |
+
+### 9. Teach
+
+| A visitor wants to | Now | New design | State |
+|---|---|---|---|
+| Hand out a set of problems | A course pack: a link, a printed handout | Not placed | Open |
+| Hand answers in | A link or a file | Not placed | Open |
+| Check answers handed in | The check view | Not placed | Open |
+
+### 10. Settings and the rest
+
+| A visitor wants to | Now | New design | State |
+|---|---|---|---|
+| Set the search's budget and bounds | Settings | The menu | Proposed |
+| See every key | Keys | The menu | Proposed |
+| Read what the page is, its licences, privacy | About, and the privacy page | The menu | Proposed |
+| Use the page offline, install it | The service worker | The same | Unchanged |
+
+### What goes
+
+- The restart warning on a change of logic (the proof stays or a view
+  opens).
+- The Workspace panel and its graph as places of their own (the sequents
+  across the top and the rail show the same links).
+- The stage's row of view tabs, the Logic popover and the four sheets
+  (all in "+ view" and the toggles).
+- The bottom band (its actions are the view's tools, the rest is in the
+  menu).
+
 ## What the drawings do not show yet
 
 - The formulas are text in Euler Math. The page draws a derivation with
