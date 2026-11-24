@@ -57,9 +57,9 @@ a hint, following a lesson, picking a practice problem.
   what this sequent allows, under four headings (prove it; decide it;
   translate it, then prove the translation; read off). This is the answer
   to problem 1.
-- The bottom box is the one place for the sequent and the proof's actions
-  (undo, redo, hint, close goal). Export, import, settings and the list of
-  steps move to one menu.
+- The bottom box holds the sequent and its calculus. (The first draft put
+  the proof's actions there too; the author wants them in a bar of their
+  own, see D.)
 - An open goal carries a dashed line where its rule will go. A solid line
   is an inference made.
 - Lessons and Practice start from the "Choose a logic" view and from the
@@ -160,17 +160,31 @@ that is not needed. D is A's colours and type with those changes.
   net). A small sign above the name says how the view's sequent was made:
   `¬¬` a negative translation, `!` the linear one. Views that depend on
   each other share a capsule (the net with its linear proof). A ring marks
-  open goals.
+  open goals. The rail never widens, with the guide on or off: a view's
+  full name shows when the pointer or the keyboard is on its cell.
 - **The page without the guide has almost no words**: the sequents, the
   calculus names, the rule's sign. Every control has its name for screen
   readers and as a tip.
-- **The guide brings the words back**: the rail widens to 228 pixels with
-  each view's name and state, the rule popover gains the rule's name,
-  schema and one sentence, captions stand beside the goals, the bottom
-  box's buttons get their names, and Lessons, Practice and the tour are at
-  the rail's foot.
-- **The search closes a goal from the goal itself**: a round button at the
-  end of the open goal's dashed line, where the rule's name will stand.
+- **The guide brings the words back**: the rule popover gains the rule's
+  name, schema and one sentence, captions stand beside the goals, the next
+  step stands above the bottom box, the bar's buttons get their names, and
+  Lessons, Practice and the tour join the bar.
+- **The stage keeps the current page's dotted field**: a dot of 1.1 pixels
+  in `#A9B2C8` every 20 pixels. A sequent lies on white, so no dot shows
+  through a formula.
+- **The view's bar** holds what can be done with the view shown, as the
+  current page's bottom band does: undo, redo, steps; hint, close all; the
+  view's own switches (for LK, whether weakenings and contractions are
+  drawn); export, import. Its content changes with the view. Each button
+  is a drawing, with its name on hover. What belongs to the page and not
+  to a view (settings, keys, About) stays in the menu at the top right.
+  Three places are drawn:
+  - D2, along the bottom, as now. For: where the current page has it; next
+    to the input. Against: the input and the bar stack at the bottom.
+  - D5, along the top, under the sequents. For: the bottom holds the input
+    alone. Against: two bands above the stage.
+  - D6, down the right, facing the rail. For: the stage keeps its full
+    height. Against: a switch or a chooser has little room in 52 pixels.
 - **The new tab view** has no heading and no descriptions: five symbols,
   each over a line with the logic's name, then "Open a file" and "Restore
   3 proofs". Three symbol sets are drawn to choose from: signs, small
@@ -179,7 +193,8 @@ that is not needed. D is A's colours and type with those changes.
   popover and the bottom box, 18 for a logic's button.
 
 Open with the author: which symbol set; whether "?" reads as the guide's
-switch; whether the search's button belongs at the goal.
+switch; where the view's bar goes; whether its buttons carry words when
+the guide is off.
 
 ## What the drawings do not show yet
 
