@@ -146,6 +146,41 @@ an outline of its views, each indented under what it is made from.
 
 Type: Atkinson Hyperlegible Next. Radius 8 to 16.
 
+## D. Sequents across, views down (the author's notes on A to C)
+
+The author's notes on the first draft: the new tab view is liked, its
+symbols want another round; the groups go across the top and the tabs
+down the side, as symbols or abbreviations only; rounder than A; no text
+that is not needed. D is A's colours and type with those changes.
+
+- **Sequents across the top**, each a rounded chip. A check stands for
+  "proved" or "valid".
+- **Views down a rail 60 pixels wide**, each a 44-pixel cell that shows
+  its calculus by the name logicians use (LK, NM, LL), or a drawing (the
+  net). A small sign above the name says how the view's sequent was made:
+  `¬¬` a negative translation, `!` the linear one. Views that depend on
+  each other share a capsule (the net with its linear proof). A ring marks
+  open goals.
+- **The page without the guide has almost no words**: the sequents, the
+  calculus names, the rule's sign. Every control has its name for screen
+  readers and as a tip.
+- **The guide brings the words back**: the rail widens to 228 pixels with
+  each view's name and state, the rule popover gains the rule's name,
+  schema and one sentence, captions stand beside the goals, the bottom
+  box's buttons get their names, and Lessons, Practice and the tour are at
+  the rail's foot.
+- **The search closes a goal from the goal itself**: a round button at the
+  end of the open goal's dashed line, where the rule's name will stand.
+- **The new tab view** has no heading and no descriptions: five symbols,
+  each over a line with the logic's name, then "Open a file" and "Restore
+  3 proofs". Three symbol sets are drawn to choose from: signs, small
+  formulas, figures. D1 uses the figures.
+- Radii: 8 to 10 for a control, 12 for a rail cell, 14 to 16 for the
+  popover and the bottom box, 18 for a logic's button.
+
+Open with the author: which symbol set; whether "?" reads as the guide's
+switch; whether the search's button belongs at the goal.
+
 ## What the drawings do not show yet
 
 - The formulas are set in a stand-in font. The page draws them with
