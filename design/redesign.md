@@ -225,8 +225,9 @@ The author asked how learning fits the split into sequents and views.
 - A practice problem opens as a new sequent, as it does now. The check on
   its chip says "proved".
 - The lists of lessons and of practice problems open from the new tab
-  view (D1: "Lessons" and "Practice" under the logics, before "Open a
-  file") and, with the guide on, from the view's tools. The frame the
+  view (D1: "Lessons" and "Practice" under the logics, after "Open a
+  file" and "Restore 3 proofs", which the author ranks higher) and, with
+  the guide on, from the view's tools. The frame the
   current page puts around the window for Learn goes.
 - The reference (connectives, rules as schemas) opens from the rule
   popover and from the menu.
