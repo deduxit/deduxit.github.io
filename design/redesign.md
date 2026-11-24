@@ -404,19 +404,21 @@ refused, which is what the prototype in the real page is for.
 
 ### 1. Start
 
-All of it plays on D1.
+All of it plays on D1, and the author has gone through it: "the rest of
+D1 is fine". The two recommendations below, on the logic a sequent opens
+in and on the last visit's proofs, are agreed too.
 
 | A visitor wants to | Now | New design | State |
 |---|---|---|---|
 | Start another sequent | "+" in the row of tabs | "+" after the sequents; the new tab view | Settled (D1) |
 | Choose the logic | The tab's Logic popover, three of five behind buttons | Four symbols on the new tab view, ordinary logic first | Settled (D1) |
-| Type a sequent | The field in each tab | In the bottom box, on the new tab view or after a logic is chosen; Enter makes the sequent the first goal and a chip at the top | Proposed (D1) |
-| Type with a plain keyboard | `->`, `\|-`, `forall` and the like are read; the tab shows signs | The same: on Enter the text in the box and in the chip is written in signs | Proposed (D1) |
-| Learn that the text is not a sequent | The field marks the place and says the problem under it | The bottom box's border turns red and a line over it says the problem, a keyword first; typing takes it away. Nothing else changes | Proposed (D1); the place in the text not marked |
-| Try an example | A menu beside the field | With the guide on and a logic chosen, a sentence and that logic's examples over the bottom box; a press puts one in the box | Proposed (D1) |
-| Open a file | Import, in the bottom band | "Open a file" on the new tab view; the file's sequent opens with its proof, and a line over the bottom box names the file. Import among a view's tools does the same | Settled as a button (D1); what follows proposed |
-| Drop a file on the page | A drop on the stage | Anywhere under the top row: a dashed frame says "Drop the file to open it" | Proposed (D1) |
-| Paste a session or a sequent as JSON | Import's panel | The bottom box takes it: Enter opens it, or says it is not deduxit's JSON | Proposed (D1) |
+| Type a sequent | The field in each tab | In the bottom box, on the new tab view or after a logic is chosen; Enter makes the sequent the first goal and a chip at the top | Settled (D1) |
+| Type with a plain keyboard | `->`, `\|-`, `forall` and the like are read; the tab shows signs | The same: on Enter the text in the box and in the chip is written in signs | Settled (D1) |
+| Learn that the text is not a sequent | The field marks the place and says the problem under it | The bottom box's border turns red and a line over it says the problem, a keyword first; typing takes it away. Nothing else changes | Settled (D1); the place in the text not marked |
+| Try an example | A menu beside the field | With the guide on and a logic chosen, a sentence and that logic's examples over the bottom box; a press puts one in the box | Settled (D1) |
+| Open a file | Import, in the bottom band | "Open a file" on the new tab view; the file's sequent opens with its proof, and a line over the bottom box names the file. Import among a view's tools does the same | Settled (D1) |
+| Drop a file on the page | A drop on the stage | Anywhere under the top row: a dashed frame says "Drop the file to open it" | Settled (D1) |
+| Paste a session or a sequent as JSON | Import's panel | The bottom box takes it: Enter opens it, or says it is not deduxit's JSON | Settled (D1) |
 | Get the last visit's proofs back | A bar over the stage | They come back by themselves on a plain visit. After a link or with the page open twice, "Restore 3 proofs" on the new tab view: they join the sequents at the top and the first opens | Settled (D1 draws the button's case) |
 | Open a link someone sent | The page reads it and opens a tab | It opens as a sequent with its views, the linked view shown | Proposed, not drawn |
 
@@ -433,14 +435,14 @@ the page's code and deduxit's wire schema for 0.8.0:
   of classical, intuitionistic and minimal logic is meant.
 
 So the new tab view asks nothing before opening (that session's
-recommendation, which I take). The bottom box stands on the new tab view
+recommendation; the author agreed). The bottom box stands on the new tab view
 too. A sequent entered there opens in the suite its signs show, ordinary
 logic if they show none, and in that suite's calculus chosen last. The
 toggles then show the calculus and change it. A visitor who wants to
 choose first presses a logic's symbol, as before. D1 plays both.
 
 The last visit's proofs (the author left it to me, with that session's
-help). The current page waits behind a bar because it cannot tell a
+help, and agreed to the result). The current page waits behind a bar because it cannot tell a
 closed browser tab from an open one: every visit keeps its proofs under a
 key of its own, and a new visit gathers what all the others left. If two
 tabs each took the other's proofs, both would save copies under the same
