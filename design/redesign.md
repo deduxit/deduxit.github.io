@@ -210,7 +210,7 @@ that is not needed. D is A's colours and type with those changes.
 Open with the author: whether "?" reads as the guide's
 switch.
 
-## Learning in groups and views (proposal, put to the author, not drawn)
+## Learning in groups and views (proposal; the author: "sounds good")
 
 The author asked how learning fits the split into sequents and views.
 
@@ -229,6 +229,19 @@ The author asked how learning fits the split into sequents and views.
   current page puts around the window for Learn goes.
 - The reference (connectives, rules as schemas) opens from the rule
   popover and from the menu.
+
+D5 draws lesson 3 of the ordinary course, "The sequent calculus LK", at
+the second step of its worked proof of `⊢ a ∨ ¬a`:
+
+- The lesson's chip carries a small mark. Its two views share a capsule
+  in the rail: the worked proof (a small triangle above LK) and the same
+  proof left to finish (a small dashed line above LK).
+- The lesson is played with the stage's own pieces. The question "Which
+  rule comes next?" and the lesson's choices stand in the popover at the
+  open goal, and the reason for a step made stands beside its line.
+- A panel at the right holds only the lesson's text: its number and
+  title, its four parts (Watch, Finish it, Practice, Check), the
+  explanation, the step count and a link to all lessons.
 
 ## What the drawings do not show yet
 
