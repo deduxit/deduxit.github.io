@@ -215,19 +215,20 @@ that is not needed. D is A's colours and type with those changes.
     IL, ML and SC, ND, which papers do not use in one fixed way). LK and
     LJ are Gentzen's and standard, NK and NJ are his too, LM and NM are
     formed like them and rarer; LL and ILL are standard.
-  - Ordinary logic has one grid of its six calculi: a row for the sequent
-    calculus (LK, LJ, LM) and a row for natural deduction (NK, NJ, NM), a
-    column each for classical, intuitionistic and minimal logic. One
-    press chooses both. deduxit has no Hilbert calculus; one would be a
-    third row.
+  - Ordinary logic has two toggles side by side (the author, after a
+    draft that put the six calculi in one grid): the proof method, L
+    (sequent calculus) or N (natural deduction), then the logic, K
+    (classical), J (intuitionistic) or M (minimal). The two pressed
+    letters spell the calculus's name, LK to NM, as the rail shows it.
+    deduxit has no Hilbert calculus; one would be a third choice of
+    method.
   - Linear logic has one toggle between LL (classical) and ILL
     (intuitionistic), and two rules that are each on or off: Mix and
     Affine (weakening). Mix is greyed in ILL, as on the current page. D6
     draws them over a finished proof of `A ⊗ B ⊢ B ⊗ A`.
-  - With the guide on, the grid's rows and columns carry their names
-    ("Sequent calculus", "Natural deduction"; "Classical",
-    "Intuitionistic", "Minimal"), so it says what LK and the others mean
-    (D4).
+  - With the guide on, each letter carries its word ("L Sequent
+    calculus", "N Natural deduction"; "K Classical", "J Intuitionistic",
+    "M Minimal"), so the toggles say what LK and the others mean (D4).
   - Proposal: a toggle changes the view shown while that view has no
     steps. Once it has steps, the toggle opens the other calculus as a
     view beside it, and the proof stays. The current page's warning
@@ -243,7 +244,7 @@ Open with the author:
 
 - whether "?" reads as the guide's switch;
 - whether the toggles sit well at the stage's top left;
-- whether one grid serves in place of the two toggles first asked for;
+- whether single letters (L, N; K, J, M) serve as the toggles' labels;
 - whether "+ view" still lists LK and NK under "Prove", now that the
   toggles reach them.
 
