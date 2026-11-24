@@ -204,11 +204,39 @@ that is not needed. D is A's colours and type with those changes.
     font units around them, so they stay the same when a visitor changes
     the font of the formulas in Settings. A sheet shows the five signs in
     each of the page's five math fonts, for comparison.
+- **The calculus is chosen by toggles in the bottom box**, before the
+  sequent (the author asked for them, for ordinary and for linear logic).
+  They offer what deduxit has.
+  - Ordinary logic has two. The first says how to prove: L, the sequent
+    calculus, or N, natural deduction. The second says in which logic: K
+    classical, J intuitionistic, M minimal. The two letters pressed spell
+    the calculus as the rail names it: LK, NJ, LM. deduxit has no Hilbert
+    calculus; one would be a third choice of the first toggle.
+  - Linear logic has one toggle between LL (classical) and ILL
+    (intuitionistic), and two rules that are each on or off: Mix and
+    Affine (weakening). Mix is greyed in ILL, as on the current page. D6
+    draws them under a finished proof of `A ⊗ B ⊢ B ⊗ A`.
+  - With the guide on, the toggles are spelt out ("Sequent calculus",
+    "Natural deduction", "Classical", "Intuitionistic", "Minimal") on a
+    row of their own above the sequent (D4).
+  - Proposal: a toggle changes the view shown while that view has no
+    steps. Once it has steps, the toggle opens the other calculus as a
+    view beside it, and the proof stays. The current page's warning
+    "Changing the logic restarts this proof" goes.
+  - What changes only the drawing is a switch among the view's tools, not
+    a toggle: weakenings and contractions (LK), tree or Fitch's lines
+    (natural deduction), two-sided (classical linear logic, drawn in D6
+    as `Γ⊢Δ`).
 - Radii: 8 to 10 for a control, 12 for a rail cell, 14 to 16 for the
   popover and the bottom box, 18 for a logic's button.
 
-Open with the author: whether "?" reads as the guide's
-switch.
+Open with the author:
+
+- whether "?" reads as the guide's switch;
+- whether the letters L, N and K, J, M read well enough without the
+  guide;
+- whether "+ view" still lists LK and NK under "Prove", now that the
+  toggles reach them.
 
 ## Learning in groups and views (proposal; the author: "sounds good")
 
