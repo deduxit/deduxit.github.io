@@ -181,8 +181,8 @@ that is not needed. D is A's colours and type with those changes.
   keyboard is on that rule, in a small card over the popover (the
   author). No name and no sentence: both were drawn and the author found
   them too wordy. A rule that does not apply has its reason in the same
-  card, under its drawing. Whether the card should need the guide is not
-  decided; the boards show it always.
+  card, under its drawing. The card shows with the guide on or off (the
+  author), so the guide does not change the popover.
 - **The stage keeps the current page's dotted field**: a dot of 1.1 pixels
   in `#A9B2C8` every 20 pixels. A sequent lies on white, so no dot shows
   through a formula.
