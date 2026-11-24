@@ -211,24 +211,26 @@ that is not needed. D is A's colours and type with those changes.
   ordinary and for linear logic). They are not in the bottom box (the
   author): they float at the stage's top left, across from the view's
   tools, each a small white group like them. They offer what deduxit has.
-  - Their names are the literature's (the author, after a round with CL,
-    IL, ML and SC, ND, which papers do not use in one fixed way). LK and
-    LJ are Gentzen's and standard, NK and NJ are his too, LM and NM are
-    formed like them and rarer; LL and ILL are standard.
+  - A calculus's name is the literature's: LK and LJ are Gentzen's and
+    standard, NK and NJ are his too, LM and NM are formed like them and
+    rarer; LL and ILL are standard. (CL, IL, ML and SC, ND were tried and
+    dropped: papers do not use them in one fixed way.)
   - Ordinary logic has two toggles side by side (the author, after a
-    draft that put the six calculi in one grid): the proof method, L
-    (sequent calculus) or N (natural deduction), then the logic, K
-    (classical), J (intuitionistic) or M (minimal). The two pressed
-    letters spell the calculus's name, LK to NM, as the rail shows it.
-    deduxit has no Hilbert calculus; one would be a third choice of
-    method.
+    draft that put the six calculi in one grid, and one with the single
+    letters L, N and K, J, M): the proof method, "Seq" or "Nat", then the
+    logic, "Cla", "Int" or "Min" (the author's short names). A cell says
+    its whole name on hover ("Sequent calculus", "Intuitionistic logic");
+    D5 draws the hover on "Int". The view's cell in the rail shows the
+    calculus the two give, by its name: LK for Seq and Cla, NM for Nat and
+    Min (the author). deduxit has no Hilbert calculus; one would be a
+    third choice of method.
   - Linear logic has one toggle between LL (classical) and ILL
     (intuitionistic), and two rules that are each on or off: Mix and
-    Affine (weakening). Mix is greyed in ILL, as on the current page. D6
-    draws them over a finished proof of `A ⊗ B ⊢ B ⊗ A`.
-  - With the guide on, each letter carries its word ("L Sequent
-    calculus", "N Natural deduction"; "K Classical", "J Intuitionistic",
-    "M Minimal"), so the toggles say what LK and the others mean (D4).
+    Affine (weakening). Mix is greyed in ILL, as on the current page.
+    Each says its whole name on hover. D6 draws them over a finished
+    proof of `A ⊗ B ⊢ B ⊗ A`.
+  - With the guide on, the cells show whole words ("Sequent calculus",
+    "Natural deduction"; "Classical", "Intuitionistic", "Minimal") (D4).
   - Proposal: a toggle changes the view shown while that view has no
     steps. Once it has steps, the toggle opens the other calculus as a
     view beside it, and the proof stays. The current page's warning
@@ -244,7 +246,8 @@ Open with the author:
 
 - whether "?" reads as the guide's switch;
 - whether the toggles sit well at the stage's top left;
-- whether single letters (L, N; K, J, M) serve as the toggles' labels;
+- whether "Seq" and "Nat" serve for the proof method, beside the
+  author's "Cla", "Int", "Min";
 - whether "+ view" still lists LK and NK under "Prove", now that the
   toggles reach them.
 
