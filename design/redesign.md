@@ -217,33 +217,59 @@ that is not needed. D is A's colours and type with those changes.
     dropped: papers do not use them in one fixed way.)
   - Ordinary logic has two toggles side by side (the author, after a
     draft that put the six calculi in one grid, and one with the single
-    letters L, N and K, J, M): the proof method, "Seq" or "Nat", then the
-    logic, "Cla", "Int" or "Min" (the author's short names; "Seq" and
-    "Nat" are mine and the author agreed). A cell says
-    its whole name on hover ("Sequent calculus", "Intuitionistic logic");
+    letters L, N and K, J, M): the proof method, "Seq", "Nat" or "Fit",
+    then the logic, "Cla", "Int" or "Min" (the author's short names;
+    "Seq" and "Nat" are mine and the author agreed). "Fit" is natural
+    deduction drawn as Fitch's lines, which was a switch among the view's
+    tools before. A cell says its whole name on hover ("Sequent
+    calculus", "Natural deduction, drawn as a tree", "Intuitionistic
+    logic");
     D5 draws the hover on "Int". The view's cell in the rail shows the
     calculus the two give, by its name: LK for Seq and Cla, NM for Nat and
-    Min (the author). deduxit has no Hilbert calculus; one would be a
-    third choice of method.
+    Min (the author); "Fit" has the calculus of "Nat", so NJ or NK or
+    NM. deduxit has no Hilbert calculus; one would be a fourth choice of
+    method.
   - D7 draws a finished NJ proof of `p → q, q → r ⊢ p → r` as Gentzen's
     tree: "Nat" and "Int" pressed, the rail's cell NJ beside the LK view,
-    which keeps its open goal (the proposal below), and the switch
-    "Fitch" among the view's tools.
+    which keeps its open goal (the rule below).
   - Linear logic has one toggle between LL (classical) and ILL
     (intuitionistic), and two rules that are each on or off: Mix and
     Affine (weakening). Mix is greyed in ILL, as on the current page.
     Each says its whole name on hover. D6 draws them over a finished
     proof of `A ⊗ B ⊢ B ⊗ A`.
   - With the guide on, the cells show whole words ("Sequent calculus",
-    "Natural deduction"; "Classical", "Intuitionistic", "Minimal") (D4).
-  - Proposal: a toggle changes the view shown while that view has no
-    steps. Once it has steps, the toggle opens the other calculus as a
-    view beside it, and the proof stays. The current page's warning
-    "Changing the logic restarts this proof" goes.
-  - What changes only the drawing is a switch among the view's tools, not
-    a toggle: weakenings and contractions (LK), tree or Fitch's lines
-    (natural deduction), two-sided (classical linear logic, drawn in D6
-    as `Γ⊢Δ`).
+    "Natural deduction", "Fitch's lines"; "Classical", "Intuitionistic",
+    "Minimal") (D4).
+  - **A toggle keeps the proof in its view where nothing is lost, and
+    opens a view beside it otherwise** (the author). The current page's
+    warning "Changing the logic restarts this proof" goes. What that
+    means for each toggle, as deduxit 0.8.0 stands:
+    - "Nat" and "Fit" are one proof drawn two ways (deduxit checks one
+      derivation and lays it out as a tree or as Fitch's lines), so the
+      view stays. A line that Fitch's proof cites twice stands twice in
+      the tree.
+    - A view without steps changes in place.
+    - A change of logic replays the proof's steps in the other calculus.
+      If every step is accepted the view stays, which holds whenever the
+      logic grows (minimal to intuitionistic to classical); if one is
+      refused, a view opens beside it. To be tried in the prototype.
+    - "Seq" to "Nat" or back opens a view beside the proof, or goes to it
+      if it is there. deduxit has no conversion between the two for a
+      proof under way. It reads a finished LJ or LM proof as a
+      lambda-term and draws that term's typing by natural deduction's
+      rules, which is a drawing, not a proof to go on with; it has
+      nothing for LK and NK, and nothing from natural deduction back.
+    - In theory a conversion exists both ways for intuitionistic and
+      minimal logic, but it is lossy: many sequent proofs, which differ
+      in the order of their left rules, become one natural deduction
+      proof, and a natural deduction proof with a detour (a formula
+      introduced and at once eliminated) needs a cut. For classical logic
+      it rewrites the proof, since LK has several formulas right of ⊢ and
+      NK one. So both proofs are kept as views even if deduxit learns to
+      convert; the conversion could then fill the new view.
+  - What changes only the drawing and has no toggle is a switch among the
+    view's tools: weakenings and contractions (LK), two-sided (classical
+    linear logic, drawn in D6 as `Γ⊢Δ`).
 - Radii: 8 to 10 for a control, 12 for a rail cell, 14 to 16 for the
   popover and the bottom box, 18 for a logic's button.
 
