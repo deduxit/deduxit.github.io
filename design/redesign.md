@@ -191,6 +191,9 @@ that is not needed. D is A's colours and type with those changes.
   and a collage of four signs. The author chose the signs: ⅋ for linear
   logic (not ⊗), ∧ for ordinary logic, □ for modal logic, λ for
   lambda-terms, ⊢ for your own rules.
+  - Ordinary logic comes first (the author), and is the default: it has
+    the focus when the view opens, so Enter chooses it. Linear logic is
+    second.
   - The signs are Euler Math, thickened, and fixed (the author, "for
     now"): drawings made once from the font's outlines with a stroke of 26
     font units around them, so they stay the same when a visitor changes
