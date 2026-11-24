@@ -241,8 +241,8 @@ that is not needed. D is A's colours and type with those changes.
   - D7 draws a finished NJ proof of `p → q, q → r ⊢ p → r` as Gentzen's
     tree: "Natural" and "Intuitionistic" pressed, the rail's cell NJ
     beside the LK view, which keeps its open goal (the rule below).
-  - Linear logic has one toggle, "Classical" or "Intuitionistic" (my
-    reading of the author's change; it read LL, ILL before), and two
+  - Linear logic has one toggle, "Classical" or "Intuitionistic" (the
+    author; it read LL, ILL before), and two
     rules that are each on or off: Mix and Affine (weakening). The rail's
     cell reads LL or ILL. Mix is greyed in intuitionistic linear logic, as
     on the current page. Each says its whole name on hover. D6 draws them
