@@ -65,8 +65,7 @@ a hint, following a lesson, picking a practice problem.
 - Lessons and Practice start from the "Choose a logic" view and from the
   guide, per logic.
 - The guide puts each explanation beside the thing it explains: a caption
-  at a goal, the rule drawn in the rule popover, the next step above the
-  bottom box, words on every button.
+  at a goal, the next step above the bottom box, words on every button.
 - The switch is labelled "Guide". "HUD" is a word from games that a
   newcomer to logic may not know.
 
@@ -174,11 +173,16 @@ that is not needed. D is A's colours and type with those changes.
 - **The page without the guide has almost no words**: the sequents, the
   calculus names, the rule's sign. Every control has its name for screen
   readers and as a tip.
-- **The guide brings the words back**: the rule popover gains the rule's
-  name and the rule itself, drawn as premises over a conclusion, with no
-  sentence (the author: "just draw the derivation rule"; a sentence stood
-  there before). Captions stand beside the goals, the next step stands
-  above the bottom box, and the view's tools get their names.
+- **The guide brings the words back**: captions stand beside the goals,
+  the next step stands above the bottom box, and the view's tools get
+  their names.
+- **The rule popover shows signs alone, guide on or off.** A rule's
+  drawing, premises over a conclusion, appears while the pointer or the
+  keyboard is on that rule, in a small card over the popover (the
+  author). No name and no sentence: both were drawn and the author found
+  them too wordy. A rule that does not apply has its reason in the same
+  card, under its drawing. Whether the card should need the guide is not
+  decided; the boards show it always.
 - **The stage keeps the current page's dotted field**: a dot of 1.1 pixels
   in `#A9B2C8` every 20 pixels. A sequent lies on white, so no dot shows
   through a formula.
@@ -493,9 +497,9 @@ script of the board's own for `→`, `∧`, `∨` and `ax`, not deduxit.
 | A visitor wants to | Now | New design | State |
 |---|---|---|---|
 | Apply a rule to a formula | Press the formula, choose in the popover | The same; the popover shows the rule's sign alone, a press applies it | Settled (D2) |
-| Choose among several rules | The popover lists them; the keys 1 to 9 pick | The popover holds one button per rule, side by side, the ones that do not apply greyed among them. With the guide on each rule has its name and its drawing under its own button, so the rules can be compared | Proposed (D2); the keys not drawn |
-| See the rule explained | A hint on every rule label | With the guide on, the popover has the rule's name beside its sign and the rule drawn under it, premises over conclusion; no sentence (the author) | Settled (D2, D4); the label's hover not drawn |
-| Learn that a rule does not apply | The rule is offered; applying it leaves a note at the goal, with "Other rules" | The rule is greyed in the popover and cannot be pressed; its hover says why (the author). On a touch screen, which has no hover, a press on the greyed rule shows the reason as a note over the goal | Settled (D2); the touch part is my addition |
+| Choose among several rules | The popover lists them; the keys 1 to 9 pick | The popover holds one button per rule, side by side, the ones that do not apply greyed among them; each shows its drawing on hover | Proposed (D2); the keys not drawn |
+| See the rule explained | A hint on every rule label: name, schema and a sentence | A card over the popover draws the rule, premises over conclusion, while the pointer or the keyboard is on it; no name, no sentence (the author) | Settled (D2; D4 draws the card); a touch screen has no hover, and the drawing's label in the derivation is not drawn |
+| Learn that a rule does not apply | The rule is offered; applying it leaves a note at the goal, with "Other rules" | The rule is greyed in the popover and cannot be pressed; its hover card says why under its drawing (the author). On a touch screen, which has no hover, a press on the greyed rule shows the reason as a note over the goal | Settled (D2); the touch part is my addition |
 | See which goals are open | The goal bar, "Open goal 1 of 2" | A dashed lapis line over each open goal; a ring on the view's cell while any is open, a check on the sequent once none is | Proposed (D2); the count not drawn |
 | Go to another open goal | The keys `[` and `]`, or a press | A press on any formula of it | Proposed (D2); the keys not drawn |
 | Undo, redo | The bottom band | The view's tools, greyed when there is nothing to undo or redo | Settled (D2) |
