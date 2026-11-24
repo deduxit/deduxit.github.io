@@ -161,7 +161,11 @@ that is not needed. D is A's colours and type with those changes.
   "proved" or "valid".
 - **Views down a rail 60 pixels wide**, each a 44-pixel cell that shows
   its calculus by the name logicians use (LK, NM, LL), or a drawing (the
-  net). A small sign above the name says how the view's sequent was made:
+  net). The net's drawing is a small net with square links, as papers
+  draw them: two axiom links side by side, joined by one connective (the
+  net of `⊢ A⊥, A ⊗ B⊥, B`). The first drawing, one round link over a
+  node, looked like a light bulb (the author). A small sign above the
+  name says how the view's sequent was made:
   `¬¬` a negative translation, `!` the linear one. Views that depend on
   each other share a capsule (the net with its linear proof). A ring marks
   open goals. The rail never widens, with the guide on or off: a view's
@@ -266,7 +270,8 @@ that is not needed. D is A's colours and type with those changes.
       introduced and at once eliminated) needs a cut. For classical logic
       it rewrites the proof, since LK has several formulas right of ⊢ and
       NK one. So both proofs are kept as views even if deduxit learns to
-      convert; the conversion could then fill the new view.
+      convert (my recommendation, the author agreed); the conversion
+      could then fill the new view.
   - What changes only the drawing and has no toggle is a switch among the
     view's tools: weakenings and contractions (LK), two-sided (classical
     linear logic, drawn in D6 as `Γ⊢Δ`).
