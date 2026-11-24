@@ -518,11 +518,39 @@ said in the popover where the typing happened, as D8 notes for a witness.
 
 For this the page must know, for a formula, every rule of the calculus
 that could act on it and for each whether it applies and why not. The
-current page shows what deduxit offers and learns of a refusal by
-applying. Whether deduxit 0.8.0 gives the reasons without a step being
-tried is asked of the session that plans deduxit (the author had me ask;
-no answer yet). If it does not, that is a wish for the library, which
-goes to the author.
+session that plans deduxit checked the library's code for 0.8.0:
+
+- No call lists the rules that do not apply, with reasons, in any suite.
+- Linear logic's list goes by the formula's connective and the mode
+  alone. It offers too much: `ax` without its dual in the goal, `1` in a
+  goal that holds more, `!` in a context that is not all `?`. Only
+  applying decides.
+- Ordinary logic's list (LK, LJ, LM, first order) leaves out what the
+  logic refuses and offers `ax` only where its partner stands. It offers
+  too little: a rule left out comes with no reason.
+- Natural deduction's list tries every rule on a copy of the session. It
+  computes each refusal with its reason and then drops it.
+- Trying each rule from the page works and changes nothing, since deduxit
+  keeps nothing between calls. It costs one full call per rule (the
+  session read and replayed, the step applied, the view built), not
+  measured, growing with the proof and waiting behind a running search.
+  The invertible rules must be off for such a trial.
+- A refusal names its reason well enough to word it (`no_dual`,
+  `not_alone`, `not_quest`, `no_partner`, `succedents`, `logic` and
+  others, with their fields). Three kinds carry an English sentence the
+  page can show but not reword: `binding`, `witness`, and natural
+  deduction's `step_refused`.
+- What can never be known before the visitor gives something: a split of
+  the context (linear `⊗` and Mix, ordinary rules of two premises), a
+  witness, a cut formula, and the values a natural deduction rule asks
+  for. Everything else can be greyed.
+
+Its recommendation, which I share: one call of the library per formula
+that returns every candidate rule as "applies", "needs a split, a witness
+or values", or "refused" with the refusal. The first two exist and the
+third is computed and dropped in natural deduction. That is a wish for
+deduxit, so it is the author's to decide. Until then the page can try
+each rule itself when a popover opens.
 
 D2 also plays the rule for a change of logic. On the first sequent a
 proof in LK replays in LJ step for step, so "Intuitionistic" renames the
