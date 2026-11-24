@@ -57,9 +57,9 @@ a hint, following a lesson, picking a practice problem.
   what this sequent allows, under four headings (prove it; decide it;
   translate it, then prove the translation; read off). This is the answer
   to problem 1.
-- The bottom box holds the sequent and its calculus. (The first draft put
-  the proof's actions there too; the author wants them in a bar of their
-  own, see D.)
+- The bottom box holds the sequent. (The first drafts put the proof's
+  actions and then the calculus there too; the author wants only the text
+  box and an enter button in it, see D.)
 - An open goal carries a dashed line where its rule will go. A solid line
   is an inference made.
 - Lessons and Practice start from the "Choose a logic" view and from the
@@ -204,21 +204,26 @@ that is not needed. D is A's colours and type with those changes.
     font units around them, so they stay the same when a visitor changes
     the font of the formulas in Settings. A sheet shows the five signs in
     each of the page's five math fonts, for comparison.
-- **The calculus is chosen by toggles in the bottom box**, before the
-  sequent (the author asked for them, for ordinary and for linear logic).
-  They offer what deduxit has.
-  - Ordinary logic has two. The first says how to prove: L, the sequent
-    calculus, or N, natural deduction. The second says in which logic: K
-    classical, J intuitionistic, M minimal. The two letters pressed spell
-    the calculus as the rail names it: LK, NJ, LM. deduxit has no Hilbert
-    calculus; one would be a third choice of the first toggle.
-  - Linear logic has one toggle between LL (classical) and ILL
+- **The bottom box holds the sequent's text box and an enter button**,
+  nothing else (the author). With the guide on the button also says
+  "Enter".
+- **The calculus is chosen by toggles** (the author asked for them, for
+  ordinary and for linear logic). They are not in the bottom box (the
+  author): they float at the stage's top left, across from the view's
+  tools, each a small white group like them. They offer what deduxit has.
+  - Ordinary logic has two. The first says how to prove: SC, the sequent
+    calculus, or ND, natural deduction. The second says in which logic:
+    CL classical, IL intuitionistic, ML minimal (the author's names: the
+    first draft's L, N and K, J, M were harder to understand). deduxit
+    has no Hilbert calculus; one would be a third choice of the first
+    toggle.
+  - Linear logic has one toggle between CLL (classical) and ILL
     (intuitionistic), and two rules that are each on or off: Mix and
     Affine (weakening). Mix is greyed in ILL, as on the current page. D6
-    draws them under a finished proof of `A ⊗ B ⊢ B ⊗ A`.
+    draws them over a finished proof of `A ⊗ B ⊢ B ⊗ A`.
   - With the guide on, the toggles are spelt out ("Sequent calculus",
-    "Natural deduction", "Classical", "Intuitionistic", "Minimal") on a
-    row of their own above the sequent (D4).
+    "Natural deduction", "Classical", "Intuitionistic", "Minimal"), in
+    the same place (D4).
   - Proposal: a toggle changes the view shown while that view has no
     steps. Once it has steps, the toggle opens the other calculus as a
     view beside it, and the proof stays. The current page's warning
@@ -233,8 +238,9 @@ that is not needed. D is A's colours and type with those changes.
 Open with the author:
 
 - whether "?" reads as the guide's switch;
-- whether the letters L, N and K, J, M read well enough without the
-  guide;
+- whether the toggles sit well at the stage's top left;
+- whether a rail cell keeps the logicians' name (LK, NM, LL) or follows
+  the toggles (SC over CL);
 - whether "+ view" still lists LK and NK under "Prove", now that the
   toggles reach them.
 
