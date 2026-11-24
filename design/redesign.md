@@ -218,7 +218,8 @@ that is not needed. D is A's colours and type with those changes.
   - Ordinary logic has two toggles side by side (the author, after a
     draft that put the six calculi in one grid, and one with the single
     letters L, N and K, J, M): the proof method, "Seq" or "Nat", then the
-    logic, "Cla", "Int" or "Min" (the author's short names). A cell says
+    logic, "Cla", "Int" or "Min" (the author's short names; "Seq" and
+    "Nat" are mine and the author agreed). A cell says
     its whole name on hover ("Sequent calculus", "Intuitionistic logic");
     D5 draws the hover on "Int". The view's cell in the rail shows the
     calculus the two give, by its name: LK for Seq and Cla, NM for Nat and
@@ -246,8 +247,6 @@ Open with the author:
 
 - whether "?" reads as the guide's switch;
 - whether the toggles sit well at the stage's top left;
-- whether "Seq" and "Nat" serve for the proof method, beside the
-  author's "Cla", "Int", "Min";
 - whether "+ view" still lists LK and NK under "Prove", now that the
   toggles reach them.
 
