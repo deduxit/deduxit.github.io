@@ -231,7 +231,8 @@ that is not needed. D is A's colours and type with those changes.
     tools before. A cell says its whole name on hover ("Sequent
     calculus", "Natural deduction, drawn as a tree", "Intuitionistic
     logic");
-    D5 draws the hover on "Int". The view's cell in the rail shows the
+    The hover was drawn on "Int" on the lesson board, which is gone. The
+    view's cell in the rail shows the
     calculus the two give, by its name: LK for Seq and Cla, NM for Nat and
     Min (the author); "Fit" has the calculus of "Nat", so NJ or NK or
     NM. deduxit has no Hilbert calculus; one would be a fourth choice of
@@ -297,6 +298,11 @@ Open with the author:
 
 ## Learning in groups and views (proposal; the author: "sounds good")
 
+Left for later (the author): Learn and Practice come back once the core
+is right. Until then their buttons stay where they are and are inactive,
+with the hint "Coming soon" (D1, and the view's tools on D4). The lesson
+board, D5, is gone from the canvas; what it drew is described below.
+
 The author asked how learning fits the split into sequents and views.
 
 - The guide is a layer, not a place: it adds words to the view that is
@@ -319,7 +325,7 @@ The author asked how learning fits the split into sequents and views.
 - The reference (connectives, rules as schemas) opens from the rule
   popover and from the menu.
 
-D5 draws lesson 3 of the ordinary course, "The sequent calculus LK", at
+D5 drew lesson 3 of the ordinary course, "The sequent calculus LK", at
 the second step of its worked proof of `⊢ a ∨ ¬a`:
 
 - The lesson's chip carries a small mark. Its two views share a capsule
@@ -493,10 +499,10 @@ refused, which is what the prototype in the real page is for.
 | A visitor wants to | Now | New design | State |
 |---|---|---|---|
 | Have the page explain itself | Learn on: a frame, every label | The guide's switch, "?" | Settled (D4); whether "?" reads as that is open |
-| Follow a lesson | Learn's panel beside the stage | A lesson is a sequent with its views, its text in a panel | Proposed (D5), "sounds good" |
-| Open the lessons, practice, the tour | The bottom band | The view's tools while the guide is on | Proposed (D4); their lists not drawn |
-| Look a rule or an engine up | Learn's Reference | Not placed | Open |
-| Pick a practice problem | Practice, a sheet with filters | Not drawn | Open |
+| Follow a lesson | Learn's panel beside the stage | Left for later; "Learn" stays as an inactive button with the hint "Coming soon" | Left for later |
+| Open the lessons, practice, the tour | The bottom band | The view's tools while the guide is on; "Learn" and "Practice" inactive there, the tour works | Proposed (D4) |
+| Look a rule or an engine up | Learn's Reference | Left for later, with Learn | Left for later |
+| Pick a practice problem | Practice, a sheet with filters | Left for later; "Practice" stays as an inactive button with the hint "Coming soon" | Left for later |
 | Take the tour | The bottom band, and a button on the empty stage | "Tour" with the guide on | Proposed |
 
 ### 9. Teach
