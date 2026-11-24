@@ -65,8 +65,8 @@ a hint, following a lesson, picking a practice problem.
 - Lessons and Practice start from the "Choose a logic" view and from the
   guide, per logic.
 - The guide puts each explanation beside the thing it explains: a caption
-  at a goal, the rule's schema and one sentence in the rule popover, the
-  next step above the bottom box, words on every button.
+  at a goal, the rule drawn in the rule popover, the next step above the
+  bottom box, words on every button.
 - The switch is labelled "Guide". "HUD" is a word from games that a
   newcomer to logic may not know.
 
@@ -175,8 +175,10 @@ that is not needed. D is A's colours and type with those changes.
   calculus names, the rule's sign. Every control has its name for screen
   readers and as a tip.
 - **The guide brings the words back**: the rule popover gains the rule's
-  name, schema and one sentence, captions stand beside the goals, the next
-  step stands above the bottom box, and the view's tools get their names.
+  name and the rule itself, drawn as premises over a conclusion, with no
+  sentence (the author: "just draw the derivation rule"; a sentence stood
+  there before). Captions stand beside the goals, the next step stands
+  above the bottom box, and the view's tools get their names.
 - **The stage keeps the current page's dotted field**: a dot of 1.1 pixels
   in `#A9B2C8` every 20 pixels. A sequent lies on white, so no dot shows
   through a formula.
@@ -491,7 +493,7 @@ three rules (`→R`, `→L`, `ax`), not deduxit.
 | A visitor wants to | Now | New design | State |
 |---|---|---|---|
 | Apply a rule to a formula | Press the formula, choose in the popover | The same; the popover shows the rule's sign alone, a press applies it | Settled (D2) |
-| See the rule explained | A hint on every rule label | With the guide on, the popover has the rule's name and one sentence under its sign | Settled (D2, D4); the schema and the label's hover not drawn |
+| See the rule explained | A hint on every rule label | With the guide on, the popover has the rule's name beside its sign and the rule drawn under it, premises over conclusion; no sentence (the author) | Settled (D2, D4); the label's hover not drawn |
 | Read why a step was refused | A note at the goal, with "Other rules" | A red-framed note over the goal: the keyword alone ("ax refused"), and the sentence with the guide on. A press elsewhere takes it away | Proposed (D2) |
 | See which goals are open | The goal bar, "Open goal 1 of 2" | A dashed lapis line over each open goal; a ring on the view's cell while any is open, a check on the sequent once none is | Proposed (D2); the count not drawn |
 | Go to another open goal | The keys `[` and `]`, or a press | A press on any formula of it | Proposed (D2); the keys not drawn |
