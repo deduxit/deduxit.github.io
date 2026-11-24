@@ -353,8 +353,11 @@ valid by a finite structure.
   eigenvariable. Not drawn.
 - **A countermodel is a view** (D9, on `∃x. p(x), q ⊢ ∀x. p(x)`): it
   shares a capsule with the proof view it refutes, as a net does with its
-  linear proof. Its cell in the rail reads "M" (to be settled). The
-  sequent's chip and the LK cell carry a cross for "not valid".
+  linear proof. Its cell in the rail reads `⊭`, "does not satisfy", in
+  Euler Math. The first draft read "M", which the author accepted and
+  offered `⊭` beside; `⊭` is taken because M already stands for minimal
+  logic in LM, NM and "Min". The sequent's chip and the LK cell carry a
+  cross for "not valid" (the author agreed).
 - **The view draws the structure and what it does to the sequent**: a
   table with a column per element and a row per predicate, a filled dot
   where the predicate holds and a ring where it does not; under it the
@@ -363,7 +366,8 @@ valid by a finite structure.
   is what "refutes" means, shown without a sentence. Constants and
   function symbols would be further rows (`a = 0`, `f: 0 ↦ 1`).
 - **Its tools** are Export and Import alone; the calculus toggles do not
-  show, since a structure refutes the sequent in every logic. The current
+  show, since a structure refutes the sequent in every logic (the author
+  agreed). The current
   page's "Change this model and check it" is not drawn.
 
 ## What the drawings do not show yet
