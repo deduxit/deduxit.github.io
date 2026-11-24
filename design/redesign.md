@@ -210,6 +210,26 @@ that is not needed. D is A's colours and type with those changes.
 Open with the author: whether "?" reads as the guide's
 switch.
 
+## Learning in groups and views (proposal, put to the author, not drawn)
+
+The author asked how learning fits the split into sequents and views.
+
+- The guide is a layer, not a place: it adds words to the view that is
+  open and changes nothing about sequents and views.
+- Hint belongs to the view's tools for everyone, as in the current page's
+  bottom band. It acts on the proof in view.
+- A lesson is a sequent with its own chip, marked as a lesson. Its parts
+  are views in the rail: the worked proof played step by step, then the
+  same proof with its last steps left to the visitor. The lesson's text
+  stands in a panel beside the stage.
+- A practice problem opens as a new sequent, as it does now. The check on
+  its chip says "proved".
+- The lists of lessons and of practice problems open from the new tab
+  view and, with the guide on, from the view's tools. The frame the
+  current page puts around the window for Learn goes.
+- The reference (connectives, rules as schemas) opens from the rule
+  popover and from the menu.
+
 ## What the drawings do not show yet
 
 - The formulas are set in a stand-in font. The page draws them with
