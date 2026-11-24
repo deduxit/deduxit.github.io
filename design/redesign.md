@@ -161,11 +161,12 @@ that is not needed. D is A's colours and type with those changes.
   "proved" or "valid".
 - **Views down a rail 60 pixels wide**, each a 44-pixel cell that shows
   its calculus by the name logicians use (LK, NM, LL), or a drawing (the
-  net). The net's drawing is a small net with square links, as papers
-  draw them: two axiom links side by side, joined by one connective (the
-  net of `⊢ A⊥, A ⊗ B⊥, B`). The first drawing, one round link over a
-  node, looked like a light bulb (the author). A small sign above the
-  name says how the view's sequent was made:
+  net). The net's drawing is a knotted diamond: one cell of netting, a
+  knot at each corner and in the middle (the author chose it from eight).
+  It reads as netting and as nodes joined by links. The first drawing, a
+  small proof net of one round link over a node, looked like a light bulb
+  (the author); a proof net with square links was tried in between. A
+  small sign above the name says how the view's sequent was made:
   `¬¬` a negative translation, `!` the linear one. Views that depend on
   each other share a capsule (the net with its linear proof). A ring marks
   open goals. The rail never widens, with the guide on or off: a view's
