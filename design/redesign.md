@@ -167,24 +167,24 @@ that is not needed. D is A's colours and type with those changes.
   readers and as a tip.
 - **The guide brings the words back**: the rule popover gains the rule's
   name, schema and one sentence, captions stand beside the goals, the next
-  step stands above the bottom box, the bar's buttons get their names, and
-  Lessons, Practice and the tour join the bar.
+  step stands above the bottom box, and the view's tools get their names.
 - **The stage keeps the current page's dotted field**: a dot of 1.1 pixels
   in `#A9B2C8` every 20 pixels. A sequent lies on white, so no dot shows
   through a formula.
-- **The view's bar** holds what can be done with the view shown, as the
-  current page's bottom band does: undo, redo, steps; hint, close all; the
-  view's own switches (for LK, whether weakenings and contractions are
-  drawn); export, import. Its content changes with the view. Each button
-  is a drawing, with its name on hover. What belongs to the page and not
-  to a view (settings, keys, About) stays in the menu at the top right.
-  Three places are drawn:
-  - D2, along the bottom, as now. For: where the current page has it; next
-    to the input. Against: the input and the bar stack at the bottom.
-  - D5, along the top, under the sequents. For: the bottom holds the input
-    alone. Against: two bands above the stage.
-  - D6, down the right, facing the rail. For: the stage keeps its full
-    height. Against: a switch or a chooser has little room in 52 pixels.
+- **The view's tools** are what can be done with the view shown, as the
+  current page's bottom band holds them: undo, redo, steps; hint, close
+  all; the view's own switches (for LK, whether weakenings and
+  contractions are drawn); export, import. The set changes with the view.
+  What belongs to the page and not to a view (settings, keys, About)
+  stays in the menu at the top right.
+  - They are a small group that floats at the stage's top right, no taller
+    than its buttons, with the dotted field around it (the author: on the
+    right, and not a full bar). Each button is a drawing, with its name on
+    hover.
+  - With the guide on, each button has its name beside it, and Lessons,
+    Practice and the tour join the group.
+  - Three full bars were drawn first: along the bottom, along the top (D5)
+    and down the right (D6). The author chose the right.
 - **The new tab view** has no heading and no descriptions: five symbols,
   each over a line with the logic's name, then "Open a file" and "Restore
   3 proofs". Four symbol sets were drawn: signs, small formulas, figures,
@@ -203,8 +203,7 @@ that is not needed. D is A's colours and type with those changes.
   popover and the bottom box, 18 for a logic's button.
 
 Open with the author: whether "?" reads as the guide's
-switch; where the view's bar goes; whether its buttons carry words when
-the guide is off.
+switch.
 
 ## What the drawings do not show yet
 
