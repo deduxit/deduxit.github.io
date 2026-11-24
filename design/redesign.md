@@ -277,15 +277,17 @@ that is not needed. D is A's colours and type with those changes.
   - What changes only the drawing and has no toggle is a switch among the
     view's tools: weakenings and contractions (LK), two-sided (classical
     linear logic, drawn in D6 as `Γ⊢Δ`).
+- **"+ view" lists what the toggles do not reach** (the author): under
+  "Prove" the tableau and resolution, then the truth table, the
+  translations and what is read off a proof. The sequent calculus and
+  natural deduction are not in it; the toggles open them.
 - Radii: 8 to 10 for a control, 12 for a rail cell, 14 to 16 for the
   popover and the bottom box, 18 for a logic's button.
 
 Open with the author:
 
 - whether "?" reads as the guide's switch;
-- whether the toggles sit well at the stage's top left;
-- whether "+ view" still lists LK and NK under "Prove", now that the
-  toggles reach them.
+- whether the toggles sit well at the stage's top left.
 
 ## Learning in groups and views (proposal; the author: "sounds good")
 
