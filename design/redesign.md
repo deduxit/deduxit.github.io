@@ -417,17 +417,33 @@ All of it plays on D1.
 | Open a file | Import, in the bottom band | "Open a file" on the new tab view; the file's sequent opens with its proof, and a line over the bottom box names the file. Import among a view's tools does the same | Settled as a button (D1); what follows proposed |
 | Drop a file on the page | A drop on the stage | Anywhere under the top row: a dashed frame says "Drop the file to open it" | Proposed (D1) |
 | Paste a session or a sequent as JSON | Import's panel | The bottom box takes it: Enter opens it, or says it is not deduxit's JSON | Proposed (D1) |
-| Get the last visit's proofs back | A bar over the stage | "Restore 3 proofs" on the new tab view: they join the sequents at the top and the button goes | Settled as a button (D1); what follows proposed |
+| Get the last visit's proofs back | A bar over the stage | "Restore 3 proofs" on the new tab view: they join the sequents at the top, the first of them opens, and the button goes | Settled (D1); whether the button is needed is open |
 | Open a link someone sent | The page reads it and opens a tab | It opens as a sequent with its views, the linked view shown | Proposed, not drawn |
 
 Not decided in this group:
 
 - Which logic a file, a pasted session or a link opens in when the new
-  tab view has none chosen yet. The board assumes the file says it.
-- Whether a restored proof opens at once or waits as a chip until
-  pressed. The board adds chips and opens none.
-- Whether the new tab view needs "Restore" at all once the page restores
-  by itself, as a browser does its tabs.
+  tab view has none chosen yet. On the current page a link names its
+  logic, a session or a sequent in deduxit's JSON is told apart by its
+  shape, and plain text is read in the calculus last chosen. The author
+  had me ask the session that plans deduxit whether that holds for 0.8.0
+  and for every logic; no answer yet.
+- Whether the new tab view needs "Restore" at all, or the page brings the
+  last visit back by itself (the author: to be worked out, with that
+  session if need be; asked, no answer yet). Two reasons for a button
+  that I see in the current page: two open browser tabs of the page would
+  each bring back the other's proofs, and a proof opened from a link
+  should open alone.
+- What Enter does in the bottom box of a sequent that already has a
+  proof: replace that sequent, or start a new one beside it. D1 starts a
+  new one.
+
+Decided here: the first restored proof opens at once (the author).
+
+The first D1 did nothing on Enter (the author found it). The likely
+cause, not confirmed: the canvas plays a board in a frame that submits no
+forms, and the box was a form. The box now listens to the Enter key and
+to its button instead.
 
 ### 2. Prove by hand
 
