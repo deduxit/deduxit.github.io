@@ -297,6 +297,8 @@ that is not needed. D is A's colours and type with those changes.
   "Prove" the tableau and resolution, then the truth table, the
   translations and what is read off a proof. The sequent calculus and
   natural deduction are not in it; the toggles open them.
+- **A rule's name beside its line is 19 pixels**, against 23 for the
+  sequents (the author found 15 too small).
 - **Every sequent and rule name is set in Euler Math** (the author), the
   page's default math font, on all seven boards. The canvas loads the
   font from a copy uploaded to it (Euler Math 0.75, SIL Open Font
