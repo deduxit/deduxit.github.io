@@ -825,7 +825,8 @@ The author went through this group on 2026-11-25 and found it fine.
   on every board.
 - In Export's list every entry has a sign of its own (the author: one
   download sign on all of them says nothing): a curve with its two points
-  for SVG, a framed picture for PNG, a page for PDF, TeX's dropped E,
+  for SVG, a framed picture for PNG, a page for PDF, the word TeX with
+  its dropped E (a first draft showed T and E alone and read as cut off),
   Typst's t, lines for text, braces for the session, a checked seal for
   Rocq, a derivation, a turnstile and a box for the three links.
   The list's four groups are Picture, Text, Proof and Link. "Proof"
