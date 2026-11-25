@@ -179,6 +179,9 @@ that is not needed. D is A's colours and type with those changes.
 - **The page without the guide has almost no words**: the sequents, the
   calculus names, the rule's sign. Every control has its name for screen
   readers and as a tip.
+  - A tip is the control's name and nothing more, two or three words
+    ("Two-sided", "Cut", "Prove apart"). The author found a tip that
+    explained its control in a sentence far too wordy.
 - **The guide brings the words back**: captions stand beside the goals,
   the next step stands above the bottom box, and the view's tools get
   their names.
