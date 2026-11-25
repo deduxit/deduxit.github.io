@@ -824,6 +824,22 @@ The author went through this group on 2026-11-25 and found it fine.
   a row per hand-in and a column per problem (c). The current page checks
   one hand-in at a time; the table is my addition.
 
+A proof view looks the same on every board (the author found D13's
+without the controls of ordinary logic, and asked that all boards be
+complete). On D13, D14, D16, D18 and D19 a proof in ordinary logic now
+has the two toggles at the top left and, among its tools, "Steps",
+"Hint", "Close all" with its caret and the switch for weakenings and
+contractions. D15 and the linear sequent a translation opens on D13 have
+the linear toggles, "Cut" and the two-sided switch. On D17 the toggles
+stand in their state and cannot be changed, with the reason on hover: a
+pack sets a problem's calculus.
+
+These controls are complete as a drawing, not as a prover. On these
+boards the toggles' other options lead to the boards that play them, D2
+for a change of logic and D7 for natural deduction; "Steps", "Hint" and
+the switches do nothing; a formula cannot be pressed for its rules.
+Proving by hand is played on D2, D6 and D7.
+
 What these boards compute themselves, with scripts of their own and not
 deduxit: D11 decides by looking for a model of up to three worlds, so a
 sequent that needs four is called valid there; D12 checks terms with `→`
