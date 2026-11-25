@@ -669,11 +669,11 @@ page uses deduxit's normal budget and bounds as its defaults.
 | Draw weakenings and contractions | A switch in the popover | A switch among the view's tools | Settled (D2) |
 | Draw a classical linear proof two-sided | A switch in the popover | A switch among the view's tools | Settled (D6) |
 | Prove in natural deduction, backwards or forwards | Its own panel: goals, numbered lines, two step lists | Press the goal for a rule that works backwards (`→I`, `∧I`, `hyp`); press a line in force for a rule that works forwards (`→E`, `∧E`). A rule that does not apply is greyed, with its reason on hover. "Natural" draws Gentzen's tree and "Fitch" the numbered lines: two drawings of one proof | Settled (D7): "lgtm" |
-| A natural deduction goal's own actions | Beside the goal, as words | A small `?` stands where the goal's rule will be named: at the end of its dashed line in the tree, in the number's place in Fitch's lines. A press opens the same actions as `⊢` does in a sequent calculus. On a goal with no proof the `?` is a red cross | Proposed (D7) |
+| A natural deduction goal's own actions | Beside the goal, as words | A small `?` stands where the goal's rule will be named: at the end of its dashed line in the tree, in the number's place in Fitch's lines. A press opens the same actions as `⊢` does in a sequent calculus. On a goal with no proof the `?` is a red cross | Settled (D7) |
 | Decide a modal sequent | A button in the popover, then a panel | A symbol on the new tab view. The sequent is decided on Enter and again when the system changes. A countermodel is a view of its own, `⊭`, changed by pressing. Where the toggles are stand the system's name and five conditions on what a world sees; the conditions make the system, and a press on the name opens the list of the fifteen | Settled (D11): the author took my recommendation |
 | Prove a valid modal sequent step by step | "Prove it step by step" under the verdict | "Prove step by step" among the tools of a valid sequent makes a view in the labelled calculus | Proposed (D11, the open goal alone) |
-| Check or find a lambda-term | A button in the popover, then a panel | A symbol on the new tab view. One toggle says how often a variable may be used: "Unrestricted", "Linear", "Affine". The box takes a term, which is checked and drawn with its typing derivation, or a type, for which a term is found. "List its terms" among the tools | Proposed (D12) |
-| Work with untyped lambda-terms | Not there, and not in deduxit | A second toggle, "Typed" or "Untyped". An untyped term is reduced step by step, the part reduced next in lapis, with "Next step" and "To the end" as for cut elimination; a line says which simple type it would have, or that none fits | Proposed (D12); needs deduxit, asked for |
+| Check or find a lambda-term | A button in the popover, then a panel | A symbol on the new tab view. One toggle says how often a variable may be used: "Unrestricted", "Linear", "Affine". The box takes a term, which is checked and drawn with its typing derivation, or a type, for which a term is found. "List its terms" among the tools | Settled (D12) |
+| Work with untyped lambda-terms | Not there, and not in deduxit | A second toggle, "Typed" or "Untyped". An untyped term is reduced step by step, the part reduced next in lapis, with "Next step" and "To the end" as for cut elimination; a line says which simple type it would have, or that none fits | Settled as a drawing (D12); needs deduxit, asked for |
 | Prove in rules of one's own | A button in the popover, then a panel | Left out, at least for now (the author) | Left out |
 
 ### 5. Look at a sequent in another way
@@ -787,7 +787,11 @@ implement all of them, and compare when we get there).
   author asked about. deduxit has no untyped terms; the session that
   plans deduxit was asked to put them into its future plans
   (2026-11-25). The board reduces untyped terms with a script of its
-  own, leftmost outermost, up to 24 steps.
+  own, leftmost outermost, up to 24 steps. The author added that System
+  F may be worth having too. It would be a third value of the same
+  toggle; that session has it as a possibility.
+
+The author went through this group on 2026-11-25 and found it fine.
 - **D13**, the other views of a sequent, each computed for the sequent in
   the box.
 - **D14**, views made from a proof: cut elimination, the λ-term and a
