@@ -658,7 +658,8 @@ logic, do the same things: a budget for the search, "Unknown" with
 with no proof, and "Go back". On D6 the cross shows after a split of the
 context that cannot close: the step was legal, and the mark says where
 it led. The boards' budgets are small on purpose (4 steps on D2, 2 on D6)
-so that "Unknown" can be met.
+so that "Unknown" can be met. That is for showing only (the author): the
+page uses deduxit's normal budget and bounds as its defaults.
 
 ### 4. Choose the calculus
 
