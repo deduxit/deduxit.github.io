@@ -817,12 +817,30 @@ while they are open; D11's model stood far under its sequent. The label
 so D13 marks the four translations by letters, Gl, Ku, GG and Ko. D3's
 list still shows `¬¬`.
 
-Once the author had signed in, I played three of the boards in the canvas
-itself. They draw there as in my pictures. On D11a the list of systems,
-a sequent typed and entered, and the changes to the countermodel work;
-on D13 the list of views, a view added and the tableau by hand; on D15c
-the wheel zooms and a drag moves the drawing. The other new boards I have
-not played in the canvas.
+Once the author had signed in, I played all fifteen new boards in the
+canvas itself. They draw there as in my pictures, and every control I
+pressed did what it should: on D11 the list of systems and the five
+conditions, a sequent typed and entered, the changes to the countermodel
+and "Prove step by step"; on D12 the three calculi and a type typed in;
+on D13 the list of views, a view added and the tableau by hand; on D14
+cut elimination to its end, then the proof changed and the view marked
+with "Start again"; on D15 the wheel, a drag and the three sets of zoom
+buttons; on D16 the menu and the panel with "Whole document" and "Copy";
+on D17 a goal finished and "Hand in" in both forms; on D18 the pack's
+title typed, problems ticked, and answers opened from the list and from
+the table.
+
+Two things the canvas showed and I changed. A derivation wider than the
+stage, as D12 draws for a long type, ran off the page; it now scrolls
+sideways in its own box. D11's goal for a proof step by step now reads as
+a labelled sequent, `w0 : □p ⊢ w0 : □□p`.
+
+Not changed: the canvas played the boards 800 pixels wide, and at that
+width D15a's zoom buttons lie over the bottom box and the panels of D16b
+and D18a push the derivation off the stage. The boards are laid out for
+1280 pixels; a narrow window is still to be designed, with the phone's
+width. D18a's pack code stays the same when the pack changes; on the page
+it would follow the pack.
 
 ### What goes
 
