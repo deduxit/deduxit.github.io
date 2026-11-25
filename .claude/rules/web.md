@@ -53,8 +53,9 @@ the page reads.
   of the suite's calls, its `term` call), `suites.test.ts` holds it to `about()`'s `suites`
   (names, prefixes, term calls, parameters, the page's values a part of deduxit's, the start deduxit's default). A new suite
   is an entry there, a variant of `Calculus`, its calls in `api.ts` and the worker's table,
-  and a branch where a call is made; the calculus popover lists the registry. Each suite has
-  one method today; a second method is a field of the link (`k`) and of the shelf's calculus.
+  and a branch where a call is made, and a logic on the new tab view (`LOGICS` in `Frame.tsx`)
+  or a toggle (`Toggles.tsx`) that offers it. Each suite has one method today; a second method
+  is a field of the link (`k`) and of the shelf's calculus.
 - **The ordinary suite** (deduxit's `ordinary_…` calls, LK and LJ for classical,
   intuitionistic and minimal logic) is shown through the shapes the linear stage reads:
   `asView` makes its view a `View` whose goals number their formulas left of ⊢ first, as the
@@ -80,9 +81,8 @@ the page reads.
   `setStructural`, which asks every ordinary proof's view again and changes the setting and
   the views together; a view kept from the other setting maps the drawing's ids to the wrong
   goals.
-- **A finished proof's λ-term** is the last item of the bottom band's Export menu, not an action
-  of its own: with Learn on every label shows, and at 1280 pixels the band had 25 pixels left,
-  less than any action (`learn.spec.ts` holds it to one row). It is read by the suite's own call
+- **A finished proof's λ-term** is the last item of the Export panel (`ExportMenu` in
+  `Panels.tsx`), not a tool of its own. It is read by the suite's own call
   (`Suite.term`: `term`, `ordinary_term`), keyed on the session document so that a changed proof
   is read again; the judgement shows only while the term read is the current proof's
   (`term.loading`: Solid's resource keeps its last value while it reads again), and "copied"
@@ -90,7 +90,7 @@ the page reads.
   `{"error": …}`, not a throw; the item is then off and words its `details.reason` (`noTerm` in
   `words.ts`). A new suite with terms is its `term` in the registry, nothing in the menu.
 - **The exports' forms** are deduxit's `Form` in the export settings (`exportSettings` in
-  `BottomBand.tsx`): LaTeX and Typst are fragments to paste (`styles.latex.form`,
+  `Panels.tsx`): LaTeX and Typst are fragments to paste (`styles.latex.form`,
   `styles.typst.form`: `fragment`), each followed by a "Whole document" item (`standalone`,
   the class `sub`); every Rocq file, the proof's and a refutation's, is `standalone`, so it
   has its import and compiles alone. Each item's detail names what the file needs.
@@ -105,19 +105,19 @@ the page reads.
   font, as a picture (`role="img"`, deduxit's `<title>` and `<desc>`), with one sentence under it
   (`figcaption`); the note's sentence then points at it. The drawing's colours are the stage's
   (`.countermodel-drawing`), the model's world in the net's highlight. Its Rocq certificate is
-  the Export menu's "Countermodel" (`ordinary_model_certificate`, standalone), shown for an
-  ordinary proof only, greyed until a goal's close or hint found one. The class `.model` is
-  Learn's: the figure's are `.countermodel*`. `tests/states.ts`'s ordinary walk ends on it.
+  the Export panel's "Countermodel" (`ordinary_model_certificate`, standalone), shown for an
+  ordinary proof only, greyed until a goal's close or hint found one. The figure's classes are
+  `.countermodel*`. `tests/states.ts`'s ordinary walk ends on it.
 - **A classical proof's truth table and tableau are views of the stage, not a method of the
-  tab** (`Methods.tsx`, `src/lib/methods.ts`): the tablist offers Table and Tableau beside Tree
-  and Net for a started proof of classical ordinary logic alone (`decidable` in `Stage.tsx`),
-  `ui.tab` holds `table` or `tableau`, and the stage puts its panel (`.method`) in the drawing's
+  tab** (`Methods.tsx`, `src/lib/methods.ts`): "+ view" offers Truth table and Tableau, and
+  adds each as a rail cell, for a started proof of classical ordinary logic alone (`decidable`
+  in `Stage.tsx`), `ui.tab` holds `table` or `tableau`, and the stage puts its panel (`.method`) in the drawing's
   place, the camera, the formulas' buttons and the dock hidden (`data-method`), the proof kept
   as it was. The panel asks deduxit's `ordinary_table` or `ordinary_tableau` with the session's
   sequent (`sequentText`) and shows the verdict in one sentence that names the values (the
   cognitive load: no searching the table for the row), the table (the atoms, then the formulas
   left of ⊢ and right of it, not every subformula) or the tree (numbered signed lines, a split
-  as two branches side by side, stacked on a phone), and under a sequent that is not valid the
+  as two branches side by side, stacked in a compact window), and under a sequent that is not valid the
   countermodel (`ModelFigure`, `Countermodel.tsx`). A table past deduxit's `table_atoms` says so
   and draws on request up to 14 atoms (`MOST_ATOMS`) by sending the bound raised. They are views
   and not a method of the tab (the registry's `methods`, the link's `k`) because they decide at
@@ -125,16 +125,16 @@ the page reads.
   visitor who does not press them nothing (the author's rule: not overwhelming). A model the
   views build is made once (`createMemo`): a prop is a getter read at every use, and the table
   built afresh per cell took 27 s for 2048 rows.
-- **A classical proof's translations and interpolant are two sheets over the stage, asked for in
-  the tab's Logic popover alone** (`Transforms.tsx`, `src/lib/transforms.ts`): under the switches of
-  a started classical ordinary proof, "Translate into intuitionistic logic" and "Find an
-  interpolant" set `ui.menu` to `translate` or `interpolate`, a `.menu.transform` sheet as Practice
-  is (light dismiss, Escape), its title taking the focus. Not a view tab: the stage's row of views
-  is full on a phone (364 of 375 pixels with Table and Tableau), and a visitor who does not ask
-  meets nothing new (the author's rule: not overwhelming). Each answer opens with its verdict
+- **A classical proof's translations and interpolant are two sheets over the stage, asked for
+  from "+ view" alone** (`Transforms.tsx`, `src/lib/transforms.ts`): for a started classical
+  ordinary proof, its "Into intuitionistic logic" (Translate group) and "Interpolant" (Read off
+  group) set `ui.menu` to `translate` or `interpolate`, a `.menu.transform` sheet (light
+  dismiss, Escape), its title taking the focus. Not rail cells (they are panels until they
+  become views of their own), and a visitor who does not ask meets nothing new (the author's
+  rule: not overwhelming). Each answer opens with its verdict
   sentence (`method-verdict`, `role="status"`): a translation's two verdicts and that they agree,
   then the translated sequent large, "Prove it in <logic>" (`prover.open` with the target's
-  calculus: a new tab, no `origin`), one line per logic and the target's Kripke model where it is
+  calculus: a new chip, no `origin`), one line per logic and the target's Kripke model where it is
   not valid (the classical one in words); an interpolant's keyword, the formula large, its three
   checks (its atoms, then the two halves deduxit decided, `first` and `second`, written from
   their own sequents). The translations are offered Glivenko, Kuroda, Gödel–Gentzen, Kolmogorov,
@@ -142,8 +142,8 @@ the page reads.
   the partition is a toggle per formula (`aria-pressed` for part 1, its number written before it,
   part 2 dashed), Craig's split (the formulas left of ⊢) at the start and again for each new
   sequent. Both calls are sent `{}` as settings, as the table's are.
-- **A classical proof's normal forms and resolution are two more sheets from the Logic popover**
-  (`Clausal.tsx`, `src/lib/clausal.ts`), beside the translation's and the interpolant's and
+- **A classical proof's normal forms and resolution are two more sheets from "+ view"** (Decide
+  group; `Clausal.tsx`, `src/lib/clausal.ts`), beside the translation's and the interpolant's and
   built from their parts (`Sheet`, `Verdict`, `Refused`, `answered`, `classicalSequent`, exported
   by `Transforms.tsx`): "Rewrite into a normal form" and "Refute by resolution" set `ui.menu` to
   `normalize` or `resolve`. Nothing of them shows before a visitor presses one (the author's
@@ -172,31 +172,28 @@ the page reads.
 - **A calculus of one's own** (deduxit's `rules_…` calls, `src/lib/custom.ts`,
   `src/islands/Custom.tsx`) is the registry's suite `rules`, its parameter the rule file's
   `name` (any name of at most 64 characters: `calculusOf` takes it, the built-in names are its
-  `values`). It has no segment on the calculus's segmented control (`Suite.segment`): the
-  popover's one button "Your own calculus" opens it, so a visitor who never presses it sees
-  nothing else of it (the author's rule: not overwhelming). Its proof keeps its work in
-  `Proof.custom` (the rule file as typed, the assumptions, the session, and never stored its
-  view, verdict, problem and goal), never in `Proof.session`, so no linear or ordinary call
-  ever gets such a session and every code path that reads `session` sees the proof as not
-  started; the stage shows `CustomPanel` in the drawing's place (`data-method="custom"`, its
-  tabs hidden). The panel's first screen says what a rule file is in one sentence and starts
-  from LJ or the tableau (`STARTERS`, the example goals `EXAMPLES`); the goal is typed in the
-  sequent field, the file and the assumptions are closed `<details>` under it. Once started:
-  the drawing (`rules_draw`, deduxit's `<title>` and `<desc>`), the open goals, the steps
-  deduxit offers for the goal chosen (`distinctSteps`: one button per text), a step that needs
-  values asks for each by name (`step_needs`), "Close by a hypothesis", the bottom band's Undo
+  `values`). The page has no entry for it: the new tab view offers four logics, and the panel
+  is reached only by proving a valid modal sequent step by step (below). Its proof keeps its
+  work in `Proof.custom` (the rule file as typed, the assumptions, the session, and never
+  stored its view, verdict, problem and goal), never in `Proof.session`, so no linear or
+  ordinary call ever gets such a session and every code path that reads `session` sees the
+  proof as not started; the stage shows `CustomPanel` in the drawing's place
+  (`data-method="custom"`). The file and the assumptions are closed `<details>` in it. Once
+  started: the drawing (`rules_draw`, deduxit's `<title>` and `<desc>`), the open goals, the
+  steps deduxit offers for the goal chosen (`distinctSteps`: one button per text), a step that
+  needs values asks for each by name (`step_needs`), "Close by a hypothesis", the tools' Undo
   (the last step: the session keeps no branches apart), and the finished derivation's check,
   "Valid in the calculus given". The session holds the rule file, so the link (`u=rules`,
   `m=` the name, `d=` the session) and the shelf (`StoredProof.custom`) keep the calculus with
   the proof; reading either back runs `rules_view`, which checks every step again. A link
   without a session restores a built-in calculus's goal, not a file of one's own.
 - **Natural deduction is the ordinary suite's second method** (`Method` `"natural"`,
-  `src/lib/natural.ts`, `src/islands/Natural.tsx`): one button of the calculus popover,
-  "Natural deduction", pressed beside the logic, so a visitor who never presses it sees nothing
-  new (the author's rule). The proof's ordinary session still starts as before (it parses the
+  `src/lib/natural.ts`, `src/islands/Natural.tsx`): the "Natural" toggle of ordinary logic's
+  method (`Toggles.tsx`, beside the logic), so a visitor who never presses it sees nothing new
+  (the author's rule). The proof's ordinary session still starts as before (it parses the
   sequent and holds its form); with the method natural the stage shows `NaturalView` in the
-  drawing's place (`data-method="natural"`, its tabs hidden), and the bottom band's proof
-  actions and their keys stand aside (they would act on the sequent calculus proof the stage
+  drawing's place (`data-method="natural"`), and the tools' proof actions and their keys stand
+  aside (they would act on the sequent calculus proof the stage
   does not show). The view starts a session of NK, NJ or NM (`CALCULI`, by the logic) on the
   sequent (`problemOf`: the formulas left of ⊢ the assumptions, the one right of it the goal, ⊥
   for none and the disjunction for several, said in a sentence), kept for the visit in a
@@ -214,10 +211,9 @@ the page reads.
   drawing shown (`rules_export`).
 - **Modal logic** (deduxit's `modal_…` calls, `src/lib/modal.ts`, `src/islands/Modal.tsx`) is
   the registry's suite `modal`, its parameter `system` (the fifteen names, `K` the default), the
-  method `sequent` (the labelled sequent calculus). Like a calculus of one's own it has no
-  segment: the popover's button "Modal logic" opens it, and with it the one switch, a chooser of
-  the systems each named with its conditions (`systemWords`); a visitor who never presses it sees
-  nothing of it (the author's rule). Its proof keeps its work in `Proof.modal` (the statement
+  method `sequent` (the labelled sequent calculus). The new tab view's "Modal logic" chooses it,
+  and its toggle (`Toggles.tsx`) is a chooser of the systems each named with its conditions
+  (`systemWords`); a visitor who never presses it sees nothing of it (the author's rule). Its proof keeps its work in `Proof.modal` (the statement
   `modal_read` wrote, the outcome, the model being edited, the world to check at, the last
   check), never in `Proof.session`; only the sequent and the system are stored and linked
   (`u=modal&m=S4&s=…`, no `d`), and a stored or linked one is decided again when read
@@ -234,8 +230,9 @@ the page reads.
   are the registry's suite `lambda`, its parameter `calculus` (`simple`, the default, `linear`,
   `affine`), the method `typing` (deduxit draws the typing derivation from the term; nobody
   builds it), which a link writes by leaving the method out (`calculusOf` takes the suite's first
-  method where none is named). No segment: the popover's button "Lambda-terms" opens it, with a
-  select of the calculi; a visitor who never presses it sees nothing of it (the author's rule).
+  method where none is named). The new tab view's "Lambda-terms" chooses it, and its toggle
+  (`Toggles.tsx`) selects the calculus; a visitor who never presses it sees nothing of it (the
+  author's rule).
   The field's text is a term or a type (`isTerm`: a `λ`, a `\` that is no half of `/\` or `\/`, a
   `:`, or a pair's bracket that is no `<->`); a term is read (`lambda_read`) and checked
   (`lambda_check`), a type read (`lambda_read_type`) and its term found (`lambda_inhabit`), then
@@ -285,11 +282,10 @@ the page reads.
   ordinary model in the drawing's place, from `ui.modelSeed` (the model, the sequent as text
   or JSON, the logic, whether deduxit found it). `ModelFigure`'s "Change this model and check
   it" opens a countermodel there (from the stage's note, the truth table, the tableau and the
-  transformations' sheets, which it closes); the calculus popover's "Check a model" opens one
-  world against the started ordinary sequent. The check is `ordinary_model`; its
+  transformations' sheets, which it closes); "+ view"'s "A model of your own" adds one world
+  against the started ordinary sequent as a rail cell. The check is `ordinary_model`; its
   `invalid_model` refusal is said as "No model of … logic" with deduxit's reason
-  (`refusalWords`). A "Model" tab shows only while the view does; Tree, or another proof on
-  the stage, leaves it.
+  (`refusalWords`).
 - **Course packs** (`src/lib/pack.ts` the formats, `src/islands/Packs.tsx` the runtime and its
   sheets, `PacksContext`): a pack `{"pack": 1, "title", "search", "problems": [{"suite",
   "parameter", "sequent"}]}` is `#v=4&k=…`, a hand-in `{"handin": 1, "pack", "answers"}` is
@@ -303,15 +299,14 @@ the page reads.
   - The limits are the prover's (`Limits`, `prover.restrict`, `NO_LIMITS` without a pack): every
     action that searches (`close`, `closeAll`, `fill`, `hint`, the hint ladder in `App.tsx`) or
     changes a started problem's sequent or calculus (`submit`, `setCalculus`) asks first and says
-    the reason on the tab's banner, so a key does no more than a button; the buttons are greyed
-    with the reason as their tip, and the calculus popover says the reason in place of its
-    switches. `modalSteps`, `customFrom` and `showModalStatement` ask `fixed` too (each would
-    turn a pack's tab into another calculus). deduxit's table and tableau decide, so the stage's
-    Table and Tableau tabs are not offered where the search is barred (`decidable`). The
+    the reason on the proof's banner, so a key does no more than a button; the tools are greyed
+    with the reason as their tip. `modalSteps`, `customFrom` and `showModalStatement` ask `fixed`
+    too (each would turn a pack's tab into another calculus). deduxit's table and tableau
+    decide, so "+ view" does not offer them where the search is barred (`decidable`). The
     invertible rules applied by themselves are barred with the search (the author, 2026-11-16):
     `invertibleOn(id)` is the setting less a pack's bar, and every call's `json`, the undo's
     grouping and `setInvertible`'s run read it, so the setting stays the visitor's elsewhere and
-    the Settings sheet says "This pack asks for every step by hand."; a hand-in whose session
+    the Settings page says "This pack asks for every step by hand."; a hand-in whose session
     holds such steps is still a proof, and the check view takes it. A modal
     problem with the search barred is not decided (`startModal`): the editor is open, empty, its
     tab's status "Undecided: find a model", and the model the student makes is the answer; a
@@ -327,23 +322,23 @@ the page reads.
     hand-in is the student's too: the view shows its code (`packCode`, 48 bits of SHA-256 of
     `packText`), which the teacher compares with the code their own sheet showed.
   - A hand-in imported (the Import panel, a file dropped on the stage, `isHandin` by its first
-    key) opens the check view and leaves the open tabs alone; "Open the answer" opens one on a
+    key) opens the check view and leaves the open sequents alone; "Open the answer" opens one on a
     tab of its own.
 - **The embed**: `&e=1` on any link sets `data-embed` on the root: no earlier visit set aside,
-  the bottom band's site group (`.group.site`: Practice, Learn, the tour, the keys, About), the
-  restore bar and the new-tab button hidden, an "Open in deduxit" link, and the links the page
+  the top row's new-chip button and the new tab view's actions (`.new-actions`) hidden, an "Open
+  in deduxit" link, and the links the page
   writes keep `&e=1`. GitHub Pages sets no header, and a `<meta>` CSP cannot carry
   `frame-ancestors`, so any page may frame it; the page in a frame reads and keeps only its own
   partitioned storage.
 - **Print** (`@media print` in `app.css`, last in the file): the light scheme whatever
-  `data-theme` says, no band, menu, pack bar or stage controls (the selectors weigh what the
-  screen's `.band.top` and `.menu.transform` weigh, and come later); with the course pack's sheet
+  `data-theme` says, no top row, rail, tools, panel, pack bar or stage controls (the selectors
+  weigh what the screen's rules weigh, and come later); with the course pack's sheet
   open, its handout alone (`.pk-handout`, `print-only`: the title, each problem and its calculus,
   the link and the code), drawn at the body's end through a `Portal` so that it flows over
   pages, everything else in the body left out.
 - **A tableau written by hand** (`TableauCheck.tsx`, `src/lib/written.ts`, `ui.tab`
-  `"written"`): "Check a tableau" in the calculus popover of a started classical sequent opens
-  it in the drawing's place, a "Your tableau" tab while it shows. It begins with the sequent's
+  `"written"`): "Tableau by hand" in "+ view" for a started classical sequent adds it as a rail
+  cell, in the drawing's place. It begins with the sequent's
   own lines (`startLines`, the root lines of `ordinary_tableau`'s tableau that cite no line;
   deduxit's tableau itself is not shown), and `ordinary_tableau_review(text, sequent, settings)`
   reviews it: `closed` and `open` right and finished (an open one's `countermodel` opens in the
@@ -364,8 +359,8 @@ the page reads.
 - **A modal tab in the workspace** joins as its statement (`modal.sequent`) and its decision
   (`modal.decide`, `joinedModal`), which the page runs at once (`runNodes`): it has no work
   node, so `rowsOf` takes a tab's node as `isTabNode` (class `work`, or `modal.decide`), and
-  nothing of it is in `work()`. "Duplicate this proof" (in the popover once decided) adds a
-  second decision on the same statement and opens it on a new tab (`openModalNode`, which
+  nothing of it is in `work()`. "A copy of this proof" ("+ view", once decided) adds a
+  second decision on the same statement and opens it on a new chip (`openModalNode`, which
   reads the statement above the node and decides it there). Its key is the system and the text
   (`modalOf`): the owner's change sets the given statement and runs its decision; a copy is the
   same recipe on the same statement, which the library's cache makes one record, so the copy
@@ -380,8 +375,8 @@ the page reads.
 - **The registry reads every linear mode deduxit's `about` lists** (the switches build six; a
   session pasted in cyclic linear logic or the Lambek calculus opens and is stored as one), and
   `parseShelf` leaves out a proof it cannot read alone, never the whole shelf.
-- **The sequent field's examples** are `src/content/examples.json` (the menu beside the field
-  of a tab of a suite Practice does not serve), each with deduxit's verdict in every logic,
+- **The sequent field's examples** are `src/content/examples.json` (`Examples` in
+  `Frame.tsx`: with the guide on and ordinary logic chosen, over the bottom box), each with deduxit's verdict in every logic,
   held by `src/content/examples.test.ts`; the file's order is the menu's.
 
 ## The step tree (`src/lib/steps.ts`)
@@ -431,8 +426,8 @@ the page reads.
   (each cut's inference and formula in the mode's syntax) and give a cut `{formula, left,
   made}`, `left` found by `leftOf` with one formula of each premise's own (the cut formula
   and its dual). deduxit's `start` on the session's sequent leaves its cut formulas out, so
-  the replayed cut makes the same occurrences. Learn's worked proofs pass their stored
-  session's view too (below).
+  the replayed cut makes the same occurrences. A worked proof (`prover.worked`) passes its
+  stored session's view too (below).
 
 - **At first order** a replay compares what a step made by occurrence (`madeOf` with the
   view's `forest`, each premise sorted): a replay that leaves a step out numbers the members
@@ -453,14 +448,60 @@ the page reads.
   reported, as a propositional one is. A cut on an instance names its body's member: its
   block starts `depth` binders before it (`occurrenceOf`).
 - **A worked proof's actions are read with its session's view** (`prover.worked` in
-  `state.tsx` asks `view` of the stored session, as Watch reads the opened one's): without
-  the view's `cuts` a cut has no formula to replay, and without its `opened` and `forest` a
-  witness replays open. A lesson's own `actionsOf(session)` without the view serves only for
-  paths and the count of steps.
+  `state.tsx` asks `view` of the stored session): without the view's `cuts` a cut has no
+  formula to replay, and without its `opened` and `forest` a witness replays open.
+  `actionsOf(session)` without the view serves only for paths and the count of steps.
 - **The worker loads the module once more past the HTTP cache** when the first load fails:
   Chromium sometimes fails to write the 6.9 MB module to its cache
   (`net::ERR_CACHE_WRITE_FAILURE`), which aborts the streaming compile; about one load in
   twenty in a fresh Playwright context did, and About's version line never came.
+
+## The frame (`src/islands/Frame.tsx`, `App.tsx`)
+
+The design guide (`design/redesign.md`, "The frame", "Window sizes", "Keys") is the spec; where a
+board and the guide disagree, the guide holds.
+
+- **A chip is a proof** (`state.proofs`): the top row's tab list (`role=tablist`, the arrow keys
+  move and choose, `rove` in `Frame.tsx`), each named with its state ("…, 1 goal open",
+  "proved", "refuted"). A proof not yet entered (`started()` false: no session, no modal or
+  lambda decision) shows **the new tab view** in the stage's place: the four logics (pressing one
+  sets the proof's calculus), "Open a file", "Restore N proofs", Learn and Practice inactive
+  ("Coming soon", said in a notice when pressed, since a hover follows no touch), About. "+" and
+  the word mark (a plain link to `/`, taken in place) reuse an empty proof before adding one.
+- **The toggles** (`Toggles.tsx`) stand at the stage's top left on the new tab view and on a
+  proof: ordinary logic's method and logic, linear logic's logic, Mix and Affine, modal logic's
+  system, lambda's use. A change with steps still asks first (`ui.pendingCalculus`, "Restart the
+  proof"); the guide's view beside the present one is later work. Structural rules and
+  two-sided are the tools' "W C" and "Two-sided"; Cut is a tool.
+- **The rail's cells are views** (`cellsOf`): the proof (named by its calculus, LK, LL, NJ), its
+  net once finished (one capsule with the proof), and the views added by "+ view"
+  (`ui.added[proof]`: truth table, tableau, tableau by hand, a model), each a `ui.tab`. "+ view"
+  (`ui.menu === "views"`) lists the views grouped as the guide groups them, a faint entry with
+  its reason; the sheets of a translation, an interpolant, a normal form and resolution open from
+  it as panels until they become views of their own.
+- **The tools** (`Tools`) are a toolbar (one stop of Tab, the arrow keys move), each with
+  `aria-keyshortcuts` and its key in its hover; with the guide on (`Settings.guide`, the top row's
+  "?") each shows its name. A compact window makes them a bar of Undo, Redo, Hint, Close all and
+  More, the rest (`data-rare`) in More's row (`ui.more`); a short window keeps the column with
+  the same split.
+- **Panels** (`ui.menu`: steps, search, export, import, the sheets, packs) stand left of the
+  tools; in an expanded window the stage's box shrinks so that the drawing moves aside (the
+  stage refits on its resize), in a medium one a panel lies over it, in a compact one it is a
+  sheet above the bar. The Settings page and the dialogs (keys, About) are `ui.menu` too.
+- **The bottom box** binds the proof's `input`; Enter submits it (a session or a sequent in
+  deduxit's JSON opens), and once it reads, the box writes it in signs (`inSigns`). The notes
+  above it: the box's problem (with its place marked; the box takes the bad edge), the banner, a
+  verdict, a notice (`ui.notice`, with an Undo where one exists, cleared by the next change).
+- **Keys** (`src/lib/keys.ts`, `keyAction`): the guide's table, a letter read by
+  `KeyboardEvent.key`, nothing in a field (Escape leaves it), nothing with Alt (AltGr), nothing
+  while composing; Settings' "Single keys" (`Settings.singleKeys`, on at first) turns off every
+  key but those with Ctrl or Cmd. `?` and Ctrl+/ open the list, whose first row is the guide's
+  switch. The zoom's keys are the stage's.
+- **Restore** (`App.tsx`): each visit holds a Web Lock named by its shelf key
+  (`prover.shelfKey()`, held until the page closes; again after `leave()`). A plain visit (no
+  fragment) with no other shelf key's lock held restores the last visit's proofs by itself;
+  otherwise the new tab view offers them. Settings' "Close every sequent" is `leave()`, whose
+  proofs are then the ones to restore: the notice's Undo restores them.
 
 ## The drawing and the stage (`src/islands/Stage.tsx`)
 
@@ -468,13 +509,13 @@ the page reads.
   and every formula of an open goal gets an HTML button over it, placed from the
   element `#i<n>-<p>`'s box (`view.inferences[n]` is the goal `i<n>` draws). The drawing
   is asked with `styles.svg.font_size` 30, so a formula is a 24-pixel target at 100 %.
-- **Colours that carry a meaning** (the verdicts, the selection and active goal, Learn's
-  frame, the nets) stay apart from the colours seen with them under simulated protanopia,
+- **Colours that carry a meaning** (the verdicts, the selection and active goal, the
+  nets) stay apart from the colours seen with them under simulated protanopia,
   deuteranopia and tritanopia: `src/styles/colours.test.ts` holds the tokens to it, with
   Machado, Oliveira and Fernandes's matrices (severity 1.0, the authors' own table; their
   paper does not claim tritanopia, the matrix is used as published) on linear RGB and the
   distance in OKLab, 8 under a deficiency and 15 in full colour, by groups of colours seen
-  together: a net's colours with each other and with the bands' state and selection colours
+  together: a net's colours with each other and with the verdicts' and the selection's colours
   around them. Each meaning has a word, a sign or a shape beside it: a tab's state is a shape
   (`STATE_MARKS`, a check, a cross, a question mark, a dotted circle, a dashed one), a
   hint's rungs a bar or a hairline. A new colour of meaning joins a group of the test.
@@ -483,7 +524,7 @@ the page reads.
   own and never `var(--color-accent)`. It stays out of `colours.test.ts`'s groups, since no
   Okabe-Ito blue of the nets can clear it and it marks nothing (WCAG agrees: SC 1.4.3 exempts
   a logotype, SC 1.4.11's Understanding treats it alike); instead the test holds it to 3:1 on
-  the band and the field in both schemes, and to the `.logo` rule alone: no other rule, token
+  the paper and the field in both schemes, and to the `.logo` rule alone: no other rule, token
   or component may name it, so the exemption cannot reach a colour of meaning. Decided by the
   planning session on 2026-11-09 for the author's review (it departs from the design, where
   the violet logo was paired with every colour of meaning and exempt only beside the equal
@@ -512,7 +553,7 @@ the page reads.
   button with its tip and a line under them for a touch. The stage and the exports draw with
   it, and the stage refits when it changes (a look can add rows).
 - The split chooser sits under the goal's row, never beside a formula of it (the
-  formulas are what it is clicked on); on a stage under 640 px both popovers are a sheet
+  formulas are what it is clicked on); in a compact window both popovers are a sheet
   at its bottom. The witness chooser (`ui.witnessing`, a rule offered with `witness`) is
   the cut chooser's twin: the term typed in the formulas' font, Apply, Leave open (`$1`),
   and deduxit's refusal said in it (`witnessed` in the state returns it); it takes the
@@ -539,7 +580,7 @@ the page reads.
   `openGoal`), while the Steps list, the formulas' accessible names and the live region keep
   deduxit's ids ("goal 3"): the bar answers "how many are left", the ids name a goal across
   steps. On a phone the bar keeps one row, "Goal N" (the same place among the open ones), the
-  count being the tab's status (`phone.spec.ts` measures the row with Cut in it).
+  count being the chip's state (`phone.spec.ts` measures the row with Cut in it).
 - Solid's narrowed accessor in `<Show>{(x) => …}` goes stale once its condition is false:
   read it before the handler changes what the condition reads (the restart warning).
 
@@ -582,11 +623,6 @@ the page reads.
   ordinary proof a goal inside a step's own run (the contraction under `¬L`, say) reopens as
   the step's goal, below it: the walk keeps each reopened goal's answer by its path, asks it
   once, and the note goes to the goal reopened, never to the path the walk asked.
-- **The empty stage offers "Start lesson 1" and "Take the tour" as buttons** with Learn off and
-  no tour running, beside the syntax line; neither starts by itself (the empty state of
-  NN/g's guidelines). Their names contain "tour" and "lesson", so a test that finds the band's
-  Tour by name passes `exact: true`.
-
 ## The state (`src/islands/state.tsx`)
 
 - **A goal's formula is shown as it reads** (`shown` in `src/lib/words.ts`): in
@@ -606,16 +642,15 @@ the page reads.
   keeps `pretty`'s text, which it does; `forall x.` and `exists x.` as `∀x.` and `∃x.`.
 
 - **Light dismiss** (`App.tsx`, one capture `pointerdown` on the document): a press outside
-  what is open closes it as Escape does: the menu or pane (`ui.menu`, inside: `.menu`, the
-  bands' popovers `.status-pop`/`.calc-pop`, and any `[aria-expanded=true]` toggle but a
-  formula's), the restart warning (inside: it and the calculus's switches), and the rule
-  popover or split chooser (inside: the stage's `.pop` and every formula's button, by which
-  a rule or a side is chosen); the tour's caption is inside everything. A press on the stage
-  that closes something does nothing else: its `pointerdown` stops there (no pan) and its
-  `click` is swallowed (no formula picked, no stage button pressed); a press on a band's
-  button closes and acts. A toggle must carry `aria-expanded`, or its own press would close
-  its menu before its click opens it again. On a phone some sheets (About) cover the whole
-  stage, so outside is the bands; `tests/dismiss.spec.ts` presses there then.
+  what is open closes it as Escape does: a panel or dialog (`ui.menu`, inside: `.menu`,
+  `.dialog`, and any `[aria-expanded=true]` toggle but a formula's; the Settings page is a
+  page and only its own button leaves it), More's row (inside: `.tools`), the restart warning
+  (inside: it and the toggles), and the rule popover or split chooser (inside: the stage's
+  `.pop` and every formula's button, by which a rule or a side is chosen); the tour's caption
+  is inside everything. A press on the stage that closes something does nothing else: its
+  `pointerdown` stops there (no pan) and its `click` is swallowed (no formula picked, no stage
+  button pressed); a press on a button of the frame closes and acts. A toggle must carry
+  `aria-expanded`, or its own press would close its menu before its click opens it again.
 - **The first-order bounds** are Settings' "Witness depth", "Instances" and "Terms"
   (`search.witness_depth`, `search.instances`, `limits.terms`), deduxit's tab defaults (64,
   2¹⁶, a million) and sent only where changed, so every other call's settings read as
@@ -633,8 +668,7 @@ the page reads.
   page does. The hint ladder's first rung reads deduxit's judgement of the hinted rule
   (`Hint.invertible`), not a list of names, and with the switch on says that the invertible
   rules are done.
-- **The Two-sided switch** is on the calculus's popover in classical mode alone
-  (`Calculus.tsx`), a setting of the tab (`Settings.twoSided`, off by default, stored with
+- **The Two-sided switch** is a tool ("Two-sided", `Frame.tsx`), a setting of the tab (`Settings.twoSided`, off by default, stored with
   the others), not of the proof: it changes no session and restarts nothing. While it is on,
   `viewJson` adds `view.classical: "two"` to `json()`, the stage's `drawSettings` and the
   exports' settings, and deduxit draws the derivation two-sided as the sequent was typed
@@ -642,16 +676,15 @@ the page reads.
   `start`, so turning the switch on redraws any proof at any point.
 - **One action that changes a proof at a time** (`guard`): each reads the session, waits on
   the worker and shows the answer, so a second begun meanwhile would build on a session
-  the first replaces. An action asked for while one runs does nothing; the bottom band's
-  buttons wait on `busy`, and the dock shows "Stop the search" instead of the close.
+  the first replaces. An action asked for while one runs does nothing; the tools wait on
+  `busy`, and the dock shows "Stop the search" instead of the close.
 
 ## The workspace of linked tabs (`src/lib/workspace.ts`, `src/islands/Workspace.tsx`)
 
-- **Nothing of it before the first link**: no document, no call, no button. A link is made by
+- **Nothing of it before the first link**: no document, no call. A link is made by
   "Prove it in ⟨logic⟩" on the translation's sheet (`proveTranslation`: the shown tab joined,
   `ordinary.translate` and `ordinary.start` on it, one action "translation", the line's check
-  made at once) and by "Duplicate this proof" in the Logic popover (`duplicate`, one action
-  "copy"). deduxit's design is `plan/notes/63g-design.md` (sections 12 to 15) in deduxit.
+  made at once) and by "A copy of this proof" in "+ view" (`duplicate`, one action "copy"). deduxit's design is `plan/notes/63g-design.md` (sections 12 to 15) in deduxit.
 - **A linked tab is a proof node** (`ordinary.start`, class `work`) of deduxit's workspace
   document; its sequent is the node above it, given (a tab the visitor typed in) or made (a
   translation). `state.tabs` maps a tab's id to its node; `rowsOf` reads the rows, each with the
@@ -679,20 +712,13 @@ the page reads.
   parked tab whose node comes back is linked again after it shows the session back (the write
   runs the change's effect, which would read the tab's own sequent as a change).
 - **What needs no search is made again by itself** after every action (`remake`: the instant
-  derived nodes not current); a proof is started again only by Start again (Update when it has no
-  steps); a check by Check.
-- **The panel docks** left of the stage (`.ws-stage`, `--size-workspace`) where the window is at
-  least `DOCK_WIDTH` (960) wide and Learn is off, shown by itself at the visit's first link;
-  else it is the sheet `ui.menu === "workspace"` from the Workspace button, which names the count
-  and the tabs out of date and takes the warn style. Its Undo and Redo say the action's name,
-  and "Undoing …" (`undoing`, both disabled, the pressed one `aria-busy`) until the tabs show the
-  change: the call, the tabs' sessions shown again and the view read can take seconds. The name
-  is kept as pressed, since the view names the next action as soon as it is read again.
-  "Show as graph" from three rows lays the rows in columns over the stage (`WorkspaceGraph`).
+  derived nodes not current).
+- **The page has no workspace panel**: the document and its links work, but nothing shows the
+  rows or a graph of them.
 - **The link** of a linked tab is version 3 (`writeWorkspaceLink`: the tab's whole linked group,
   every tab joined to it by lines either way, packed without results; `n` the shown node); past the limit the
   tab's own link. Arriving (`arrive`) reads it as a claim (`workspace_open`), opens every linked
-  tab, shows the link's and says so in the tab's banner; the panel stays closed.
+  tab as a chip, shows the link's and says so in the proof's banner.
 - `tests/workspace.spec.ts` drives each; `linking` in `tests/states.ts` puts the page in each
   state for axe and the target sizes.
 
@@ -712,7 +738,8 @@ the page reads.
   fragment written, so a `hashchange` to it is ignored). A link pasted into the open page,
   where only the fragment changes, is read on `hashchange` (`pasted`) and opened as a load
   would: `leave` stops the work, closes every proof and starts a new visit, so the closed
-  proofs are in the restore bar ("from your last visit") with those set aside before; a
+  proofs are the ones "Restore N proofs" offers on the new tab view, with those set aside
+  before; a
   fragment that is no link changes nothing. The page's start and each pasted link run one
   after another (`opening`). `prover.spec.ts` sets `location.hash` for it. A test of a link's
   load opens it in a page of its own: `goto` to another fragment of the loaded page opens it
@@ -720,9 +747,10 @@ the page reads.
 - **Autosave** (`src/lib/shelf.ts`, version 2: each proof's `calculus`; a shelf of version 1,
   each proof with a linear `mode`, reads as the linear suite): every visit (tab) saves its open proofs under
   `deduxit-proofs:<visit>`, each with the time, so two tabs never overwrite each other; at a
-  visit's start the other visits' are gathered into `deduxit-proofs-previous` for the restore
-  bar, the copy of a proof saved last winning, and work begun before the visitor answers
-  overwrites nothing. A proof open already (a link's) is taken out of the bar (`prune`). Settings are `deduxit-settings`,
+  visit's start the other visits' are gathered into `deduxit-proofs-previous` to restore (by
+  itself or by "Restore N proofs"), the copy of a proof saved last winning, and work begun
+  before the visitor answers overwrites nothing. A proof open already (a link's) is taken out
+  of them (`prune`). Settings are `deduxit-settings`,
   the theme `deduxit-theme` (read before the first paint by `Base.astro`).
 - **The browser's keys are `deduxit-*`, moved from `linlog-*`** (the prover's rename,
   2026-11-09): `deduxit-settings`, `deduxit-theme`, `deduxit-practice`,
@@ -795,22 +823,23 @@ the page reads.
 
 ## The written content (`src/content/`, CC BY 4.0)
 
+- **The page shows only part of the content today** (see "The tour, About"). The bullets below
+  on problems, lessons, the course format and the stores describe that content and its checks,
+  not a place on the page.
 - **Markdown in content collections** (`src/content.config.ts`): `problems/` (the one store
-  Practice and Learn draw from: a sequent, its mode, deduxit's verdict, a `level` 1 to 4, its
+  Practice and Learn drew from: a sequent, its mode, deduxit's verdict, a `level` 1 to 4, its
   `categories`, the `fragment` deduxit detects; `lesson`/`order` for a lesson's practice,
   `source`/`url` for one from the literature; a provable one's proof beside it as
   `<id>.session.json`), `tour/` (the stops in order, each with the element it points at
-  and the step it performs), `texts/` (About, Practice's opening and Learn's two openings),
-  `lessons/` (Learn's written lessons) and `rules/` (the one-sided rules as schemas).
+  and the step it performs), `texts/` (About, Practice's opening, Learn's two openings),
+  `lessons/` (the written lessons) and `rules/` (the one-sided rules as schemas).
 - **Rendered by `index.astro` into `<template data-written data-content="…">`** and cloned
-  by the island (`Written` in `Learn.tsx`), never set from strings: the content is in the
-  built HTML, where `no-style-attributes`, `csp` and `licences` read it. Only Learn's
-  problems (those with a `lesson`, with their sessions) and the tour's data are the
-  island's props; Practice's problems are `/problems.json` (`src/pages/problems.json.ts`,
-  `offered` in `src/lib/practice.ts`: the provable ones alone), fetched when Practice first
-  opens, so the first load carries none of the 400. The `licence` template is the CC BY
-  line, shown with the content (Learn's frame, Practice); every page with a `data-written`
-  element must link CC BY 4.0 (the `licences` check).
+  by the island (`Written` in `Written.tsx`), never set from strings: the content is in the
+  built HTML, where `no-style-attributes`, `csp` and `licences` read it. The tour's stops, the
+  examples and the rules are the island's props; no problem store is (`/problems.json` and
+  `/ordinary-problems.json` are served by `src/pages/`, but the page fetches none). The
+  `licence` template is the CC BY line; every page with a `data-written` element must link CC
+  BY 4.0 (the `licences` check).
 - **The linear suite's content lives under `src/content/linear/`** (its `problems/`,
   `lessons/` and `rules/`, with `problems.test.ts` and `lessons.test.ts`), moved there
   unchanged when the content was keyed by suite: the collections keep their names and every
@@ -837,38 +866,10 @@ the page reads.
   (`<id>.sequent.json`, `<id>.natural.json`, `<id>.tableau.json`) to `deduxit interact
   --state` and `proof`, which check every step again (`check --calculus` reads a derivation,
   not a session).
-- **Practice follows the current tab's suite** (`createPractice`'s `store`): an ordinary tab's
-  Practice is the ordinary store (`/ordinary-problems.json`, `offeredOrdinary`: every problem,
-  valid or not, to decide), filtered by `ORDINARY_GROUPS` (its connectives and the logic it
-  is posed in, never a verdict), written in the ordinary signs (`prettyOrdinary`; the linear
-  `displayed` writes `~a` as `a⊥`), opening in its logic (`openProblem`); every other tab's is
-  the linear store as before, a calculus of one's own having none. The browser keeps each
-  store's filters and proved problems apart (`practiceKey`: the linear one's key is the old
-  `deduxit-practice`), and an ordinary problem counts as proved in the sequent calculus.
-- **Learn's tutorial follows the current tab's suite**: an ordinary tab's is the ordinary
-  course (`src/islands/Course.tsx`, `ORDINARY_LESSONS` in `content.ts`, a lesson not written
-  yet "to come" as in the linear list); a linear tab's is the linear course as it was, with
-  one line at its end that opens a new ordinary tab; a custom-calculus tab's says in one
-  sentence that it has no course. An ordinary lesson (the collection `ordinaryLessons`,
-  passed as the island's `ordinary` with each worked session's text) plays its worked proof
-  from the finished session alone: `ordinary_undo` takes it back step by step, the states are
-  kept, and step `k` is shown on the lesson's tab (`showOrdinarySession`); a step's rule is the
-  session's history's, which `src/content/ordinary/lessons.test.ts` holds to the lesson's
-  steps. Each method plays on its own stage: `sequent` an ordinary tab
-  (`showOrdinarySession`); `tableau` a session of the calculus `tableau` on a custom tab
-  (`rules_undo`, `showCustomSession`); `natural` an ordinary tab set to natural deduction, the
-  state put into its view's store (`putNatural`, which the view's own start then leaves be);
-  `table` no stage, its rows (each step's rule `holds` or `falsifies`) read in the lesson and
-  the whole table opened at the end, its faded part the last rows predicted without reasons. A
-  goal closed by a line reads `line` ("a line in force"). A natural deduction lesson sets the
-  view's drawing to its `layout` (`setNaturalLayout`; its reasons cite Fitch's line numbers),
-  and a table lesson shows each row's assignment, read off `ordinary_table`. The course stays in
-  Learn from a lesson's opening until the visitor goes to a linear tab
-  (`ordinaryCourseKept`, `leaveOrdinaryCourse`): a tableau's worked proof and practice open on a
-  custom tab, whose tutorial would otherwise be the linear course.
-  Opening an ordinary sequent keeps the calculus's method (`openOrdinary`): a problem opened for
-  natural deduction is proved by it. Practice opens a lesson's problems in its method. Zod stays out of the island (`course.ts` is
-  the content config's and the tests'): Zod 4 probes `new Function`, which the CSP reports.
+- **An ordinary lesson** (the collection `ordinaryLessons`) has a method (`sequent`, `tableau`,
+  `natural` or `table`) and a worked session; `src/content/ordinary/lessons.test.ts` holds a
+  step's rule to the session's history. Zod stays out of the island (`course.ts` is the content
+  config's and the tests'): Zod 4 probes `new Function`, which the CSP reports.
 - **Every problem is decided by the command, and checked twice**: `src/content/linear/problems.test.ts`
   (each verdict and fragment by the module, each session to its sequent, mode and a
   finished proof, the categories to the sequent's connectives and mode, no sequent twice in
@@ -895,10 +896,9 @@ the page reads.
 - **Categories** are the connectives' families the sequent uses (`multiplicatives`,
   `additives`, `units`, `exponentials`, `quantifiers`), its logic (`classical`, `intuitionistic`, and
   `structural` for weakening or Mix) and `literature` for a classic with its source read in
-  the work. Practice filters by groups (`GROUPS`): any chosen within a group, every group at
-  once, and the levels.
-- **A written lesson** (`lessons/<n>-<name>.md`, `LessonView` in `Learn.tsx`) is D56's
-  sequence: its opening (the body; where it holds more than the worked proof shows, the part
+  the work. `GROUPS` (`practice.ts`) groups them for a filter: any chosen within a group, every
+  group at once, and the levels.
+- **A written lesson** (`lessons/<n>-<name>.md`) is D56's sequence: its opening (the body; where it holds more than the worked proof shows, the part
   after its one thematic break `***` stands below the worked proof, `Written`'s `part`, which
   `lessons.test.ts` holds to one break with text above it: lessons 7 to 10), the worked proof (`worked`, a store problem of the same
   lesson, played from its session: `steps` holds one rule and reason per entry of the
@@ -909,7 +909,7 @@ the page reads.
   in the split chooser, which `split_passes` must refuse), and the hinge question (one
   option without a `misconception`; an option's `problem`, when named, is provable exactly
   when the option is right, and a wrong answer that names one offers "Try <its sequent>
-  yourself", opened as a practice problem opens, before "Try the faded proof again"). Every sequent a lesson shows as a problem is a store problem
+  yourself" before "Try the faded proof again"). Every sequent a lesson shows as a problem is a store problem
   with that lesson, so the store's checks cover it. Optional parts: `rewrite` (lesson 1: one
   sentence on how the worked sequent, typed two-sided, reads one-sided, with buttons that
   turn the Two-sided switch on and off for the visit alone, never stored (`setSettings`'s
@@ -924,10 +924,8 @@ the page reads.
   so the visitor watches Unknown and the retry's doublings decide it; the test holds the text's
   budget to the module's answers), `net` (the finished worked proof offers its net),
   `eliminate` (the finished worked proof's cut eliminated by the stage's own cluster, on the
-  derivation and on the net, Learn's panel saying how far each has come; its `cases`, a reason
-  per case by deduxit's snake-case name, go to `ui.cases` while the lesson is open and stand in
-  the cluster under the step's line, `.case-why`, with Learn on; the test holds every case
-  deduxit takes on both views to a reason), `counts` (problems proved with a cut, their cut
+  derivation and on the net; its `cases` are a reason per case by deduxit's snake-case name,
+  and the test holds every case deduxit takes on both views to a reason), `counts` (problems proved with a cut, their cut
   formula and inferences with it, the session's, and without, the `i<n>` ids of the drawing
   `eliminate` reaches; their practice card asks for the cut and, once the visitor's tab
   proves the problem, counts that proof's inferences beside both) and `refusal` (an
@@ -938,21 +936,7 @@ the page reads.
   store keeps no verdict a budget could change, and a lesson problem near the budget is
   replaced, not marked. Formulas in a lesson's or a rule's text
   stand between backticks and are set in the math font (`Words` in `ui.tsx`).
-- **The worked proof plays on a tab of its own** (`prover.worked`: the session replayed to
-  its first steps, the rest on the redo stack for a worked proof or left to the visitor for
-  the faded one; the same tab while it still holds the problem's sequent, so a lesson piles
-  up no tabs). A step is played by the prover's Redo; when the visitor worked on the tab
-  meanwhile, the lesson replays it to where it stands first.
-- **A step's reason stands beside its inference** (`ui.reason`, the `.because` note in
-  `Stage.tsx`, with Learn on): on the rule label's row past the drawing's right edge, under
-  the drawing where the stage has no room there, above the stage's controls on a phone. Never
-  in Learn's panel (D22); the panel says only whether the prediction was right.
-- **Learn's hover explanations** (D47) are on only with Learn on: a formula's button gets
-  `data-tip`, its last connective's name and reading (`readingOf`, a leading `∀` or `∃` taken
-  as the formula's, since a quantifier reaches as far right as it can; `READINGS` in
-  `words.ts`, which `lessons.test.ts` holds to the reference table's reading column). A
-  verdict's reason is a line of the note and of the status (below, under the stage).
-- **Every rule label has a hint, Learn on or off** (`RuleHint.tsx`, the author's request of
+- **Every rule label has a hint** (`RuleHint.tsx`, the author's request of
   2026-11-09): the full name, the schema (`Schema`) and one sentence, from `hintsFor` in
   `src/lib/rules.ts`: the reference's rules (`rules/`) for the one-sided calculus and ILL, its
   own tables for classical linear logic drawn two-sided (the drawing's names; a classical
@@ -961,9 +945,8 @@ the page reads.
   entry there and in the test. A label is hinted by `hinted(label)` (`data-rule-hint` and an
   `aria-describedby` to a hidden sentence per rule, `rule-hint-<code points>`); a press opens
   it only on an element with `data-hint-toggle` (the drawing's label buttons `.lb`, laid over
-  each label as the formulas' buttons are and under them, `RuleName` in Learn's text, the
-  popover's `About <rule>` buttons), since a press on a rule of the popover or a prediction
-  acts. Hover and the keyboard's focus open it anywhere; Escape closes the hint alone; the
+  each label as the formulas' buttons are and under them, the rules popover's `About <rule>`
+  buttons), since a press on a rule of the popover acts. Hover and the keyboard's focus open it anywhere; Escape closes the hint alone; the
   pointer may rest on it (SC 1.4.13). It is no `data-tip`: tips follow no touch, the hint does.
   A drawing's label button is named "Rule ⊗, step 3": the inference `g#i<n>` is step n + 1,
   the number deduxit's `<desc>` gives it (one writer for the linear and the ordinary
@@ -971,44 +954,25 @@ the page reads.
   `hints.spec.ts` holds each name to its line of the description.
 - **The reference's rules** are `rules/<nn>-<name>.md` (deduxit's name, the premises and the
   conclusion as the Handbook's Table 1.4 writes them, deduxit's two-sided names from its
-  `ClassicalRule` table, the lesson), drawn by `Rules` into the reference's `<div
-  data-rules>` through a portal, after the text is cloned (`Written`'s `ready`).
-  The two-sided rules of intuitionistic linear logic (`rules/14-ill-*.md` to `32`, and
+  `ClassicalRule` table, the lesson); the rule hints read them. The page has no reference
+  today. The two-sided rules of intuitionistic linear logic (`rules/14-ill-*.md` to `32`, and
   `36-ill-cut.md` to `40`, the Handbook's Table 1.5 in deduxit's names) carry `oneSided`, the
-  one-sided rule they are, in place of `twoSided`, and are drawn into `<div
-  data-rules-two>`; `lessons.test.ts` holds each to a one-sided rule that lists its name. The
+  one-sided rule they are, in place of `twoSided`; `lessons.test.ts` holds each to a one-sided
+  rule that lists its name. The
   cut and the quantifiers (`33-cut.md` to `35-exists.md`) are Table 1.4's `(cut)`, `(∀₁)` and
   `(∃₁)`; both cuts are named `cut`, and `ruleNamed` takes the two-sided one in an
-  intuitionistic proof, as for every rule. A step's reason is placed beside the rule label, which
-  deduxit draws as a text, or as a group where the name has a subscript (`⊕₁`).
-- **The reference shows every hint a rule label shows** (SC 2.5.8's "equivalent" exception for
-  a label's small button, below): each label's own full name, schema and sentence, from the
-  written rules or from the parts `REFERENCE` in `src/lib/rules.ts` takes from the hints' own
-  tables (Mix and affine weakening, classical linear logic drawn two-sided, the Lambek
-  calculus, LK, LJ). A two-sided name listed under a one-sided rule is no equivalent: its
-  hint's schema is two-sided. The parts are drawn
-  by `HintRules` into `<div data-rules-<key>>` in `texts/reference.md`, in the written rules'
-  form (`RuleItem`). `rules.test.ts` holds every label of every calculus to `inReference`, and
-  each part to its place in the text. A new rule of deduxit gets its hint and a place in the
-  reference; without the place, the axe spec no longer excepts its label's small button.
-- **Learn's practice is a lesson's**: the problems with a `lesson`, under the tutorial's
-  lesson, easiest first, provable and unprovable mixed, never three alike in a row
-  (`problems.test.ts`); a card asks "Has a proof" or "No proof" and answers at once
-  (Right or Not quite, the verdict, the explanation and Watch), the answer kept while the
-  lesson is open. Every
-  lesson from the second has at least two provable problems at level 3 or above. Every
-  unprovable problem has a lesson (the schema refuses one without): Practice never offers
-  it.
-- **Practice** (`Practice.tsx`, `ui.menu === "practice"`, the band's Practice at every
-  width, key P) is a sheet over the stage, outside Learn's frame, so light dismiss and
-  Escape close it as any menu. A problem opens through `prover.example`, a proof of its
-  own, replacing only the page's empty tab. `createPractice` lives as long as the island:
-  the tab a problem opened on marks it proved when it finishes the proof of the problem's
-  sequent with no goal closed by the search (`engines` empty: Close and Close all are not
-  the visitor's proof; steps Hint applied are, as Practice's text says), kept with the
-  filters under `deduxit-practice` (the privacy page
-  lists it).
-- **A goal opens in a new tab** (`openGoal`, the dock's arrow): its formulas as the field
+  intuitionistic proof, as for every rule.
+- **The hints' own tables** (`REFERENCE` in `src/lib/rules.ts`: Mix and affine weakening,
+  classical linear logic drawn two-sided, the Lambek calculus, LK, LJ) hold the parts of the
+  reference that no written rule has. `rules.test.ts` holds every label of every calculus to
+  `inReference`, and each part to its place in the text. A new rule of deduxit gets its hint and
+  a place in the reference.
+- **A lesson's problems**: the problems with a `lesson` go easiest first,
+  provable and unprovable mixed, never three alike in a row (`problems.test.ts`). Every lesson
+  from the second has at least two provable problems at level 3 or above. Every unprovable
+  problem has a lesson (the schema refuses one without), so a store of problems to offer is
+  the provable ones alone.
+- **A goal opens in a new chip** (`openGoal`, the dock's arrow): its formulas as the field
   reads them (`sequentText`, two-sided where they have sides, each formula as its reading,
   deduxit's `reading`, the dual of its one-sided `text` only where there is none), in the same
   calculus, the new
@@ -1022,17 +986,14 @@ the page reads.
   (`own` on its action, set by `actionsFor` from that name), so undo elsewhere keeps it. A
   tab is named by its sequent as the tab shows it, cut to `SHORT` characters (`short`),
   never by its place in the row, which changes as tabs close.
-- **Watch** opens an example's proof taken back to the sequent with each step alone on the
-  redo stack, so Redo plays it; an example opens as a proof of its own, in place of the
-  page's empty one only, so it replaces no work and needs no warning.
 
 ## The engines (`src/lib/engines.ts`)
 
 - An outcome names its engine (`engine`), but a classical refutation is the classical
   refuter's work (`engineOf`). The chip beside a note or a hint, the label beside a graft's
   rule (`text.engine` after the rule label, from `Proof.engines`, a goal's path to the
-  engine, kept in the shelf), and the step list name it; the hover gives the source, a
-  press opens Learn's reference at `#engine-<key>` (`ui.spot`). Every reference in
+  engine, kept in the shelf), and the step list name it; the hover gives the source. Every
+  reference in
   `texts/reference.md` was read in the work itself (2026-10-22), an open copy where the
   original is paywalled being replaced by an open work that states it; change one only from
   the work itself.
@@ -1043,31 +1004,28 @@ the page reads.
   engine lasts for the visit: `setSettings` stores every setting but it, and the page starts
   on Automatic (`tests/engines.spec.ts` reloads to check).
 
-## Learn, the tour, About
+## The tour, About
 
-- **Learn** (`Learn.tsx`) is `ui.learn`, the place shown or null (the tutorial or the reference): a frame of `--color-learn`
-  around the window (`.app[data-learn]`, the window is `.win`) with the panel beside it,
-  under it on a phone; with it on every action shows its label. Off, nothing of it is on
-  the page. The tutorial lists the lessons (`LESSONS`): a written one opens its lesson
-  (`ui.lesson`), one not yet written is a place holding its practice. With Learn on, the band packs tighter (`.app[data-learn] .act`) to keep one row at 1280 pixels (`learn.spec.ts`).
-- **The tour** (`Tour.tsx`) runs on `ui.tour`: each stop's `act` is performed once, on the
-  way forward, through the state's own actions; the caption takes the focus, says each
-  stop in the live region, and marks what it points at with `data-tour-spot`.
-- **About** is a menu of the bottom band: its text, deduxit's version from `about`, every
-  licence the site serves (linked, `tests/learn.spec.ts` fetches each) and the line that
-  GitHub logs visitors' addresses, which links the privacy page. Its text links `/llms.txt`,
-  the page described for AI models in the proposal's shape (an H1, a blockquote, then lists
-  of links; no heading among the details), which points to deduxit's guide on the rustdoc
-  site rather than copying it, so that the guide stays one text, kept true by deduxit's own
-  tests; `tests/learn.spec.ts` holds the link, the shape and the two guide links.
-- **The privacy page** (`src/pages/privacy.astro`, at `/privacy/`) is a page of its own,
-  linked from About, from the bottom band's end (More's sheet on a phone) and from the 404
-  page. Each statement cites one of its numbered sources (`SOURCES`), every one cited and
-  read in itself (Fedlex, the FDPIC, EUR-Lex, GitHub's documents, the Data Privacy
-  Framework list); `tests/page.spec.ts` holds the citations to the list. A change of what
-  the browser keeps, of the hosting or of the policy changes the page, from the sources
-  read again. Astro's HTML compression drops a line break before an inline element: a
-  line that ends in a word before a link ends in `{" "}`.
+- **Learn and Practice wait** for a step after the redesign: their islands left the page, their
+  content stays in `src/content/` (and `src/lib/practice.ts`, `content.ts` with their tests);
+  "Learn" and "Practice" are inactive buttons on the new tab view and, with the guide on, at the
+  tools' end.
+- **The tour** (`Tour.tsx`) runs on `ui.tour`, from the tools with the guide on: each stop's
+  `act` is performed once, on the way forward, through the state's own actions; the caption
+  takes the focus, says each stop in the live region, and marks what it points at with
+  `data-tour-spot` (`SPOTS`: the chosen chip, the stage, a formula, the dock, the tools). Its
+  texts are the old page's until the tour is written again.
+- **About** is a dialog from the new tab view and the Settings page: its text, deduxit's version
+  from `about`, every licence the site serves (linked, `tests/about.spec.ts` fetches each) and
+  the line that GitHub logs visitors' addresses, which links the privacy page. Its text links
+  `/llms.txt`, the page described for AI models in the proposal's shape (an H1, a blockquote,
+  then lists of links), which points to deduxit's guide on the rustdoc site rather than copying
+  it; `tests/about.spec.ts` holds the link, the shape and the two guide links.
+- **The privacy page** (`src/pages/privacy.astro`, at `/privacy/`) is a page of its own, linked
+  from About, from the Settings page and from the 404 page. Each statement cites one of its
+  numbered sources (`SOURCES`); `tests/page.spec.ts` holds the citations to the list. Astro's
+  HTML compression drops a line break before an inline element: a line that ends in a word
+  before a link ends in `{" "}`.
 
 ## Offline and installable (`src/offline/sw.js`, `src/integrations/offline.ts`)
 
@@ -1113,16 +1071,13 @@ the page reads.
   URL: keep the paths `/logo/wordmark-*.svg`, `/logo/square-dark.svg` and
   `/logo/favicon-32.png` stable.
 - **On the page the word mark is inline** (`Logo.tsx`, the 404 page's `set:html`, both from
-  `wordmark-band.svg`), so the theme's tokens paint it: the letters (`path`) `--color-ink`,
-  the long marks (`rect`) `--color-logo` (`.logo` in `app.css`); the drawing names itself
-  "deduxit". The band's mark is 30 pixels high (`--size-wordmark`) and hidden on a phone.
-- **The band's mark is a button carrying the dictionary line** (`BandMark`): **dēdūxit**
-  [deːˈduːk.sɪt] *Latin, verb*: "it has derived", the perfect of *dēdūcō*, to lead down,
-  derive. (Approved by the author, 2026-11-09; keep it word for word.) A card under the mark
-  shows it on hover, on the keyboard's focus and on a click or a tap (kept until the focus
-  leaves); it is the button's `aria-describedby`, the pointer may rest on it, and Escape
-  dismisses it (SC 1.4.13). The drawing's `<title>` is removed there, so the browser's own
-  tooltip never doubles the card. About repeats the line under its mark (`Dictionary`).
+  `wordmark-band.svg`; the top row's home link in `Frame.tsx` holds the word mark and the
+  square), so the theme's tokens paint it: the letters (`path`) `--color-ink`, the long marks
+  (`rect`) `--color-logo` (`.logo` in `app.css`); the drawing names itself "deduxit". Its height
+  is `--size-wordmark`.
+- **The dictionary line** is shown under the mark in About (`Dictionary` in `Logo.tsx`):
+  **dēdūxit** [deːˈduːk.sɪt] *Latin, verb*: "it has derived", the perfect of *dēdūcō*, to lead
+  down, derive. (Approved by the author, 2026-11-09; keep it word for word.)
 - **Its licence**: `src/logo/LICENSE.txt` (served at `/logo/LICENSE.txt`, listed in About)
   puts every file of the mark under CC BY 4.0 and says the name and mark may not suggest the
   project's endorsement; About repeats that line. The `licences` check holds every image
@@ -1137,71 +1092,58 @@ the page reads.
 ## Styling
 
 - **Every colour, font and size is a token** in `src/styles/tokens.css` (`@theme static`,
-  `light-dark()` pairs; Tailwind's palette, fonts and type scale off); `app.css` holds the
-  page's one grammar (cluster, label, keyword, hover tip). Never a raw colour outside
-  `tokens.css`, never a `style` attribute in markup (the `no-style-attributes` check):
-  placement goes through the CSSOM (`el.style.left = …`) in a ref or an effect.
+  `light-dark()` pairs; Tailwind's palette, fonts and type scale off), named as the design
+  guide's "The scale" names them (`design/redesign.md`): `--color-paper`, `band`, `ink`,
+  `ink2`, `soft`, `faint`, `edge`, `line`, `hair`, `lapis`, `deep`, `wash`, `good`, `bad`,
+  `dot`, `over`. Never a raw colour outside `tokens.css`, never a `style` attribute in markup
+  (the `no-style-attributes` check): placement goes through the CSSOM (`el.style.left = …`)
+  in a ref or an effect.
+- **Sizes are in rem** (the guide's "Window sizes"), so the browser's text size scales the page;
+  `token()` in `ui.tsx` reads a rem token as pixels at the root's size. The spacing scale is the
+  guide's alone (2, 4, 8, 12, 16, 24, 32, 48: `tokens.test.ts`); the frame's own offsets (10 from
+  the stage's edge, 6 between cells) are `--size-inset` and `--size-gap`.
+- **The guide's colours depart in one place** (for the author's review): `good` is `#075e55`
+  light and `#86e2ba` dark, not `#0A6B4F` and `#6FCBA4`, since `colours.test.ts` holds the
+  colours of meaning apart under simulated colour-vision deficiencies and the guide's greens met
+  lapis under tritanopia (5.7) and the dark red under deuteranopia (5.0). The net colours were
+  moved within their Okabe-Ito hues for the new paper. The test's groups are the new page's: the
+  verdicts with lapis, the chosen formula with ink, a net's colours with the verdicts at the top
+  (lapis is not among them: a net is drawn only for a finished proof, where nothing on the
+  drawing is chosen). `faint` is for what cannot act, never text; `edge` (3:1) is a field's
+  edge, `line` (1.9:1) a box whose signs tell it (a toggle's box, the tools, a panel).
 - No `!important` (Biome's rule): reduced motion zeroes the duration tokens instead.
-- **A keyword's wash is laid on the panel** (`.kw.bad` and its kin: `background-color` the panel,
-  `background-image` the wash), whatever stands under it: on Learn's frame the wash over the
-  frame's tint left `--color-bad` at 4.29:1. `colours.test.ts` holds every tone at 4.5:1 on its
-  wash over the panel. A link in running text on a page of text is underlined (SC 1.4.1).
 - **No raw value outside the tokens** (`src/styles/tokens.test.ts`): every length, colour,
   duration, weight, opacity and layer in `app.css` is a `var(--…)`; allowed bare are 0, 1,
-  `1fr`, `50%`/`100%`, `100vw`/`100vh`, and integers inside `calc()` as arithmetic over
-  tokens. The island sizes no icon (`size={…}` is refused: `button svg.lucide` takes
-  `--size-icon`) and writes no length in a string; a placement in TypeScript reads its
-  offsets with `token("--spacing-…")` (`ui.tsx`). One breakpoint, 640 px, in every media
-  query and in `phone()`; the test holds them equal.
-- **Every control is one of two heights**, `--size-control` and `--size-control-small`,
-  both 44 px under the phone's media query in `tokens.css`, and shares the states of the
-  grammar's one rule in `app.css` (hover, `:active`, focus ring, disabled).
-  `tests/targets.spec.ts` measures every visible control in every state at both widths
-  (44 on a phone, 24 on a desktop): a new control, popover or state gets a step in the walk
-  of `tests/states.ts`, which `tests/accessibility.spec.ts` walks too. A rule label's button grows to a control's size but stops at a formula's or a cut's button
-  and halfway to the next label (`spread` in `src/lib/gap.ts`, pairs nearest first, each pair
-  only while its buttons still meet), so a label of a drawing fitted to a phone may be shorter
-  than 44 pixels: `targets.spec.ts` accepts that only where it reaches a neighbour's button on
-  that axis, and fails any two buttons of the drawing that overlap (they had overlapped at 44,
-  each hiding part of the other's taps). A formula's button covers half the gap to its neighbours and is at least a
-  control's height on screen, and `fitView` never zooms out below the size at which the
-  active goal's formulas are a control wide (`floor`); a step that leaves them narrower
-  zooms in to the floor unless the visitor zoomed by hand since the last fit (`byHand`).
-  `floor` solves for the zoom per button: a button's padding past its formula's ends stays
-  the same on screen while the formula scales (`Hit.fixed`), so the ratio of the narrowest
-  width to a control's undershoots, which a lesson's step on a phone showed (39 pixels).
-  The test measures the stage in every math font too: Garamond-Math's narrower `B⊥` fell
-  to 43 pixels on a phone before a step re-applied the floor.
-- **A tab's calculus mark** stands apart from the sequent (`.pt-mark`: 12 pixels before it,
-  8 between the calculus and the fragment); `tests/chip.spec.ts` measures the gaps on the
-  label (`.mk`) and that the phone's tab and `+` fit the row. On a wide screen the label names
-  the suite with the mark and a ▾ follows (`markLabel`, "Linear (LL) ▾"), so that it reads as
-  the control it is; a phone keeps the short mark. Its accessible name is "Logic:", then what it
-  shows at that width, then the switches' words ("Logic: Linear (LL) MLL, Classical; fragment
-  MLL"): `aria-labelledby` over its own label and fragment and two `hidden` spans beside it, so
-  that the name holds the visible text at either width (SC 2.5.3, Label in Name), and the mark's
-  `textContent`, which tests read with `toContainText`, holds no word a screen reader alone
-  hears.
-- **On a phone** the bottom band keeps undo, redo, close all, hint, Practice and Learn;
-  `wide-only` actions move to More's sheet. Tips follow a mouse or a keyboard, never a
-  touch (`App.tsx`).
-- **The bottom band's labels** are `.act-name`, beside the icon at a desktop's width (D54),
-  under it with Learn on, hidden on a phone. `app.css` styles classes globally, so a class
-  is one component's: the band's labels were `.lb` until 2026-11-16, and the drawing's rule
-  label buttons `.lb` (absolute, over the drawing) laid every label over its icon. The
-  target-size walks measure buttons only and missed it; `page.spec.ts`'s band test holds
-  each action's icon and label inside its button and apart, from 320 to 2560 pixels.
-- **The calculus is each tab's** (`Proof.calculus`, kept in the shelf; a new empty tab starts
-  in `lastCalculus`, the calculus last chosen in this visit, classical linear logic at a
-  visit's start). A change of suite reads the field's text anew in the other suite's syntax. A tab's
-  calculus mark opens its switches (`Calculus` in the "Logic" popover) at every width, by a
-  key too (the switches take the focus, Escape gives it back to the mark); that is their
-  only place, the stage has none (`tests/modes.spec.ts`), and the restart warning
-  (`ui.pendingMode`) is inside the popover. Tests set a calculus through `calculus()` and
-  `switches()` in `tests/prover.ts`. The status writes the mode in the switches' words
-  (`modeWords`). The band's popovers (Status, Logic) are `position: fixed` under the active tab
-  (`underTab`): the row of tabs scrolls (`overflow: auto`) and clipped them while they were
-  absolute, which no test saw until one asked what is drawn at the popover's middle.
+  `1fr`, `50%`/`100%`, `100vw`/`100vh`/`100dvh`, and integers inside `calc()` as arithmetic
+  over tokens (so `repeat(4, …)` is written out). The island sizes no icon (`button svg.lucide`
+  takes `--size-icon`) and writes no length in a string.
+- **The window's classes** are the guide's: compact under 600 pixels (`(width < 600px)`),
+  expanded from 840 (`(width >= 840px)`), medium between, short under 480 high
+  (`(height < 480px)`), in the range syntax; `tokens.test.ts` holds every media query of
+  `app.css`, `tokens.css` and the island to those three bounds and refuses `max-width`/
+  `min-width`. `compact()` in `ui.tsx` is the same query as a signal. A compact window and a
+  coarse pointer (`pointer: coarse`) make every target 44 pixels and a field's text 16
+  (`tokens.css`); `tests/targets.spec.ts` measures every visible control in every state of
+  `tests/states.ts` at 24 (desktop) and 44 (phone).
+- **The controls' sizes** are the guide's "Controls": `--size-button` (a plain button, a field,
+  30), `--size-toggle`/`--size-toggle-box` (24 in 30), `--size-tool` (34, 36 wide), `--size-chip`
+  (34), `--size-cell` (44), `--size-enter` (38), `--size-rule` (40). Every control shares the
+  states of one rule in `app.css`: `over` under the pointer, `wash` while pressed, `faint` when it
+  cannot act (never an opacity), the 2-pixel lapis focus ring 2 off its edge.
+- **A keyword** (`.kw`, a verdict's "Proved.") is weight 600 in its tone's colour with no box or
+  wash; its word or sign says the state, never the colour alone.
+- **A change of scheme fades** through the View Transitions API (`applyTheme` in `Frame.tsx`),
+  0.5 s (`::view-transition` rules, `--duration-scheme`), none under reduced motion.
+- **Fonts**: Ysabeau Office (400, 500, 600) for the interface, Gentium Book Plus (700) for the
+  word mark's neighbours and headings, from npm (`@fontsource/*`, OFL, served beside their
+  licences: `licences.ts`, `modules/_checks/licences.py`); the math fonts are deduxit's.
+- **A rule label's button** grows to a control's size but stops at a formula's or a cut's button
+  and halfway to the next label (`spread` in `src/lib/gap.ts`), so a label of a drawing fitted to
+  a phone may be shorter than 44 pixels: `targets.spec.ts` accepts that only where it reaches a
+  neighbour's button on that axis, and fails any two buttons of the drawing that overlap. A
+  formula's button covers half the gap to its neighbours and is at least a control's height on
+  screen, and `fitView` never zooms out below the size at which the active goal's formulas are
+  a control wide (`floor`; `Hit.fixed`, the button's padding past its formula's ends).
 
 ## Tests
 
@@ -1215,45 +1157,38 @@ the page reads.
   AA and axe's best practices on every page (the prover, privacy, 404, the Rocq library's old
   address with its refresh taken out) and in every state of `tests/states.ts`, in both schemes
   at a desktop's and a phone's width; a violation fails the test, with axe's reason in the
-  line. One violation is filtered, for the one reason SC 2.5.8 gives (its "equivalent"
-  exception): `target-size` on a rule label's button whose rule Learn's Reference draws, by the
-  label's name "Rule X, step N" against the schemas' names, which the spec reads from the built
-  Reference in a context of its own (`rules.test.ts` holds the same hint, calculus by
-  calculus). The e2e check's sources are `tests/` and the built site, so a spec imports
-  nothing from `src/`. Such a button may be
+  line. The e2e check's sources are `tests/` and the built site, so a spec imports
+  nothing from `src/`. A rule label's button may be
   under 24 pixels where its neighbours are nearer in a drawing fitted to a phone (no zoom floor
-  for that: declined, 2026-11-14), or lie partly under the stage's view controls or a sheet
-  over the stage. A label's button that overlaps another button of the drawing is never
+  for that: declined, 2026-11-14), or lie partly under the stage's tools or a panel over the
+  stage. A label's button that overlaps another button of the drawing is never
   filtered, the overlap measured by the spec itself (axe names no covering element for a target
   under 24 pixels): the labels share the gaps (`spread`, below). What axe
   leaves "incomplete" is not asserted: contrast
   over a gradient (the stage's dotted field, and every keyword's wash, which
   `colours.test.ts` holds instead), under an overlapping element, or of symbols alone.
 - **Each walk of the axe spec is a test of its own, under 20 seconds here.** axe takes 1.5 to
-  4 seconds a state (Learn's Reference the most), the page's own work under one. GitHub's
-  runner, with the other checks building beside the e2e, was 1.8 to 2.9 times slower on
-  2026-11-15: the Learn walk of twelve states, about 33 seconds here, ran past CI's 60 twice,
-  while the 20-second walks passed. So it is split (`learning`, then `attempting`, which
-  `targets.spec.ts` walks in a row), as `proving` and `menus` are. Time a walk with
+  4 seconds a state, the page's own work under one. GitHub's runner, with the other checks
+  building beside the e2e, was 1.8 to 2.9 times slower on 2026-11-15: a walk of twelve states,
+  about 33 seconds here, ran past CI's 60 twice, while the 20-second walks passed. So a long
+  walk is split, as `proving` and `menus` are. Time a walk with
   `playwright test tests/accessibility.spec.ts -g NAME --workers 1` on idle cores; a slow
   runner is closest with `CI=1` (60 s, the runner's budget) on one core and four workers
   (`taskset -c N`, `--workers 4 --retries 0`), where the twelve-state walk failed and its
   halves passed. Chromium's CPU throttling (`Emulation.setCPUThrottlingRate`) slowed the
-  walks unevenly, and is no measure. The phone's band and menus walk (about 20 seconds here)
-  is the longest left.
+  walks unevenly, and is no measure.
 - **A control's visible text is in its accessible name** (SC 2.5.3): axe compares words, joins
   an element's text nodes with no space between elements and drops what stands in
   parentheses. So the parts of a control's label are separated by a space in the markup
   (`{" "}` between spans of a flex or grid button, which the layout ignores), and an
-  `aria-label` repeats every word the control shows (a practice row's fragment, a lesson's
-  parts, Watch's "the proof of").
+  `aria-label` repeats every word the control shows.
 - **The stage measures its buttons at the scale the drawing is shown at** (`rendered()` in
   `Stage.tsx`), never at `camera().k`: the effect that lays them again after a zoom runs before
   the world's transform follows the camera, and a glide may be under way; measured at the
-  camera's scale, a fitted goal's buttons on a phone with Learn open lay 30 to 90 pixels off
+  camera's scale, a fitted goal's buttons on a phone lay 30 to 90 pixels off
   their formulas. The sizes a button must reach on the screen still come from `camera().k`.
 - **The dock keeps clear of the stage's controls**: where it fits neither above the goal nor
-  below it without running under them (a short stage: a phone with Learn open), the goal moves
+  below it without running under them (a short stage: a phone), the goal moves
   down until the dock fits above it, if the goal then still clears the controls
   (`phone.spec.ts`).
 - **The world's transform is a render effect** (`createRenderEffect` in `Stage.tsx`): Solid
