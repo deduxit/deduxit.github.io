@@ -875,6 +875,16 @@ The author went through this group on 2026-11-25 and found it fine.
   search may close goals and give hints" goes, and with it the greyed
   "Hint" and "Close all" on a pack's problems. A pack of the current
   page that bars the search would open with the search allowed.
+- A pack's code goes too. On the current page it is a fingerprint, the
+  first 48 bits of the SHA-256 of the pack's JSON, shown as three groups
+  of four hexadecimal digits (`src/lib/pack.ts`). It does not hold the
+  pack: the link does. Its one use was for a teacher to see that a
+  hand-in answers their own, unchanged problems, and nothing is handed
+  in any more. The boards' "K7Q2" was a made-up stand-in, not even in
+  the real form.
+- What a pack holds, read from the same file: its title, and per problem
+  the suite, the calculus and the sequent. A teacher's own proofs do not
+  travel with it.
 - Handing in is gone (the author, 2026-11-25, on seeing D17a played).
   The first drafts had "Hand in" among a pack's tools, with a link or a
   file for the teacher, and two boards on which a teacher checked one
