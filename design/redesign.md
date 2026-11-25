@@ -516,7 +516,7 @@ script of the board's own for `→`, `∧`, `∨` and `ax`, not deduxit.
 | Go back to an earlier step | "Steps", a list | "Steps" opens a list beside the tools: 0 for the start, then each step by its rule and formula; a press goes back to it and Redo goes forward again | Settled (D2) |
 | Be told what to do next | The hint ladder at the goal | "Hint" rings the formula to press, and once it is pressed the rule to take; with the guide on a line over the bottom box says it in words. Where no rule leads on, a line says so and to undo | Settled (D2); the ladder's later rungs not drawn |
 | Give a witness (`∃R`, `∀L`) | A second popover | A small box in the rule's popover | Settled (D8) |
-| Split the context (linear `⊗`) | A chooser under the goal, with "Passes" and "Cannot close" | The two premises the rule would make appear over the goal, dashed, with the goal's other formulas as chips inside them. A press on a chip moves it to the other premise. A button at the line's end, the rule's sign and an enter arrow, applies the rule; it is greyed with its reason on hover while the split cannot close | Proposed (D6) |
+| Split the context (linear `⊗`) | A chooser under the goal, with "Passes" and "Cannot close" | The two premises the rule would make appear over the goal, dashed, with the goal's other formulas as chips inside them. A press on a chip moves it to the other premise. A button at the line's end, the rule's sign and an enter arrow, applies the rule. Every split is legal, so the button is never greyed | Proposed (D6) |
 | Cut (linear) | "Cut" beside the goal, then a chooser | "Cut" among a linear view's tools opens a small box over the goal for the cut formula. Once it reads, the two premises appear as for a split and are filled the same way; a text that is no formula is said under the box | Proposed (D6) |
 | Prove a goal apart | "Open this goal in a new tab" | A new sequent beside this one, linked to the goal | Open |
 | Close a goal by a proof made apart | "Fill from" a finished tab | Offered at the goal when a finished sequent fits | Open |
@@ -530,12 +530,20 @@ stage has to be read. The count of open goals stands as a small number
 on the view's cell in the rail. D6's toggles (Classical, Intuitionistic,
 Mix, Affine) and its two-sided switch are drawn and do nothing there.
 
+The page forbids only what is not a legal step (the author). A legal
+step that leads to a goal with no proof is the visitor's to take and to
+undo: the page does not grey it and does not warn. So a split of the
+context is never refused for where it leads, and the current page's
+"Passes" and "Cannot close" go. The first D6 greyed a split that could
+not close; the author had it removed. "Hint" and "Close all" still say
+when the search finds no proof of what is left.
+
 A rule that does not apply is never offered as if it did (the author):
 it stands greyed in the popover with its reason on hover. A refusal after
 the fact is left for what the page cannot know before trying: a witness
 that breaks the eigenvariable condition, a typed term or cut formula that
-does not parse, a split of the context that closes nothing. Those are
-said in the popover where the typing happened, as D8 notes for a witness.
+does not parse. Those are said in the popover where the typing happened,
+as D8 notes for a witness.
 
 For this the page must know, for a formula, every rule of the calculus
 that could act on it and for each whether it applies and why not. The
