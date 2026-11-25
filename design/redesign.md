@@ -728,8 +728,18 @@ the bottom box says why, and LK keeps its proof.
 
 ## What the drawings do not show yet
 
-- The formulas are text in Euler Math. The page draws a derivation with
-  deduxit, in the math font chosen in Settings.
+- The boards draw a derivation themselves, as text in Euler Math. The
+  page takes deduxit's own drawing, as the current page does, in the math
+  font chosen in Settings, and lays its buttons over the formulas and the
+  rule names. So the sizes and spacing within a derivation, the rule
+  names' size among them, are the library's; the boards' 23 and 19 pixels
+  only stand in for them. What the new design puts on top of the drawing
+  is the page's: the dashed line over an open goal, the button on `⊢`,
+  the popovers and their cards, and the premises shown while a split or a
+  cut is chosen. For those premises the page can apply the step to a copy
+  of the proof and take the library's drawing of it, since deduxit keeps
+  nothing between calls. If the library's proportions should change, that
+  is a setting of its drawing and so a wish for deduxit.
 - The word mark in every board's header is the logo's own drawing
   (`src/logo/wordmark-band.svg`, 28 pixels high, its letters in the
   boards' ink). The first drafts set the word in Gentium with two drawn
