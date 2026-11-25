@@ -7,7 +7,7 @@
 
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
-import { goto, rule, start, switches } from "./prover";
+import { calculus, goto, rule, start, tool } from "./prover";
 
 const hint = (page: Page) => page.locator(".rule-tip");
 
@@ -49,7 +49,7 @@ test("a label of the derivation opens its hint on a click, and a press elsewhere
   // It stays while the pointer moves away, until a press elsewhere.
   await page.mouse.move(5, 5);
   await expect(hint(page)).toBeVisible();
-  await page.locator("footer").click({ position: { x: 5, y: 5 } });
+  await page.locator(".top-row").click({ position: { x: 300, y: 5 } });
   await expect(hint(page)).toHaveCount(0);
 });
 
@@ -59,7 +59,7 @@ test("each label is named by its step, as the drawing's description numbers the 
   await start(page, "A * B |- B * A");
   await page.getByRole("button", { name: "Close goal" }).click();
   await expect(
-    page.getByRole("status").filter({ hasText: "Proved: every goal is closed" }),
+    page.getByRole("status").filter({ hasText: "Proved. Every goal is closed." }),
   ).toBeVisible();
   const steps = (await page.locator(".drawing svg desc").textContent())?.split("\n") ?? [];
   const names = await page
@@ -81,10 +81,9 @@ test("drawn two-sided, a classical label shows its two-sided rule", async ({ pag
   await start(page, "A * B |- B * A");
   await page.getByRole("button", { name: "Close goal" }).click();
   await expect(
-    page.getByRole("status").filter({ hasText: "Proved: every goal is closed" }),
+    page.getByRole("status").filter({ hasText: "Proved. Every goal is closed." }),
   ).toBeVisible();
-  await (await switches(page)).getByRole("checkbox", { name: "Two-sided" }).check();
-  await page.keyboard.press("Escape");
+  await tool(page, "Two-sided").click();
   await page.getByRole("button", { name: /^Rule ⊗L, step \d+$/ }).hover();
   await expect(hint(page)).toContainText("⊗L: tensor, left");
   await expect(
@@ -92,12 +91,9 @@ test("drawn two-sided, a classical label shows its two-sided rule", async ({ pag
   ).toBeVisible();
 });
 
-test("an ordinary tab's labels show LJ's rules", async ({ page }) => {
+test("an ordinary sequent's labels show LJ's rules", async ({ page }) => {
   await goto(page);
-  const pop = await switches(page);
-  await pop.getByRole("button", { name: "Ordinary", exact: true }).click();
-  await pop.getByRole("button", { name: "Intuitionistic", exact: true }).click();
-  await page.keyboard.press("Escape");
+  await calculus(page, ["Ordinary", "Intuitionistic"]);
   await page.getByRole("textbox", { name: "Sequent" }).fill("a -> b, a |- b");
   await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
   await page.getByRole("button", { name: "Close goal" }).click();
@@ -106,15 +102,4 @@ test("an ordinary tab's labels show LJ's rules", async ({ page }) => {
   await expect(
     hint(page).getByRole("img", { name: "→L: from Γ ⊢ A and Δ, B ⊢ C to Γ, Δ, A → B ⊢ C" }),
   ).toBeVisible();
-});
-
-test("a lesson's step names its rule with the hint", async ({ page }) => {
-  await goto(page);
-  await page.locator("footer").getByRole("button", { name: "Learn" }).click();
-  const frame = page.getByRole("complementary", { name: "Learn" });
-  await frame.getByRole("button", { name: "Lesson 2: The multiplicatives" }).click();
-  await frame.getByRole("button", { name: "Start the worked proof" }).click();
-  await frame.getByRole("button", { name: "Predict ⅋" }).click();
-  await frame.locator(".said").getByRole("button", { name: "⅋" }).click();
-  await expect(hint(page)).toContainText("⅋: par");
 });

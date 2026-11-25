@@ -45,7 +45,7 @@ import {
 } from "../lib/pack";
 import { calculusOf, markLabel, parameterOf } from "../lib/suites";
 import { pretty } from "../lib/words";
-import { download } from "./BottomBand";
+import { download } from "./Panels";
 import { NO_LIMITS, type Proof, type Prover } from "./state";
 import type { Ui } from "./ui";
 

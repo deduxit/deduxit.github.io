@@ -13,7 +13,7 @@
  * anywhere. Every visit (a tab) saves under a key of its own, so that two
  * tabs never overwrite each other. At a visit's start the page gathers what
  * other visits left, with what earlier visits set aside, into
- * `PREVIOUS_KEY` and offers it in the restore bar; a proof saved by several
+ * `PREVIOUS_KEY` and offers it to restore; a proof saved by several
  * visits is offered as the one saved last. Work begun before the visitor
  * answers the bar overwrites nothing, and restoring adds the earlier proofs
  * to the open ones.
@@ -143,7 +143,7 @@ export function parseShelf(text: string | null): Shelf | undefined {
 
 /**
  * At a visit's start: gathers the proofs every other visit saved, with those
- * set aside before, into `PREVIOUS_KEY` and returns them for the restore bar
+ * set aside before, into `PREVIOUS_KEY` and returns them to restore
  * (undefined when there are none). Of several copies of one proof the one
  * saved last is kept. A storage the browser refuses reads as empty.
  */

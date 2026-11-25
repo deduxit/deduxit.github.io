@@ -3,10 +3,10 @@
 
 /**
  * A classical proof's sequent translated into intuitionistic or minimal logic, and its
- * interpolant: two sheets over the stage, opened from the tab's Logic popover and nowhere else,
- * so that a visitor who does not ask sees nothing of them. Each says its verdict in one sentence
+ * interpolant: two sheets beside the tools, opened from "+ view" and nowhere else, so that a
+ * visitor who does not ask sees nothing of them. Each says its verdict in one sentence
  * first: for a translation both verdicts and that they agree, for an interpolant the formula and
- * its three checks. The translated sequent opens as a proof of its own in its logic's tab.
+ * its three checks. The translated sequent opens as a sequent of its own in its logic.
  */
 
 import { CircleCheck, CircleQuestionMark } from "lucide-solid";

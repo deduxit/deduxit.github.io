@@ -9,7 +9,7 @@
 import { deflateRawSync } from "node:zlib";
 import type { BrowserContext, Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
-import { goto, rule, switches } from "./prover";
+import { goto, rule, viewCell } from "./prover";
 
 /** A pack's link, packed as the page packs one. */
 function packLink(pack: object, embed = false): string {
@@ -65,7 +65,7 @@ test("a teacher packs the open tabs into a link, its code and its handout", asyn
   expect(link).toBeTruthy();
   await page.goto(link as string);
   await expect(bar(page)).toContainText("Week 3");
-  await expect(page.locator(".ptab")).toHaveCount(1);
+  await expect(page.locator(".chip")).toHaveCount(1);
   await page.getByRole("button", { name: "Hand in" }).click();
   await expect(page.getByRole("dialog", { name: "Hand in" }).locator(".pk-code")).toHaveText(
     code ?? "",
@@ -77,18 +77,16 @@ test("a pack's limits hold: the calculus fixed and the search barred, by keys to
 }) => {
   await page.goto(packLink(BY_HAND));
   await expect(bar(page)).toContainText("0 of 3 done");
-  await expect(page.locator(".ptab")).toHaveCount(3);
+  await expect(page.locator(".chip")).toHaveCount(3);
   await expect(page.getByRole("button", { name: "Close goal" })).toBeDisabled();
   await expect(page.getByRole("button", { name: "Close all" })).toBeDisabled();
   await expect(page.getByRole("button", { name: "Hint" })).toBeDisabled();
   await page.locator(".stage").click({ position: { x: 5, y: 5 } });
   await page.keyboard.press("c");
   await page.keyboard.press("h");
-  await expect(page.locator(".stage .kw", { hasText: "Course pack" }).first()).toBeVisible();
-  const pop = await switches(page);
-  await expect(pop).toContainText("This is problem 1 of the pack");
-  await expect(pop.getByRole("button", { name: "Ordinary", exact: true })).toHaveCount(0);
-  await page.keyboard.press("Escape");
+  await expect(page.locator(".notes .kw", { hasText: "Course pack" }).first()).toBeVisible();
+  await expect(page.locator(".calc-fixed")).toContainText("This is problem 1 of the pack");
+  await expect(page.getByRole("group", { name: "Calculus of this view" })).toHaveCount(0);
   // By hand it is done.
   await rule(page, /^a, formula/, "ax");
   await expect(bar(page)).toContainText("1 of 3 done");
@@ -107,7 +105,7 @@ test("a pack's limits hold: the calculus fixed and the search barred, by keys to
   await page.reload();
   await expect(bar(page)).toContainText("2 of 3 done");
   // A proof kept reads on its tab as the problem was written.
-  await expect(page.locator(".ptab").first()).toContainText("a ⊢ a");
+  await expect(page.locator(".chip").first()).toContainText("a ⊢ a");
 });
 
 test("a hand-in is checked again: what holds, what is open, what is missing", async ({
@@ -137,7 +135,7 @@ test("a hand-in is checked again: what holds, what is open, what is missing", as
   await expect(rows.nth(2)).toContainText("fails at world 0");
   // An answer opens on a tab of its own, the teacher's tabs left as they were.
   await rows.nth(0).getByRole("button", { name: "Open the answer to problem 1" }).click();
-  await expect(page.locator(".ptab[aria-current=true] .pt-mark")).toContainText("LJ");
+  await expect(viewCell(page)).toHaveAttribute("data-tip", /LJ/);
 });
 
 test("a hand-in's claims count for nothing: a changed pack and a forged proof are found", async ({
@@ -184,7 +182,7 @@ test("embedded, the page keeps the proof and leaves the site's places out", asyn
   await expect(page.getByRole("link", { name: "Open in deduxit" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Practice" })).toBeHidden();
   await expect(page.getByRole("button", { name: "Undo" })).toBeVisible();
-  await expect(page.locator(".pt-new")).toBeHidden();
+  await expect(page.getByRole("button", { name: "New sequent", exact: true })).toBeHidden();
 });
 
 test("a visitor without a pack sees nothing of it", async ({ page }) => {
@@ -201,9 +199,18 @@ test("with the search barred, deduxit's table and tableau are barred too", async
     }),
   );
   await expect(bar(page)).toContainText("0 of 1 done");
-  await expect(page.getByRole("tab", { name: "Tree" })).toBeVisible();
-  await expect(page.getByRole("tab", { name: "Tableau" })).toHaveCount(0);
-  await expect(page.getByRole("tab", { name: "Table" })).toHaveCount(0);
+  await expect(
+    page.getByRole("tab", {
+      name: /^(Sequent calculus|Natural deduction|Classical linear|Intuitionistic linear)/,
+    }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Add a view" }).click();
+  const list = page.getByRole("dialog", { name: "Add a view" });
+  for (const name of ["Truth table", "Tableau"])
+    await expect(list.getByRole("button", { name, exact: true })).toHaveAttribute(
+      "aria-disabled",
+      "true",
+    );
 });
 
 test("a modal problem keeps its calculus, and a valid one is never done", async ({ page }) => {
@@ -217,8 +224,8 @@ test("a modal problem keeps its calculus, and a valid one is never done", async 
   await expect(page.locator(".modal .kw.ok")).toHaveText("Valid");
   await expect(bar(page)).toContainText("0 of 1 done");
   await page.getByRole("button", { name: "Prove it step by step" }).click();
-  await expect(page.locator(".stage .kw", { hasText: "Course pack" }).first()).toBeVisible();
-  await expect(page.locator(".ptab[aria-current=true] .pt-mark")).toContainText("Modal (K)");
+  await expect(page.locator(".notes .kw", { hasText: "Course pack" }).first()).toBeVisible();
+  await expect(viewCell(page)).toHaveAttribute("data-tip", "Modal logic, K");
 });
 
 test("print leaves the bands out, and prints light in the dark theme", async ({ page }) => {
@@ -246,8 +253,8 @@ test("with the search barred, the invertible rules wait for the student too", as
     }),
   );
   await expect(bar(page)).toContainText("0 of 3 done");
-  await page.getByRole("button", { name: "Settings" }).click();
-  const settings = page.getByRole("dialog", { name: "Settings" });
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  const settings = page.getByRole("region", { name: "Settings" });
   await settings.getByRole("checkbox", { name: "Apply invertible rules by themselves" }).check();
   await expect(settings).toContainText("This pack asks for every step by hand.");
   await page.keyboard.press("Escape");
@@ -259,8 +266,8 @@ test("with the search barred, the invertible rules wait for the student too", as
   }
   // Outside the pack the setting holds: a tab of one's own (in LJ, the calculus last started)
   // is finished by the rules alone.
-  await page.getByRole("button", { name: "New proof" }).click();
+  await page.getByRole("button", { name: "New sequent", exact: true }).click();
   await page.getByRole("textbox", { name: "Sequent" }).fill("|- a -> a");
   await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
-  await expect(page.locator(".ptab[aria-current=true] .dot[data-tone=ok]")).toBeVisible();
+  await expect(page.locator(".chip[aria-selected=true] svg.lucide-check")).toBeVisible();
 });

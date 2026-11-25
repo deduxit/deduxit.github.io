@@ -64,10 +64,8 @@ describe("every rule label has a hint", () => {
   });
 });
 
-// SC 2.5.8 excepts a target whose function an equivalent control on the page achieves: a rule
-// label's button over a drawing fitted to a phone may be under 24 pixels because Learn's
-// Reference shows the same hint.
-describe("every rule label's hint is in Learn's Reference", () => {
+// Every rule label's hint is drawn from the written rules, which hold each one the labels name.
+describe("every rule label's hint is in the written rules", () => {
   it.each(cases)("in %s", (_, calculus, twoSided, labels) => {
     const hints = hintsFor(written, calculus, twoSided);
     for (const label of labels.split(" ")) {

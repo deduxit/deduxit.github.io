@@ -7,14 +7,14 @@
 
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
-import { goto, rule, start } from "./prover";
+import { goto, rule, start, tool } from "./prover";
 
 const SWITCH = "Apply invertible rules by themselves";
 
 /** Opens Settings and returns the switch. */
 async function invertible(page: Page) {
-  await page.locator("footer").getByRole("button", { name: "Settings", exact: true }).click();
-  return page.getByRole("dialog", { name: "Settings" }).getByRole("checkbox", { name: SWITCH });
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  return page.getByRole("region", { name: "Settings" }).getByRole("checkbox", { name: SWITCH });
 }
 
 test("the switch is off by default, kept with the settings, and applies the rules at once", async ({
@@ -54,16 +54,16 @@ test("with the switch on, undo takes back a step with the invertible steps after
   // ⊕₁ is the visitor's choice; ⅋ and the axiom follow by themselves and finish the proof.
   await rule(page, /^\(B ⅋ B⊥\) ⊕ A/, "⊕₁");
   await expect(
-    page.getByRole("status").filter({ hasText: "Proved: every goal is closed" }),
+    page.getByRole("status").filter({ hasText: "Proved. Every goal is closed." }),
   ).toBeVisible();
-  await page.locator("footer").getByRole("button", { name: "Undo", exact: true }).click();
+  await tool(page, "Undo").click();
   await expect(
     page.getByRole("button", { name: /^\(B ⅋ B⊥\) ⊕ A, formula 1 of goal 1/ }),
   ).toBeVisible();
   // Where every step on the branch was applied by itself, there is nothing to take back
   // (on the page loaded again, the switch kept on).
   await start(page, "A * B |- B * A");
-  await page.locator("footer").getByRole("button", { name: "Undo", exact: true }).click();
+  await tool(page, "Undo").click();
   const note = page.locator(".dock .note");
   await expect(note.locator(".kw")).toHaveText("Nothing to undo on this branch");
   await expect(note).toContainText(

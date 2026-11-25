@@ -8,7 +8,7 @@
 
 import { readFile } from "node:fs/promises";
 import { devices, expect, type Page } from "@playwright/test";
-import { calculus, goto, rule, start, switches } from "./prover";
+import { addView, calculus, goto, newTab, rule, start, switches, tool } from "./prover";
 
 /** Called in each state, with the state's name. */
 export type Visit = (state: string) => Promise<void>;
@@ -17,25 +17,28 @@ const { defaultBrowserType: _, ...phone } = devices["Pixel 7"];
 /** Pixel 7 without its browser type, which `test.use` refuses inside a project. */
 export const pixel = phone;
 
-/** Presses a button of the bottom band, through More's sheet where a phone keeps it there. */
-async function band(page: Page, name: string, visit?: Visit) {
-  const button = page.locator("footer").getByRole("button", { name, exact: true });
+/** Presses a tool, through More's row where a compact window keeps it there. */
+async function press(page: Page, name: string, visit?: Visit) {
+  const button = tool(page, name);
   if (!(await button.isVisible())) {
-    await page.locator("footer").getByRole("button", { name: "More" }).click();
+    await tool(page, "More").click();
     await visit?.("more");
-    await page.getByRole("dialog", { name: "More" }).getByRole("button", { name }).click();
-  } else {
-    await button.click();
   }
+  await button.click();
+}
+
+/** Turns the guide on or off by its button in the top row. */
+async function guide(page: Page) {
+  await page.getByRole("button", { name: "Guide", exact: true }).click();
 }
 
 /**
- * The empty page, a field's parse error, a proof with the rule popover, the
- * split chooser, a refusal, a hint, and a proof closed and its net.
+ * The new tab view, a parse error, a proof with the rule popover, the split chooser, a refusal, a
+ * hint, and a proof closed and its net.
  */
 export async function proving(page: Page, visit: Visit) {
   await goto(page);
-  await visit("empty");
+  await visit("new tab");
   await page.getByRole("textbox", { name: "Sequent" }).fill("A *");
   await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
   await expect(page.getByRole("alert")).toBeVisible();
@@ -55,144 +58,95 @@ export async function proving(page: Page, visit: Visit) {
   await rule(page, /^A⊥, formula/, "ax");
   await expect(page.locator(".dline .kw.bad")).toBeVisible();
   await visit("refusal");
-  await band(page, "Hint", visit);
+  await press(page, "Hint", visit);
   await expect(page.locator(".dline.hint")).toContainText("Work on this goal");
   await visit("hint");
-  await page.locator("footer").getByRole("button", { name: "Close all" }).click();
-  await expect(page.getByText("Proved: every goal is closed")).toBeVisible();
+  await press(page, "Close all");
+  await expect(page.getByText("Proved. Every goal is closed.")).toBeVisible();
   await visit("proved");
-  await page.getByRole("tab", { name: "Net" }).click();
+  await page.getByRole("tab", { name: "Proof net" }).click();
   await visit("net");
-  await page.getByRole("tab", { name: "Tree" }).click();
+  await page.getByRole("tab", { name: /^Classical linear logic/ }).click();
+}
+
+/** On a proof closed: the tools' panels and the list of views to add. */
+export async function menus(page: Page, visit: Visit) {
+  for (const [name, role] of [
+    ["Export", "menu"],
+    ["Steps", "dialog"],
+    ["Import", "dialog"],
+    ["The search's settings", "dialog"],
+  ] as const) {
+    await press(page, name, visit);
+    await expect(page.getByRole(role, { name })).toBeVisible();
+    await visit(name);
+    await page.keyboard.press("Escape");
+  }
+  await page.getByRole("button", { name: "Add a view" }).click();
+  await expect(page.getByRole("dialog", { name: "Add a view" })).toBeVisible();
+  await visit("views to add");
+  await page.keyboard.press("Escape");
 }
 
 /**
- * On a proof closed, every menu of the band, the status and the calculus, and the restart
- * warning.
+ * The Settings page, the list of keys, the guide on, the restart warning, the new tab view in
+ * ordinary logic with the guide's examples, and About.
  */
-export async function menus(page: Page, visit: Visit) {
-  for (const menu of ["Export", "Steps", "Import", "Settings", "Keys", "About"]) {
-    await band(page, menu, visit);
-    await expect(
-      page.getByRole(menu === "Export" ? "menu" : "dialog", { name: menu }),
-    ).toBeVisible();
-    await visit(menu);
-    await page.keyboard.press("Escape");
-  }
-  const tab = page.locator(".ptab[aria-current=true]");
-  await tab.getByRole("button", { name: /^Status/ }).click();
-  await visit("status");
+export async function framePages(page: Page, visit: Visit) {
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Settings", exact: true })).toBeVisible();
+  await visit("Settings");
+  await page.getByRole("button", { name: "The list of keys" }).click();
+  await expect(page.getByRole("dialog", { name: "Keys" })).toBeVisible();
+  await visit("Keys");
+  // The list of keys took the Settings page's place; Escape closes it and leaves the proof shown.
   await page.keyboard.press("Escape");
-  await tab.getByRole("button", { name: /^Logic/ }).click();
-  await visit("calculus mark");
-  await page.keyboard.press("Escape");
-  // The switches are the tab's mark's alone.
-  await tab.getByRole("button", { name: /^Logic/ }).click();
-  await page.getByRole("button", { name: "Intuitionistic", exact: true }).click();
+  await guide(page);
+  await visit("guide on");
+  // A step of the visitor's own, which a change of the logic would lose.
+  await start(page, "A * B |- B * A", false);
+  await rule(page, /^A⊥ ⅋ B⊥, formula/, "⅋");
+  await (await switches(page)).getByRole("button", { name: "Intuitionistic" }).click();
   await expect(page.getByRole("alertdialog", { name: "Restart the proof" })).toBeVisible();
   await visit("restart warning");
   await page.getByRole("button", { name: "Keep the proof" }).click();
+  await newTab(page);
+  await page.getByRole("button", { name: /^Ordinary logic/ }).click();
+  await expect(page.getByRole("button", { name: /^Example: / }).first()).toBeVisible();
+  await visit("new tab, ordinary, the guide's examples");
+  await page.getByRole("button", { name: "About" }).click();
+  await expect(page.getByRole("dialog", { name: "About" })).toBeVisible();
+  await visit("About");
   await page.keyboard.press("Escape");
+  await guide(page);
 }
 
-/** Practice and its filters. */
-export async function practising(page: Page, visit: Visit) {
-  await band(page, "Practice", visit);
-  const practice = page.getByRole("dialog", { name: "Practice" });
-  await expect(practice.locator(".pr-row").first()).toBeVisible();
-  await visit("Practice");
-  await practice.getByRole("checkbox", { name: "Additives" }).check();
-  await practice.getByRole("checkbox", { name: "Hard", exact: true }).check();
-  await visit("Practice filtered");
-  await page.keyboard.press("Escape");
-}
-
-/** The tour's first stop. */
+/** The tour's first stop, from the tools with the guide on. */
 export async function touring(page: Page, visit: Visit) {
-  await band(page, "Tour", visit);
+  // The tour is among the tools, which a sequent entered shows.
+  await start(page, "A |- A", false);
+  await guide(page);
+  await press(page, "Tour", visit);
   await expect(page.getByRole("dialog", { name: "Tour" })).toBeVisible();
   await visit("tour");
   await page.keyboard.press("Escape");
+  await guide(page);
 }
 
 /**
- * Learn's two places and a lesson's parts: a worked proof, its dead end, its
- * prompt, its faded proof and its check. It ends on the list of lessons,
- * where `attempting` goes on.
+ * The new tab view's "Restore N proofs", after a link opened on a page whose earlier proofs were
+ * not restored by themselves, and "Close every sequent" with its notice to undo it.
  */
-export async function learning(page: Page, visit: Visit) {
-  await band(page, "Learn", visit);
-  for (const place of ["Tutorial", "Reference"]) {
-    await page.getByRole("tab", { name: place }).click();
-    await visit(`Learn ${place}`);
-  }
-  await page.getByRole("tab", { name: "Tutorial" }).click();
-  await page.getByRole("button", { name: "Lesson 2: The multiplicatives" }).click();
-  await visit("lesson");
-  await page.getByRole("button", { name: "Start the worked proof" }).click();
-  await page.getByRole("button", { name: "Show the step" }).click();
-  await page.getByRole("button", { name: "Play this split" }).click();
-  await expect(page.locator(".detour").getByRole("status")).toContainText("Cannot close");
-  await visit("lesson's dead end");
-  await page.getByRole("button", { name: "Predict ⊗" }).click();
-  await expect(page.getByRole("note", { name: "Why this step" })).toBeVisible();
-  await visit("lesson's worked proof");
-  await page.getByRole("button", { name: "Finish the proof yourself" }).click();
-  await visit("lesson's faded proof");
-  await page.getByRole("region", { name: "Check" }).getByRole("radio").nth(1).check();
-  await visit("lesson's check");
-  await page.getByRole("button", { name: "All lessons" }).click();
-}
-
-/** Learn opened on the list of lessons, where `attempting` starts. */
-export async function toLessons(page: Page) {
-  await band(page, "Learn");
-  await page.getByRole("tab", { name: "Tutorial" }).click();
-}
-
-/**
- * From Learn's list of lessons: lesson 7's attempt, its question, and the
- * search that gives up; lesson 9's elimination; lesson 10's refusal. It ends
- * with Learn turned off.
- */
-export async function attempting(page: Page, visit: Visit) {
-  await page.getByRole("button", { name: "Lesson 7: When there is no proof" }).click();
-  await page.getByRole("button", { name: "Play the attempt" }).click();
-  await visit("lesson's attempt");
-  for (let step = 0; step < 5; step++)
-    await page.getByRole("button", { name: "Next step of the attempt" }).click();
-  await page.getByRole("radio", { name: "Step 2, ⊕₁" }).check();
-  await visit("lesson's wrong step");
-  await page.getByRole("button", { name: "Ask deduxit about A false case" }).click();
-  await page.getByRole("button", { name: "Search it with a budget of 20 units" }).click();
-  await expect(page.getByRole("button", { name: "Try 40 units" })).toBeVisible();
-  await visit("lesson's unknown");
-  await page.getByRole("button", { name: "All lessons" }).click();
-  await page.getByRole("button", { name: "Lesson 9: Cut and its elimination" }).click();
-  await page.getByRole("button", { name: "Show the finished proof" }).click();
-  await page.getByRole("button", { name: "Eliminate the cuts" }).click();
-  await page.getByRole("button", { name: "Next step" }).click();
-  await expect(page.getByRole("note", { name: "Why this elimination step" })).toBeVisible();
-  await visit("lesson's elimination");
-  await page.getByRole("button", { name: "All lessons" }).click();
-  await page.getByRole("button", { name: "Lesson 10: The quantifiers" }).click();
-  await page.getByRole("button", { name: "Play the attempt" }).click();
-  for (let step = 0; step < 4; step++)
-    await page.getByRole("button", { name: "Next step of the attempt" }).click();
-  await page.getByRole("button", { name: "Try the last step" }).click();
-  await expect(
-    page.getByRole("region", { name: "A step deduxit refuses" }).getByRole("status"),
-  ).toBeVisible();
-  await visit("lesson's refusal");
-  await page.getByRole("button", { name: "All lessons" }).click();
-  await page.getByRole("button", { name: "Turn Learn off" }).click();
-}
-
-/** The restore bar, after a reload of a page with a proof begun. */
 export async function restoring(page: Page, visit: Visit) {
-  await page.reload();
-  await expect(page.getByRole("region", { name: "Restore" })).toBeVisible();
+  await page.goto("/#v=2&u=linear&m=classical&s=A%20%E2%8A%A2%20A");
+  await expect(page.getByRole("tab", { name: /^A ⊢ A/ })).toBeVisible();
+  await newTab(page);
+  await expect(page.getByRole("button", { name: /^Restore \d+ proofs?$/ })).toBeVisible();
   await visit("restore");
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await page.getByRole("button", { name: "Close every sequent" }).click();
+  await expect(page.getByRole("status").filter({ hasText: "Every sequent closed." })).toBeVisible();
+  await visit("every sequent closed");
 }
 
 /** A goal's reasons: a goal an earlier step lost, with Go back, and a long reason with its "more". */
@@ -202,60 +156,33 @@ export async function reasons(page: Page, visit: Visit) {
   await page.getByRole("button", { name: "Close goal" }).click();
   await expect(page.getByRole("button", { name: "Go back" })).toBeVisible();
   await visit("lost goal");
-  await start(page, "!(a -o a * a * a), !(a -o a), a |- a * (a + 0)", false);
+  await newTab(page);
   await calculus(page, ["Intuitionistic"]);
+  await page
+    .getByRole("textbox", { name: "Sequent" })
+    .fill("!(a -o a * a * a), !(a -o a), a |- a * (a + 0)");
+  await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
   await page.getByRole("button", { name: "Close goal" }).click();
   await expect(page.locator(".dock .note").getByRole("button", { name: "more" })).toBeVisible();
   await visit("long reason");
 }
 
-/** Learn's answers: lesson 1's rewrite, a wrong check answer's sequent to try, a practice row answered. */
-export async function answers(page: Page, visit: Visit) {
-  await goto(page);
-  await band(page, "Learn");
-  await page.getByRole("button", { name: "Lesson 1: Reading a sequent" }).click();
-  await page.getByRole("button", { name: "Start the worked proof" }).click();
-  await page.getByRole("button", { name: "Turn on Two-sided" }).click();
-  await expect(page.getByRole("button", { name: "Turn it off" })).toBeVisible();
-  // Visited once the stage has redrawn the sequent two-sided, and zoomed to it.
-  await expect(page.locator(".drawing svg title")).toHaveText("A ⊢ A");
-  await visit("lesson's rewrite");
-  await page.getByRole("region", { name: "Check" }).getByRole("radio", { name: "⊢ A, A" }).check();
-  await expect(page.getByRole("button", { name: "Try ⊢ A, A yourself" })).toBeVisible();
-  await visit("check's sequent to try");
-  const card = page.locator(".exercise").filter({ hasText: "A entails A" });
-  await card.getByRole("button", { name: "Has a proof" }).click();
-  await expect(card.getByRole("button", { name: "Watch the proof of A entails A" })).toBeVisible();
-  await visit("practice answered");
-}
-
 /**
- * An ordinary tab: its calculus's switches, the field's examples, a proof's rules, a goal that is
- * not valid with its countermodel drawn, and that model in the editor, checked and refused.
+ * An ordinary sequent: its toggles on the new tab view, a proof's rules, a goal that is not valid
+ * with its countermodel drawn, and that model in the editor, checked and refused.
  */
 export async function ordinary(page: Page, visit: Visit) {
   await goto(page);
-  await page
-    .locator(".ptab[aria-current=true]")
-    .getByRole("button", { name: /^Logic/ })
-    .click();
-  await page
-    .getByRole("dialog", { name: "Logic" })
-    .getByRole("button", { name: "Ordinary", exact: true })
-    .click();
+  await calculus(page, ["Ordinary"]);
   await visit("ordinary calculus");
-  await page.keyboard.press("Escape");
-  await page.getByRole("button", { name: "Examples" }).click();
-  await visit("examples");
-  await page
-    .getByRole("dialog", { name: "Examples" })
-    .getByRole("button", { name: /^Modus ponens/ })
-    .click();
+  await page.getByRole("textbox", { name: "Sequent" }).fill("a -> b, a |- b");
+  await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
   await page.getByRole("button", { name: /^a → b, formula/ }).click();
   await expect(page.getByRole("dialog", { name: "Rules" })).toBeVisible();
   await visit("ordinary rules");
   await page.keyboard.press("Escape");
-  await page.getByRole("button", { name: "New proof" }).click();
+  await newTab(page);
+  await calculus(page, ["Intuitionistic"]);
   await page.getByRole("textbox", { name: "Sequent" }).fill("|- a \\/ ~a");
   await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
   await page.getByRole("button", { name: "Close goal" }).click();
@@ -272,31 +199,25 @@ export async function ordinary(page: Page, visit: Visit) {
   await page.getByRole("button", { name: "Check the model" }).click();
   await expect(page.locator(".modal-check")).toContainText("No model of intuitionistic logic");
   await visit("ordinary model refused");
-  await page.getByRole("tab", { name: "Tree" }).click();
-  await band(page, "Practice", visit);
-  const practice = page.getByRole("dialog", { name: "Practice" });
-  await expect(practice.getByRole("checkbox", { name: "Minimal" })).toBeVisible();
-  await visit("ordinary practice");
-  await page.keyboard.press("Escape");
+  await page.getByRole("tab", { name: /^Sequent calculus/ }).click();
 }
 
 /**
  * A classical proof's other views: its truth table with the countermodel, its tableau with an
- * open branch, and a table past the bound on atoms with the way to draw it.
+ * open branch, a tableau by hand, and a table past the bound on atoms with the way to draw it.
  */
 export async function methods(page: Page, visit: Visit) {
   await goto(page);
   await calculus(page, ["Ordinary", "Classical"]);
   await page.getByRole("textbox", { name: "Sequent" }).fill("a -> b |- b -> a");
   await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
-  await page.getByRole("tab", { name: "Table", exact: true }).click();
+  await addView(page, "Truth table");
   await expect(page.getByRole("img", { name: /^A countermodel of/ })).toBeVisible();
   await visit("truth table");
-  await page.getByRole("tab", { name: "Tableau" }).click();
+  await addView(page, "Tableau");
   await expect(page.locator(".tb-end").first()).toBeVisible();
   await visit("tableau");
-  const pop = await switches(page);
-  await pop.getByRole("button", { name: "Check a tableau" }).click();
+  await addView(page, "Tableau by hand");
   await expect(page.getByRole("textbox", { name: "Your tableau, a line each" })).toHaveValue(
     /^1 T a → b\n2 F b → a$/,
   );
@@ -304,33 +225,31 @@ export async function methods(page: Page, visit: Visit) {
   await page.getByRole("button", { name: "Check the tableau" }).click();
   await expect(page.locator(".written .kw")).toHaveText("Unfinished");
   await visit("tableau reviewed");
-  await page.getByRole("button", { name: "New proof" }).click();
+  await newTab(page);
   await page.getByRole("textbox", { name: "Sequent" }).fill("a, b, c, d, e, f, g, h, i, j, k |- a");
   await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
-  await page.getByRole("tab", { name: "Table", exact: true }).click();
+  await addView(page, "Truth table");
   await expect(page.getByRole("button", { name: "Draw all 2048 rows" })).toBeVisible();
   await visit("table refused");
-  await page.getByRole("tab", { name: "Tree" }).click();
+  await page.getByRole("tab", { name: /^Sequent calculus/ }).click();
 }
 
 /**
- * A classical proof's translations and interpolants: the Logic popover that offers them, a
- * translation whose verdicts agree, one that is not valid with its countermodel, and an
- * interpolant before and after a formula is moved to the other part.
+ * A classical proof's translations and interpolants: a translation whose verdicts agree, one
+ * that is not valid with its countermodel, and an interpolant before and after a formula is moved
+ * to the other part.
  */
 export async function transforms(page: Page, visit: Visit) {
   await goto(page);
   await calculus(page, ["Ordinary", "Classical"]);
   await page.getByRole("textbox", { name: "Sequent" }).fill("p /\\ (p -> q), s |- q \\/ t");
   await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
-  let pop = await switches(page);
-  await visit("logic, classical");
-  await pop.getByRole("button", { name: "Translate into intuitionistic logic" }).click();
+  await addView(page, "Into intuitionistic logic");
   const translation = page.getByRole("dialog", { name: "Translate into intuitionistic logic" });
   await expect(translation.getByRole("status")).toContainText("Both valid");
   await visit("translation");
-  pop = await switches(page);
-  await pop.getByRole("button", { name: "Find an interpolant" }).click();
+  await page.keyboard.press("Escape");
+  await addView(page, "Interpolant");
   const interpolant = page.getByRole("dialog", { name: "Find an interpolant" });
   await expect(interpolant.getByRole("status")).toContainText("Interpolant");
   await visit("interpolant");
@@ -339,11 +258,10 @@ export async function transforms(page: Page, visit: Visit) {
   await expect(interpolant.getByRole("status")).toContainText("Interpolant");
   await visit("interpolant, a formula moved");
   await page.keyboard.press("Escape");
-  await page.getByRole("button", { name: "New proof" }).click();
+  await newTab(page);
   await page.getByRole("textbox", { name: "Sequent" }).fill("a \\/ b |- a");
   await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
-  pop = await switches(page);
-  await pop.getByRole("button", { name: "Translate into intuitionistic logic" }).click();
+  await addView(page, "Into intuitionistic logic");
   await expect(page.getByRole("img", { name: /^A countermodel of/ })).toBeVisible();
   await visit("translation, not valid");
   await page.keyboard.press("Escape");
@@ -358,8 +276,7 @@ export async function clausal(page: Page, visit: Visit) {
   await calculus(page, ["Ordinary", "Classical"]);
   await page.getByRole("textbox", { name: "Sequent" }).fill("a -> b, b -> c |- a -> c");
   await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
-  let pop = await switches(page);
-  await pop.getByRole("button", { name: "Rewrite into a normal form" }).click();
+  await addView(page, "Normal form");
   const normal = page.getByRole("dialog", { name: "Rewrite into a normal form" });
   await expect(normal.getByRole("status")).toContainText("Equivalent");
   await visit("normal form");
@@ -369,8 +286,7 @@ export async function clausal(page: Page, visit: Visit) {
   await expect(normal.getByRole("status")).toContainText("Same verdict");
   await visit("normal form, Tseitin's clauses");
   await page.keyboard.press("Escape");
-  pop = await switches(page);
-  await pop.getByRole("button", { name: "Refute by resolution" }).click();
+  await addView(page, "Resolution");
   const resolution = page.getByRole("dialog", { name: "Refute by resolution" });
   await expect(resolution.getByRole("status")).toContainText("Valid");
   await resolution.locator(".cl-graph").getByRole("button").first().click();
@@ -395,54 +311,21 @@ export async function clausal(page: Page, visit: Visit) {
   await page.keyboard.press("Escape");
 }
 
-/**
- * The workspace of linked tabs: a translation proved on a new tab and linked, the panel (docked,
- * or the sheet its button opens on a narrow screen), a tab out of date after its sequent changed,
- * and the graph of three linked tabs.
- */
+/** A translation proved as a sequent of its own, and a copy of a proof, each a chip at the top. */
 export async function linking(page: Page, visit: Visit) {
   await goto(page);
   await calculus(page, ["Ordinary", "Classical"]);
   await page.getByRole("textbox", { name: "Sequent" }).fill("|- a \\/ ~a");
   await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
-  let pop = await switches(page);
-  await pop.getByRole("button", { name: "Translate into intuitionistic logic" }).click();
+  await addView(page, "Into intuitionistic logic");
   const translation = page.getByRole("dialog", { name: "Translate into intuitionistic logic" });
   await expect(translation.getByRole("status")).toContainText("Both valid");
   await translation.getByRole("button", { name: "Prove it in intuitionistic logic" }).click();
-  await expect(page.locator(".ptab")).toHaveCount(2);
-  const button = page.getByRole("button", { name: /^Workspace, \d linked tabs/ });
-  await expect(button).toBeVisible();
-  /** The panel: docked where it fits, else the sheet its button opens. */
-  const panel = async () => {
-    const docked = page.getByRole("region", { name: "Workspace" });
-    if (await docked.isVisible()) return docked;
-    await button.click();
-    const sheet = page.getByRole("dialog", { name: "Workspace" });
-    await expect(sheet).toBeVisible();
-    return sheet;
-  };
-  let ws = await panel();
-  await expect(ws.locator(".ws-line")).toContainText("Both valid");
-  await visit("workspace, linked");
-  await ws.locator(".ws-row").first().locator(".ws-tab").click();
-  await page.keyboard.press("Escape");
-  await page.locator(".ptab").first().locator(".pt-go").click();
-  await page.getByRole("textbox", { name: "Sequent" }).fill("|- a -> b \\/ ~b");
-  await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
-  await expect(page.getByRole("button", { name: /1 out of date/ })).toBeVisible();
-  ws = await panel();
-  await expect(ws.getByText("Out of date")).toBeVisible();
-  await visit("workspace, out of date");
-  await page.keyboard.press("Escape");
-  pop = await switches(page);
-  await pop.getByRole("button", { name: "Duplicate this proof" }).click();
-  await expect(page.locator(".ptab")).toHaveCount(3);
-  ws = await panel();
-  await ws.getByRole("button", { name: "Show as graph" }).click();
-  await expect(page.getByRole("region", { name: "Workspace graph" })).toBeVisible();
-  await visit("workspace, graph");
-  await page.keyboard.press("Escape");
+  await expect(page.locator(".chip")).toHaveCount(2);
+  await visit("translation proved");
+  await addView(page, "A copy of this proof");
+  await expect(page.locator(".chip")).toHaveCount(3);
+  await visit("copy");
 }
 
 /** The witness chooser with a term typed, and its refusal. */
@@ -461,12 +344,12 @@ export async function witnessing(page: Page, visit: Visit) {
 /** The cut chooser with a formula typed, and the elimination's panel stepping and at its end. */
 export async function cutting(page: Page, visit: Visit) {
   await start(page, "A, A -o B |- B");
-  await page.getByRole("button", { name: "Cut", exact: true }).click();
+  await press(page, "Cut");
   await page.getByRole("dialog", { name: "Cut" }).getByRole("textbox").fill("A -o B");
   await visit("cut");
   await page.getByRole("button", { name: /^A ⊗ B⊥, formula 2/ }).click();
   await page.getByRole("dialog", { name: "Cut" }).getByRole("button", { name: "Cut" }).click();
-  await page.getByRole("button", { name: "Close all" }).first().click();
+  await press(page, "Close all");
   const panel = page.getByRole("region", { name: "Cut elimination" });
   await panel.getByRole("button", { name: "Eliminate the cuts" }).click();
   await visit("elimination");
@@ -493,7 +376,7 @@ export async function fonts(page: Page, visit: Visit) {
   }
 }
 
-/** Takes the step of a custom calculus's goal whose button starts with `words`. */
+/** Takes the step of a goal in a view of steps (natural deduction) whose button starts with `words`. */
 export async function customStep(page: Page, words: string) {
   const escaped = words.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   await page
@@ -504,81 +387,45 @@ export async function customStep(page: Page, words: string) {
 }
 
 /**
- * A calculus of one's own: the popover's entry, the panel's start and its rule file, a
- * derivation in LJ by steps, a step asking what it needs, and the verdict.
- */
-export async function customising(page: Page, visit: Visit) {
-  await goto(page);
-  const pop = await switches(page);
-  await pop.getByRole("button", { name: "Your own calculus" }).click();
-  await visit("custom entry");
-  await page.keyboard.press("Escape");
-  await expect(page.getByText("A rule file is a calculus written down")).toBeVisible();
-  await page.getByText("The rule file", { exact: true }).click();
-  await expect(page.getByRole("textbox", { name: "The rule file" })).toHaveValue(/"LJ"/);
-  await visit("custom start");
-  await page.getByRole("textbox", { name: "Sequent" }).fill("a ∧ b ⊢ b ∧ a");
-  await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
-  await customStep(page, "∧R on b ∧ a");
-  await expect(page.getByText("Open goal 1 of 2")).toBeVisible();
-  await visit("custom steps");
-  await customStep(page, "cut");
-  await expect(page.getByRole("form", { name: /^Give what cut needs/ })).toBeVisible();
-  await visit("custom giving");
-  await page.getByRole("button", { name: "Other steps" }).click();
-  await customStep(page, "∧L₂ on a ∧ b");
-  await customStep(page, "ax");
-  await customStep(page, "∧L₁ on a ∧ b");
-  await customStep(page, "ax");
-  await page.getByRole("button", { name: "Check the derivation" }).click();
-  await expect(page.getByRole("status").filter({ hasText: "in the calculus given" })).toBeVisible();
-  await visit("custom valid");
-}
-
-/**
- * Modal logic: the popover's button and its system chooser, the first screen, a countermodel in
- * K, the model checked where it fails and where it holds, a valid sequent's derivation in S4, a
- * model that is none of S4, a linked copy in the workspace, and a parse error.
- */
-/**
- * Lambda-terms: the popover's button and its calculus select, the setup, a term checked with its
- * typing derivation, a type's term found and its terms listed, and an ill-typed term.
+ * Lambda-terms: the new tab view with its toggle, a term checked with its typing derivation, a
+ * type's term found and its terms listed, and an ill-typed term.
  */
 export async function lambdaing(page: Page, visit: Visit) {
   await goto(page);
-  const pop = await switches(page);
-  await pop.getByRole("button", { name: "Lambda-terms" }).click();
-  await expect(pop.getByRole("combobox", { name: "Lambda calculus" })).toHaveValue("simple");
+  await calculus(page, ["Lambda-terms"]);
+  await expect(
+    (await switches(page)).getByRole("combobox", { name: "Lambda calculus" }),
+  ).toHaveValue("simple");
   await visit("lambda entry");
-  await page.keyboard.press("Escape");
-  await expect(page.getByText(/A λ-term is a small program/)).toBeVisible();
-  await visit("lambda start");
-  await page.getByRole("button", { name: /^Try \\f:a/ }).click();
+  await page.getByRole("textbox", { name: "Sequent" }).fill(String.raw`\f:a -> b. \x:a. f x`);
+  await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
   await expect(page.locator(".lambda .kw.ok", { hasText: "Well typed" })).toBeVisible();
   await expect(page.locator(".lambda .custom-drawing svg")).toBeVisible();
   await visit("lambda term checked");
-  await page.getByRole("button", { name: "New proof" }).click();
-  await page.getByRole("button", { name: "Try a -> a -> a" }).click();
+  await newTab(page);
+  await page.getByRole("textbox", { name: "Sequent" }).fill("a -> a -> a");
+  await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
   await expect(page.locator(".lambda .kw.ok", { hasText: "Has a term" })).toBeVisible();
   await page.getByRole("button", { name: "List its terms" }).click();
   await expect(page.locator(".lambda-terms li")).toHaveCount(2);
   await visit("lambda terms listed");
-  await page.getByRole("button", { name: "New proof" }).click();
+  await newTab(page);
   await page.getByRole("textbox", { name: "Sequent" }).fill(String.raw`\x:a. x x`);
   await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
   await expect(page.locator(".lambda .kw.bad", { hasText: "Not well typed" })).toBeVisible();
   await visit("lambda ill typed");
 }
 
+/**
+ * Modal logic: the new tab view with its system, a countermodel in K, the model checked where it
+ * fails and where it holds, a valid sequent's derivation in S4, a model that is none of S4, a
+ * copy, and a parse error.
+ */
 export async function modalising(page: Page, visit: Visit) {
   await goto(page);
-  const pop = await switches(page);
-  await pop.getByRole("button", { name: "Modal logic" }).click();
-  await expect(pop.getByRole("combobox", { name: "System" })).toHaveValue("K");
+  await calculus(page, ["Modal logic"]);
+  await expect((await switches(page)).getByRole("combobox", { name: "System" })).toHaveValue("K");
   await visit("modal entry");
-  await page.keyboard.press("Escape");
-  await expect(page.getByText(/Modal logic adds □A/)).toBeVisible();
-  await visit("modal start");
   await page.getByRole("textbox", { name: "Sequent" }).fill("[]p -> [][]p");
   await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
   await expect(page.locator(".modal .kw.bad", { hasText: "Not valid" })).toBeVisible();
@@ -592,9 +439,7 @@ export async function modalising(page: Page, visit: Visit) {
   await page.getByRole("button", { name: "Check the model" }).click();
   await expect(page.locator(".modal-check")).toContainText("Holds");
   await visit("modal holds");
-  const again = await switches(page);
-  await again.getByRole("combobox", { name: "System" }).selectOption("S4");
-  await page.keyboard.press("Escape");
+  await (await switches(page)).getByRole("combobox", { name: "System" }).selectOption("S4");
   await expect(page.locator(".modal .kw.ok", { hasText: "Valid" })).toBeVisible();
   await expect(page.locator(".modal .custom-drawing svg")).toBeVisible();
   await visit("modal valid");
@@ -607,19 +452,17 @@ export async function modalising(page: Page, visit: Visit) {
   await page.getByRole("button", { name: "Add a world" }).click();
   await expect(page.locator(".kripke-form legend")).toHaveText("World 1");
   await visit("modal editor, a world added");
-  const linking = await switches(page);
-  await linking.getByRole("button", { name: "Duplicate this proof" }).click();
-  await expect(page.locator(".ptab")).toHaveCount(2);
-  await page.getByRole("button", { name: /^Workspace, 2 linked tabs/ }).waitFor();
-  await visit("modal linked");
-  await page.getByRole("button", { name: "New proof" }).click();
+  await addView(page, "A copy of this proof");
+  await expect(page.locator(".chip")).toHaveCount(2);
+  await visit("modal copy");
+  await newTab(page);
   await page.getByRole("textbox", { name: "Sequent" }).fill("[]p ->");
   await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
   await expect(page.getByRole("alert")).toBeVisible();
   await visit("modal parse error");
 }
 
-/** Starts `sequent` in the tab's calculus, set to natural deduction, and waits for its goal. */
+/** Starts `sequent` in the view's calculus, set to natural deduction, and waits for its goal. */
 export async function deduce(page: Page, sequent: string) {
   await page.getByRole("textbox", { name: "Sequent" }).fill(sequent);
   await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
@@ -635,16 +478,13 @@ export async function deriveLine(page: Page, rule: string, lines: string) {
 }
 
 /**
- * Natural deduction, a method of the ordinary tab: the calculus popover's button, a proof begun
- * backwards, a line derived forwards, a refused citation, both drawings, and the verdict.
+ * Natural deduction, a method of ordinary logic: its toggle, a proof begun backwards, a line
+ * derived forwards, a refused citation, both drawings, and the verdict.
  */
 export async function deducing(page: Page, visit: Visit) {
   await goto(page);
-  await calculus(page, ["Ordinary", "Intuitionistic"]);
-  const pop = await switches(page);
-  await pop.getByRole("button", { name: "Natural deduction" }).click();
+  await calculus(page, ["Ordinary", "Intuitionistic", "Natural deduction"]);
   await visit("natural calculus");
-  await page.keyboard.press("Escape");
   await deduce(page, "a ∧ b ⊢ b ∧ a");
   await visit("natural start");
   await customStep(page, "∧I");
@@ -664,46 +504,12 @@ export async function deducing(page: Page, visit: Visit) {
 }
 
 /**
- * The ordinary course, in an ordinary tab's Learn: its list, lesson 3's worked proof played
- * with a prediction, its self-explanation prompt, the finished proof and the hinge answered.
- */
-export async function coursing(page: Page, visit: Visit) {
-  await goto(page);
-  await calculus(page, ["Ordinary", "Classical"]);
-  await band(page, "Learn", visit);
-  await page.getByRole("tab", { name: "Tutorial" }).click();
-  await expect(page.getByText("The course on ordinary logic")).toBeVisible();
-  await visit("ordinary course");
-  await page.getByRole("button", { name: /^Lesson 3: The sequent calculus LK/ }).click();
-  await page.getByRole("button", { name: "Start the worked proof" }).click();
-  await page.getByRole("button", { name: "Predict ∨R", exact: true }).click();
-  await expect(page.getByRole("note", { name: "Why this step" })).toContainText("Right");
-  await visit("ordinary lesson's step");
-  await page.getByRole("button", { name: "Show the step" }).click();
-  await page.getByRole("button", { name: "Show the step" }).click();
-  await expect(page.locator(".lesson-view .kw.ok").filter({ hasText: "Proved" })).toBeVisible();
-  await page.getByRole("region", { name: "Check" }).getByRole("radio").nth(1).check();
-  await visit("ordinary lesson's check");
-  await page.getByRole("button", { name: "All lessons" }).click();
-  await page.getByRole("button", { name: /^Lesson 1: Valid, by the truth table/ }).click();
-  await page.getByRole("button", { name: "Start with the first row" }).click();
-  await page.getByRole("button", { name: "Predict falsifies" }).click();
-  await visit("table lesson's row");
-  await page.getByRole("button", { name: "All lessons" }).click();
-  await page.getByRole("button", { name: /^Lesson 5: Natural deduction, forwards/ }).click();
-  await page.getByRole("button", { name: "Start the worked proof" }).click();
-  await page.getByRole("button", { name: "Predict ∧E₂" }).click();
-  await expect(page.getByRole("region", { name: "Natural deduction" })).toBeVisible();
-  await visit("natural lesson's step");
-}
-
-/**
  * Course packs: the teacher's sheet, a pack opened with its bar, its fixed calculus, the hand-in,
  * the check view of a hand-in imported, and a pack embedded in a course's page.
  */
 export async function packing(page: Page, visit: Visit) {
   await start(page, "A * B |- B * A");
-  await band(page, "Export");
+  await press(page, "Export");
   await page.getByRole("menuitem", { name: /^Course pack/ }).click();
   const sheet = page.getByRole("dialog", { name: "Course pack" });
   await sheet.getByRole("textbox", { name: "Title" }).fill("Week 3");
@@ -715,10 +521,8 @@ export async function packing(page: Page, visit: Visit) {
   const bar = page.getByRole("region", { name: "Course pack" });
   await expect(bar).toContainText("Week 3");
   await visit("pack opened");
-  const pop = await switches(page);
-  await expect(pop).toContainText("problem 1 of the pack");
+  await expect(page.locator(".calc-fixed")).toContainText("problem 1 of the pack");
   await visit("pack's fixed calculus");
-  await page.keyboard.press("Escape");
   await bar.getByRole("button", { name: "Hand in" }).click();
   const handin = page.getByRole("dialog", { name: "Hand in" });
   await expect(handin.locator(".pk-code")).toBeVisible();
@@ -727,7 +531,7 @@ export async function packing(page: Page, visit: Visit) {
   await handin.getByRole("button", { name: "Download the file" }).click();
   const text = await readFile(await (await download).path(), "utf8");
   await page.keyboard.press("Escape");
-  await band(page, "Import");
+  await press(page, "Import");
   await page.getByRole("dialog", { name: "Import" }).locator("textarea").fill(text);
   await page
     .getByRole("dialog", { name: "Import" })

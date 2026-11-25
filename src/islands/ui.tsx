@@ -3,10 +3,9 @@
 
 /**
  * The island's own view state, beside the proofs' (state.tsx): what is
- * selected, which popover or menu is open, the tree or net tab, the camera,
- * the hint ladder, the live region's message, Learn's place, its lesson open,
- * the reason of the step it played and its reasons for the cases of cut
- * elimination, and the tour's stop.
+ * selected, which popover, panel or page is open, the view shown and the views
+ * added, a notice, More's row, the hint ladder, the live region's message and
+ * the tour's stop.
  */
 
 import { createSignal, For, Show } from "solid-js";
@@ -38,36 +37,37 @@ export interface Ladder {
   readonly hint: Hint | null;
 }
 
-/** Which menu or pane is open. */
+/**
+ * Which panel, page, list or dialog is open: a panel beside the tools (Steps, the search's
+ * settings, Export, Import, and the sheets of a translation, an interpolant, a normal form,
+ * resolution and a course pack), the list of views to add, the Settings page, the list of keys,
+ * About.
+ */
 export type Menu =
   | "export"
   | "import"
   | "settings"
   | "keys"
-  | "status"
-  | "calculus"
-  | "examples"
   | "steps"
+  | "search"
+  | "views"
   | "about"
-  | "practice"
   | "translate"
   | "interpolate"
   | "normalize"
   | "resolve"
-  | "more"
-  | "workspace"
   | "pack"
   | "handin"
   | "check"
   | null;
 
-/** A step a lesson played, whose reason stands beside its inference on the stage. */
-export interface Reason {
-  /** The tab the lesson's proof is on. */
-  readonly tab: string;
-  /** The path of the goal the step expanded. */
-  readonly path: readonly number[];
+/** A view of a sequent the stage shows, each a cell in the rail. */
+export type View = "tree" | "net" | "table" | "tableau" | "model" | "written";
+
+/** A line above the bottom box saying what was done, with an action that takes it back. */
+export interface Notice {
   readonly text: string;
+  readonly undo?: { readonly label: string; readonly run: () => void };
 }
 
 /** What the stage's model view starts from: a model, its sequent (text or JSON) and its logic. */
@@ -78,9 +78,6 @@ export interface ModelSeed {
   /** Whether the model is a countermodel deduxit found, to change; else one of the visitor's own. */
   readonly found: boolean;
 }
-
-/** Learn's two places. */
-export type Rubric = "tutorial" | "reference";
 
 /** Creates the view state. */
 export function createUi() {
@@ -98,25 +95,21 @@ export function createUi() {
      * Kripke model to change and check (`modelSeed` the one it starts from), or a classical
      * proof's tableau written by hand.
      */
-    tab: "tree" | "net" | "table" | "tableau" | "model" | "written";
+    tab: View;
+    /** The views a visitor added to each proof by "+ view", by the proof's id, beside its proof and net. */
+    added: Readonly<Record<string, readonly View[]>>;
+    /** What was just done, said above the bottom box until the next action. */
+    notice: Notice | null;
+    /** In a compact window, whether the tools' second row (More) is open. */
+    more: boolean;
     /** The model the model view starts from, the sequent it is checked against, and the logic. */
     modelSeed: ModelSeed | null;
     ladder: Ladder | null;
     live: string;
     /** The calculus a switch asked for, until the visitor confirms the restart. */
     pendingCalculus: Calculus | null;
-    /** Learn's place shown, or null with Learn off. */
-    learn: Rubric | null;
     /** The tour's stop shown (from 0), or null when no tour runs. */
     tour: number | null;
-    /** The id of what Learn shows and marks: an engine of the reference. */
-    spot: string | null;
-    /** The tutorial's lesson open, by its number, or null for the list of lessons. */
-    lesson: number | null;
-    /** The reason of the step a lesson played last, while Learn is on. */
-    reason: Reason | null;
-    /** The open lesson's reasons for the cases of a cut elimination's steps, by deduxit's name of the case. */
-    cases: Readonly<Record<string, string>> | null;
   }>({
     selected: null,
     offered: null,
@@ -125,16 +118,14 @@ export function createUi() {
     witnessing: null,
     menu: null,
     tab: "tree",
+    added: {},
+    notice: null,
+    more: false,
     modelSeed: null,
     ladder: null,
     live: "",
     pendingCalculus: null,
-    learn: null,
     tour: null,
-    spot: null,
-    lesson: null,
-    reason: null,
-    cases: null,
   });
   /** Bumped when the drawing must be laid out again (a new drawing, a resize). */
   const [drawn, setDrawn] = createSignal(0);
@@ -149,17 +140,20 @@ export function ladderKey(proof: string, path: readonly number[]): string {
   return `${proof}:${path.join(".")}`;
 }
 
-/** A token of tokens.css as a number: a length in pixels, a duration in milliseconds. */
+/** A token of tokens.css as a number: a length in pixels (a rem at the root's size), a duration in milliseconds. */
 export function token(name: string): number {
-  return Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name)) || 0;
+  const root = getComputedStyle(document.documentElement);
+  const value = root.getPropertyValue(name).trim();
+  const number = Number.parseFloat(value) || 0;
+  return value.endsWith("rem") ? number * (Number.parseFloat(root.fontSize) || 16) : number;
 }
 
-/** The phone's width, at which tokens.css makes every control 44 pixels: as app.css's media queries. */
-const PHONE = "(max-width: 640px)";
+/** The compact window class, under 600 pixels wide, where tokens.css makes every target 44 pixels: as app.css's media queries. */
+const COMPACT = "(width < 600px)";
 
-/** Whether the page is at a phone's width, as a signal. */
-export const phone = (() => {
-  const query = typeof window === "undefined" ? null : window.matchMedia(PHONE);
+/** Whether the window is compact, as a signal. */
+export const compact = (() => {
+  const query = typeof window === "undefined" ? null : window.matchMedia(COMPACT);
   const [matches, setMatches] = createSignal(query?.matches ?? false);
   query?.addEventListener("change", (event) => setMatches(event.matches));
   return matches;

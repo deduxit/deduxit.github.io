@@ -411,7 +411,7 @@ export function KripkeEditor(props: {
               />
             </label>
             <Show when={props.reading === "minimal"}>
-              <label class="chip">
+              <label class="kripke-chip">
                 <input
                   type="checkbox"
                   aria-label={`World ${String(selected())} forces ⊥`}
@@ -441,7 +441,7 @@ export function KripkeEditor(props: {
                     <Show
                       when={!ordinary() || to !== selected() || (w().arrows ?? []).includes(to)}
                     >
-                      <label class="chip">
+                      <label class="kripke-chip">
                         <input
                           type="checkbox"
                           aria-label={

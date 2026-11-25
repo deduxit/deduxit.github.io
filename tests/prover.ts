@@ -5,40 +5,74 @@
 
 import { expect, type Page } from "@playwright/test";
 
-/** Opens the page and waits for the sequent field. */
+/** Opens the page and waits for the bottom box. */
 export async function goto(page: Page) {
   await page.goto("/");
   await expect(page.getByRole("textbox", { name: "Sequent" })).toBeVisible();
 }
 
-/** Starts a sequent: on a fresh page, or as a new proof beside the open ones. */
+/** Opens the new tab view from the top row's "+". */
+export async function newTab(page: Page) {
+  await page.getByRole("button", { name: "New sequent", exact: true }).click();
+  await expect(page.getByRole("region", { name: "New sequent" })).toBeVisible();
+}
+
+/** Starts a sequent: on a fresh page, or as a new sequent beside the open ones. */
 export async function start(page: Page, sequent: string, fresh = true) {
   if (fresh) await goto(page);
-  else await page.getByRole("button", { name: "New proof" }).click();
+  else await newTab(page);
   await page.getByRole("textbox", { name: "Sequent" }).fill(sequent);
   await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
-  // Started: the field gave way to the proof, or said why it could not.
+  // Started: the box gave way to the proof, or said why it could not.
   await expect(page.locator(".stage .fb, [role=alert]").first()).toBeVisible();
 }
 
-/** The current tab's calculus switches, opened from its mark if they are not open yet. */
+/** The toggles of the view shown: the calculus it is in. */
 export async function switches(page: Page) {
-  const pop = page.getByRole("dialog", { name: "Logic", exact: true });
-  if (!(await pop.isVisible())) await page.locator(".ptab[aria-current=true] .pt-mark").click();
-  await expect(pop).toBeVisible();
-  return pop;
+  const toggles = page.getByRole("group", { name: "Calculus of this view" });
+  await expect(toggles).toBeVisible();
+  return toggles;
 }
 
-/** Sets the current tab's calculus by its mark's switches, before any step, and closes them. */
+/** The new tab view's logics, by the names the tests give the suites. */
+const SUITES: Readonly<Record<string, string>> = {
+  Ordinary: "Ordinary logic",
+  Linear: "Linear logic",
+  "Modal logic": "Modal logic",
+  "Lambda-terms": "Lambda-terms",
+};
+/** The tools that set how a derivation is drawn, by the names the tests give them. */
+const TOOLS: Readonly<Record<string, string>> = {
+  "Two-sided": "Two-sided",
+  "Structural rules": "W C, weakenings and contractions",
+};
+
+/**
+ * Sets the calculus: a logic on the new tab view (a new one if a sequent is shown), then the
+ * toggles of the view and the drawing's tools by their names.
+ */
 export async function calculus(page: Page, names: readonly string[]) {
-  const pop = await switches(page);
   for (const name of names) {
-    const button = pop.getByRole("button", { name, exact: true });
-    if (await button.count()) await button.click();
-    else await pop.locator("label.sw", { hasText: name }).click();
+    const suite = SUITES[name];
+    if (suite) {
+      const logics = page.getByRole("region", { name: "New sequent" });
+      if (!(await logics.isVisible())) await newTab(page);
+      await logics.getByRole("button", { name: suite }).click();
+      continue;
+    }
+    const tool = TOOLS[name];
+    if (tool) {
+      await page
+        .getByRole("toolbar", { name: "Tools" })
+        .getByRole("button", { name: tool })
+        .click();
+      continue;
+    }
+    const toggles = await switches(page);
+    await toggles
+      .getByRole("button", { name: name === "Natural deduction" ? "Natural" : name, exact: true })
+      .click();
   }
-  await page.keyboard.press("Escape");
-  await expect(pop).toBeHidden();
 }
 
 /** Applies a rule to the active goal's formula whose name matches. */
@@ -50,11 +84,33 @@ export async function rule(page: Page, formula: RegExp, name: string) {
     .click();
 }
 
+/** The chosen sequent's proof, its cell in the rail, whose hover names its calculus. */
+export function viewCell(page: Page) {
+  return page.getByRole("tablist", { name: "Views of this sequent" }).getByRole("tab").first();
+}
+
+/** A tool of the view shown, by its name. */
+export function tool(page: Page, name: string) {
+  return page.getByRole("toolbar", { name: "Tools" }).getByRole("button", { name, exact: true });
+}
+
+/** Adds a view of the sequent shown, by its entry in "+ view". */
+export async function addView(page: Page, name: string) {
+  await page.getByRole("button", { name: "Add a view" }).click();
+  await page
+    .getByRole("dialog", { name: "Add a view" })
+    .getByRole("button", { name, exact: true })
+    .click();
+}
+
+/** The note that says the proof is finished. */
+export function proved(page: Page) {
+  return page.getByRole("status").filter({ hasText: "Proved. Every goal is closed." });
+}
+
 /** Proves A ⊗ B ⊢ B ⊗ A by the search. */
 export async function proveCommuted(page: Page) {
   await start(page, "A * B |- B * A");
   await page.getByRole("button", { name: "Close goal" }).click();
-  await expect(
-    page.getByRole("status").filter({ hasText: "Proved: every goal is closed" }),
-  ).toBeVisible();
+  await expect(proved(page)).toBeVisible();
 }

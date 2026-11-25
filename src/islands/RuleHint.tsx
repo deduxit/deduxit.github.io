@@ -10,7 +10,7 @@
 
 import { createEffect, createSignal, For, onCleanup, onMount, Show } from "solid-js";
 import { hintId, hintNamed, type RuleHint } from "../lib/rules";
-import { Schema } from "./Learn";
+import { Schema } from "./Written";
 import { Words } from "./ui";
 
 /**

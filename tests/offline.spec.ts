@@ -30,7 +30,7 @@ test("after one visit the page proves a sequent with no network", async ({ page,
   await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
   await page.getByRole("button", { name: "Close goal" }).click();
   await expect(
-    page.getByRole("status").filter({ hasText: "Proved: every goal is closed" }),
+    page.getByRole("status").filter({ hasText: "Proved. Every goal is closed." }),
   ).toBeVisible();
 });
 
@@ -64,7 +64,7 @@ test("a session without a PNG or PDF export never fetches the renderers, and the
   await start(page, "A * B |- B * A", false);
   await page.getByRole("button", { name: "Close goal" }).click();
   await expect(
-    page.getByRole("status").filter({ hasText: "Proved: every goal is closed" }),
+    page.getByRole("status").filter({ hasText: "Proved. Every goal is closed." }),
   ).toBeVisible();
   for (const label of ["SVG", "LaTeX", "Text", "Session"]) await exported(label);
   expect(fetched).toEqual([]);

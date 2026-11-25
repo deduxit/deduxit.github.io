@@ -5,9 +5,7 @@
  * deduxit's engines as the page names them: the name an outcome gives
  * (`engine`, and `classical` for the classical refuter, whose refutation an
  * outcome names by its kind), a short name for beside the work, what the
- * engine does in a line, and its source in the literature, which Learn's
- * reference lists in full with its link (src/content/texts/reference.md,
- * each engine under the id `engine-<key>`).
+ * engine does in a line, and its source in the literature.
  */
 
 import type { Outcome } from "./deduxit";
@@ -103,7 +101,7 @@ export function engineTip(key: string): string {
     return `Filled in from the finished proof of ${tab}, in another tab, checked again in this proof's calculus.`;
   const engine = ENGINES[key];
   if (!engine) return `The engine ${key}`;
-  return `The ${engine.name} ${engine.does}. Source: ${engine.source}; Learn's reference has it in full.`;
+  return `The ${engine.name} ${engine.does}. Source: ${engine.source}.`;
 }
 
 /** An engine's name standing alone, as a label: in sentence case. */

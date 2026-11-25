@@ -13,29 +13,24 @@ import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
 import { goto } from "./prover";
 import {
-  answers,
-  attempting,
+  clausal,
   cutting,
-  fonts,
-  learning,
-  menus,
-  methods,
-  coursing,
-  customising,
   deducing,
+  fonts,
   lambdaing,
+  linking,
+  menus,
+  framePages,
+  methods,
   modalising,
-  packing,
   ordinary,
+  packing,
   pixel,
-  practising,
   proving,
   reasons,
   restoring,
   touring,
   transforms,
-  clausal,
-  linking,
   type Visit,
   witnessing,
 } from "./states";
@@ -126,13 +121,11 @@ async function measured(
   return found;
 }
 
-/** Every state of the page's walk, in order: a proof, Practice, Learn, the tour and the restore bar. */
+/** Every state of the page's walk, in order: a proof, the frame's panels and pages, the tour, restoring. */
 async function walk(page: Page, visit: Visit) {
   await proving(page, visit);
   await menus(page, visit);
-  await practising(page, visit);
-  await learning(page, visit);
-  await attempting(page, visit);
+  await framePages(page, visit);
   await touring(page, visit);
   await restoring(page, visit);
 }
@@ -149,13 +142,7 @@ test("a goal's reasons and their controls are targets of 24 by 24 pixels at leas
   expect(await measured(page, 24, reasons)).toEqual([]);
 });
 
-test("Learn's answers and lesson 1's rewrite are targets of 24 by 24 pixels at least, at a desktop's width", async ({
-  page,
-}) => {
-  expect(await measured(page, 24, answers)).toEqual([]);
-});
-
-test("an ordinary tab's controls are targets of 24 by 24 pixels at least, at a desktop's width", async ({
+test("an ordinary sequent's controls are targets of 24 by 24 pixels at least, at a desktop's width", async ({
   page,
 }) => {
   expect(await measured(page, 24, ordinary)).toEqual([]);
@@ -179,14 +166,10 @@ test("the normal forms' and resolution's controls are targets of 24 by 24 pixels
   expect(await measured(page, 24, clausal)).toEqual([]);
 });
 
-test("the workspace's controls are targets of 24 by 24 pixels at least", async ({ page }) => {
-  expect(await measured(page, 24, linking)).toEqual([]);
-});
-
-test("a calculus of one's own's controls are targets of 24 by 24 pixels at least", async ({
+test("a translation proved and a copy's controls are targets of 24 by 24 pixels at least", async ({
   page,
 }) => {
-  expect(await measured(page, 24, customising)).toEqual([]);
+  expect(await measured(page, 24, linking)).toEqual([]);
 });
 
 test("modal logic's controls are targets of 24 by 24 pixels at least", async ({ page }) => {
@@ -201,10 +184,6 @@ test("course packs' controls are targets of 24 by 24 pixels at least", async ({ 
   expect(await measured(page, 24, packing)).toEqual([]);
 });
 
-test("the ordinary course's controls are targets of 24 by 24 pixels at least", async ({ page }) => {
-  expect(await measured(page, 24, coursing)).toEqual([]);
-});
-
 test("natural deduction's controls are targets of 24 by 24 pixels at least", async ({ page }) => {
   expect(await measured(page, 24, deducing)).toEqual([]);
 });
@@ -212,16 +191,8 @@ test("natural deduction's controls are targets of 24 by 24 pixels at least", asy
 test.describe("at a phone's width", () => {
   test.use(pixel);
 
-  test("the ordinary course's controls are 44 by 44 pixels at least", async ({ page }) => {
-    expect(await measured(page, 44, coursing)).toEqual([]);
-  });
-
   test("natural deduction's controls are 44 by 44 pixels at least", async ({ page }) => {
     expect(await measured(page, 44, deducing)).toEqual([]);
-  });
-
-  test("a calculus of one's own's controls are 44 by 44 pixels at least", async ({ page }) => {
-    expect(await measured(page, 44, customising)).toEqual([]);
   });
 
   test("course packs' controls are 44 by 44 pixels at least", async ({ page }) => {
@@ -254,20 +225,18 @@ test.describe("at a phone's width", () => {
     expect(await measured(page, 44, clausal)).toEqual([]);
   });
 
-  test("the workspace's controls are 44 by 44 pixels at least", async ({ page }) => {
+  test("a translation proved and a copy's controls are 44 by 44 pixels at least", async ({
+    page,
+  }) => {
     expect(await measured(page, 44, linking)).toEqual([]);
   });
 
-  test("an ordinary tab's controls are 44 by 44 pixels at least", async ({ page }) => {
+  test("an ordinary sequent's controls are 44 by 44 pixels at least", async ({ page }) => {
     expect(await measured(page, 44, ordinary)).toEqual([]);
   });
 
   test("every control is a target of 44 by 44 pixels at least", async ({ page }) => {
     expect(await measured(page, 44, walk)).toEqual([]);
-  });
-
-  test("Learn's answers and lesson 1's rewrite are 44 by 44 pixels at least", async ({ page }) => {
-    expect(await measured(page, 44, answers)).toEqual([]);
   });
 
   test("a goal's reasons and their controls are 44 by 44 pixels at least", async ({ page }) => {

@@ -2,16 +2,17 @@
 // Licensed under the EUPL
 
 /**
- * The prover, one island: the top band (the open proofs), the stage (the
- * work) and the bottom band (what can be done with the proof). Here too
- * what holds the work: the link in the URL's fragment, written as the proof
- * changes and read when the page opens; autosave of every open proof, with
- * the restore bar on the next visit; the one hover rule for tips; the
- * keyboard; the hint ladder; light dismiss; and deduxit's math fonts, whose
- * bytes the PNG and PDF exports render with, Euler Math also the drawings'.
+ * The prover, one island, in the frame of the design guide: the top row (the open sequents), the
+ * rail (the chosen sequent's views), the stage with its toggles, tools, panels and zoom, the
+ * bottom box with its notes; the new tab view for a sequent not yet entered, and the Settings page.
+ * Here too what holds the work: the link in the URL's fragment, written as the proof changes and
+ * read when the page opens; autosave of every open proof, restored by itself on a plain visit
+ * while no other tab of the page is open; the one hover rule for tips; the keys; the hint ladder;
+ * light dismiss; and deduxit's math fonts, whose bytes the PNG and PDF exports render with, Euler
+ * Math also the drawings'.
  */
 
-import { createEffect, createSignal, on, onCleanup, onMount, Show } from "solid-js";
+import { createEffect, createSignal, For, on, onCleanup, onMount, Show } from "solid-js";
 import { unwrap } from "solid-js/store";
 import {
   isEmbedded,
@@ -23,28 +24,50 @@ import {
 } from "../lib/link";
 import { readHandin, readPack } from "../lib/pack";
 import { MATH_FONTS, type MathFont } from "../lib/deduxit";
+import { KEY_ROWS, keyAction } from "../lib/keys";
 import { prettyModal } from "../lib/modal";
 import { prettyOrdinary } from "../lib/ordinary";
 import { paths } from "../lib/steps";
 import { failure } from "../lib/deduxit";
 import { Cancelled } from "../lib/protocol";
+import { SHELF_PREFIX } from "../lib/shelf";
 import { calculusOf, isNatural, parameterOf, SUITES } from "../lib/suites";
 import { inputProblem, pretty } from "../lib/words";
-import type { Theme } from "../lib/theme";
-import type { Example, Lesson, OrdinaryCourse, Rule, Sample, Stop } from "../lib/content";
+import { parseTheme, type Theme } from "../lib/theme";
+import type { Rule, Sample, Stop } from "../lib/content";
 import { hintsFor } from "../lib/rules";
 import { migrate } from "../lib/storage";
-import { BottomBand } from "./BottomBand";
-import { createPacks, PackBar, PacksContext } from "./Packs";
-import { LearnFrame } from "./Learn";
+import { NormalizeSheet, ResolveSheet } from "./Clausal";
+import {
+  BottomBox,
+  cellsOf,
+  Dialog,
+  Examples,
+  NewTab,
+  ProblemNote,
+  Rail,
+  started,
+  Tools,
+  TogglesPlace,
+  TopRow,
+} from "./Frame";
+import { CheckSheet, createPacks, HandinSheet, PackBar, PackSheet, PacksContext } from "./Packs";
+import {
+  AboutPane,
+  ExportMenu,
+  ImportPanel,
+  importText,
+  SearchPanel,
+  SettingsPage,
+  StepsPanel,
+} from "./Panels";
 import { RuleHints } from "./RuleHint";
-import { createPractice } from "./Practice";
 import { Stage } from "./Stage";
 import { createProver } from "./state";
-import { TopBand } from "./TopBand";
-import { createWorkspace, WorkspaceContext, WorkspaceGraph, WorkspacePanel } from "./Workspace";
+import { InterpolateSheet, TranslateSheet } from "./Transforms";
+import { createWorkspace, WorkspaceContext } from "./Workspace";
 import { Tour } from "./Tour";
-import { createUi, ladderKey } from "./ui";
+import { createUi, ladderKey, Why } from "./ui";
 
 /** The browser's storage, or undefined where it is refused. */
 const storage = () => {
@@ -58,17 +81,11 @@ const storage = () => {
 export default function App(props: {
   /** The math fonts' addresses: the page imports them, so each is served under /fonts/ beside its licence. */
   fonts: Record<MathFont, string>;
-  /** Learn's problems: the lessons' practice, in their order. */
-  examples: readonly Example[];
-  /** The sequent field's examples of the ordinary suite, in their order. */
+  /** The examples of the ordinary suite, which the guide offers over the bottom box. */
   samples: readonly Sample[];
   /** The tour's stops, in their order. */
   stops: readonly Stop[];
-  /** Learn's written lessons, in their order. */
-  lessons: readonly Lesson[];
-  /** The ordinary suite's course: its lessons and the problems they practise. */
-  ordinary: OrdinaryCourse;
-  /** The one-sided rules, as the reference draws them. */
+  /** The one-sided rules, as a rule label's hint draws them. */
   rules: readonly Rule[];
 }) {
   // Before anything reads the browser's storage: an earlier release's keys move to their new names.
@@ -76,13 +93,10 @@ export default function App(props: {
   const view = createUi();
   const { ui, setUi } = view;
   const prover = createProver((text) => setUi("live", text));
-  const practice = createPractice(prover);
   const workspace = createWorkspace(prover, view);
   const packs = createPacks(prover, view);
   /** Whether the page is embedded in a course's own page: the stage, the rest left out. */
   const embedded = isEmbedded(typeof location === "undefined" ? "" : location.hash);
-  /** Whether the panel of linked tabs stands left of the stage. */
-  const docked = () => workspace.linked() && workspace.docks() && workspace.state.shown;
   const [theme, setTheme] = createSignal<Theme>("system");
   const [tip, setTip] = createSignal<{
     text: string;
@@ -158,7 +172,10 @@ export default function App(props: {
       refused(keyword, `The link holds no course pack this page reads (${pack.problem}).`);
       return true;
     }
-    if (pasted) prover.leave();
+    if (pasted) {
+      prover.leave();
+      hold(prover.shelfKey());
+    }
     await packs.arrive(pack);
     return true;
   }
@@ -205,6 +222,58 @@ export default function App(props: {
     }
   }
 
+  /** Lets go of the lock this visit holds on its shelf key, while the page is open. */
+  let release: (() => void) | undefined;
+  /**
+   * Holds a lock named by the visit's shelf key for as long as the visit lasts (the Web Locks
+   * API): another tab of the page sees it, and so knows that this visit's proofs are open here.
+   */
+  const hold = (name: string) => {
+    release?.();
+    release = undefined;
+    void navigator.locks
+      ?.request(name, () => new Promise<void>((done) => (release = done)))
+      .catch(() => undefined);
+  };
+  /** Whether no other tab of the page is open: none holds a lock on a shelf key but this visit's. */
+  const alone = async () => {
+    if (!navigator.locks) return false;
+    const held = await navigator.locks.query().catch(() => null);
+    if (!held) return false;
+    const own = prover.shelfKey();
+    return !held.held?.some((lock) => lock.name?.startsWith(SHELF_PREFIX) && lock.name !== own);
+  };
+
+  /** Closes every sequent, the closed ones kept to restore: the notice's Undo brings them back. */
+  const closeEvery = () => {
+    prover.leave();
+    hold(prover.shelfKey());
+    prover.add();
+    setUi({
+      menu: null,
+      notice: {
+        text: "Every sequent closed.",
+        undo: { label: "Undo", run: () => prover.restore() },
+      },
+    });
+  };
+
+  /** Opens the new tab view: the empty sequent there is, or a new one. */
+  const newTab = () => {
+    const empty = prover.store.proofs.find((p) => !started(p) && !p.input.trim());
+    if (empty) prover.activate(empty.id);
+    else prover.add();
+    setUi({ menu: null, tab: "tree" });
+    queueMicrotask(() => document.querySelector<HTMLInputElement>(".box .field")?.focus());
+  };
+
+  /** Opens a file chosen or dropped: a hand-in, a session, a sequent; the notice names the file. */
+  const openFile = async (file: File) => {
+    const said = await importText(prover, packs, await file.text(), ` from ${file.name}`);
+    setUi({ notice: { text: said.text }, live: said.text, menu: null });
+  };
+  const [dropping, setDropping] = createSignal(false);
+
   // While the link and the saved proofs load, a change of the active proof is
   // the page starting, not the visitor's: a menu opened meanwhile stays open.
   let starting = true;
@@ -215,7 +284,7 @@ export default function App(props: {
 
   /**
    * Opens a link pasted into the open page, where only the fragment changed, as a load of it
-   * would: the open proofs go to the restore bar and the link's proof opens alone.
+   * would: the open proofs are set aside to restore and the link's proof opens alone.
    */
   const pasted = (event: HashChangeEvent) => {
     // The event's own address: the page's write of its link may land before the event does.
@@ -233,6 +302,7 @@ export default function App(props: {
         if (!link) return;
         // Not `starting`: the old proof's menus and selection close as the active proof changes.
         prover.leave();
+        hold(prover.shelfKey());
         await openLink(link);
         prover.prune();
         if (prover.store.proofs.length === 0) prover.add();
@@ -240,18 +310,25 @@ export default function App(props: {
   };
 
   onMount(() => {
+    // The scheme the page was painted in, read before the first paint by the body's first script.
+    setTheme(parseTheme(document.documentElement.dataset["theme"] ?? null));
     void font().catch(() => undefined);
     // The worker starts with the first call: this one, so that deduxit's
     // module loads after the first paint, before the visitor's first step.
     void prover.api.about().catch(() => undefined);
     if (embedded) document.documentElement.dataset["embed"] = "";
     // An embedded page is a course page's exercise: it sets no earlier visit's proofs aside.
-    else prover.begin();
+    else {
+      prover.begin();
+      hold(prover.shelfKey());
+    }
     const hash = location.hash;
     opening = (async () => {
       if (!(await openPack(hash))) {
         const link = await readLink(hash);
         if (link) await openLink(link);
+        // A plain visit, with no other tab of the page open, brings the last visit's proofs back.
+        else if (!embedded && (await alone())) prover.restore();
       }
       prover.prune();
       if (prover.store.proofs.length === 0) prover.add();
@@ -486,11 +563,20 @@ export default function App(props: {
       if (target.closest(".tour")) return;
       const outside = (inside: string) => !target.closest(inside);
       let closed = false;
-      if (ui.menu && outside(".menu, .status-pop, .calc-pop, [aria-expanded='true']:not(.fb)")) {
+      // The Settings page is a page, not something open over one: only its own button leaves it.
+      if (
+        ui.menu &&
+        ui.menu !== "settings" &&
+        outside(".menu, .dialog, [aria-expanded='true']:not(.fb)")
+      ) {
         setUi("menu", null);
         closed = true;
       }
-      if (ui.pendingCalculus && outside(".mode-warn, .calc")) {
+      if (ui.more && outside(".tools")) {
+        setUi("more", false);
+        closed = true;
+      }
+      if (ui.pendingCalculus && outside(".mode-warn, .toggles")) {
         setUi("pendingCalculus", null);
         closed = true;
       }
@@ -543,58 +629,83 @@ export default function App(props: {
     tipBox.style.top = `${y}px`;
   });
 
-  // The keyboard: every action the mouse has, by single keys outside the field.
+  /** Shows the view next to the one shown in the rail, `step` cells on. */
+  const cycleView = (step: number) => {
+    const cells = cellsOf(prover, view, prover.current());
+    if (cells.length < 2) return;
+    const at = cells.findIndex((c) => c.view === ui.tab);
+    const next = cells[(Math.max(at, 0) + step + cells.length) % cells.length];
+    if (next) setUi({ tab: next.view, menu: null });
+  };
+  /** Shows the sequent next to the one shown in the top row, `step` chips on. */
+  const cycleSequent = (step: number) => {
+    const all = prover.store.proofs;
+    const at = all.findIndex((p) => p.id === prover.store.active);
+    const next = all[(Math.max(at, 0) + step + all.length) % all.length];
+    if (next) {
+      prover.activate(next.id);
+      setUi({ menu: null, tab: "tree" });
+    }
+  };
+
+  // The keys: every action has one (src/lib/keys.ts); a single key only outside a field, and
+  // only while Settings' "Single keys" is on. The zoom's keys are the stage's.
   onMount(() => {
     const keys = (event: KeyboardEvent) => {
-      if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey) return;
-      // In a field the keys are the field's; Escape still closes a menu around it.
-      if (event.key !== "Escape" && (event.target as Element).closest("input, textarea, select"))
+      if (event.defaultPrevented) return;
+      if (event.key === "Escape") {
+        if (ui.menu === null && !ui.pendingCalculus && !ui.more) return;
+        setTip(null);
+        setUi({ menu: null, pendingCalculus: null, more: false });
+        event.preventDefault();
         return;
-      const goal = prover.activeGoal();
-      const act: Record<string, () => void> = {
-        u: () => void prover.undo(),
-        U: () => void prover.redo(),
-        c: () => goal !== undefined && void prover.close(goal),
-        C: () => void prover.closeAll(),
-        h: () => void hint(),
-        "[": () => prover.cycle(-1),
-        "]": () => prover.cycle(1),
-        v: () =>
-          setUi(
-            "tab",
-            ui.tab === "tree" && prover.current()?.view?.complete && !prover.current()?.view?.net
-              ? "net"
-              : "tree",
-          ),
-        n: () => {
-          prover.add();
-          queueMicrotask(() => document.querySelector<HTMLInputElement>(".field")?.focus());
-        },
-        e: () => setUi("menu", ui.menu === "export" ? null : "export"),
-        s: () => setUi("menu", ui.menu === "steps" ? null : "steps"),
-        i: () => setUi("menu", ui.menu === "import" ? null : "import"),
-        ",": () => setUi("menu", ui.menu === "settings" ? null : "settings"),
-        "?": () => setUi("menu", ui.menu === "keys" ? null : "keys"),
-        l: () => setUi("learn", ui.learn ? null : "tutorial"),
-        p: () => setUi("menu", ui.menu === "practice" ? null : "practice"),
-        Escape: () => {
-          setTip(null);
-          setUi({ menu: null, pendingCalculus: null });
-        },
-      };
-      const action = act[event.key];
+      }
+      const inField = !!(event.target as Element).closest("input, textarea, select");
+      const action = keyAction(event, { inField, singleKeys: prover.settings().singleKeys });
       if (!action) return;
-      // A proof by natural deduction takes its steps in its own view: the sequent calculus's
-      // keys would act on a proof the stage does not show.
-      const calculus = prover.current()?.calculus;
-      if (calculus && isNatural(calculus) && "uUcCh[]es".includes(event.key)) return;
-      if (event.key === "Escape" && ui.menu === null && !ui.pendingCalculus) return;
+      const proof = prover.current();
+      const proving = !!proof?.session && ui.tab === "tree" && !isNatural(proof.calculus);
+      const goal = prover.activeGoal();
+      const toggle = (menu: "steps" | "export" | "import" | "views" | "settings" | "keys") =>
+        setUi("menu", ui.menu === menu ? null : menu);
+      const act: Partial<Record<typeof action, () => void>> = {
+        undo: () => (proving || !!proof?.custom?.session) && void prover.undo(),
+        redo: () => (proving || !!proof?.custom?.session) && void prover.redo(),
+        steps: () => proving && toggle("steps"),
+        hint: () => proving && void hint(),
+        close: () => proving && goal !== undefined && void prover.close(goal),
+        closeAll: () => proving && void prover.closeAll(),
+        export: () => proof?.session && toggle("export"),
+        import: () => toggle("import"),
+        nextGoal: () => proving && prover.cycle(1),
+        previousGoal: () => proving && prover.cycle(-1),
+        nextSequent: () => cycleSequent(1),
+        previousSequent: () => cycleSequent(-1),
+        nextView: () => cycleView(1),
+        previousView: () => cycleView(-1),
+        addView: () => started(proof) && toggle("views"),
+        newTab: () => newTab(),
+        box: () => document.querySelector<HTMLInputElement>(".box .field")?.focus(),
+        settings: () => toggle("settings"),
+        keys: () => toggle("keys"),
+      };
+      const run = act[action];
+      if (!run) return;
       event.preventDefault();
-      action();
+      run();
     };
     window.addEventListener("keydown", keys);
     onCleanup(() => window.removeEventListener("keydown", keys));
   });
+
+  // A notice says what was just done: the next change of the proof shown takes it away.
+  createEffect(
+    on(
+      () => [prover.current()?.session, prover.current()?.input] as const,
+      () => setUi("notice", null),
+      { defer: true },
+    ),
+  );
 
   // A note at a goal is said in the live region too, for a screen reader.
   createEffect(
@@ -607,48 +718,115 @@ export default function App(props: {
     ),
   );
 
+  const settingsShown = () => ui.menu === "settings";
+  const current = () => prover.current();
+  const tour = () => {
+    setUi({ menu: null, tour: null });
+    setUi("tour", 0);
+  };
+
   return (
     <PacksContext.Provider value={packs}>
       <WorkspaceContext.Provider value={workspace}>
-        <div
-          class="app"
-          data-keys={prover.settings().showKeys ? "" : undefined}
-          data-learn={ui.learn ? "" : undefined}
-        >
-          <div class="win">
-            <TopBand
-              prover={prover}
-              ui={view}
-              theme={theme}
-              setTheme={setTheme}
-              samples={props.samples}
-            />
-            <Show when={prover.aside()}>
-              {(shelf) => (
-                <section class="restore cluster" aria-label="Restore">
-                  <span>
-                    {shelf().proofs.length} {shelf().proofs.length === 1 ? "proof" : "proofs"} from
-                    your last visit
-                  </span>
-                  <button type="button" class="btn btn-primary" onClick={() => prover.restore()}>
-                    Restore
-                  </button>
-                  <button type="button" class="btn" onClick={() => prover.discard()}>
-                    Discard
-                  </button>
-                </section>
-              )}
+        <div class="app" data-guide={prover.settings().guide ? "" : undefined}>
+          <TopRow prover={prover} ui={view} theme={theme} setTheme={setTheme} newTab={newTab} />
+          {/* biome-ignore lint/a11y/noStaticElementInteractions: a file dropped anywhere under the top row opens; "Open a file" and Import are the controls that do the same. */}
+          <div
+            class="body"
+            data-dropping={dropping() ? "" : undefined}
+            onDragOver={(event) => {
+              if (!event.dataTransfer?.types.includes("Files")) return;
+              event.preventDefault();
+              setDropping(true);
+            }}
+            onDragLeave={(event) => {
+              if (!event.currentTarget.contains(event.relatedTarget as Node | null))
+                setDropping(false);
+            }}
+            onDrop={(event) => {
+              event.preventDefault();
+              setDropping(false);
+              const file = event.dataTransfer?.files[0];
+              if (file) void openFile(file);
+            }}
+          >
+            <Show when={!settingsShown()}>
+              <Rail prover={prover} ui={view} />
             </Show>
-            <div class="ws-stage" data-docked={docked() ? "" : undefined}>
-              <Show when={docked()}>
-                <WorkspacePanel workspace={workspace} prover={prover} ui={view} docked={true} />
-              </Show>
-              <div class="ws-main">
-                <Stage prover={prover} ui={view} />
-                <PackBar packs={packs} prover={prover} ui={view} />
+            <div class="stage-area" data-view={ui.tab}>
+              <Show
+                when={!settingsShown()}
+                fallback={
+                  <SettingsPage
+                    prover={prover}
+                    ui={view}
+                    theme={theme}
+                    setTheme={setTheme}
+                    closeEvery={closeEvery}
+                  />
+                }
+              >
+                <Show
+                  when={started(current())}
+                  fallback={
+                    <NewTab
+                      prover={prover}
+                      ui={view}
+                      samples={props.samples}
+                      openFile={(file) => void openFile(file)}
+                    />
+                  }
+                >
+                  <Stage prover={prover} ui={view} />
+                  <PackBar packs={packs} prover={prover} ui={view} />
+                  <Tools prover={prover} ui={view} hint={() => void hint()} tour={tour} />
+                </Show>
+                <TogglesPlace prover={prover} ui={view} />
+                <div class="panels">
+                  <Show when={ui.menu === "steps"}>
+                    <StepsPanel prover={prover} />
+                  </Show>
+                  <Show when={ui.menu === "search"}>
+                    <SearchPanel
+                      prover={prover}
+                      ui={view}
+                      search={() => {
+                        setUi("menu", null);
+                        void prover.closeAll();
+                      }}
+                    />
+                  </Show>
+                  <Show when={ui.menu === "export"}>
+                    <ExportMenu prover={prover} ui={view} font={font} />
+                  </Show>
+                  <Show when={ui.menu === "import"}>
+                    <ImportPanel prover={prover} ui={view} />
+                  </Show>
+                  <Show when={ui.menu === "translate"}>
+                    <TranslateSheet prover={prover} ui={view} />
+                  </Show>
+                  <Show when={ui.menu === "interpolate"}>
+                    <InterpolateSheet prover={prover} ui={view} />
+                  </Show>
+                  <Show when={ui.menu === "normalize"}>
+                    <NormalizeSheet prover={prover} ui={view} />
+                  </Show>
+                  <Show when={ui.menu === "resolve"}>
+                    <ResolveSheet prover={prover} ui={view} />
+                  </Show>
+                  <Show when={ui.menu === "pack"}>
+                    <PackSheet prover={prover} ui={view} />
+                  </Show>
+                  <Show when={ui.menu === "handin"}>
+                    <HandinSheet packs={packs} prover={prover} />
+                  </Show>
+                  <Show when={ui.menu === "check"}>
+                    <CheckSheet packs={packs} prover={prover} ui={view} />
+                  </Show>
+                </div>
                 <Show when={embedded}>
                   <a
-                    class="embed-open btn btn-s"
+                    class="embed-open btn"
                     href="/"
                     target="_blank"
                     // The address as it is when pressed: the proof shown, the embed's mark left out.
@@ -660,44 +838,105 @@ export default function App(props: {
                     Open in deduxit
                   </a>
                 </Show>
-                <Show when={workspace.linked() && workspace.state.graph}>
-                  <WorkspaceGraph workspace={workspace} prover={prover} />
-                </Show>
-              </div>
+                <BottomBox
+                  prover={prover}
+                  ui={view}
+                  notes={
+                    <>
+                      <Show when={current()}>{(p) => <ProblemNote proof={p()} />}</Show>
+                      <Show when={current()?.banner}>
+                        {(banner) => (
+                          <p class="note said-banner" role="status">
+                            <span class="kw">{banner().keyword}</span> <Why said={banner()} />
+                          </p>
+                        )}
+                      </Show>
+                      <Show when={current()?.view?.complete && ui.tab === "tree"}>
+                        <p class="note verdict" role="status">
+                          <span class="kw ok">Proved.</span> Every goal is closed.
+                        </p>
+                      </Show>
+                      <Show when={ui.notice}>
+                        {(notice) => (
+                          <p class="note notice" role="status">
+                            {notice().text}
+                            <Show when={notice().undo}>
+                              {(undo) => (
+                                <button
+                                  type="button"
+                                  class="btn"
+                                  onClick={() => {
+                                    const run = undo().run;
+                                    setUi("notice", null);
+                                    run();
+                                  }}
+                                >
+                                  {undo().label}
+                                </button>
+                              )}
+                            </Show>
+                          </p>
+                        )}
+                      </Show>
+                      <Show when={linkShort() && ui.menu === "export"}>
+                        <p class="note">The link holds the sequent alone.</p>
+                      </Show>
+                      <Examples prover={prover} samples={props.samples} />
+                    </>
+                  }
+                />
+              </Show>
+              <Show when={dropping()}>
+                <div class="drop">
+                  <p>Drop the file to open it</p>
+                </div>
+              </Show>
             </div>
-            <Show when={ui.menu === "workspace" && workspace.linked()}>
-              <WorkspacePanel workspace={workspace} prover={prover} ui={view} docked={false} />
-            </Show>
-            <Show when={linkShort() && ui.menu === "export"}>
-              <p class="sr-only">The link holds the sequent alone.</p>
-            </Show>
-            <BottomBand
-              prover={prover}
-              ui={view}
-              hint={() => void hint()}
-              font={font}
-              practice={practice}
-              theme={theme}
-              setTheme={setTheme}
-              tour={() => {
-                setUi({ menu: null, tour: null });
-                setUi("tour", 0);
-              }}
-            />
           </div>
-          <Show when={ui.learn}>
-            <LearnFrame
-              prover={prover}
-              ui={view}
-              examples={props.examples}
-              lessons={props.lessons}
-              ordinary={props.ordinary}
-              rules={props.rules}
-              tour={() => {
-                setUi({ tour: null });
-                setUi("tour", 0);
-              }}
-            />
+          <Show when={ui.menu === "keys"}>
+            <Dialog label="Keys" onClose={() => setUi("menu", null)}>
+              <label class="sw">
+                <input
+                  type="checkbox"
+                  checked={prover.settings().guide}
+                  onChange={(event) => prover.setSettings({ guide: event.currentTarget.checked })}
+                />
+                <span class="sw-t" aria-hidden="true" />
+                Guide
+              </label>
+              <table class="keys">
+                <thead>
+                  <tr>
+                    <th scope="col">Action</th>
+                    <th scope="col">Key</th>
+                    <th scope="col">Also</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <For each={KEY_ROWS}>
+                    {(row) => (
+                      <tr>
+                        <td>{row.what}</td>
+                        <td>
+                          <kbd>{row.key}</kbd>
+                        </td>
+                        <td>{row.also ?? ""}</td>
+                      </tr>
+                    )}
+                  </For>
+                </tbody>
+              </table>
+              <Show when={!prover.settings().singleKeys}>
+                <p class="sub">
+                  Single keys are off in Settings: only the keys with Ctrl or Cmd act.
+                </p>
+              </Show>
+            </Dialog>
+          </Show>
+          <Show when={ui.menu === "about"}>
+            <Dialog label="About" onClose={() => setUi("menu", null)}>
+              <AboutPane prover={prover} />
+            </Dialog>
           </Show>
           <Tour prover={prover} ui={view} stops={props.stops} />
           <Show when={tip()}>

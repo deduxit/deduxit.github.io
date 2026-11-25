@@ -9,13 +9,10 @@
 // others an export may be set in, are imported here, so that they are built
 // as the other fonts are, under /fonts/ (astro.config.ts).
 //
-// The written content (src/content.config.ts) is rendered here into inert
-// templates, each marked data-written, which the island clones where it
-// shows them (Learn, Practice, the tour, About); Learn's problems (those of
-// the store with a lesson, with their sessions), its lessons (their openings
-// rendered here, the rest data), the rules and the tour's data go to the
-// island as props. Practice's problems come from /problems.json. The licence of the written content is a template
-// of its own, shown with it.
+// The written content (src/content.config.ts) the island shows (About and the tour's captions)
+// is rendered here into inert templates, each marked data-written, which the island clones; the
+// ordinary suite's examples, the tour's stops and the rules go to the island as props. Learn's
+// and Practice's content stays in src/content/ until they come back.
 import asana from "deduxit-fonts/Asana-Math.otf?url";
 import euler from "deduxit-fonts/Euler-Math.otf?url";
 import garamond from "deduxit-fonts/Garamond-Math.otf?url";
@@ -24,24 +21,9 @@ import stix from "deduxit-fonts/STIXTwoMath-Regular.otf?url";
 import { getCollection, render } from "astro:content";
 import App from "../islands/App";
 import examplesFile from "../content/examples.json";
-import type {
-  Example,
-  Lesson,
-  OrdinaryCourse,
-  Rule,
-  Sample,
-  Stop,
-} from "../lib/content";
+import type { Rule, Sample, Stop } from "../lib/content";
 import Base from "../layouts/Base.astro";
 
-const sessions = import.meta.glob<string>("../content/linear/problems/*.session.json", {
-  query: "?raw",
-  import: "default",
-  eager: true,
-});
-const examples = (await getCollection("problems"))
-  .filter((p) => p.data.lesson !== undefined)
-  .sort((a, b) => (a.data.order ?? 0) - (b.data.order ?? 0));
 const stops = (await getCollection("tour")).sort((a, b) => a.id.localeCompare(b.id));
 // The file's order is the menu's, a lesson's order; the collection is sorted by id.
 const order = examplesFile.map((e) => e.id);
@@ -55,110 +37,18 @@ const samples: Sample[] = (await getCollection("examples"))
   note: e.data.note,
 }));
 const texts = await getCollection("texts");
-const lessons = (await getCollection("lessons")).sort((a, b) => a.data.lesson - b.data.lesson);
 const rules = (await getCollection("rules")).sort((a, b) => a.id.localeCompare(b.id));
 
-const exampleData: Example[] = examples.map((e) => ({
-  id: e.id,
-  title: e.data.title ?? e.data.sequent,
-  sequent: e.data.sequent,
-  mode: e.data.mode,
-  level: e.data.level,
-  lesson: e.data.lesson ?? 0,
-  verdict: e.data.verdict,
-  session: sessions[`../content/linear/problems/${e.id}.session.json`] ?? null,
-}));
 const stopData: Stop[] = stops.map((s) => ({
   id: s.id,
   title: s.data.title,
   target: s.data.target,
   act: s.data.act,
 }));
-const attempts = import.meta.glob<string>("../content/linear/lessons/*.attempt.json", {
-  query: "?raw",
-  import: "default",
-  eager: true,
-});
-const refusals = import.meta.glob<string>("../content/linear/lessons/*.refusal.json", {
-  query: "?raw",
-  import: "default",
-  eager: true,
-});
-const lessonData: Lesson[] = lessons.map((l) => {
-  const attempt = l.data.attempt;
-  const session = attempts[`../content/linear/lessons/${l.id}.attempt.json`];
-  if (attempt && !session) throw new Error(`lesson ${l.id}: its attempt has no session beside it`);
-  const refusal = l.data.refusal;
-  const refused = refusals[`../content/linear/lessons/${l.id}.refusal.json`];
-  if (refusal && !refused) throw new Error(`lesson ${l.id}: its refusal has no session beside it`);
-  return {
-    id: l.id,
-    ...l.data,
-    detour: l.data.detour ?? null,
-    attempt: attempt && session ? { ...attempt, session } : null,
-    eliminate: l.data.eliminate ?? null,
-    refusal: refusal && refused ? { ...refusal, session: refused } : null,
-    unknown: l.data.unknown ?? null,
-    rewrite: l.data.rewrite ?? null,
-    gallery: l.data.gallery ?? null,
-  };
-});
 const ruleData: Rule[] = rules.map((r) => ({ id: r.id, ...r.data }));
 
-// The ordinary course: each lesson with its worked proof's session, the file beside its
-// problem for the lesson's method, and the store's problems a lesson practises.
-const ordinarySessions = import.meta.glob<string>("../content/ordinary/problems/*.json", {
-  query: "?raw",
-  import: "default",
-  eager: true,
-});
-const ordinaryProblems = await getCollection("ordinaryProblems");
-const ordinaryLessons = (await getCollection("ordinaryLessons")).sort(
-  (a, b) => a.data.lesson - b.data.lesson,
-);
-const ordinaryCourse: OrdinaryCourse = {
-  lessons: ordinaryLessons.map((l) => {
-    // A truth table's lesson reads its rows off the sequent: it has no session.
-    const session =
-      l.data.method === "table"
-        ? ""
-        : ordinarySessions[`../content/ordinary/problems/${l.data.worked}.${l.data.method}.json`];
-    const problem = ordinaryProblems.find((p) => p.id === l.data.worked);
-    if (session === undefined || !problem)
-      throw new Error(`lesson ${l.id}: no worked proof beside its problem`);
-    const model = ordinaryProblems.find((p) => p.id === l.data.model);
-    if (l.data.model && !model) throw new Error(`lesson ${l.id}: no problem ${l.data.model}`);
-    return {
-      id: l.id,
-      lesson: l.data.lesson,
-      title: l.data.title,
-      worked: l.data.worked,
-      sequent: problem.data.sequent,
-      method: l.data.method,
-      logic: l.data.logic,
-      layout: l.data.layout ?? null,
-      choices: l.data.choices,
-      steps: l.data.steps,
-      faded: l.data.faded,
-      explain: l.data.explain,
-      hinge: l.data.hinge,
-      session,
-      model: model ? { sequent: model.data.sequent, logic: model.data.logic } : null,
-    };
-  }),
-  problems: ordinaryProblems
-    .filter((p) => p.data.lesson !== undefined)
-    .sort((a, b) => (a.data.order ?? 0) - (b.data.order ?? 0))
-    .map((p) => ({
-      id: p.id,
-      title: p.data.title ?? p.data.sequent,
-      sequent: p.data.sequent,
-      logic: p.data.logic,
-      lesson: p.data.lesson ?? 0,
-    })),
-};
 const rendered = await Promise.all(
-  [...examples, ...stops, ...texts, ...lessons, ...ordinaryLessons].map(async (entry) => ({
+  [...stops, ...texts].map(async (entry) => ({
     key: `${entry.collection}/${entry.id}`,
     Content: (await render(entry)).Content,
   })),
@@ -171,11 +61,8 @@ const rendered = await Promise.all(
     <App
       client:only="solid-js"
       fonts={{ euler, "stix-two": stix, garamond, asana, "new-computer-modern": newcm }}
-      examples={exampleData}
       samples={samples}
       stops={stopData}
-      lessons={lessonData}
-      ordinary={ordinaryCourse}
       rules={ruleData}
     >
       <p slot="fallback" class="noscript">

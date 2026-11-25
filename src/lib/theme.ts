@@ -27,7 +27,7 @@ export function effective(theme: Theme, systemDark: boolean): "light" | "dark" {
   return theme;
 }
 
-/** The choice the band's toggle makes: the other scheme than the one shown. */
+/** The choice the top row's button makes: the other scheme than the one shown. */
 export function toggled(theme: Theme, systemDark: boolean): Theme {
   return effective(theme, systemDark) === "dark" ? "light" : "dark";
 }

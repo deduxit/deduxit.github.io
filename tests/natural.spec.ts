@@ -8,16 +8,13 @@
 
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
-import { calculus, goto, start, switches } from "./prover";
+import { calculus, goto, start } from "./prover";
 import { customStep, deduce, deriveLine } from "./states";
 
 /** Opens the page with its tab in ordinary intuitionistic logic, by natural deduction. */
 async function natural(page: Page) {
   await goto(page);
-  await calculus(page, ["Ordinary", "Intuitionistic"]);
-  const pop = await switches(page);
-  await pop.getByRole("button", { name: "Natural deduction" }).click();
-  await page.keyboard.press("Escape");
+  await calculus(page, ["Ordinary", "Intuitionistic", "Natural deduction"]);
 }
 
 test("an ordinary proof shows nothing of natural deduction until its button is pressed", async ({
@@ -38,7 +35,9 @@ test("a proof is built backwards and forwards, and a line out of reach is refuse
   await deduce(page, "⊢ (a → b) ∧ (b → a) → (b ↔ a)");
   const view = page.getByRole("region", { name: "Natural deduction" });
   await expect(view).toContainText("an introduction rule builds a connective");
-  await expect(page.locator(".pt-mark").first()).toContainText("NJ");
+  await expect(
+    page.getByRole("tablist", { name: "Views of this sequent" }).getByRole("tab").first(),
+  ).toHaveAttribute("data-tip", "Natural deduction, NJ");
 
   // Backwards: →I opens a subproof whose hypothesis is line 1.
   await customStep(page, "→I");

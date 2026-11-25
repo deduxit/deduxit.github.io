@@ -14,7 +14,7 @@
 import { X } from "lucide-solid";
 import { createEffect, on, onCleanup, Show } from "solid-js";
 import type { Example, Stop } from "../lib/content";
-import { Written } from "./Learn";
+import { Written } from "./Written";
 import type { Prover } from "./state";
 import type { Ui } from "./ui";
 
@@ -32,12 +32,12 @@ export const TOUR_EXAMPLE: Example = {
 
 /** The element a stop points at. */
 const SPOTS: Record<Stop["target"], string> = {
-  tab: '.ptab[aria-current="true"]',
+  tab: '.chip[aria-selected="true"]',
   stage: ".stage",
   formula: ".stage .fb",
   goal: ".dock",
-  status: '.ptab[aria-current="true"] .dot-b',
-  bottom: ".band.bottom",
+  status: '.chip[aria-selected="true"]',
+  bottom: ".tools",
 };
 
 export function Tour(props: { prover: Prover; ui: Ui; stops: readonly Stop[] }) {

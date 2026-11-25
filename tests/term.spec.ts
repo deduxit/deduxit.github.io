@@ -7,13 +7,13 @@
 
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
-import { calculus, goto, start, switches } from "./prover";
+import { calculus, goto, start } from "./prover";
 
 /** Closes every open goal by the search and waits for the proof to be finished. */
 async function closeAll(page: Page) {
   await page.getByRole("button", { name: "Close all" }).click();
   await expect(
-    page.getByRole("status").filter({ hasText: "Proved: every goal is closed" }),
+    page.getByRole("status").filter({ hasText: "Proved. Every goal is closed." }),
   ).toBeVisible();
 }
 
@@ -57,10 +57,7 @@ test("a finished proof of intuitionistic linear logic shows its λ-term, copied 
 test("a finished derivation of LJ shows its simply typed λ-term", async ({ page, context }) => {
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
   await goto(page);
-  const pop = await switches(page);
-  await pop.getByRole("button", { name: "Ordinary", exact: true }).click();
-  await pop.getByRole("button", { name: "Intuitionistic", exact: true }).click();
-  await page.keyboard.press("Escape");
+  await calculus(page, ["Ordinary", "Intuitionistic"]);
   await page.getByRole("textbox", { name: "Sequent" }).fill("|- (a -> b) -> (b -> c) -> a -> c");
   await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
   await closeAll(page);

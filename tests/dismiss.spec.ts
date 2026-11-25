@@ -1,13 +1,13 @@
 // deduxit © Fabian Lukas Grubmüller 2026
 // Licensed under the EUPL
 
-// Light dismiss: a press outside an open menu, pane, sheet or popover closes it, as Escape
-// does. A press on the stage that closes one does nothing else (no formula picked, no pan); a
-// press on another of the bands' buttons closes it and acts.
+// Light dismiss: a press outside an open panel, sheet, list, dialog or popover closes it, as
+// Escape does. A press on the stage that closes one does nothing else (no formula picked, no
+// pan); a press on another of the frame's buttons closes it and acts.
 
 import { devices, type Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
-import { start } from "./prover";
+import { start, tool } from "./prover";
 
 /**
  * A press on the stage's empty field, right of the drawing and above whatever is open (on a
@@ -22,11 +22,11 @@ async function pressField(page: Page, touch: boolean) {
   const stage = await page.locator(".stage").boundingBox();
   if (!stage) throw new Error("no stage");
   const open = await page
-    .locator(".menu, .pop, .mode-warn")
+    .locator(".menu, .pop, .mode-warn, .tools[data-more]")
     .evaluateAll((all) => all.map((e) => e.getBoundingClientRect().top));
   // A surface that starts at or above the stage's top covers it there.
   const top = Math.min(stage.y + stage.height * 0.2, ...open.map((t) => Math.max(t, stage.y)));
-  // A sheet that covers the whole stage leaves the top band's empty part.
+  // A sheet that covers the whole stage leaves the top row's empty part.
   const free = await page.evaluate(() => {
     const band = document.querySelector("header")?.getBoundingClientRect();
     if (!band) return null;
@@ -44,12 +44,11 @@ async function pressField(page: Page, touch: boolean) {
   else await page.mouse.click(at.x, at.y);
 }
 
-/** Opens an action of the bottom band, through More's sheet where the band has no room for it. */
+/** Presses a tool, through More's row where a compact window keeps it there. */
 async function band(page: Page, name: string) {
-  const button = page.locator("footer").getByRole("button", { name, exact: true });
-  if (await button.isVisible()) return button.click();
-  await page.locator("footer").getByRole("button", { name: "More" }).click();
-  await page.getByRole("dialog", { name: "More" }).getByRole("button", { name }).click();
+  const button = tool(page, name);
+  if (!(await button.isVisible())) await tool(page, "More").click();
+  await button.click();
 }
 
 /** Where the drawing's conclusion is: a press that closes something must not pan it. */
@@ -62,23 +61,23 @@ async function dismissals(page: Page, touch: boolean) {
     await expect(opened).toBeVisible();
     await pressField(page, touch);
     await expect(opened).toBeHidden();
-    // The press did nothing else: no rule popover, the drawing where it was.
+    // The press did nothing else: no rule popover, the drawing where it was (once a panel that
+    // moved it aside has closed and moved it back).
     await expect(page.getByRole("dialog", { name: "Rules" })).toBeHidden();
-    expect(await conclusion(page)).toEqual(drawn);
+    await expect.poll(() => conclusion(page)).toEqual(drawn);
   };
-  for (const name of ["Export", "Steps", "Settings", "About", "Practice"]) {
+  for (const name of ["Export", "Steps", "Import", "The search's settings"]) {
     await band(page, name);
     await closes(page.getByRole(name === "Export" ? "menu" : "dialog", { name }));
   }
   if (touch) {
-    await page.locator("footer").getByRole("button", { name: "More" }).click();
-    await closes(page.getByRole("dialog", { name: "More" }));
+    await tool(page, "More").click();
+    await expect(tool(page, "Export")).toBeVisible();
+    await pressField(page, touch);
+    await expect(tool(page, "Export")).toBeHidden();
   }
-  const tab = page.locator(".ptab[aria-current=true]");
-  await tab.getByRole("button", { name: /^Status/ }).click();
-  await closes(page.getByRole("dialog", { name: "Status" }));
-  await tab.getByRole("button", { name: /^Logic/ }).click();
-  await closes(page.getByRole("dialog", { name: "Logic" }));
+  await page.getByRole("button", { name: "Add a view" }).click();
+  await closes(page.getByRole("dialog", { name: "Add a view" }));
   await page.getByRole("button", { name: /^A⊥ ⅋ B⊥, formula/ }).click();
   const rules = page.getByRole("dialog", { name: "Rules" });
   await expect(rules).toBeVisible();
@@ -89,20 +88,16 @@ async function dismissals(page: Page, touch: boolean) {
   await rules.getByRole("button", { name: /^⅋/ }).click();
   await expect(page.getByRole("button", { name: /^A⊥, formula/ })).toBeVisible();
   // The restart warning: a press outside keeps the proof, as Escape does.
-  // The switches are the tab's mark's alone; the warning is inside its popover, and a press
-  // outside closes both.
-  await tab.getByRole("button", { name: /^Logic/ }).click();
   await page.getByRole("button", { name: "Intuitionistic", exact: true }).click();
   const warning = page.getByRole("alertdialog", { name: "Restart the proof" });
   await expect(warning).toBeVisible();
   await pressField(page, touch);
-  await expect(page.getByRole("dialog", { name: "Logic" })).toBeHidden();
   await expect(warning).toBeHidden();
   await expect(page.getByRole("button", { name: /^A⊥, formula/ })).toBeVisible();
-  // A press on another of the band's buttons closes the open menu and opens its own.
+  // A press on another of the tools closes the open panel and acts.
   await band(page, "Export");
   await expect(page.getByRole("menu", { name: "Export" })).toBeVisible();
-  await page.locator("footer").getByRole("button", { name: "Undo", exact: true }).click();
+  await tool(page, "Undo").click();
   await expect(page.getByRole("menu", { name: "Export" })).toBeHidden();
   await expect(page.getByRole("button", { name: /^A⊥ ⅋ B⊥, formula/ })).toBeVisible();
 }

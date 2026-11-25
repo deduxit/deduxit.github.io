@@ -16,7 +16,7 @@
     margin: 0;
   }
   body {
-    background: var(--color-field);
+    background: var(--color-paper);
     color: var(--color-ink);
     font: var(--font-weight-normal) var(--text-body) / var(--leading-normal) var(--font-text);
     -webkit-font-smoothing: antialiased;
@@ -29,7 +29,7 @@
     color: inherit;
   }
   :focus-visible {
-    outline: var(--line-strong) solid var(--color-accent);
+    outline: var(--line-strong) solid var(--color-lapis);
     outline-offset: var(--spacing-0-5);
   }
 }
@@ -61,8 +61,8 @@
   margin: var(--spacing-2) 0 0;
 }
 .sub {
-  color: var(--color-dim);
-  font-size: var(--text-small);
+  color: var(--color-ink2);
+  font-size: var(--text-control);
   margin: var(--spacing-1) 0;
 }
 .noscript {
@@ -73,7 +73,7 @@
   max-width: var(--size-text);
   margin: 0 auto;
   padding: var(--spacing-6) var(--spacing-4);
-  font-size: var(--text-panel);
+  font-size: var(--text-body);
 }
 .page h1 {
   font: var(--font-weight-semibold) var(--text-title) / var(--leading-none) var(--font-text);
@@ -85,12 +85,12 @@
 /* A link in running text is underlined: its colour alone does not tell it
    from the text around it (SC 1.4.1). */
 .page a:not(.logo) {
-  color: var(--color-accent);
+  color: var(--color-lapis);
   text-decoration: underline;
   text-underline-offset: var(--spacing-0-5);
 }
 .page h2 {
-  font: var(--font-weight-semibold) var(--text-panel) / var(--leading-snug) var(--font-text);
+  font: var(--font-weight-semibold) var(--text-body) / var(--leading-snug) var(--font-text);
   margin: var(--spacing-6) 0 var(--spacing-2);
 }
 .page h3 {
@@ -102,10 +102,10 @@
   max-width: var(--size-text);
 }
 .page code {
-  font: var(--text-small) / var(--leading-snug) var(--font-mono);
+  font: var(--text-control) / var(--leading-snug) var(--font-mono);
   overflow-wrap: anywhere;
 }
-/* The way back to the prover, where the band's word mark stands on the prover's page. */
+/* The way back to the prover, where the top row's word mark stands on the prover's page. */
 .page-home {
   margin: 0 0 var(--spacing-5);
 }
@@ -122,10 +122,10 @@
    instrument's readout, a row per holder. */
 .ledger {
   margin: var(--spacing-5) 0;
-  border: var(--line) solid var(--color-edge);
-  border-left: var(--line-strong) solid var(--color-accent);
+  border: var(--line) solid var(--color-hair);
+  border-left: var(--line-strong) solid var(--color-lapis);
   border-radius: var(--radius-control);
-  background: var(--color-panel);
+  background: var(--color-paper);
 }
 .ledger > div {
   display: grid;
@@ -134,14 +134,14 @@
   padding: var(--spacing-3) var(--spacing-4);
 }
 .ledger > div + div {
-  border-top: var(--line) solid var(--color-edge);
+  border-top: var(--line) solid var(--color-hair);
 }
 .ledger dt {
   font-weight: var(--font-weight-semibold);
 }
 .ledger dd {
   margin: 0;
-  color: var(--color-dim);
+  color: var(--color-ink2);
 }
 .kept {
   width: 100%;
@@ -153,33 +153,33 @@
   text-align: left;
   vertical-align: top;
   padding: var(--spacing-2) var(--spacing-3) var(--spacing-2) 0;
-  border-bottom: var(--line) solid var(--color-edge);
+  border-bottom: var(--line) solid var(--color-hair);
 }
 .kept th {
   font-weight: var(--font-weight-semibold);
-  color: var(--color-dim);
+  color: var(--color-ink2);
 }
 .kept td:first-child {
   width: var(--size-ledger-label);
 }
 .cite {
-  font-size: var(--text-small);
+  font-size: var(--text-control);
   white-space: nowrap;
 }
 .sources {
   list-style: decimal;
   padding-left: var(--spacing-5);
-  font-size: var(--text-small);
-  color: var(--color-dim);
+  font-size: var(--text-control);
+  color: var(--color-ink2);
 }
 .sources li + li {
-  margin-top: var(--spacing-1-5);
+  margin-top: var(--spacing-2);
 }
 .sources li:target {
   color: var(--color-ink);
-  background: var(--color-accent-wash);
+  background: var(--color-wash);
 }
-@media (max-width: 640px) {
+@media (width < 600px) {
   .ledger > div {
     grid-template-columns: 1fr;
     gap: var(--spacing-1);
@@ -189,101 +189,71 @@
   }
 }
 kbd {
-  font: var(--font-weight-semibold) var(--text-label) / var(--leading-none) var(--font-text);
+  font: var(--font-weight-semibold) var(--text-sign) / var(--leading-none) var(--font-text);
   display: inline-grid;
   place-items: center;
   min-width: var(--size-key);
   height: var(--size-key);
   padding: 0 var(--spacing-1);
-  border: var(--line) solid var(--color-line);
+  border: var(--line) solid var(--color-edge);
   border-bottom-width: var(--line-strong);
-  border-radius: var(--radius-key);
-  color: var(--color-dim);
-  background: var(--color-panel-2);
+  border-radius: var(--radius-control);
+  color: var(--color-ink2);
+  background: var(--color-band);
 }
 
-/* The grammar: one cluster style for every floating thing (the dock, the
-   stage's controls, the calculus, every popover, menu and caption). */
-.cluster {
-  background: var(--color-glass);
-  backdrop-filter: blur(var(--blur-hud));
-  border: var(--line) solid var(--color-edge);
-  border-radius: var(--radius-cluster);
-  box-shadow:
-    inset 0 var(--line) 0 var(--color-sheen),
-    0 var(--line) 0 var(--color-shadow-near),
-    0 var(--spacing-2) var(--spacing-5) calc(-1 * var(--spacing-2)) var(--color-shadow-far);
+/* A panel, a popover, a sheet: paper with a 1 pixel line edge and a corner of 16. */
+.cluster,
+.panel {
+  background: var(--color-paper);
+  border: var(--line) solid var(--color-line);
+  border-radius: var(--radius-panel);
 }
 .kw-label {
-  font: var(--font-weight-semibold) var(--text-small) / var(--leading-snug) var(--font-text);
-  color: var(--color-dim);
+  font: var(--font-weight-semibold) var(--text-control) / var(--leading-snug) var(--font-text);
+  color: var(--color-ink2);
 }
-/* A keyword that carries a fact, tinted by its colour role; as a button it
-   hides the sentence behind it. */
+/* A keyword that carries a fact, in weight 600 and its tone's colour; its sign or its word
+   says the state, never the colour alone. */
 .kw {
-  font: var(--font-weight-semibold) var(--text-small) / var(--leading-none) var(--font-text);
+  font: var(--font-weight-semibold) var(--text-body) / var(--leading-snug) var(--font-text);
   display: inline-flex;
   align-items: center;
-  gap: var(--spacing-1-5);
-  min-height: var(--size-chip);
-  padding: 0 var(--spacing-2);
-  border-radius: var(--radius-control);
-  border: var(--line) solid currentColor;
-  background: transparent;
+  gap: var(--spacing-2);
   margin: 0;
-}
-button.kw {
-  min-height: var(--size-control-small);
-  cursor: help;
-}
-/* A keyword's wash is laid on the panel whatever stands under it, so that its
-   colour reads at 4.5:1 on Learn's frame and the field alike (colours.test.ts). */
-.kw.bad,
-.kw.warn,
-.kw.ok,
-.kw.acc {
-  background-color: var(--color-panel);
+  color: var(--color-ink);
 }
 .kw.bad {
   color: var(--color-bad);
-  background-image: linear-gradient(var(--color-bad-wash), var(--color-bad-wash));
-}
-.kw.warn {
-  color: var(--color-warn);
-  background-image: linear-gradient(var(--color-warn-wash), var(--color-warn-wash));
 }
 .kw.ok {
-  color: var(--color-ok);
-  background-image: linear-gradient(var(--color-ok-wash), var(--color-ok-wash));
+  color: var(--color-good);
 }
 .kw.acc {
-  color: var(--color-accent);
-  background-image: linear-gradient(var(--color-accent-wash), var(--color-accent-wash));
+  color: var(--color-lapis);
 }
+.kw.warn,
 .kw.plain {
-  color: var(--color-dim);
+  color: var(--color-ink2);
 }
-/* A status in a line of controls: its colour without a control's box. */
 .kw.flat {
-  border-color: transparent;
-  background: none;
   padding-inline: 0;
 }
-/* The engine that ran a search, its source on hover and in Learn. */
+/* The engine that ran a search, its source on hover. */
 .kw.engine {
-  color: var(--color-dim);
-  border-style: dashed;
+  color: var(--color-ink2);
   font-weight: var(--font-weight-normal);
+  font-size: var(--text-control);
 }
 .tip {
   position: fixed;
   z-index: var(--layer-tip);
   max-width: var(--size-popover-wide);
   background: var(--color-ink);
-  color: var(--color-panel);
+  color: var(--color-paper);
   border-radius: var(--radius-control);
-  padding: var(--spacing-1-5) var(--spacing-2);
-  font: var(--font-weight-normal) var(--text-small) / var(--leading-snug) var(--font-text);
+  padding: var(--spacing-1) var(--spacing-2);
+  font: var(--font-weight-normal) var(--text-control) / var(--leading-snug) var(--font-text);
   pointer-events: none;
   display: flex;
   gap: var(--spacing-2);
@@ -295,29 +265,6 @@ button.kw {
   border-color: currentColor;
 }
 
-/* The page: the window, and Learn's frame when it is on. */
-.app {
-  position: fixed;
-  inset: 0;
-  display: grid;
-  grid-template-rows: minmax(0, 1fr);
-  grid-template-columns: minmax(0, 1fr);
-  overflow: hidden;
-}
-.band {
-  background: var(--color-panel);
-  position: relative;
-  z-index: var(--layer-band);
-}
-.band.top {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
-  min-height: var(--size-band);
-  padding: 0 var(--spacing-3);
-  border-bottom: var(--line) solid var(--color-edge);
-  min-width: 0;
-}
 /* deduxit's word mark, inline: the letters in ink, the long marks (its rects) in lapis. */
 .logo {
   display: block;
@@ -339,58 +286,14 @@ button.kw {
     height: var(--size-wordmark-large);
   }
 }
-/* The band's mark and the dictionary's card under it, shown on hover and on focus. The card
-   joins the mark across the gap, so that the pointer can move onto it (SC 1.4.13). */
-.mark-host {
-  position: relative;
-  flex: none;
-}
-button.wordmark {
-  padding: 0;
-  border: 0;
-  background: none;
-  color: inherit;
-  cursor: help;
-  &:focus-visible {
-    border-radius: var(--radius-key);
-  }
-}
-.dictionary {
-  position: absolute;
-  top: calc(100% + var(--spacing-2));
-  left: calc(-1 * var(--spacing-1));
-  z-index: var(--layer-popover);
-  width: max-content;
-  max-width: min(var(--size-popover-wide), calc(100vw - 2 * var(--spacing-3)));
-  padding: var(--spacing-2) var(--spacing-3);
-  font: var(--font-weight-normal) var(--text-small) / var(--leading-normal) var(--font-text);
-  color: var(--color-ink);
-  &[hidden] {
-    display: none;
-  }
-  &::before {
-    content: "";
-    position: absolute;
-    inset: calc(-1 * var(--spacing-2)) 0 100% 0;
-  }
-}
 /* The dictionary line: the headword, its pronunciation, its kind, its sense. */
 .headword {
   font-weight: var(--font-weight-bold);
 }
 .ipa,
 .word-kind {
-  color: var(--color-dim);
+  color: var(--color-ink2);
 }
-.proofs {
-  display: flex;
-  gap: var(--spacing-1);
-  min-width: 0;
-  overflow-x: auto;
-  scrollbar-width: none;
-  align-items: center;
-}
-
 /* The formulas in the font Settings chooses (the drawing asks deduxit for the same). */
 :root[data-math-font="stix-two"] {
   --font-math: var(--font-math-stix-two);
@@ -405,278 +308,182 @@ button.wordmark {
   --font-math: var(--font-math-new-computer-modern);
 }
 
-/* Every control: one height (two on a phone, both 44 pixels), one radius,
-   and the same states: hover, pressed, focus, disabled. */
+/* Every control shares the same states: over under the pointer, wash while pressed, faint when
+   it cannot act, the focus ring. */
 .btn,
-.dot-b,
-.pt-go,
-.pt-mark,
-.pt-ex,
-.pt-x,
-.pt-new,
 .seg-b,
 .tab,
 .ftab,
 .rule,
 .mi,
 .pr-item,
-.chip,
 .tf-part,
-.linkish {
-  min-height: var(--size-control);
-  min-width: var(--size-control);
-  border-radius: var(--radius-control);
+.linkish,
+.tool,
+.chip,
+.cell,
+.toggle-cell,
+.entry,
+.logic,
+.enter {
   border: var(--line) solid transparent;
   background: transparent;
   cursor: pointer;
   color: var(--color-ink);
+  font: inherit;
   transition:
-    background var(--duration-fast) var(--ease-out),
+    background-color var(--duration-fast) var(--ease-out),
     border-color var(--duration-fast) var(--ease-out),
     color var(--duration-fast) var(--ease-out);
 }
 :is(
   .btn,
-  .dot-b,
-  .pt-go,
-  .pt-mark,
-  .pt-ex,
-  .pt-x,
-  .pt-new,
   .seg-b,
   .tab,
   .ftab,
   .rule,
   .mi,
   .pr-item,
+  .tf-part,
+  .tool,
   .chip,
-  .tf-part
-):hover:not(:disabled, [aria-disabled="true"]) {
-  background: var(--color-panel-2);
-  border-color: var(--color-line);
+  .cell,
+  .toggle-cell,
+  .entry,
+  .logic
+):hover:not(:disabled, [aria-disabled="true"], [aria-selected="true"], [aria-pressed="true"]) {
+  background-color: var(--color-over);
 }
 :is(
   .btn,
-  .dot-b,
-  .pt-go,
-  .pt-mark,
-  .pt-ex,
-  .pt-x,
-  .pt-new,
   .seg-b,
   .tab,
   .ftab,
   .rule,
   .mi,
-  .pr-item
+  .pr-item,
+  .tool,
+  .chip,
+  .cell,
+  .toggle-cell,
+  .entry,
+  .logic
 ):active:not(:disabled, [aria-disabled="true"]) {
-  background: var(--color-accent-wash);
-  transform: translateY(var(--press));
+  background-color: var(--color-wash);
 }
-:is(.btn, .seg-b, .tab, .mi, .rule, .pr-item):is(:disabled, [aria-disabled="true"]) {
-  opacity: var(--opacity-disabled);
+:is(.btn, .seg-b, .tab, .mi, .rule, .pr-item, .tool, .toggle-cell, .entry):is(
+  :disabled,
+  [aria-disabled="true"]
+) {
+  color: var(--color-faint);
   cursor: not-allowed;
 }
-:is(.seg-b, .tab, .mi)[aria-disabled="true"] {
+:is(.seg-b, .tab, .mi, .toggle-cell)[aria-disabled="true"] {
   cursor: help;
 }
 
-.btn {
+/* An atom or a world to tick in the model editor: its label is the target, the whole of it. */
+.kripke-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  min-height: var(--size-button);
+  padding: 0 var(--spacing-2);
+  border: var(--line) solid var(--color-line);
+  border-radius: var(--radius-control);
+  cursor: pointer;
+}
+
+/* A disclosure's summary is a target of its own: padded to a control's least size. */
+summary {
+  min-height: var(--size-button);
+  padding-block: var(--spacing-1);
+  cursor: pointer;
+}
+
+/* The older controls of the views' panels keep a control's least size. */
+.seg-b,
+.tab,
+.ftab,
+.rule,
+.mi,
+.pr-item,
+.tf-part {
+  min-height: var(--size-button);
+  min-width: var(--size-button);
+  border-radius: var(--radius-control);
+}
+
+/* A plain button: 30 high, padding 12, corner 8, type 15 at 500; paper with an ink edge, the
+   primary one ink with paper text. */
+.btn,
+.linkish {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--spacing-1-5);
-  padding: 0 var(--spacing-2);
-  font-size: var(--text-small);
+  gap: var(--spacing-2);
+  min-height: var(--size-button);
+  min-width: var(--size-button);
+  padding: 0 var(--spacing-3);
+  border-radius: var(--radius-control);
+  font: var(--font-weight-medium) var(--text-body) / var(--leading-snug) var(--font-text);
   white-space: nowrap;
+  text-decoration: none;
+}
+.btn {
+  border-color: var(--color-ink);
+  background-color: var(--color-paper);
+}
+.btn:is(:disabled, [aria-disabled="true"]) {
+  border-color: var(--color-line);
 }
 .btn[aria-expanded="true"],
 .btn[aria-pressed="true"] {
-  background: var(--color-accent-wash);
-  border-color: var(--color-accent);
-}
-.btn-primary {
-  border-color: var(--color-accent);
-  background: var(--color-accent-wash);
+  background-color: var(--color-wash);
+  border-color: var(--color-lapis);
   font-weight: var(--font-weight-semibold);
 }
+.btn-primary {
+  border-color: var(--color-ink);
+  background-color: var(--color-ink);
+  color: var(--color-paper);
+}
+.btn-primary:hover:not(:disabled, [aria-disabled="true"]) {
+  background-color: var(--color-ink2);
+}
 .btn-s {
-  min-height: var(--size-control-small);
-  min-width: var(--size-control-small);
-}
-.btn.warn {
-  border-color: var(--color-warn);
-  background: var(--color-warn-wash);
-}
-/* A control in running content (a practice card): its outline says it is one. */
-.btn.outline {
-  border-color: var(--color-line);
+  min-height: var(--size-button);
 }
 .btn.icon {
   padding: 0;
 }
-:is(button, a.btn, a.mi) svg.lucide {
+.linkish {
+  color: var(--color-lapis);
+  text-decoration: underline;
+  text-underline-offset: var(--spacing-0-5);
+}
+:is(button, a) svg.lucide {
   width: var(--size-icon);
   height: var(--size-icon);
+  stroke-width: var(--stroke-icon);
   flex: none;
 }
-:is(.btn-s, .dot-b, .pt-ex, .pt-x, .pt-new, .linkish) svg.lucide {
+.btn svg.lucide {
   width: var(--size-icon-small);
   height: var(--size-icon-small);
+  stroke-width: var(--stroke-icon-small);
 }
-
-/* A proof's tab: its verdict's dot, its sequent, its calculus, its close. */
-.ptab {
-  display: inline-flex;
-  align-items: center;
-  border: var(--line) solid var(--color-edge);
-  border-radius: var(--radius-control);
-  flex: none;
-  position: relative;
-}
-.ptab[aria-current="true"] {
-  border-color: var(--color-accent);
-  background: var(--color-accent-wash);
-}
-.ptab > button {
-  border-radius: var(--radius-key);
-}
-.dot-b,
-.pt-ex,
-.pt-x,
-.pt-new {
-  display: grid;
-  place-items: center;
-  padding: 0;
-}
-/* A proof's state: a shape for each, in its colour role. */
-.dot {
-  color: var(--color-line);
-}
-.dot[data-tone="open"] {
-  color: var(--color-accent);
-}
-.dot[data-tone="ok"] {
-  color: var(--color-ok);
-}
-.dot[data-tone="bad"] {
-  color: var(--color-bad);
-}
-.dot[data-tone="warn"] {
-  color: var(--color-warn);
-}
-.pt-go {
-  padding: 0 var(--spacing-1);
-  max-width: var(--size-tab);
-}
-.pt-go .m {
-  font-size: var(--text-panel);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: block;
-}
-/* The mark is a label of its own: a step of the scale more from the sequent than from the
-   close, and its calculus and fragment a word apart. */
-.pt-mark {
-  font: var(--font-weight-semibold) var(--text-label) / var(--leading-none) var(--font-text);
-  color: var(--color-dim);
-  padding: 0 var(--spacing-1) 0 var(--spacing-3);
-  display: inline-flex;
-  gap: var(--spacing-2);
-  align-items: center;
-}
-.pt-mark .frag {
-  color: var(--color-accent);
-}
-.pt-x {
-  color: var(--color-faint);
-}
-.pt-ex {
-  color: var(--color-dim);
-}
-.pt-new {
-  border: var(--line) dashed var(--color-line);
-  color: var(--color-dim);
+svg.sign {
+  width: var(--size-sign);
+  height: var(--size-sign);
+  stroke-width: var(--stroke-sign);
   flex: none;
 }
-.field {
-  width: min(var(--size-field), var(--size-field-share));
-  height: var(--size-control);
-  padding: 0 var(--spacing-2);
-  font: var(--font-weight-normal) var(--text-body) / var(--leading-none) var(--font-mono);
-  background: var(--color-field);
-  border: var(--line) solid var(--color-line);
-  border-radius: var(--radius-control);
+.sign.good {
+  color: var(--color-good);
 }
-.field:focus-visible {
-  outline-offset: calc(-1 * var(--line));
-}
-.field[aria-invalid="true"] {
-  border-color: var(--color-bad);
-}
-.field-msg {
-  position: absolute;
-  top: calc(100% + var(--spacing-1-5));
-  left: var(--spacing-3);
-  display: flex;
-  gap: var(--spacing-3);
-  align-items: center;
-  flex-wrap: wrap;
-  padding: var(--spacing-1) var(--spacing-2);
-  max-width: calc(100vw - var(--spacing-5));
-  z-index: var(--layer-popover);
-}
-.caret {
-  font: var(--font-weight-normal) var(--text-body) / var(--leading-snug) var(--font-mono);
-  white-space: pre;
-  margin: 0;
-  padding: var(--spacing-1) var(--spacing-2);
-  background: var(--color-bad-wash);
-  border-left: var(--line-strong) solid var(--color-bad);
-  overflow-x: auto;
-  max-width: 100%;
-}
-.caret .at {
+.sign.bad {
   color: var(--color-bad);
-  background: transparent;
-  font-weight: var(--font-weight-bold);
-  text-decoration: underline wavy;
-}
-
-/* The bottom band: what I can do with the proof. */
-.band.bottom {
-  border-top: var(--line) solid var(--color-edge);
-  padding: var(--spacing-1-5) var(--spacing-3);
-  display: flex;
-  gap: var(--spacing-2);
-  justify-content: center;
-  align-items: center;
-  flex-wrap: wrap;
-}
-.group {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-0-5);
-  padding: 0 var(--spacing-1-5);
-}
-.group + .group {
-  border-left: var(--line) solid var(--color-edge);
-}
-/* With Learn on, every label shows: the band packs tighter to keep one row. */
-.app[data-learn] .band.bottom {
-  gap: 0;
-  padding-inline: var(--spacing-1);
-}
-.app[data-learn] .group {
-  padding: 0 var(--spacing-0-5);
-}
-.app[data-learn] .act {
-  padding: 0 var(--spacing-0-5);
-  gap: var(--spacing-1);
-}
-.act .k {
-  margin-left: var(--spacing-0-5);
 }
 
 /* The stage. */
@@ -689,9 +496,9 @@ button.wordmark {
   background-image: radial-gradient(
     circle,
     var(--color-dot) var(--size-grid-dot),
-    transparent var(--size-grid-fade)
+    transparent var(--size-grid-dot)
   );
-  background-size: var(--spacing-5) var(--spacing-5);
+  background-size: var(--size-dots) var(--size-dots);
 }
 .stage[data-panning] {
   cursor: grabbing;
@@ -709,11 +516,6 @@ button.wordmark {
   display: block;
   overflow: visible;
   fill: var(--color-ink);
-}
-/* The glow lifts the line art off the field; the formulas stay without it,
-   which on their strokes read as a heavier weight. */
-.drawing svg g[stroke] {
-  filter: drop-shadow(0 0 var(--spacing-1-5) var(--color-glow));
 }
 .drawing svg text {
   fill: var(--color-ink);
@@ -745,7 +547,7 @@ button.wordmark {
 }
 .drawing svg g.search + text,
 .drawing svg text.engine {
-  fill: var(--color-faint);
+  fill: var(--color-soft);
   font-style: italic;
 }
 .drawing svg text.engine {
@@ -753,11 +555,11 @@ button.wordmark {
 }
 .drawing svg g.open-goal text {
   transition:
-    fill var(--duration-mid) var(--ease-out),
-    opacity var(--duration-mid) var(--ease-out);
+    fill var(--duration-panel) var(--ease-out),
+    opacity var(--duration-panel) var(--ease-out);
 }
 .drawing svg g.open-goal.active text {
-  fill: var(--color-accent);
+  fill: var(--color-lapis);
 }
 .drawing svg g.open-goal.dim {
   opacity: var(--opacity-dimmed);
@@ -782,131 +584,68 @@ button.wordmark {
     border-color var(--duration-fast);
 }
 .fb[data-active] {
-  border-color: var(--color-edge);
+  border-color: var(--color-hair);
 }
 .fb:hover {
-  background: var(--color-accent-wash);
-  border-color: var(--color-line);
+  background: var(--color-wash);
+  border-color: var(--color-edge);
 }
 .fb:focus-visible {
-  background: var(--color-accent-wash);
+  background: var(--color-wash);
 }
 .fb[data-selected] {
-  border-color: var(--color-accent);
-  background: var(--color-accent-wash);
+  border-color: var(--color-lapis);
+  background: var(--color-wash);
 }
 .fb[data-left] {
-  border: var(--line-strong) solid var(--color-accent);
-  background: var(--color-accent-wash);
+  border: var(--line-strong) solid var(--color-lapis);
+  background: var(--color-wash);
 }
 .fb[data-left]::after {
   content: "L";
   position: absolute;
   top: calc(-1 * var(--spacing-2));
   left: calc(-1 * var(--spacing-2));
-  font: var(--font-weight-bold) var(--text-label) / var(--size-badge) var(--font-text);
+  font: var(--font-weight-bold) var(--text-sign) / var(--size-badge) var(--font-text);
   width: var(--size-badge);
   height: var(--size-badge);
   text-align: center;
   border-radius: var(--radius-round);
-  background: var(--color-accent);
-  color: var(--color-panel);
+  background: var(--color-lapis);
+  color: var(--color-paper);
 }
 .fb[data-principal] {
-  border: var(--line) dashed var(--color-accent);
+  border: var(--line) dashed var(--color-lapis);
 }
 .fb[data-hinted] {
-  border: var(--line-strong) solid var(--color-accent);
+  border: var(--line-strong) solid var(--color-lapis);
 }
-.empty {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-content: center;
-  pointer-events: none;
-  color: var(--color-dim);
-  font-size: var(--text-body);
-  text-align: center;
-  padding: var(--spacing-4);
-}
-.empty p {
-  margin: 0;
-}
-.empty .linkish {
-  padding: 0;
-  min-width: 0;
-}
-/* The first visit's help, offered as buttons: pressable on a field that passes presses on. */
-.empty .start {
-  justify-content: center;
-  margin-top: var(--spacing-3);
-}
-.empty .btn {
-  pointer-events: auto;
-}
-.banner,
-.done {
-  position: absolute;
-  top: var(--spacing-7);
-  right: var(--spacing-3);
-  z-index: var(--layer-stage);
-}
-.done {
-  cursor: default;
-}
-/* A line the stage says with its reason under it, as a goal's note does. */
-.said-banner {
-  display: grid;
-  justify-items: start;
-  gap: var(--spacing-1);
-  padding: var(--spacing-2);
-  max-width: min(var(--size-menu), calc(100vw - var(--spacing-6)));
-}
-/* Over the dotted field a keyword is laid on the panel, so no dot shows through. */
-.stage .banner.kw,
-.stage .done {
-  background-color: var(--color-panel);
-  background-image: linear-gradient(var(--color-ok-wash), var(--color-ok-wash));
-}
-.stage .banner.warn {
-  background-image: linear-gradient(var(--color-warn-wash), var(--color-warn-wash));
-}
-
-/* The calculus's switches, in the tab's mark's popover. */
-.calc {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  margin: 0;
-  border: 0;
-  padding: var(--spacing-2);
-  gap: var(--spacing-2) var(--spacing-3);
-}
+/* A segmented control: a row of pressed buttons (Settings, the sheets, a view's own choices). */
 .seg {
   display: inline-flex;
   width: fit-content;
   gap: var(--spacing-0-5);
   padding: var(--spacing-0-5);
-  border: var(--line) solid var(--color-edge);
+  border: var(--line) solid var(--color-hair);
   border-radius: var(--radius-control);
-  background: var(--color-field);
+  background: var(--color-paper);
   flex: none;
   margin: 0;
 }
 .seg-b {
   flex: none;
   padding: 0 var(--spacing-3);
-  font-size: var(--text-small);
-  color: var(--color-dim);
-  border-radius: var(--radius-key);
+  font-size: var(--text-control);
+  color: var(--color-ink2);
+  border-radius: var(--radius-control);
 }
 .seg-b[aria-pressed="true"],
 .seg-b[aria-checked="true"],
 .mi[aria-checked="true"],
 .tab[aria-selected="true"] {
-  background: var(--color-panel);
+  background: var(--color-paper);
   color: var(--color-ink);
-  border-color: var(--color-accent);
+  border-color: var(--color-lapis);
   font-weight: var(--font-weight-semibold);
 }
 /* A switch: its label is the target, the whole of it. */
@@ -914,9 +653,9 @@ button.wordmark {
   display: inline-flex;
   align-items: center;
   gap: var(--spacing-2);
-  font-size: var(--text-small);
+  font-size: var(--text-control);
   cursor: pointer;
-  min-height: var(--size-control);
+  min-height: var(--size-button);
   position: relative;
 }
 .sw input {
@@ -932,16 +671,16 @@ button.wordmark {
   cursor: help;
 }
 .sw:has(input:disabled) {
-  color: var(--color-faint);
+  color: var(--color-soft);
 }
 .sw-t {
   width: var(--size-switch);
   height: var(--size-switch-height);
-  border: var(--line) solid var(--color-line);
+  border: var(--line) solid var(--color-edge);
   border-radius: var(--radius-round);
   position: relative;
   flex: none;
-  background: var(--color-field);
+  background: var(--color-paper);
   transition:
     background var(--duration-fast) var(--ease-out),
     border-color var(--duration-fast) var(--ease-out);
@@ -954,21 +693,21 @@ button.wordmark {
   width: var(--size-knob);
   height: var(--size-knob);
   border-radius: var(--radius-round);
-  background: var(--color-dim);
+  background: var(--color-ink2);
   transition: transform var(--duration-fast) var(--ease-out);
 }
 .sw input:checked + .sw-t {
-  background: var(--color-accent-wash);
-  border-color: var(--color-accent);
+  background: var(--color-wash);
+  border-color: var(--color-lapis);
 }
 .sw input:checked + .sw-t::after {
   transform: translateX(
     calc(var(--size-switch) - var(--size-knob) - 2 * var(--spacing-0-5) - 2 * var(--line))
   );
-  background: var(--color-accent);
+  background: var(--color-lapis);
 }
 .sw input:focus-visible + .sw-t {
-  outline: var(--line-strong) solid var(--color-accent);
+  outline: var(--line-strong) solid var(--color-lapis);
   outline-offset: var(--spacing-0-5);
 }
 .mode-warn {
@@ -977,7 +716,7 @@ button.wordmark {
   left: 0;
   width: var(--size-tour);
   max-width: calc(100vw - var(--spacing-5));
-  border-color: var(--color-warn);
+  border-color: var(--color-ink2);
   padding: var(--spacing-3);
   z-index: var(--layer-popover);
 }
@@ -1005,14 +744,14 @@ button.wordmark {
   gap: var(--spacing-1);
   padding: var(--spacing-1);
   flex-wrap: wrap;
-  max-width: min(var(--size-menu), calc(100vw - var(--spacing-6)));
+  max-width: min(var(--size-panel-wide), calc(100vw - var(--spacing-6)));
 }
 /* A reason under its keyword: in view, never a tip, a whole line of the cluster. */
 .said-why {
   flex-basis: 100%;
   margin: 0;
   padding: 0 var(--spacing-1);
-  font: var(--font-weight-normal) var(--text-small) / var(--leading-snug) var(--font-text);
+  font: var(--font-weight-normal) var(--text-control) / var(--leading-snug) var(--font-text);
   color: var(--color-ink);
 }
 /* A classical proof's truth table or tableau, in the drawing's place: a page of its own that
@@ -1020,7 +759,7 @@ button.wordmark {
 .stage[data-method] .world,
 .stage[data-method] .hits,
 .stage[data-method] .dock,
-.stage[data-method] .stage-ctl > :not(.tabs) {
+.stage[data-method] .stage-ctl {
   display: none;
 }
 .method {
@@ -1035,13 +774,11 @@ button.wordmark {
   flex-direction: column;
   align-items: flex-start;
   gap: var(--spacing-3);
-  /* The view's tabs stand over the stage's bottom right: the last line clears them. */
-  padding: var(--spacing-4) var(--spacing-4) calc(2 * var(--size-control) + var(--spacing-6));
-  background: var(--color-field);
-}
-/* The restore bar stands over the stage's top: the view's sentence starts under it. */
-.app:has(.restore) .method {
-  padding-top: calc(var(--size-control) + var(--spacing-6));
+  /* The toggles stand over its top and the bottom box over its bottom: its lines clear both. */
+  padding: calc(var(--size-toggle-box) + 2 * var(--size-inset))
+    calc(var(--size-tools) + 2 * var(--size-inset))
+    calc(var(--size-box) + 2 * var(--size-box-inset)) var(--spacing-4);
+  background: var(--color-paper);
 }
 /* Each part keeps its height: the page scrolls, never a part's own box. */
 .method > * {
@@ -1056,23 +793,9 @@ button.wordmark {
   max-width: var(--size-text);
 }
 .method-model:focus-visible {
-  outline: var(--line-strong) solid var(--color-accent);
+  outline: var(--line-strong) solid var(--color-lapis);
 }
 
-/* A calculus of one's own: the panel has no view tabs (the stage's Tree and Net draw the other
-   suites), its drawing in the stage's ink, its file and steps under it. A proof by natural
-   deduction is drawn the same way, its own switch between the tree and Fitch's lines. */
-.stage:is([data-method="custom"], [data-method="natural"], [data-method="modal"]) .stage-ctl {
-  display: none;
-}
-.nd-bar,
-.nd-save {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--spacing-2);
-  margin: 0;
-}
 /* The lines in force, numbered as the Fitch drawing numbers them: what a forward step cites. */
 .nd-lines {
   display: grid;
@@ -1108,15 +831,15 @@ button.wordmark {
 }
 .custom-file summary {
   cursor: pointer;
-  min-height: var(--size-control-small);
+  min-height: var(--size-button);
   display: flex;
   align-items: center;
-  gap: var(--spacing-1-5);
+  gap: var(--spacing-2);
 }
 /* A closed part shows that it opens, an open one that it closes. */
 .custom-file summary::before {
   content: "▸";
-  color: var(--color-dim);
+  color: var(--color-ink2);
 }
 .custom-file[open] summary::before {
   content: "▾";
@@ -1129,11 +852,11 @@ button.wordmark {
 .custom-text {
   display: block;
   width: 100%;
-  font: var(--text-small) / var(--leading-snug) var(--font-mono);
+  font: var(--text-control) / var(--leading-snug) var(--font-mono);
   padding: var(--spacing-2);
-  border: var(--line) solid var(--color-line);
+  border: var(--line) solid var(--color-edge);
   border-radius: var(--radius-control);
-  background: var(--color-panel);
+  background: var(--color-paper);
   color: var(--color-ink);
 }
 .custom-goals,
@@ -1181,13 +904,13 @@ button.wordmark {
 }
 .tt thead th {
   font-size: var(--text-math);
-  border-bottom: var(--line) solid var(--color-line);
+  border-bottom: var(--line) solid var(--color-edge);
 }
 .tt td[data-value="F"] {
-  color: var(--color-dim);
+  color: var(--color-ink2);
 }
 .tt [data-edge="atoms"] {
-  border-left: var(--line) solid var(--color-line);
+  border-left: var(--line) solid var(--color-edge);
 }
 .tt th[data-edge="turnstile"] {
   position: relative;
@@ -1198,13 +921,13 @@ button.wordmark {
   position: absolute;
   left: 0;
   font-family: var(--font-math);
-  color: var(--color-dim);
+  color: var(--color-ink2);
 }
 .tt td[data-edge="turnstile"] {
   padding-left: var(--spacing-5);
 }
 .tt tr[data-falsifies] td {
-  background: var(--color-bad-wash);
+  background: var(--color-paper);
 }
 .tt .tt-mark {
   text-align: left;
@@ -1232,8 +955,8 @@ button.wordmark {
 }
 .tb-n,
 .tb-from {
-  color: var(--color-dim);
-  font-size: var(--text-small);
+  color: var(--color-ink2);
+  font-size: var(--text-control);
   font-variant-numeric: tabular-nums;
 }
 .tb-n {
@@ -1254,29 +977,25 @@ button.wordmark {
   margin: 0;
   padding: var(--spacing-2) 0 0;
   list-style: none;
-  border-top: var(--line-strong) solid var(--color-line);
+  border-top: var(--line-strong) solid var(--color-edge);
 }
 .tb-branch {
   flex: 0 0 auto;
   padding-left: var(--spacing-2);
-  border-left: var(--line-strong) solid var(--color-line);
+  border-left: var(--line-strong) solid var(--color-edge);
 }
 .tb-end {
   padding-left: calc(var(--size-tableau-indent) + 2 * var(--spacing-2));
-  font-size: var(--text-small);
+  font-size: var(--text-control);
   font-weight: var(--font-weight-semibold);
   color: var(--color-bad);
 }
 .tb-end[data-closed] {
-  color: var(--color-ok);
+  color: var(--color-good);
 }
-@media (max-width: 640px) {
+@media (width < 600px) {
   .method {
     padding-inline: var(--spacing-3);
-  }
-  /* On a phone the restore bar wraps to two rows. */
-  .app:has(.restore) .method {
-    padding-top: calc(2 * var(--size-control) + var(--spacing-6));
   }
   .tb-branches {
     flex-direction: column;
@@ -1348,9 +1067,9 @@ button.wordmark {
   width: 100%;
   height: auto;
   max-height: var(--size-canvas);
-  border: var(--line) solid var(--color-edge);
+  border: var(--line) solid var(--color-hair);
   border-radius: var(--radius-control);
-  background: var(--color-panel);
+  background: var(--color-paper);
   touch-action: none;
   user-select: none;
 }
@@ -1359,27 +1078,27 @@ button.wordmark {
 }
 .kripke-arrow {
   fill: none;
-  stroke: var(--color-line);
+  stroke: var(--color-edge);
   stroke-width: var(--line-arrow);
 }
 .kripke-arrow.missing {
-  stroke: var(--color-warn);
+  stroke: var(--color-ink2);
   stroke-dasharray: var(--dash-missing);
 }
 .kripke-arrow.preview,
 .kripke-arrow.loose {
-  stroke: var(--color-accent);
+  stroke: var(--color-lapis);
   stroke-dasharray: var(--dash-preview);
 }
 .kripke-tip path {
-  fill: var(--color-line);
+  fill: var(--color-edge);
 }
 .kripke-tip.missing path {
-  fill: var(--color-warn);
+  fill: var(--color-ink2);
 }
 .kripke-ghost {
-  fill: var(--color-accent-wash);
-  stroke: var(--color-accent);
+  fill: var(--color-wash);
+  stroke: var(--color-lapis);
   stroke-dasharray: var(--dash-preview);
 }
 .kripke-world {
@@ -1389,23 +1108,23 @@ button.wordmark {
   outline: none;
 }
 .kripke-box {
-  fill: var(--color-panel-2);
+  fill: var(--color-band);
   stroke: var(--color-ink);
   stroke-width: var(--line);
 }
 .kripke-world[aria-pressed="true"] .kripke-box {
-  fill: var(--color-accent-wash);
-  stroke: var(--color-accent);
+  fill: var(--color-wash);
+  stroke: var(--color-lapis);
   stroke-width: var(--line-strong);
 }
 .kripke-world:focus-visible .kripke-box,
 .kripke-world[data-target] .kripke-box {
-  stroke: var(--color-accent);
-  stroke-width: var(--line-focus);
+  stroke: var(--color-lapis);
+  stroke-width: var(--line-strong);
 }
 .kripke-world[data-frame] .kripke-box,
 .kripke-world[data-witness] .kripke-box {
-  stroke: var(--color-warn);
+  stroke: var(--color-ink2);
   stroke-width: var(--line-strong);
   stroke-dasharray: var(--dash-mark);
 }
@@ -1416,7 +1135,7 @@ button.wordmark {
 }
 .kripke-num {
   font: var(--font-weight-semibold) var(--text-canvas) var(--font-text);
-  fill: var(--color-dim);
+  fill: var(--color-ink2);
 }
 .kripke-atoms {
   font: var(--font-weight-normal) var(--text-canvas-math) var(--font-math);
@@ -1439,12 +1158,12 @@ button.wordmark {
   gap: var(--spacing-2);
   margin: 0;
   padding: var(--spacing-2) var(--spacing-3);
-  border: var(--line) solid var(--color-edge);
+  border: var(--line) solid var(--color-hair);
   border-radius: var(--radius-control);
 }
 .kripke-form legend {
   padding: 0 var(--spacing-1);
-  font: var(--font-weight-semibold) var(--text-small) / var(--leading-snug) var(--font-text);
+  font: var(--font-weight-semibold) var(--text-control) / var(--leading-snug) var(--font-text);
 }
 .kripke .custom-field .field {
   width: auto;
@@ -1473,29 +1192,29 @@ button.wordmark {
 }
 .said-why .more {
   padding: 0 var(--spacing-1);
-  color: var(--color-accent);
+  color: var(--color-lapis);
 }
 .gn {
-  font: var(--font-weight-semibold) var(--text-small) / var(--leading-none) var(--font-text);
-  color: var(--color-accent);
-  padding: 0 var(--spacing-1-5);
+  font: var(--font-weight-semibold) var(--text-control) / var(--leading-none) var(--font-text);
+  color: var(--color-lapis);
+  padding: 0 var(--spacing-2);
   white-space: nowrap;
 }
 .sep {
   width: var(--line);
   align-self: stretch;
-  background: var(--color-edge);
+  background: var(--color-hair);
   margin: 0 var(--spacing-0-5);
 }
 .txt {
-  font-size: var(--text-small);
+  font-size: var(--text-control);
   padding: 0 var(--spacing-1);
 }
 .lamp {
   width: var(--size-lamp);
   height: var(--size-lamp);
   border-radius: var(--radius-round);
-  background: var(--color-warn);
+  background: var(--color-ink2);
 }
 .rungs {
   display: inline-flex;
@@ -1506,12 +1225,12 @@ button.wordmark {
 .rungs i {
   width: var(--size-rung);
   height: var(--line-strong);
-  background: var(--color-line);
+  background: var(--color-edge);
   border-radius: var(--radius-round);
 }
 .rungs i[data-on] {
   height: var(--size-rung-height);
-  background: var(--color-accent);
+  background: var(--color-lapis);
 }
 
 /* Popovers and menus. */
@@ -1553,8 +1272,8 @@ button.wordmark {
   font: var(--text-math-large) / var(--leading-none) var(--font-math);
 }
 .rd {
-  font: var(--font-weight-normal) var(--text-small) / var(--leading-none) var(--font-text);
-  color: var(--color-dim);
+  font: var(--font-weight-normal) var(--text-control) / var(--leading-none) var(--font-text);
+  color: var(--color-ink2);
 }
 .split-pre {
   margin: var(--spacing-2) 0;
@@ -1567,7 +1286,7 @@ button.wordmark {
   gap: var(--spacing-2);
   align-items: baseline;
   padding: var(--spacing-1) var(--spacing-2);
-  border: var(--line) solid var(--color-edge);
+  border: var(--line) solid var(--color-hair);
   border-radius: var(--radius-control);
   margin: 0;
 }
@@ -1577,43 +1296,25 @@ button.wordmark {
 .split-pre[data-fails] .prem {
   border-style: dashed;
 }
-.stage-ctl {
-  position: absolute;
-  right: var(--spacing-3);
-  bottom: var(--spacing-3);
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-1);
-  padding: var(--spacing-1);
-  z-index: var(--layer-hud);
-}
-/* Why the Net tab is greyed, over the stage's controls once it was pressed. */
-.net-why {
-  position: absolute;
-  right: var(--spacing-3);
-  bottom: calc(var(--spacing-3) + var(--size-control) + var(--spacing-3));
-  max-width: min(var(--size-menu), calc(100vw - var(--spacing-6)));
-  padding: var(--spacing-1-5) var(--spacing-2);
-  z-index: var(--layer-hud);
-}
+
 .tabs {
   display: flex;
   gap: var(--spacing-0-5);
 }
 .tab {
   padding: 0 var(--spacing-2);
-  font: var(--font-weight-semibold) var(--text-small) / var(--leading-none) var(--font-text);
-  color: var(--color-dim);
+  font: var(--font-weight-semibold) var(--text-control) / var(--leading-none) var(--font-text);
+  color: var(--color-ink2);
 }
 .tab[aria-disabled="true"] {
   text-decoration: underline dotted;
   text-underline-offset: var(--spacing-1);
 }
 .zoom-v {
-  font: var(--font-weight-normal) var(--text-label) / var(--leading-none) var(--font-text);
+  font: var(--font-weight-normal) var(--text-sign) / var(--leading-none) var(--font-text);
   min-width: var(--spacing-7);
   text-align: center;
-  color: var(--color-dim);
+  color: var(--color-ink2);
   font-variant-numeric: tabular-nums;
 }
 .drop {
@@ -1622,22 +1323,12 @@ button.wordmark {
   z-index: var(--layer-popover);
   display: grid;
   place-items: center;
-  border: var(--line-strong) dashed var(--color-accent);
-  border-radius: var(--radius-cluster);
-  background: var(--color-accent-wash);
+  border: var(--line-strong) dashed var(--color-lapis);
+  border-radius: var(--radius-panel);
+  background: var(--color-wash);
   pointer-events: none;
 }
-.menu {
-  position: fixed;
-  z-index: var(--layer-menu);
-  bottom: calc(var(--size-band) + var(--spacing-3));
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(var(--size-menu), calc(100vw - var(--spacing-5)));
-  max-height: calc(100vh - 3 * var(--size-band) - var(--spacing-6));
-  overflow: auto;
-  padding: var(--spacing-2);
-}
+
 .menu .h {
   display: block;
   margin: var(--spacing-2) 0 var(--spacing-1);
@@ -1660,7 +1351,7 @@ button.wordmark {
   align-items: center;
   padding: var(--spacing-1) var(--spacing-2);
   text-align: left;
-  font-size: var(--text-small);
+  font-size: var(--text-control);
 }
 /* A second form of the export above it (a whole document), indented under it. */
 .mi.sub .fmt {
@@ -1685,12 +1376,12 @@ button.wordmark {
   grid-template-columns: 1fr;
 }
 .fmt {
-  font: var(--font-weight-bold) var(--text-label) / var(--leading-none) var(--font-text);
-  color: var(--color-accent);
+  font: var(--font-weight-bold) var(--text-sign) / var(--leading-none) var(--font-text);
+  color: var(--color-lapis);
 }
 .fn {
-  font: var(--font-weight-normal) var(--text-label) / var(--leading-snug) var(--font-text);
-  color: var(--color-dim);
+  font: var(--font-weight-normal) var(--text-sign) / var(--leading-snug) var(--font-text);
+  color: var(--color-ink2);
 }
 /* Why an export item is greyed, in view under what it does. */
 .fn .off {
@@ -1699,18 +1390,18 @@ button.wordmark {
 }
 .msep {
   height: var(--line);
-  background: var(--color-edge);
+  background: var(--color-hair);
   margin: var(--spacing-1) 0;
 }
 .said {
   margin: var(--spacing-2) var(--spacing-1) 0;
-  font-size: var(--text-small);
+  font-size: var(--text-control);
 }
 /* A finished proof's λ-term in the export menu: its judgement in the math font, broken
    anywhere, since a long term has few spaces to break at. */
 .mi .fn.judgement {
   font-family: var(--font-math);
-  font-size: var(--text-panel);
+  font-size: var(--text-body);
   font-synthesis: none;
   color: inherit;
   overflow-wrap: anywhere;
@@ -1725,7 +1416,7 @@ button.wordmark {
   grid-template-columns: var(--size-label-column) 1fr;
   gap: var(--spacing-2);
   align-items: center;
-  font-size: var(--text-small);
+  font-size: var(--text-control);
   border: 0;
   padding: 0;
   margin: 0;
@@ -1735,24 +1426,24 @@ button.wordmark {
 }
 .lbl > span:first-child,
 .lbl legend {
-  color: var(--color-dim);
+  color: var(--color-ink2);
   padding: 0;
 }
 .form textarea {
   width: 100%;
   min-height: var(--size-textarea);
-  background: var(--color-field);
-  border: var(--line) solid var(--color-line);
+  background: var(--color-paper);
+  border: var(--line) solid var(--color-edge);
   border-radius: var(--radius-control);
-  padding: var(--spacing-1-5);
-  font: var(--font-weight-normal) var(--text-label) / var(--leading-normal) var(--font-mono);
+  padding: var(--spacing-2);
+  font: var(--font-weight-normal) var(--text-sign) / var(--leading-normal) var(--font-mono);
 }
 .num-in,
 .file-in {
   width: var(--size-number);
-  height: var(--size-control);
-  background: var(--color-field);
-  border: var(--line) solid var(--color-line);
+  height: var(--size-button);
+  background: var(--color-paper);
+  border: var(--line) solid var(--color-edge);
   border-radius: var(--radius-control);
   padding: 0 var(--spacing-2);
 }
@@ -1761,10 +1452,10 @@ button.wordmark {
   padding: var(--spacing-1);
 }
 .file-in::file-selector-button {
-  min-height: calc(var(--size-control) - 2 * var(--spacing-1) - 2 * var(--line));
-  border: var(--line) solid var(--color-line);
-  border-radius: var(--radius-key);
-  background: var(--color-panel-2);
+  min-height: calc(var(--size-button) - 2 * var(--spacing-1) - 2 * var(--line));
+  border: var(--line) solid var(--color-edge);
+  border-radius: var(--radius-control);
+  background: var(--color-band);
   color: var(--color-ink);
   font: inherit;
   margin-right: var(--spacing-2);
@@ -1784,7 +1475,7 @@ button.wordmark {
   align-items: center;
   text-align: left;
   padding: var(--spacing-1) var(--spacing-2);
-  min-height: var(--size-control);
+  min-height: var(--size-button);
 }
 .choices input {
   position: absolute;
@@ -1796,22 +1487,22 @@ button.wordmark {
   cursor: inherit;
 }
 .choices .seg-b:has(input:checked) {
-  background: var(--color-panel);
+  background: var(--color-paper);
   color: var(--color-ink);
-  border-color: var(--color-accent);
+  border-color: var(--color-lapis);
   font-weight: var(--font-weight-semibold);
 }
 .choices .seg-b:has(input:disabled) {
-  opacity: var(--opacity-disabled);
+  color: var(--color-faint);
   cursor: help;
 }
 .choices .seg-b:has(input:focus-visible) {
-  outline: var(--line-strong) solid var(--color-accent);
+  outline: var(--line-strong) solid var(--color-lapis);
   outline-offset: var(--spacing-0-5);
 }
 .choices .why {
-  font-size: var(--text-label);
-  color: var(--color-faint);
+  font-size: var(--text-sign);
+  color: var(--color-soft);
   font-weight: var(--font-weight-normal);
 }
 /* A greyed engine's reason, in view under its name. */
@@ -1820,7 +1511,7 @@ button.wordmark {
 }
 .choices .why-not {
   grid-area: not;
-  font-size: var(--text-label);
+  font-size: var(--text-sign);
   line-height: var(--leading-snug);
   font-weight: var(--font-weight-normal);
 }
@@ -1828,10 +1519,10 @@ button.wordmark {
 .facts {
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: var(--spacing-1-5) var(--spacing-3);
+  gap: var(--spacing-2) var(--spacing-3);
   margin: 0;
-  padding: var(--spacing-1) var(--spacing-1-5);
-  font-size: var(--text-small);
+  padding: var(--spacing-1) var(--spacing-2);
+  font-size: var(--text-control);
   align-items: center;
 }
 .keys dd,
@@ -1839,288 +1530,8 @@ button.wordmark {
   margin: 0;
 }
 .facts dt {
-  color: var(--color-dim);
+  color: var(--color-ink2);
 }
-/* The band's popovers are fixed under the active tab (placed in TopBand.tsx): the row of
-   tabs scrolls, and would clip them. */
-.status-pop,
-.calc-pop {
-  position: fixed;
-}
-/* The sequent field's examples: each its name over its sequent, the list scrolling inside the
-   window. */
-.calc-pop.examples {
-  width: min(var(--size-menu), calc(100vw - 2 * var(--spacing-2)));
-  max-height: calc(100vh - 3 * var(--size-band));
-  overflow: auto;
-}
-.calc-pop.examples .mi {
-  grid-template-columns: 1fr;
-  gap: var(--spacing-0-5);
-}
-.restore {
-  position: absolute;
-  top: calc(var(--size-band) + var(--spacing-2));
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: var(--layer-popover);
-  display: flex;
-  gap: var(--spacing-2);
-  align-items: center;
-  padding: var(--spacing-1-5) var(--spacing-3);
-  font-size: var(--text-small);
-  max-width: calc(100vw - var(--spacing-5));
-  flex-wrap: wrap;
-}
-
-/* The window inside the page: the top band, the stage, the bottom band. */
-.win {
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
-  grid-template-columns: minmax(0, 1fr);
-  min-height: 0;
-  min-width: 0;
-  overflow: hidden;
-  position: relative;
-  background: var(--color-field);
-}
-
-/* Learn: a frame around the window, with its panel beside it. */
-.app[data-learn] {
-  grid-template-columns: minmax(0, 1fr) var(--size-frame);
-  gap: var(--spacing-1-5);
-  padding: var(--spacing-1-5);
-  background: var(--color-learn);
-}
-.app[data-learn] .win {
-  border-radius: var(--radius-control);
-}
-.app[data-learn] .act .act-name {
-  position: static;
-  width: auto;
-  height: auto;
-  clip-path: none;
-}
-.frame {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  background: var(--color-learn-wash);
-  border-radius: var(--radius-control);
-  overflow: hidden;
-}
-.frame-head {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
-  padding: var(--spacing-1) var(--spacing-2) var(--spacing-1) var(--spacing-3);
-  border-bottom: var(--line) solid var(--color-learn);
-}
-.frame-mark {
-  font: var(--font-weight-bold) var(--text-label) / var(--leading-none) var(--font-text);
-  color: var(--color-panel);
-  background: var(--color-learn);
-  padding: var(--spacing-1) var(--spacing-1-5);
-  border-radius: var(--radius-key);
-}
-.ftabs {
-  display: flex;
-  gap: var(--spacing-0-5);
-}
-.ftab {
-  color: var(--color-dim);
-  font-weight: var(--font-weight-semibold);
-  padding: 0 var(--spacing-2);
-}
-.ftab[aria-selected="true"] {
-  color: var(--color-ink);
-  box-shadow: inset 0 calc(-1 * var(--line-strong)) 0 var(--color-learn);
-  border-radius: var(--radius-key) var(--radius-key) 0 0;
-}
-.frame-body {
-  overflow: auto;
-  padding: var(--spacing-3);
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-3);
-}
-/* A lesson's opening below its worked proof, where it has such a part. */
-.after-worked:empty {
-  display: none;
-}
-.written p {
-  margin: 0 0 var(--spacing-2);
-}
-.written h2 {
-  font: var(--font-weight-semibold) var(--text-panel) / var(--leading-snug) var(--font-text);
-  margin: var(--spacing-4) 0 var(--spacing-1);
-}
-.written td code {
-  white-space: nowrap;
-}
-.written code,
-.ex-seq {
-  font-family: var(--font-math);
-  font-size: var(--text-panel);
-  font-weight: var(--font-weight-normal);
-  font-synthesis: none;
-}
-.written a,
-.about a,
-.pr-source a,
-.linkish {
-  color: var(--color-accent);
-}
-.linkish {
-  pointer-events: auto;
-  padding: 0 var(--spacing-1);
-  text-decoration: underline;
-  text-underline-offset: var(--spacing-0-5);
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-1);
-}
-.written table {
-  border-collapse: collapse;
-  font-size: var(--text-small);
-}
-.written th,
-.written td {
-  text-align: left;
-  padding: var(--spacing-1) var(--spacing-1-5);
-  border-bottom: var(--line) solid var(--color-edge);
-  vertical-align: top;
-}
-.written dl {
-  display: grid;
-  gap: var(--spacing-1);
-  margin: 0;
-}
-.written dt {
-  font-weight: var(--font-weight-semibold);
-  margin-top: var(--spacing-2);
-}
-.written dd {
-  margin: 0;
-  font-size: var(--text-small);
-}
-.written [data-highlight] {
-  outline: var(--line-strong) solid var(--color-learn);
-  outline-offset: var(--spacing-1);
-  border-radius: var(--radius-key);
-}
-.lessons,
-.prac,
-.licences {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-2);
-}
-.lessons > li {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--spacing-2);
-  padding: var(--spacing-1-5) var(--spacing-2);
-  border: var(--line) dashed var(--color-line);
-  border-radius: var(--radius-control);
-  counter-increment: lesson;
-}
-.lessons > li > span:first-child::before {
-  content: counter(lesson) ". ";
-}
-.lesson {
-  display: grid;
-  gap: var(--spacing-2);
-}
-.prac-h {
-  font: var(--font-weight-semibold) var(--text-body) / var(--leading-snug) var(--font-text);
-  display: list-item;
-  min-height: var(--size-control);
-  cursor: pointer;
-  border-radius: var(--radius-control);
-  padding: 0 var(--spacing-1);
-  color: var(--color-ink);
-}
-.prac-h::marker {
-  color: var(--color-learn);
-}
-.prac-h:hover {
-  background: var(--color-panel-2);
-}
-/* A practice row's answer buttons, side by side in the row with Prove. */
-.decide {
-  margin: 0;
-  padding: 0;
-  border: 0;
-  min-width: 0;
-}
-.answer {
-  margin-top: var(--spacing-2);
-  display: grid;
-  gap: var(--spacing-1);
-  justify-items: start;
-}
-.exercise {
-  background: var(--color-panel);
-  border: var(--line) solid var(--color-edge);
-  border-radius: var(--radius-cluster);
-  padding: var(--spacing-2) var(--spacing-3);
-}
-.ex-head {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--spacing-2);
-  font-weight: var(--font-weight-semibold);
-}
-.ex-seq {
-  margin: var(--spacing-1) 0;
-}
-.diff {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-1);
-  color: var(--color-learn);
-  font-size: var(--text-small);
-  white-space: nowrap;
-}
-.lessons > li:has(details) {
-  display: block;
-  border-style: solid;
-}
-/* A level as a stair of four steps, the first ones filled; its name stands beside it. */
-.stairs {
-  display: inline-flex;
-  align-items: flex-end;
-  gap: var(--line);
-  height: calc(var(--spacing-1) * 3);
-}
-.stairs i {
-  width: var(--spacing-1);
-  border: var(--line) solid currentColor;
-  border-radius: var(--line);
-}
-.stairs i:nth-child(1) {
-  height: calc(var(--spacing-0-5) * 3);
-}
-.stairs i:nth-child(2) {
-  height: calc(var(--spacing-1) * 2);
-}
-.stairs i:nth-child(3) {
-  height: calc(var(--spacing-0-5) * 5);
-}
-.stairs i:nth-child(4) {
-  height: calc(var(--spacing-1) * 3);
-}
-.stairs[data-level="1"] i:nth-child(-n + 1),
-.stairs[data-level="2"] i:nth-child(-n + 2),
-.stairs[data-level="3"] i:nth-child(-n + 3),
-.stairs[data-level="4"] i {
-  background: currentColor;
-}
-
 /* A classical sequent's translation or interpolant: a sheet over the stage, as wide as a line of
    text, the answer's formula the one large thing in it. */
 .menu.transform {
@@ -2146,7 +1557,7 @@ button.wordmark {
   flex-wrap: wrap;
   width: auto;
 }
-@media (max-width: 640px) {
+@media (width < 600px) {
   .tf-seg {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -2160,7 +1571,7 @@ button.wordmark {
   gap: var(--spacing-2);
   width: 100%;
   padding-top: var(--spacing-2);
-  border-top: var(--line) solid var(--color-edge);
+  border-top: var(--line) solid var(--color-hair);
 }
 .tf-answer .row {
   margin: 0;
@@ -2175,10 +1586,10 @@ button.wordmark {
   grid-template-columns: auto 1fr;
   gap: var(--spacing-1) var(--spacing-3);
   margin: 0;
-  font-size: var(--text-small);
+  font-size: var(--text-control);
 }
 .tf-evidence dt {
-  color: var(--color-dim);
+  color: var(--color-ink2);
 }
 .tf-evidence dd {
   margin: 0;
@@ -2192,25 +1603,25 @@ button.wordmark {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--spacing-1-5);
+  gap: var(--spacing-2);
 }
 .tf-part {
   display: inline-flex;
   align-items: center;
-  gap: var(--spacing-1-5);
+  gap: var(--spacing-2);
   padding: 0 var(--spacing-2);
-  border: var(--line) dashed var(--color-line);
+  border: var(--line) dashed var(--color-edge);
   font-size: var(--text-math);
   overflow-wrap: anywhere;
 }
 .tf-part[aria-pressed="true"] {
   border-style: solid;
-  border-color: var(--color-accent);
-  background: var(--color-accent-wash);
+  border-color: var(--color-lapis);
+  background: var(--color-wash);
 }
 .tf-n {
-  font: var(--font-weight-semibold) var(--text-small) / var(--leading-none) var(--font-text);
-  color: var(--color-dim);
+  font: var(--font-weight-semibold) var(--text-control) / var(--leading-none) var(--font-text);
+  color: var(--color-ink2);
 }
 .tf-turnstile {
   font-size: var(--text-math);
@@ -2227,17 +1638,17 @@ button.wordmark {
 .tf-check {
   display: flex;
   align-items: baseline;
-  gap: var(--spacing-1-5);
+  gap: var(--spacing-2);
 }
 .tf-check svg.lucide {
   flex: none;
   width: var(--size-icon);
   height: var(--size-icon);
   align-self: center;
-  color: var(--color-warn);
+  color: var(--color-ink2);
 }
 .tf-check[data-ok] svg.lucide {
-  color: var(--color-ok);
+  color: var(--color-good);
 }
 .tf-check .m {
   overflow-wrap: anywhere;
@@ -2275,14 +1686,14 @@ button.wordmark {
 /* A refutation's clauses as a list and as a graph, and DPLL's steps. */
 .cl-h {
   margin: 0;
-  font: var(--font-weight-semibold) var(--text-small) / var(--leading-none) var(--font-text);
-  color: var(--color-dim);
+  font: var(--font-weight-semibold) var(--text-control) / var(--leading-none) var(--font-text);
+  color: var(--color-ink2);
 }
 .cl-trace {
   margin: 0;
   padding: 0;
   list-style: none;
-  font-size: var(--text-small);
+  font-size: var(--text-control);
 }
 .cl-trace li[data-depth="1"] {
   padding-left: var(--spacing-3);
@@ -2310,11 +1721,11 @@ button.wordmark {
 .cl-item {
   display: flex;
   align-items: baseline;
-  gap: var(--spacing-1-5);
+  gap: var(--spacing-2);
   width: 100%;
-  min-height: var(--size-control);
+  min-height: var(--size-button);
   padding: 0 var(--spacing-2);
-  border: var(--line) solid var(--color-edge);
+  border: var(--line) solid var(--color-hair);
   text-align: left;
   overflow-wrap: anywhere;
 }
@@ -2322,12 +1733,12 @@ button.wordmark {
   font-size: var(--text-math);
 }
 :is(.cl-item, .cl-node)[aria-pressed="true"] {
-  border-color: var(--color-accent);
-  background: var(--color-accent-wash);
+  border-color: var(--color-lapis);
+  background: var(--color-wash);
 }
 .cl-n {
-  font: var(--font-weight-semibold) var(--text-small) / var(--leading-none) var(--font-text);
-  color: var(--color-dim);
+  font: var(--font-weight-semibold) var(--text-control) / var(--leading-none) var(--font-text);
+  color: var(--color-ink2);
 }
 .cl-scroll {
   width: 100%;
@@ -2341,11 +1752,11 @@ button.wordmark {
   inset: 0;
 }
 .cl-edges line {
-  stroke: var(--color-line);
+  stroke: var(--color-edge);
   stroke-width: var(--line-arrow);
 }
 .cl-edges line[data-on] {
-  stroke: var(--color-accent);
+  stroke: var(--color-lapis);
   stroke-width: var(--line-strong);
 }
 /* Its place and size come from the graph's layout, through the CSSOM. */
@@ -2356,9 +1767,9 @@ button.wordmark {
   justify-content: center;
   gap: var(--spacing-1);
   padding: 0 var(--spacing-1);
-  border: var(--line) solid var(--color-line);
-  background: var(--color-panel);
-  font-size: var(--text-small);
+  border: var(--line) solid var(--color-edge);
+  background: var(--color-paper);
+  font-size: var(--text-control);
   overflow: hidden;
   overflow-wrap: anywhere;
 }
@@ -2373,138 +1784,6 @@ button.wordmark {
   font-weight: var(--font-weight-semibold);
 }
 
-/* The Logic popover's way to them: under the switches, apart from them. */
-.calc-more {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--spacing-1);
-  flex-basis: 100%;
-  padding-top: var(--spacing-2);
-  border-top: var(--line) solid var(--color-edge);
-}
-
-/* Practice: a sheet over the stage, wider than a menu, the filters above the problems. */
-.menu.practice {
-  width: min(var(--size-practice), calc(100vw - var(--spacing-5)));
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-2);
-  padding: var(--spacing-3);
-}
-.pr-head {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--spacing-2) var(--spacing-3);
-}
-.pr-title {
-  margin: 0;
-  font: var(--font-weight-semibold) var(--text-head) / var(--leading-snug) var(--font-text);
-}
-.pr-intro p {
-  margin: 0;
-  max-width: var(--size-text);
-}
-.pr-filters {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: var(--spacing-2) var(--spacing-4);
-  padding-bottom: var(--spacing-2);
-  border-bottom: var(--line) solid var(--color-edge);
-}
-.pr-group {
-  border: 0;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--spacing-1);
-}
-.pr-group legend {
-  padding: 0;
-  margin-bottom: var(--spacing-1);
-}
-.chip {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-1-5);
-  padding: 0 var(--spacing-2);
-  border-color: var(--color-edge);
-  font-size: var(--text-small);
-}
-.chip input {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  margin: 0;
-  opacity: 0;
-  cursor: inherit;
-}
-.chip:has(input:checked) {
-  background: var(--color-accent-wash);
-  border-color: var(--color-accent);
-  font-weight: var(--font-weight-semibold);
-}
-.chip:has(input:checked)::before {
-  content: "✓";
-}
-.chip:has(input:focus-visible) {
-  outline: var(--line-strong) solid var(--color-accent);
-  outline-offset: var(--spacing-0-5);
-}
-.pr-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-0-5);
-}
-.pr-item {
-  width: 100%;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--spacing-1) var(--spacing-3);
-  padding: var(--spacing-1-5) var(--spacing-2);
-  text-align: left;
-}
-.pr-seq {
-  font-size: var(--text-math);
-  overflow-wrap: anywhere;
-}
-.pr-meta {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-1-5);
-  font-size: var(--text-small);
-  color: var(--color-dim);
-  white-space: nowrap;
-}
-.pr-meta .stairs {
-  color: var(--color-accent);
-}
-.pr-frag {
-  min-width: calc(var(--spacing-6) * 2);
-}
-.pr-done {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-1);
-}
-.pr-source {
-  margin: 0 var(--spacing-2) var(--spacing-1);
-  font-size: var(--text-small);
-}
-.frame-licence {
-  font-size: var(--text-small);
-  color: var(--color-dim);
-  margin-top: auto;
-}
 /* The licence's link stands in its sentence: underlined, as a link in running text must be. */
 .frame-licence a {
   text-decoration: underline;
@@ -2517,7 +1796,7 @@ button.wordmark {
   z-index: var(--layer-tour);
   width: min(var(--size-tour), calc(100vw - var(--spacing-4)));
   padding: var(--spacing-3);
-  border-color: var(--color-accent);
+  border-color: var(--color-lapis);
 }
 .tour-h {
   display: flex;
@@ -2528,264 +1807,26 @@ button.wordmark {
   color: var(--color-ink);
 }
 [data-tour-spot] {
-  outline: var(--line-strong) solid var(--color-accent);
+  outline: var(--line-strong) solid var(--color-lapis);
   outline-offset: var(--spacing-1);
 }
 .about .licences {
   gap: 0;
 }
 .about .licences li {
-  font-size: var(--text-small);
+  font-size: var(--text-control);
 }
 .about .licences a {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: var(--size-control);
-  min-width: var(--size-control);
+  min-height: var(--size-button);
+  min-width: var(--size-button);
 }
 fieldset {
   min-inline-size: 0;
 }
 
-/* Only on a phone: More, and its sheet. */
-.phone-only {
-  display: none;
-}
-
-/* A phone: the bands keep one row each, the bottom band's rarer actions
-   in More's sheet with the calculus's switches, every control 44 pixels
-   (tokens.css). */
-@media (max-width: 640px) {
-  .band.bottom {
-    gap: 0;
-    padding: var(--spacing-1);
-    flex-wrap: nowrap;
-  }
-  .act .act-name,
-  .app[data-learn] .act .act-name {
-    position: absolute;
-    width: var(--line);
-    height: var(--line);
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-  }
-  .group {
-    padding: 0 var(--spacing-0-5);
-    gap: 0;
-  }
-  .group + .group {
-    border-left: 0;
-  }
-  .wide-only,
-  .mark-host,
-  .stage .calc,
-  .stage-ctl .zoom-v {
-    display: none;
-  }
-  .phone-only {
-    display: revert;
-  }
-  /* The field takes what the row's five other controls leave. */
-  .field {
-    width: calc(100vw - 5 * var(--size-control) - var(--spacing-7));
-  }
-  .app[data-learn] .field {
-    width: calc(100vw - 5 * var(--size-control) - var(--spacing-7) - var(--spacing-4));
-  }
-  /* With Learn on every action keeps its name (D54): under its icon. */
-  .app[data-learn] .act {
-    flex-direction: column;
-    gap: 0;
-    padding: var(--spacing-0-5) var(--spacing-0-5) 0;
-    min-width: var(--size-control);
-  }
-  .app[data-learn] .act .act-name {
-    position: static;
-    width: auto;
-    height: auto;
-    clip-path: none;
-    font-size: var(--text-label);
-    line-height: var(--leading-none);
-  }
-  .menu {
-    bottom: var(--size-band);
-    width: 100vw;
-    border-radius: var(--radius-cluster) var(--radius-cluster) 0 0;
-    max-height: calc(100vh - 2 * var(--size-band));
-  }
-  .app[data-learn] {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: minmax(0, 1fr) var(--size-learn-sheet);
-    padding: var(--spacing-1);
-  }
-}
-
-/* A written lesson: the list's entry, the lesson's parts, each a stage of the worked-example
-   sequence along a rule in Learn's colour. */
-.lessons > li:has(.lesson-open) {
-  padding: 0;
-  border-style: solid;
-}
-.lesson-open {
-  display: grid;
-  grid-template-areas: "n name" "n sub";
-  grid-template-columns: auto 1fr;
-  column-gap: var(--spacing-2);
-  align-items: center;
-  width: 100%;
-  min-height: var(--size-control);
-  padding: var(--spacing-1-5) var(--spacing-2);
-  text-align: left;
-  border-radius: var(--radius-control);
-}
-.lesson-open:hover {
-  background: var(--color-panel-2);
-}
-.lesson-open .sub {
-  grid-area: sub;
-}
-.lesson-open .lesson-name {
-  grid-area: name;
-}
-.lesson-name {
-  font-weight: var(--font-weight-semibold);
-}
-.lesson-n {
-  display: inline-grid;
-  place-items: center;
-  width: var(--size-chip);
-  height: var(--size-chip);
-  border-radius: var(--radius-round);
-  background: var(--color-learn);
-  color: var(--color-panel);
-  font: var(--font-weight-bold) var(--text-small) / var(--leading-none) var(--font-text);
-}
-.lessons > li:has(.lesson-open) .lesson-n {
-  grid-area: n;
-}
-.lesson-view {
-  display: grid;
-  gap: var(--spacing-3);
-  justify-items: start;
-}
-.lesson-title {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
-  margin: 0;
-  font: var(--font-weight-semibold) var(--text-head) / var(--leading-snug) var(--font-text);
-}
-.part {
-  display: grid;
-  gap: var(--spacing-2);
-  justify-items: start;
-  width: 100%;
-  padding-left: var(--spacing-3);
-  border-left: var(--line-strong) solid var(--color-learn);
-}
-.part h3 {
-  margin: 0;
-  font: var(--font-weight-semibold) var(--text-panel) / var(--leading-snug) var(--font-text);
-}
-.part > .ex-seq {
-  margin: 0;
-}
-.said,
-.detour p {
-  margin: 0;
-}
-.predict {
-  margin: 0;
-  padding: 0;
-  border: 0;
-}
-.predict legend {
-  padding: 0;
-  margin-bottom: var(--spacing-1-5);
-}
-.predict,
-.detour,
-.explain {
-  display: grid;
-  gap: var(--spacing-1-5);
-  justify-items: start;
-  width: 100%;
-}
-.rule-guess {
-  min-width: var(--size-control);
-  justify-content: center;
-  font-size: var(--text-panel);
-}
-.detour {
-  padding: var(--spacing-2);
-  border: var(--line) dashed var(--color-warn);
-  border-radius: var(--radius-control);
-}
-/* Lesson 1's rewrite of a two-sided sequent, shown with the Two-sided switch. */
-.rewrite {
-  display: grid;
-  gap: var(--spacing-1);
-  justify-items: start;
-  margin-bottom: var(--spacing-2);
-}
-.rewrite p {
-  margin: 0;
-}
-.explain,
-.rewrite {
-  padding: var(--spacing-2);
-  background: var(--color-panel);
-  border: var(--line) solid var(--color-edge);
-  border-radius: var(--radius-cluster);
-}
-.explain-q {
-  display: grid;
-  gap: var(--spacing-1);
-}
-.explain textarea {
-  width: 100%;
-  min-height: var(--size-textarea);
-  background: var(--color-field);
-  border: var(--line) solid var(--color-line);
-  border-radius: var(--radius-control);
-  padding: var(--spacing-1-5);
-  font: var(--font-weight-normal) var(--text-small) / var(--leading-normal) var(--font-text);
-}
-.model {
-  margin: 0;
-  padding-left: var(--spacing-2);
-  border-left: var(--line-strong) solid var(--color-learn);
-}
-.hinge {
-  display: grid;
-  gap: var(--spacing-1);
-  width: 100%;
-  margin: 0;
-  padding: 0;
-  border: 0;
-}
-.hinge legend {
-  padding: 0;
-  margin-bottom: var(--spacing-1-5);
-}
-.hinge-option {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
-  min-height: var(--size-control);
-  padding: 0 var(--spacing-2);
-  border: var(--line) solid var(--color-edge);
-  border-radius: var(--radius-control);
-  background: var(--color-panel);
-  cursor: pointer;
-}
-.hinge-option:has(input:checked) {
-  border-color: var(--color-learn);
-  box-shadow: inset 0 0 0 var(--line) var(--color-learn);
-}
 /* The radio covers its whole option, which is its target; the dot shows its state. */
 .hinge-option input {
   position: absolute;
@@ -2797,24 +1838,24 @@ fieldset {
   cursor: inherit;
 }
 .hinge-option:has(input:focus-visible) {
-  outline: var(--line-strong) solid var(--color-accent);
+  outline: var(--line-strong) solid var(--color-lapis);
   outline-offset: var(--spacing-0-5);
 }
 .hinge-dot {
   flex: none;
   width: var(--spacing-3);
   height: var(--spacing-3);
-  border: var(--line) solid var(--color-dim);
+  border: var(--line) solid var(--color-ink2);
   border-radius: var(--radius-round);
 }
 .hinge-option:has(input:checked) .hinge-dot {
-  border-color: var(--color-learn);
-  background: var(--color-learn);
-  box-shadow: inset 0 0 0 var(--spacing-0-5) var(--color-panel);
+  border-color: var(--color-lapis);
+  background: var(--color-lapis);
+  box-shadow: inset 0 0 0 var(--spacing-0-5) var(--color-paper);
 }
 .hinge-said {
   display: grid;
-  gap: var(--spacing-1-5);
+  gap: var(--spacing-2);
   justify-items: start;
 }
 .hinge-said p {
@@ -2825,8 +1866,8 @@ fieldset {
 .schema {
   display: inline-flex;
   align-items: center;
-  gap: var(--spacing-1-5);
-  font-size: var(--text-panel);
+  gap: var(--spacing-2);
+  font-size: var(--text-body);
 }
 .sch-fig {
   display: inline-grid;
@@ -2843,7 +1884,7 @@ fieldset {
   padding: var(--spacing-0-5) var(--spacing-1) 0;
 }
 .sch-name {
-  font-size: var(--text-small);
+  font-size: var(--text-control);
 }
 .rule-list {
   margin: var(--spacing-2) 0;
@@ -2863,32 +1904,16 @@ fieldset {
   align-items: start;
 }
 
-/* A lesson's reason, beside the rule label of the inference it explains. */
-.because {
-  position: absolute;
-  z-index: var(--layer-hud);
-  visibility: hidden;
-  max-width: var(--size-popover-wide);
-  margin: 0;
-  padding: var(--spacing-1-5) var(--spacing-2);
-  background: var(--color-panel);
-  border: var(--line) solid var(--color-learn);
-  border-left-width: var(--line-strong);
-  border-radius: var(--radius-control);
-  font: var(--font-weight-normal) var(--text-small) / var(--leading-snug) var(--font-text);
-  pointer-events: none;
-}
-
 /* Cut elimination: its own cluster at the stage's top left, over a finished proof with cuts. */
 .elim {
   position: absolute;
-  top: var(--spacing-7);
-  left: var(--spacing-3);
+  top: calc(var(--size-inset) + var(--size-toggle-box) + var(--spacing-2));
+  left: var(--size-inset);
   z-index: var(--layer-hud);
   display: grid;
   gap: var(--spacing-1);
   padding: var(--spacing-2);
-  max-width: min(var(--size-menu), calc(100vw - var(--spacing-6)));
+  max-width: min(var(--size-panel-wide), calc(100vw - var(--spacing-6)));
 }
 .elim .h,
 .elim .line {
@@ -2896,58 +1921,25 @@ fieldset {
   padding: 0 var(--spacing-1);
 }
 .elim .line {
-  font-size: var(--text-small);
-}
-/* A lesson's reason for the last step's case, in Learn's colour as a step's reason is. */
-.elim .case-why {
-  padding: var(--spacing-1) var(--spacing-2);
-  border-left: var(--line-strong) solid var(--color-learn);
-}
-.elim .line .kw {
-  font-weight: var(--font-weight-semibold);
-}
-.elim .row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--spacing-1);
-  margin: 0;
-}
-.steps-taken summary {
-  display: flex;
-  align-items: center;
-  min-height: var(--size-control);
-  font-size: var(--text-small);
-  padding: 0 var(--spacing-1);
-  cursor: pointer;
-}
-.steps-taken ol {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  max-height: calc(6 * var(--size-band));
-  overflow-y: auto;
-}
-.steps-taken .mi[aria-pressed="true"] {
-  background: var(--color-accent-wash);
+  font-size: var(--text-control);
 }
 /* A cut's button over an elimination's drawing; the strategy's next cut outlined. */
 .cb {
   position: absolute;
   pointer-events: auto;
   background: transparent;
-  border: var(--line) dashed var(--color-edge);
+  border: var(--line) dashed var(--color-hair);
   border-radius: var(--radius-control);
   padding: 0;
   cursor: pointer;
 }
 .cb:hover,
 .cb:focus-visible {
-  background: var(--color-accent-wash);
-  border-color: var(--color-line);
+  background: var(--color-wash);
+  border-color: var(--color-edge);
 }
 .cb[data-next] {
-  border: var(--line-strong) solid var(--color-accent);
+  border: var(--line-strong) solid var(--color-lapis);
 }
 /* The cut a step reduced, on the drawing it was taken on, and where it acted besides: an
    inference's conclusion and rule label, a net's vertex or box; a net's lines keep no fill. */
@@ -2964,10 +1956,10 @@ fieldset {
 }
 .drawing svg g.next-cut text,
 .drawing svg g.next-cut + text {
-  fill: var(--color-accent);
+  fill: var(--color-lapis);
 }
 .drawing svg path.next-cut {
-  stroke: var(--color-accent);
+  stroke: var(--color-lapis);
 }
 .cut-field {
   display: grid;
@@ -3007,16 +1999,16 @@ fieldset {
 }
 .lb:hover,
 .lb:focus-visible {
-  background: var(--color-accent-wash);
-  border-color: var(--color-line);
+  background: var(--color-wash);
+  border-color: var(--color-edge);
 }
 /* A rule's name in running text, which opens its hint. */
 .rule-name {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: var(--size-control-small);
-  min-width: var(--size-control-small);
+  min-height: var(--size-button);
+  min-width: var(--size-button);
   padding: 0 var(--spacing-0-5);
   background: transparent;
   border: 0;
@@ -3025,170 +2017,20 @@ fieldset {
   cursor: help;
 }
 
-/* The workspace of linked tabs: the stage's row with the panel docked left of
-   the stage, the panel's rows under their lines, and the graph in the
-   stage's place. */
-.ws-stage {
-  display: grid;
-  grid-template-rows: minmax(0, 1fr);
-  grid-template-columns: minmax(0, 1fr);
-  min-height: 0;
-  min-width: 0;
-}
-.ws-stage[data-docked] {
-  grid-template-columns: var(--size-workspace) minmax(0, 1fr);
-}
-.ws-main {
-  position: relative;
-  display: grid;
-  grid-template-rows: minmax(0, 1fr);
-  grid-template-columns: minmax(0, 1fr);
-  min-height: 0;
-  min-width: 0;
-}
-.ws-panel {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-2);
-  padding: var(--spacing-3);
-  overflow: auto;
-  background: var(--color-panel);
-}
-.ws-panel[data-docked] {
-  border-right: var(--line) solid var(--color-edge);
-}
-.ws-panel.menu {
-  left: var(--spacing-3);
-  transform: none;
-  width: min(var(--size-workspace), calc(100vw - var(--spacing-5)));
-}
-.ws-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--spacing-2);
-}
-.ws-rows,
-.ws-columns,
-.ws-cards {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: var(--spacing-2);
-}
-.ws-row {
-  display: grid;
-  gap: var(--spacing-1);
-}
-.ws-row[data-depth="1"] {
-  padding-left: var(--spacing-3);
-}
-.ws-row[data-depth="2"] {
-  padding-left: var(--spacing-5);
-}
-.ws-row[data-depth="3"] {
-  padding-left: var(--spacing-6);
-}
-/* The line above a made tab, drawn as an inference line: a bar with the
-   operation's name at its end. Dashed while the tab below is out of date,
-   dotted for a copy; the words say the same. */
-.ws-line {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--spacing-1) var(--spacing-2);
-  border-top: var(--line-strong) solid var(--color-ink);
-  padding-top: var(--spacing-1);
-  font: var(--text-small) / var(--leading-snug) var(--font-text);
-}
-.ws-line[data-stale] {
-  border-top-style: dashed;
-}
-.ws-line[data-kind="copy"] {
-  border-top-style: dotted;
-}
-.ws-label {
-  font-weight: var(--font-weight-semibold);
-}
-.ws-check[data-shape="held"]::before {
-  content: "✓ ";
-}
-.ws-check[data-shape="failed"]::before {
-  content: "✗ ";
-}
-.ws-check[data-shape="open"]::before {
-  content: "? ";
-}
-.ws-tab {
-  display: grid;
-  gap: var(--spacing-0-5);
-  text-align: left;
-  min-height: var(--size-control);
-  padding: var(--spacing-1) var(--spacing-2);
-  border: var(--line) solid transparent;
-  border-radius: var(--radius-control);
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-}
-.ws-tab[aria-current] {
-  border-color: var(--color-edge);
-  background: var(--color-field);
-}
-.ws-sequent {
-  overflow-wrap: anywhere;
-}
-.ws-stale {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--spacing-1);
-}
-.ws-button[data-warn] {
-  border-color: var(--color-warn);
-}
-.ws-count {
-  font-variant-numeric: tabular-nums;
-}
-.ws-graph {
-  position: absolute;
-  inset: 0;
-  overflow: auto;
-  padding: var(--spacing-4);
-  background: var(--color-field);
-}
-.ws-columns {
-  grid-auto-flow: column;
-  grid-auto-columns: var(--size-card);
-  align-items: start;
-}
-.ws-card {
-  display: grid;
-  gap: var(--spacing-1);
-  padding: var(--spacing-2);
-  border: var(--line) solid var(--color-edge);
-  border-radius: var(--radius-control);
-  background: var(--color-panel);
-}
-.ws-card[data-stale] {
-  border-style: dashed;
-}
-
 /* A course pack's bar, over the stage's top left: its title, a button per problem (done ones
    ticked, the shown one outlined), how many are done, the hand-in. */
 .pack-bar {
   position: absolute;
-  top: var(--spacing-2);
-  left: var(--spacing-2);
+  top: calc(var(--size-inset) + var(--size-toggle-box) + var(--spacing-2));
+  left: var(--size-inset);
   z-index: var(--layer-hud);
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--spacing-2);
   max-width: calc(100% - 2 * var(--spacing-2));
-  padding: var(--spacing-1-5) var(--spacing-3);
-  font-size: var(--text-small);
+  padding: var(--spacing-2) var(--spacing-3);
+  font-size: var(--text-control);
 }
 .pk-title {
   font-weight: var(--font-weight-semibold);
@@ -3202,27 +2044,27 @@ fieldset {
   list-style: none;
 }
 .pk-problem {
-  min-width: var(--size-control-small);
-  min-height: var(--size-control-small);
+  min-width: var(--size-button);
+  min-height: var(--size-button);
   padding: 0 var(--spacing-1);
-  border: var(--line) solid var(--color-line);
+  border: var(--line) solid var(--color-edge);
   border-radius: var(--radius-control);
-  background: var(--color-panel);
+  background: var(--color-paper);
   color: var(--color-ink);
   font: inherit;
   cursor: pointer;
 }
 .pk-problem[aria-current="true"] {
-  border: var(--line-strong) solid var(--color-accent);
+  border: var(--line-strong) solid var(--color-lapis);
 }
 /* Done is a tick beside the number, not the colour alone. */
 .pk-problem[data-done] {
-  background: var(--color-ok-wash);
+  background: var(--color-paper);
 }
 .pk-problem[data-done]::after {
   content: "✓";
   margin-left: var(--spacing-0-5);
-  color: var(--color-ok);
+  color: var(--color-good);
 }
 .pk-code {
   font-family: var(--font-mono);
@@ -3245,8 +2087,8 @@ fieldset {
   gap: var(--spacing-2);
 }
 .pk-calc {
-  color: var(--color-dim);
-  font-size: var(--text-small);
+  color: var(--color-ink2);
+  font-size: var(--text-control);
 }
 .pk-checks {
   display: flex;
@@ -3262,18 +2104,16 @@ fieldset {
   display: none;
 }
 
-/* The page embedded in a course's own page: the proofs and their actions, without the site's
-   places (Practice, Learn, the tour, the keys, About), the restore bar or a new tab; a link
-   opens the whole page. */
+/* The page embedded in a course's own page: the proofs and their tools, without a new sequent
+   or the new tab view's files and places; a link opens the whole page. */
 .embed-open {
   position: absolute;
   top: var(--spacing-2);
   right: var(--spacing-2);
   z-index: var(--layer-hud);
 }
-:root[data-embed] .band.bottom > .group.site,
-:root[data-embed] .restore,
-:root[data-embed] .pt-new {
+:root[data-embed] .top-row .new,
+:root[data-embed] .new-actions {
   display: none;
 }
 
@@ -3290,6 +2130,855 @@ fieldset {
   font: var(--font-weight-normal) var(--text-math) / var(--leading-snug) var(--font-math);
 }
 
+/* A change of scheme fades every colour (applyTheme's view transition). */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: var(--duration-scheme);
+}
+
+/* The frame (the guide's "The frame"): the top row and the rail in the band's colour, a hairline
+   towards the stage; the stage with its toggles at the top left, the tools at the top right, the
+   zoom at the lower right and the bottom box with its notes at the bottom centre. The page's
+   height is the visible height, the bottom box and the bar clear of a phone's home bar. */
+.app {
+  position: fixed;
+  inset: 0;
+  height: 100dvh;
+  display: grid;
+  grid-template-rows: var(--size-top) minmax(0, 1fr);
+  overflow: hidden;
+}
+.top-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  min-width: 0;
+  padding: 0 var(--size-inset) 0 var(--spacing-4);
+  background: var(--color-band);
+  border-bottom: var(--line) solid var(--color-hair);
+  z-index: var(--layer-band);
+}
+.home {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--size-tool-width);
+  min-height: var(--size-tool);
+  border-radius: var(--radius-control);
+}
+.mark-square {
+  display: none;
+}
+.chips-scroll {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
+}
+.chips {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  /* The focus ring and a chip's edge are not cut by the scrolling row. */
+  padding: var(--spacing-1) var(--spacing-0-5);
+}
+.chip {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  height: var(--size-chip);
+  min-width: var(--size-chip-least);
+  max-width: var(--size-chip-most);
+  padding: 0 var(--spacing-3);
+  border-radius: var(--radius-chip);
+  font: var(--font-weight-normal) var(--text-math) / var(--leading-none) var(--font-math);
+  font-synthesis: none;
+}
+.chip[aria-selected="true"] {
+  border-color: var(--color-lapis);
+  background-color: var(--color-wash);
+}
+.chip-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* A tool and a top-row button: 34 high, a tool 36 wide, no edge, over under the pointer. */
+.tool {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-2);
+  min-width: var(--size-tool-width);
+  height: var(--size-tool);
+  padding: 0;
+  border-radius: var(--radius-chip);
+  font: var(--font-weight-medium) var(--text-body) / var(--leading-snug) var(--font-text);
+  white-space: nowrap;
+}
+.tool[aria-pressed="true"],
+.tool[aria-expanded="true"] {
+  background-color: var(--color-wash);
+  color: var(--color-ink);
+}
+.top-row > .tool,
+.top-row .new {
+  flex: none;
+}
+/* The guide's switch: a round button with a 1 pixel edge. */
+.tool.round {
+  width: var(--size-tool);
+  min-width: var(--size-tool);
+  border-color: var(--color-ink);
+  border-radius: var(--radius-round);
+}
+.tool-sign {
+  font: var(--font-weight-semibold) var(--text-sign) / var(--leading-none) var(--font-text);
+}
+.tool-sign.m {
+  font: var(--font-weight-normal) var(--text-control) / var(--leading-none) var(--font-math);
+}
+.tool-name,
+.phone-only {
+  display: none;
+}
+.body {
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--size-rail) minmax(0, 1fr);
+  min-height: 0;
+}
+.body:has(> .stage-area:only-child) {
+  grid-template-columns: minmax(0, 1fr);
+}
+/* The rail: 60 wide, cells 44 by 44, 6 apart, 10 from the top; "+ view" a dashed cell. */
+.rail {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--size-gap);
+  padding-top: var(--size-inset);
+  background: var(--color-band);
+  border-right: var(--line) solid var(--color-hair);
+  z-index: var(--layer-band);
+}
+.cells {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-gap);
+}
+.cell {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--size-cell);
+  height: var(--size-cell);
+  padding: 0;
+  border-radius: var(--radius-cell);
+  font: var(--font-weight-semibold) var(--text-field) / var(--leading-tight) var(--font-text);
+}
+.cell-name[data-long] {
+  font-size: var(--text-control);
+}
+.cell[aria-selected="true"] {
+  background-color: var(--color-lapis);
+  color: var(--color-paper);
+}
+.cell-name[data-count]::after {
+  content: attr(data-count);
+  position: absolute;
+  top: var(--spacing-1);
+  right: var(--spacing-1);
+  font: var(--font-weight-semibold) var(--text-sign) / var(--leading-none) var(--font-text);
+}
+.cell svg.count {
+  position: absolute;
+  top: var(--spacing-1);
+  right: var(--spacing-1);
+}
+.cell[aria-selected="true"] .sign.bad {
+  color: var(--color-paper);
+}
+/* A proof and its net share one capsule: one frame with a line edge around both cells. */
+.cell[data-capsule] {
+  border-color: var(--color-line);
+}
+.cell[data-view="tree"][data-capsule] {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+.cell[data-view="net"][data-capsule] {
+  margin-top: calc(-1 * var(--size-gap) - var(--line));
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+.cell.add {
+  border: var(--line) dashed var(--color-lapis);
+  color: var(--color-lapis);
+}
+.cell.add[aria-disabled="true"] {
+  border-color: var(--color-faint);
+  color: var(--color-faint);
+}
+/* The list of views to add, beside the rail. */
+.views-list {
+  position: absolute;
+  top: var(--size-inset);
+  left: calc(100% + var(--spacing-2));
+  z-index: var(--layer-menu);
+  width: min(var(--size-panel), calc(100vw - var(--size-rail) - var(--spacing-5)));
+  max-height: calc(100% - 2 * var(--size-inset));
+  overflow: auto;
+  padding: var(--size-gap);
+}
+.views-list ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.group-head {
+  margin: var(--spacing-2) var(--spacing-2) var(--spacing-1);
+  font: var(--font-weight-semibold) var(--text-sign) / var(--leading-snug) var(--font-text);
+  color: var(--color-soft);
+}
+.entry {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  width: 100%;
+  min-height: var(--size-button);
+  padding: var(--spacing-1) var(--spacing-2);
+  border-radius: var(--radius-row);
+  text-align: left;
+  font: var(--font-weight-medium) var(--text-body) / var(--leading-snug) var(--font-text);
+}
+.entry-name {
+  flex: 1;
+}
+.badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: var(--size-tool-width);
+  height: var(--size-badge);
+  padding: 0 var(--spacing-1);
+  border: var(--line) solid currentColor;
+  border-radius: var(--radius-control);
+  font-size: var(--text-sign);
+}
+.entry-why {
+  margin: 0 var(--spacing-2) var(--spacing-1) calc(var(--size-tool-width) + 2 * var(--spacing-2));
+  font-size: var(--text-control);
+  color: var(--color-soft);
+}
+/* The stage's region: the stage, its toggles, tools, zoom, panels and bottom box over it. */
+.stage-area {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  container: stage / size;
+}
+.stage-area > .stage {
+  position: absolute;
+  inset: 0;
+  transition: right var(--duration-panel) var(--ease-standard);
+}
+.toggles-place {
+  position: absolute;
+  top: var(--size-inset);
+  left: var(--size-inset);
+  right: calc(var(--size-tools) + 2 * var(--size-inset));
+  z-index: var(--layer-hud);
+  pointer-events: none;
+}
+.toggles-place > * {
+  pointer-events: auto;
+}
+.toggles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--size-gap);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-inline-size: 0;
+  width: fit-content;
+  max-width: 100%;
+}
+/* A toggle: a box 30 high of cells 24 high, 2 inside it; the chosen cell's edge, ground and weight. */
+.toggle {
+  display: flex;
+  gap: var(--spacing-0-5);
+  margin: 0;
+  padding: var(--spacing-0-5);
+  min-inline-size: 0;
+  height: var(--size-toggle-box);
+  border: var(--line) solid var(--color-line);
+  border-radius: var(--radius-toggle);
+  background: var(--color-paper);
+}
+.toggle-cell {
+  min-width: var(--size-button);
+  height: var(--size-toggle);
+  padding: 0 var(--spacing-2);
+  border-radius: var(--radius-control);
+  font: var(--font-weight-medium) var(--text-control) / var(--leading-none) var(--font-text);
+  color: var(--color-ink2);
+}
+.toggle-cell[aria-pressed="true"] {
+  border-color: var(--color-lapis);
+  background-color: var(--color-wash);
+  color: var(--color-ink);
+  font-weight: var(--font-weight-semibold);
+}
+.toggle-select {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  font: var(--font-weight-medium) var(--text-control) / var(--leading-none) var(--font-text);
+  color: var(--color-ink2);
+}
+.select,
+.field,
+.num-in,
+.file-in,
+textarea {
+  min-height: var(--size-button);
+  padding: 0 var(--spacing-2);
+  border: var(--line) solid var(--color-edge);
+  border-radius: var(--radius-control);
+  background: var(--color-paper);
+  font-size: var(--size-input-text);
+}
+.num-in {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+/* The tools: one column 46 wide of tools 36 by 34, in groups parted by a hairline. */
+.tools {
+  position: absolute;
+  top: var(--size-inset);
+  right: var(--size-inset);
+  z-index: var(--layer-hud);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--spacing-0-5);
+  min-width: var(--size-tools);
+  max-height: calc(100% - 2 * var(--size-inset));
+  overflow-y: auto;
+  padding: var(--spacing-1);
+  border: var(--line) solid var(--color-line);
+  border-radius: var(--radius-tools);
+  background: var(--color-paper);
+}
+.tool-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-0-5);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-inline-size: 0;
+}
+.tool-group + .tool-group,
+.tools > .tool-group + .more {
+  margin-top: var(--spacing-0-5);
+  padding-top: var(--spacing-1);
+  border-top: var(--line) solid var(--color-hair);
+}
+.tools .tool {
+  justify-content: flex-start;
+  padding: 0 var(--spacing-2);
+}
+.tool.caret {
+  height: var(--size-caret);
+}
+.tool.more {
+  display: none;
+}
+.tool.soon {
+  color: var(--color-faint);
+}
+/* With the guide on, the tools show their names and the column grows to fit them. */
+.app[data-guide] .tool-name {
+  display: inline;
+}
+/* The zoom: one box 30 high at the stage's lower right. */
+.stage-ctl {
+  position: absolute;
+  right: var(--size-inset);
+  bottom: var(--size-box-inset);
+  z-index: var(--layer-hud);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-0-5);
+  margin: 0;
+  padding: var(--spacing-0-5);
+  min-inline-size: 0;
+  border: var(--line) solid var(--color-line);
+  border-radius: var(--radius-toggle);
+}
+.stage-ctl .btn.icon {
+  min-height: var(--size-toggle);
+  min-width: var(--size-toggle);
+  border-color: transparent;
+}
+@media (width < 600px), (pointer: coarse) {
+  .stage-ctl .btn.icon {
+    min-height: var(--size-tool);
+    min-width: var(--size-tool);
+  }
+}
+/* The bottom box, 24 from the stage's bottom, at most 560 wide; the notes right above it. */
+.bottom {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--size-box-inset) + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  z-index: var(--layer-hud);
+  width: min(var(--size-box-most), calc(100% - 2 * var(--size-box-inset)));
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+.notes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+.notes:empty {
+  display: none;
+}
+.note {
+  margin: 0;
+  padding: var(--spacing-2) var(--spacing-3);
+  border: var(--line) solid var(--color-line);
+  border-radius: var(--radius-cell);
+  background: var(--color-paper);
+  font: var(--font-weight-normal) var(--text-body) / var(--leading-normal) var(--font-text);
+  text-wrap: balance;
+}
+.note p {
+  margin: 0;
+}
+.note.notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-3);
+  border-color: transparent;
+}
+.note.problem .caret {
+  font-size: var(--text-math);
+  overflow-wrap: anywhere;
+}
+.example-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-2);
+  margin-top: var(--spacing-2);
+}
+.example-row .btn {
+  font: var(--font-weight-normal) var(--text-math) / var(--leading-none) var(--font-math);
+}
+.box {
+  display: flex;
+  align-items: center;
+  gap: var(--size-gap);
+  height: var(--size-box);
+  padding: 0 calc(var(--spacing-2) - var(--line)) 0 var(--spacing-2);
+  border: var(--line) solid var(--color-ink);
+  border-radius: var(--radius-panel);
+  background: var(--color-paper);
+}
+.box[data-invalid] {
+  border-color: var(--color-bad);
+}
+.box:focus-within {
+  outline: var(--line-strong) solid var(--color-lapis);
+  outline-offset: var(--spacing-0-5);
+}
+.box .field {
+  flex: 1;
+  min-width: 0;
+  height: var(--size-enter);
+  border: 0;
+  background: none;
+  font: var(--font-weight-normal) var(--text-math) / var(--leading-none) var(--font-math);
+}
+.box .field:focus-visible {
+  outline: none;
+}
+.enter {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-2);
+  min-width: var(--size-enter);
+  height: var(--size-enter);
+  padding: 0 var(--spacing-2);
+  border-radius: var(--radius-control);
+  background: var(--color-ink);
+  color: var(--color-paper);
+  font: var(--font-weight-medium) var(--text-body) / var(--leading-none) var(--font-text);
+}
+/* The panels: at the stage's top, left of the tools, with a 1 pixel line edge and a corner of 16. */
+.panels > .menu {
+  position: absolute;
+  top: var(--size-inset);
+  right: calc(var(--size-tools) + 2 * var(--size-inset));
+  z-index: var(--layer-menu);
+  width: min(var(--size-panel), calc(100% - var(--size-tools) - 3 * var(--size-inset)));
+  max-height: calc(100% - 2 * var(--size-inset));
+  overflow: auto;
+  padding: var(--spacing-3);
+  border-color: var(--color-line);
+}
+.panels > .menu.export,
+.panels > .menu.transform {
+  width: min(var(--size-panel-wide), calc(100% - var(--size-tools) - 3 * var(--size-inset)));
+}
+.menu .h {
+  display: block;
+  margin: var(--spacing-2) 0 var(--spacing-1);
+}
+.menu .h:first-child {
+  margin-top: 0;
+}
+/* A panel moves the drawing aside in an expanded window; it lies over it in a medium one. */
+@media (width >= 840px) {
+  .stage-area:has(.panels > .menu) > .stage {
+    right: min(var(--size-panel), 50%);
+  }
+  .stage-area:has(.panels > .menu.export, .panels > .menu.transform) > .stage {
+    right: min(var(--size-panel-wide), 50%);
+  }
+}
+/* A dialog over the page: the list of keys, About. */
+.dialog-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: var(--layer-menu);
+  display: grid;
+  place-items: center;
+  padding: var(--spacing-4);
+  background: var(--color-scrim);
+}
+.dialog {
+  width: min(var(--size-panel-wide), 100%);
+  max-height: 100%;
+  overflow: auto;
+  padding: var(--spacing-4);
+}
+.dialog-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-3);
+  margin-bottom: var(--spacing-3);
+}
+.dialog-head h2 {
+  margin: 0;
+  font: var(--font-weight-semibold) var(--text-head) / var(--leading-snug) var(--font-text);
+}
+table.keys {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: var(--spacing-3);
+  font-size: var(--text-body);
+}
+table.keys :is(th, td) {
+  text-align: left;
+  vertical-align: top;
+  padding: var(--spacing-1) var(--spacing-2) var(--spacing-1) 0;
+  border-bottom: var(--line) solid var(--color-hair);
+}
+table.keys th {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-ink2);
+}
+/* The new tab view: the four logics, then the files, Learn and Practice, About. */
+.new-tab {
+  position: absolute;
+  inset: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-6);
+  padding: var(--spacing-5) var(--spacing-4) calc(var(--size-bottom) + 2 * var(--size-box-inset));
+}
+.logics {
+  display: grid;
+  grid-template-columns: var(--size-logic) var(--size-logic) var(--size-logic) var(--size-logic);
+  gap: var(--spacing-4);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-inline-size: 0;
+}
+.logic {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--spacing-3);
+  padding: var(--spacing-5) var(--spacing-4) var(--spacing-4);
+  border-radius: var(--radius-panel);
+  text-align: center;
+}
+.logic[aria-pressed="true"] {
+  background-color: var(--color-wash);
+}
+.logic-sign {
+  font-size: var(--size-logic-sign);
+  line-height: var(--leading-none);
+}
+.logic-rule {
+  height: var(--line-strong);
+  background: var(--color-ink);
+}
+.logic[aria-pressed="true"] .logic-rule {
+  background: var(--color-lapis);
+}
+.logic-name {
+  font: var(--font-weight-bold) var(--text-head) / var(--leading-snug) var(--font-head);
+}
+.logic-says {
+  font-size: var(--text-control);
+  color: var(--color-ink2);
+  text-wrap: balance;
+}
+.new-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+.divider {
+  width: var(--line);
+  height: var(--size-toggle);
+  background: var(--color-hair);
+}
+.btn.soon {
+  color: var(--color-faint);
+  border-color: var(--color-line);
+  cursor: help;
+}
+/* The Settings page: one column of rows, at most 640 wide, centred. */
+.settings-page {
+  position: absolute;
+  inset: 0;
+  overflow: auto;
+  padding: var(--spacing-5) var(--spacing-4) var(--spacing-7);
+}
+.settings-page > * {
+  max-width: var(--size-page);
+  margin-inline: auto;
+}
+.settings-page h1 {
+  font: var(--font-weight-bold) var(--text-title) / var(--leading-snug) var(--font-head);
+  margin-block: 0 var(--spacing-4);
+}
+.settings-page h2 {
+  font: var(--font-weight-bold) var(--text-head) / var(--leading-snug) var(--font-head);
+  margin: var(--spacing-6) 0 var(--spacing-2);
+  padding-top: var(--spacing-3);
+  border-top: var(--line) solid var(--color-hair);
+}
+.settings-page .form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+/* A compact window, under 600 wide: the views a row under the top row, the tools a bar along the
+   bottom, the bottom box above the bar, every panel and the list of views a sheet. */
+@media (width < 600px) {
+  .app {
+    grid-template-rows: var(--size-top) minmax(0, 1fr);
+  }
+  .mark-word,
+  .top-row .scheme {
+    display: none;
+  }
+  .mark-square {
+    display: block;
+  }
+  .top-row {
+    gap: var(--spacing-2);
+    padding-left: var(--spacing-2);
+  }
+  .body {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: var(--size-views) minmax(0, 1fr);
+  }
+  .body:has(> .stage-area:only-child) {
+    grid-template-rows: minmax(0, 1fr);
+  }
+  .rail {
+    flex-direction: row;
+    padding: 0 var(--spacing-2);
+    overflow-x: auto;
+    border-right: 0;
+    border-bottom: var(--line) solid var(--color-hair);
+  }
+  .cells {
+    flex-direction: row;
+  }
+  .cell[data-view="tree"][data-capsule] {
+    border-radius: var(--radius-cell) 0 0 var(--radius-cell);
+  }
+  .cell[data-view="net"][data-capsule] {
+    margin: 0 0 0 calc(-1 * var(--size-gap) - var(--line));
+    border-radius: 0 var(--radius-cell) var(--radius-cell) 0;
+  }
+  .views-list,
+  .panels > .menu,
+  .panels > .menu.export,
+  .panels > .menu.transform {
+    position: fixed;
+    top: auto;
+    left: var(--spacing-2);
+    right: var(--spacing-2);
+    bottom: calc(var(--size-views) + var(--spacing-2) + env(safe-area-inset-bottom));
+    width: auto;
+    max-height: 50%;
+  }
+  .tools {
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    flex-direction: row;
+    flex-wrap: wrap-reverse;
+    align-items: center;
+    gap: 0;
+    max-height: none;
+    padding: 0 var(--spacing-1) env(safe-area-inset-bottom);
+    border-width: var(--line) 0 0;
+    border-color: var(--color-hair);
+    border-radius: 0;
+  }
+  .tool-group {
+    display: contents;
+  }
+  .tools .tool {
+    flex: 1 0 calc(100% / 5);
+    justify-content: center;
+    height: var(--size-views);
+  }
+  .tools .tool[data-rare] {
+    display: none;
+    order: 1;
+  }
+  .tools[data-more] .tool[data-rare] {
+    display: inline-flex;
+  }
+  /* More's rows stand where the bottom box was, until a tool is pressed or the row closes. */
+  .stage-area:has(.tools[data-more]) .bottom {
+    visibility: hidden;
+  }
+  .tool.more {
+    display: inline-flex;
+  }
+  .phone-only {
+    display: revert;
+  }
+  .wide-only {
+    display: none;
+  }
+  .tools > .tool-group + .more {
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+  .app[data-guide] .tools .tool-name {
+    display: none;
+  }
+  .bottom {
+    bottom: calc(var(--size-views) + var(--spacing-2) + env(safe-area-inset-bottom));
+    width: calc(100% - 2 * var(--spacing-2));
+  }
+  .box {
+    height: var(--size-button);
+  }
+  .box .field {
+    font-size: var(--text-field);
+  }
+  /* The stage ends above the bottom box and the bar: its drawing, its sheets and its zoom
+     stay in sight above them. */
+  .stage-area > .stage {
+    bottom: calc(var(--size-views) + var(--size-button) + 2 * var(--spacing-2));
+  }
+  .stage-ctl {
+    bottom: var(--spacing-2);
+  }
+  .stage-ctl .zoom-v {
+    display: none;
+  }
+  .toggles-place {
+    right: var(--size-inset);
+  }
+  .logics {
+    grid-template-columns: minmax(0, var(--size-logic)) minmax(0, var(--size-logic));
+    gap: var(--spacing-2);
+  }
+  .new-tab {
+    justify-content: flex-start;
+  }
+  .settings-page {
+    padding-inline: var(--spacing-4);
+  }
+}
+
+/* A short window, under 480 high: the medium frame, the rail scrolling, the tools' rarer ones
+   behind More, the bottom box at the lower left. */
+@media (height < 480px) and (width >= 600px) {
+  .rail {
+    overflow-y: auto;
+  }
+  .tools .tool[data-rare] {
+    display: none;
+  }
+  .tools[data-more] .tool[data-rare] {
+    display: inline-flex;
+  }
+  .tool.more {
+    display: inline-flex;
+  }
+  .bottom {
+    left: var(--size-box-inset);
+    transform: none;
+  }
+}
+
+/* With forced colours every edge is a real border: grounds and shadows are dropped. */
+@media (forced-colors: active) {
+  .tool,
+  .chip,
+  .cell,
+  .toggle-cell,
+  .entry,
+  .logic {
+    border-color: ButtonText;
+  }
+  :is(.chip, .cell, .toggle-cell, .logic)[aria-selected="true"],
+  :is(.chip, .cell, .toggle-cell, .logic)[aria-pressed="true"] {
+    border-color: Highlight;
+  }
+}
+
 /* Print: a handout or the proof shown, on white, without the page's controls. With the course
    pack's sheet open, its handout alone (drawn at the body's end, so that it flows over pages):
    the pack's title, its problems, its link. The selectors match the screen's rules in weight and
@@ -3300,8 +2989,11 @@ fieldset {
   :root[data-theme="light"] {
     color-scheme: light;
   }
-  .app .band,
-  .app .restore,
+  .app .top-row,
+  .app .rail,
+  .app .tools,
+  .app .toggles-place,
+  .app .bottom,
   .app .pack-bar,
   .app .embed-open,
   .app .stage-ctl,
@@ -3314,7 +3006,7 @@ fieldset {
   .pk-handout.print-only {
     display: block;
     padding: var(--spacing-6);
-    font: var(--font-weight-normal) var(--text-panel) / var(--leading-normal) var(--font-text);
+    font: var(--font-weight-normal) var(--text-body) / var(--leading-normal) var(--font-text);
     color: var(--color-ink);
   }
   .pk-handout li {

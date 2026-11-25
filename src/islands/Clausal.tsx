@@ -3,8 +3,8 @@
 
 /**
  * A classical proof's sequent rewritten into a normal form, and the clauses of its negation
- * refuted: two sheets over the stage, opened from the tab's Logic popover and nowhere else, so
- * that a visitor who does not ask sees nothing of them. Each says its verdict in one sentence
+ * refuted: two sheets beside the tools, opened from "+ view" and nowhere else, so that a visitor
+ * who does not ask sees nothing of them. Each says its verdict in one sentence
  * first. The normal form is stepped through one law at a time. A refutation is found by
  * saturation, traced by DPLL, or built by hand, one resolvent at a time; its clauses are listed
  * and drawn as a graph, the two in step: a clause chosen in one is chosen in the other.

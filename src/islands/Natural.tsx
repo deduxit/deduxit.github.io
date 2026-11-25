@@ -35,7 +35,7 @@ import {
   shownNumbers,
 } from "../lib/natural";
 import { isOrdinary, type SequentForm } from "../lib/ordinary";
-import { download } from "./BottomBand";
+import { download } from "./Panels";
 import type { Proof, Prover } from "./state";
 
 /** The two drawings of one proof. */

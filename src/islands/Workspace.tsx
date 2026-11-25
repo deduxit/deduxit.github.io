@@ -9,19 +9,7 @@
  * its Undo and Redo take back whole changes by name; the graph is the same list in columns.
  */
 
-import {
-  batch,
-  createContext,
-  createEffect,
-  createMemo,
-  createSignal,
-  For,
-  on,
-  onCleanup,
-  onMount,
-  Show,
-  useContext,
-} from "solid-js";
+import { batch, createContext, createEffect, createMemo, on, useContext } from "solid-js";
 import { createStore } from "solid-js/store";
 import { failure } from "../lib/deduxit";
 import { prettyModal } from "../lib/modal";
@@ -32,7 +20,6 @@ import {
   type Action,
   buttonName,
   changeWords,
-  checkWords,
   type Edit,
   joined,
   joinedModal,
@@ -46,14 +33,11 @@ import {
 import type { Prover } from "./state";
 import type { Ui } from "./ui";
 
-/** The workspace, for the parts of the page that link tabs (the sheets, the Logic popover). */
+/** The workspace, for the parts of the page that link sequents (the sheets, "+ view"). */
 export const WorkspaceContext = createContext<Workspace>();
 
 /** The page's workspace; every component under the app has it. */
 export const useWorkspace = () => useContext(WorkspaceContext);
-
-/** The narrowest stage row that docks the panel: the panel's 320 pixels and a stage of 640. */
-export const DOCK_WIDTH = 960;
 
 /** The workspace's state on the page. */
 export type Workspace = ReturnType<typeof createWorkspace>;
@@ -67,12 +51,6 @@ export function createWorkspace(prover: Prover, ui: Ui) {
     /** Each linked tab's proof node, by the tab's id. */
     tabs: Record<string, number>;
     view: WorkspaceView | null;
-    /** Whether the panel is shown where it docks. */
-    shown: boolean;
-    /** Whether the panel has been shown in this visit: its first-time sentence. */
-    told: boolean;
-    /** Whether the graph is shown in the stage's place. */
-    graph: boolean;
     /** The row whose action runs. */
     running: number | null;
     /** An Undo or a Redo asked for and not yet shown, which can take seconds, and its action. */
@@ -81,21 +59,9 @@ export function createWorkspace(prover: Prover, ui: Ui) {
     doc: null,
     tabs: {},
     view: null,
-    shown: false,
-    told: false,
-    graph: false,
     running: null,
     undoing: null,
   });
-  /** The window's width, which decides whether the panel docks. */
-  const [width, setWidth] = createSignal(window.innerWidth);
-  onMount(() => {
-    const resized = () => setWidth(window.innerWidth);
-    window.addEventListener("resize", resized);
-    onCleanup(() => window.removeEventListener("resize", resized));
-  });
-  /** Whether the panel docks left of the stage: a wide window with Learn's frame closed. */
-  const docks = () => width() >= DOCK_WIDTH && !ui.ui.learn;
   /** Each linked tab's sequent as it was when the workspace last saw it, by the tab's id. */
   const seen = new Map<string, string>();
   /** The workspace's calls, one after another: each answer is the next call's document. */
@@ -333,13 +299,6 @@ export function createWorkspace(prover: Prover, ui: Ui) {
     setState("tabs", tab, undefined as unknown as number);
     seen.delete(tab);
     latest.delete(tab);
-  }
-
-  /** Shows the panel by itself at the visit's first link, where it docks. */
-  function firstLink() {
-    if (state.told) return;
-    setState("told", true);
-    if (docks()) setState("shown", true);
   }
 
   /** Opens a proof node's session on a new tab, and links that tab to the node. */
@@ -617,8 +576,6 @@ export function createWorkspace(prover: Prover, ui: Ui) {
         doc: null,
         tabs: {},
         view: null,
-        shown: false,
-        graph: false,
         running: null,
         undoing: null,
       });
@@ -632,13 +589,10 @@ export function createWorkspace(prover: Prover, ui: Ui) {
   return {
     state,
     rows,
-    docks,
     /** Whether any tab is linked: the button and the panel exist only then. */
     linked: () => rows().length > 0,
     buttonName: () => buttonName(rows()),
     stale: () => outOfDate(rows()),
-    setShown: (shown: boolean) => setState("shown", shown),
-    setGraph: (graph: boolean) => setState("graph", graph),
     undo: () => undo(false),
     redo: () => undo(true),
 
@@ -671,7 +625,6 @@ export function createWorkspace(prover: Prover, ui: Ui) {
         const proof = made[at + 1] as number;
         await checkNode(translated);
         const opened = await openNode(proof, target);
-        firstLink();
         const source = sessionOf(tab);
         const target_ = opened ? sessionOf(opened) : null;
         if (source && target_)
@@ -704,7 +657,6 @@ export function createWorkspace(prover: Prover, ui: Ui) {
           if (join.edits.length > 0) link(tab, made[1] as number);
           await runNodes(join.edits.length > 0 ? [made[1] as number, copy] : [copy]);
           await openModalNode(copy);
-          firstLink();
           setUi("live", `${prettyModal(modalTab.text)}: a copy opened on a new tab.`);
           return;
         }
@@ -723,7 +675,6 @@ export function createWorkspace(prover: Prover, ui: Ui) {
         });
         if (join.edits.length > 0) link(tab, made[1] as number);
         await openNode(made[at] as number, session.logic);
-        firstLink();
         setUi("live", `${displayed(sequentText(session))}: a copy opened on a new tab.`);
       }).catch(said),
 
@@ -799,7 +750,7 @@ export function createWorkspace(prover: Prover, ui: Ui) {
     arrive: (document: string, shown: number) =>
       queued(async () => {
         const opened = await prover.api.workspace.open(document, settings());
-        setState({ doc: opened, told: true });
+        setState({ doc: opened });
         await look();
         await remake();
         let tab: string | null = null;
@@ -838,7 +789,7 @@ export function createWorkspace(prover: Prover, ui: Ui) {
   };
 }
 
-/** A translation's name as the status line says it. */
+/** A translation's name as the live region says it. */
 const translationName = (key: string) =>
   ({
     glivenko: "Glivenko's translation",
@@ -846,301 +797,3 @@ const translationName = (key: string) =>
     kuroda: "Kuroda's translation",
     "godel-gentzen": "Gödel and Gentzen's translation",
   })[key] ?? "a translation";
-
-/** The Workspace button in the top band, before the tabs: shown from the first link. */
-export function WorkspaceButton(props: { workspace: Workspace; ui: Ui }) {
-  const toggle = () => {
-    if (props.workspace.docks()) props.workspace.setShown(!props.workspace.state.shown);
-    else props.ui.setUi("menu", props.ui.ui.menu === "workspace" ? null : "workspace");
-  };
-  return (
-    <Show when={props.workspace.linked()}>
-      <button
-        type="button"
-        class="btn ws-button"
-        data-warn={props.workspace.stale() > 0 ? "" : undefined}
-        aria-expanded={
-          props.workspace.docks() ? props.workspace.state.shown : props.ui.ui.menu === "workspace"
-        }
-        aria-label={props.workspace.buttonName()}
-        onClick={toggle}
-      >
-        Workspace <span class="ws-count">{props.workspace.rows().length}</span>
-      </button>
-    </Show>
-  );
-}
-
-/** The panel of linked tabs: docked left of the stage, or a sheet where the window is narrow. */
-export function WorkspacePanel(props: {
-  workspace: Workspace;
-  prover: Prover;
-  ui: Ui;
-  docked: boolean;
-}) {
-  const ws = () => props.workspace;
-  const view = () => ws().state.view;
-  const close = () => {
-    if (props.docked) ws().setShown(false);
-    else props.ui.setUi("menu", null);
-  };
-  let title: HTMLHeadingElement | undefined;
-  createEffect(() => {
-    if (!props.docked) title?.focus();
-  });
-  return (
-    <section
-      class={props.docked ? "ws-panel" : "ws-panel cluster menu"}
-      data-docked={props.docked ? "" : undefined}
-      role={props.docked ? undefined : "dialog"}
-      aria-label="Workspace"
-    >
-      <div class="ws-head">
-        <h2 class="pr-title" tabindex="-1" ref={title}>
-          Workspace
-        </h2>
-        <button
-          type="button"
-          class="btn btn-small"
-          aria-label="Close the workspace"
-          onClick={close}
-        >
-          ×
-        </button>
-      </div>
-      <Show when={view()?.undo || view()?.redo}>
-        <p class="row ws-undo">
-          <Show when={view()?.undo}>
-            {(name) => (
-              <button
-                type="button"
-                class="btn btn-small"
-                disabled={ws().state.undoing !== null}
-                aria-busy={ws().state.undoing?.redo === false}
-                onClick={() => void ws().undo()}
-              >
-                {ws().state.undoing?.redo === false
-                  ? `Undoing ${ws().state.undoing?.name}…`
-                  : `Undo ${name()}`}
-              </button>
-            )}
-          </Show>
-          <Show when={view()?.redo}>
-            {(name) => (
-              <button
-                type="button"
-                class="btn btn-small"
-                disabled={ws().state.undoing !== null}
-                aria-busy={ws().state.undoing?.redo === true}
-                onClick={() => void ws().redo()}
-              >
-                {ws().state.undoing?.redo === true
-                  ? `Redoing ${ws().state.undoing?.name}…`
-                  : `Redo ${name()}`}
-              </button>
-            )}
-          </Show>
-        </p>
-      </Show>
-      <Show when={ws().rows().length >= 3}>
-        <p class="row">
-          <button
-            type="button"
-            class="btn btn-small"
-            aria-pressed={ws().state.graph}
-            onClick={() => ws().setGraph(!ws().state.graph)}
-          >
-            {ws().state.graph ? "Back to the proof" : "Show as graph"}
-          </button>
-        </p>
-      </Show>
-      <Show when={ws().state.told && ws().rows().length <= 2}>
-        <p class="sub ws-told">
-          These are your linked tabs. The line above a tab says what it was made from.
-        </p>
-      </Show>
-      <ol class="ws-rows">
-        <For each={ws().rows()}>
-          {(row) => <RowItem row={row} workspace={ws()} prover={props.prover} />}
-        </For>
-      </ol>
-    </section>
-  );
-}
-
-/** A linked tab's row: the line above it, its sequent and state, and an action when it needs one. */
-function RowItem(props: { row: Row; workspace: Workspace; prover: Prover }) {
-  const proof = () => props.prover.store.proofs.find((p) => p.id === props.row.tab);
-  const shown = () => props.prover.current()?.id === props.row.tab;
-  const text = () => {
-    const session = proof()?.session;
-    return session && isOrdinary(session) ? sequentText(session) : (proof()?.input ?? "");
-  };
-  const words = () => {
-    const outcome = proof()?.modal?.outcome;
-    if (outcome)
-      return outcome.verdict === "valid"
-        ? "Valid"
-        : outcome.verdict === "not_valid"
-          ? "Not valid"
-          : "Not decided";
-    const v = proof()?.view;
-    if (!v) return "Not started";
-    if (v.complete) return "Proved";
-    const open = v.goals.length;
-    return `${open} open ${open === 1 ? "goal" : "goals"}`;
-  };
-  const stale = () => props.row.state === "out_of_date";
-  const steps = () => {
-    const session = proof()?.session;
-    return session && isOrdinary(session) ? session.history.length : 0;
-  };
-  const sourceText = (node: number | null) => {
-    if (node === null) return null;
-    const row = props.workspace.rows().find((r) => r.node === node);
-    const p = row && props.prover.store.proofs.find((q) => q.id === row.tab);
-    const session = p?.session;
-    return session && isOrdinary(session) ? sequentText(session) : null;
-  };
-  return (
-    <li
-      class="ws-row"
-      data-depth={props.row.depth}
-      data-shown={shown() ? "" : undefined}
-      data-node={props.row.node}
-    >
-      <Show when={props.row.line}>
-        {(line) => {
-          const check = () => checkWords(line().checked?.check ?? null);
-          return (
-            <div class="ws-line" data-kind={line().kind} data-stale={stale() ? "" : undefined}>
-              <span class="ws-label">
-                {line().kind === "copy"
-                  ? `Copy of ${displayed(sourceText(line().from) ?? line().fromSequent ?? "")}`
-                  : line().label}
-              </span>
-              <Show when={line().kind === "made" && !stale()}>
-                <span class="ws-check" data-shape={check().shape}>
-                  {check().sentence}
-                </span>
-                <Show when={check().action && line().checked}>
-                  {(_) => (
-                    <button
-                      type="button"
-                      class="btn btn-small"
-                      aria-busy={props.workspace.state.running === line().checked?.node}
-                      onClick={() => {
-                        const node = line().checked?.node;
-                        if (node !== undefined) void props.workspace.check(node);
-                      }}
-                    >
-                      Check
-                    </button>
-                  )}
-                </Show>
-              </Show>
-            </div>
-          );
-        }}
-      </Show>
-      <button
-        type="button"
-        class="ws-tab"
-        aria-current={shown() ? "true" : undefined}
-        onClick={() => props.prover.activate(props.row.tab)}
-      >
-        <span class="ws-sequent m">
-          {proof()?.calculus.suite === "modal" ? prettyModal(text()) : displayed(text())}
-        </span>
-        <span class="ws-state sub">
-          {words()}
-          {(() => {
-            const calculus = proof()?.calculus;
-            return calculus?.suite === "ordinary"
-              ? ` · ${calculus.logic} logic`
-              : calculus?.suite === "modal"
-                ? ` · ${calculus.system}`
-                : "";
-          })()}
-        </span>
-      </button>
-      <Show when={stale()}>
-        <div class="ws-stale">
-          <span class="kw warn">Out of date</span>{" "}
-          <span class="sub">
-            {steps() > 0
-              ? `It is now ${displayed(props.row.now)}. This proof is of the earlier one. Undo brings it back.`
-              : `Made from a sequent that has changed: it is now ${displayed(props.row.now)}.`}
-          </span>{" "}
-          <button
-            type="button"
-            class="btn btn-small btn-primary"
-            aria-busy={props.workspace.state.running === props.row.node}
-            onClick={() => void props.workspace.startAgain(props.row)}
-          >
-            {steps() > 0 ? "Start again" : "Update"}
-          </button>
-        </div>
-      </Show>
-    </li>
-  );
-}
-
-/** The graph: the linked tabs in columns by what they were made from, in the stage's place. */
-export function WorkspaceGraph(props: { workspace: Workspace; prover: Prover }) {
-  const columns = createMemo(() => {
-    const rows = props.workspace.rows();
-    const byColumn = new Map<number, Row[]>();
-    for (const row of rows) {
-      const list = byColumn.get(row.depth) ?? [];
-      list.push(row);
-      byColumn.set(row.depth, list);
-    }
-    return [...byColumn.entries()].sort(([a], [b]) => a - b).map(([, list]) => list);
-  });
-  const text = (row: Row) => {
-    const p = props.prover.store.proofs.find((q) => q.id === row.tab);
-    const session = p?.session;
-    return session && isOrdinary(session) ? sequentText(session) : (p?.input ?? "");
-  };
-  return (
-    <section class="ws-graph" aria-label="Workspace graph">
-      <ol class="ws-columns">
-        <For each={columns()}>
-          {(column) => (
-            <li class="ws-column">
-              <ol class="ws-cards">
-                <For each={column}>
-                  {(row) => (
-                    <li class="ws-card" data-stale={row.state === "out_of_date" ? "" : undefined}>
-                      <Show when={row.line}>
-                        {(line) => (
-                          <p class="ws-label sub">
-                            {line().kind === "copy" ? "Copy" : line().label}
-                          </p>
-                        )}
-                      </Show>
-                      <button
-                        type="button"
-                        class="ws-tab"
-                        onClick={() => {
-                          props.prover.activate(row.tab);
-                          props.workspace.setGraph(false);
-                        }}
-                      >
-                        <span class="ws-sequent m">{displayed(text(row))}</span>
-                      </button>
-                      <Show when={row.state === "out_of_date"}>
-                        <span class="kw warn">Out of date</span>
-                      </Show>
-                    </li>
-                  )}
-                </For>
-              </ol>
-            </li>
-          )}
-        </For>
-      </ol>
-    </section>
-  );
-}

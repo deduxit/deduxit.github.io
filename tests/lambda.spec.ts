@@ -1,24 +1,21 @@
 // deduxit © Fabian Lukas Grubmüller 2026
 // Licensed under the EUPL
 
-// Lambda-terms on the page: the calculus popover's button opens them, a term typed is checked and
-// its typing derivation drawn, a type typed gets a term found and its terms listed and counted, an
-// ill-typed term says why, and the link keeps the text and the calculus. A visitor who never
-// presses the button sees none of it.
+// Lambda-terms on the page: the new tab view's logic opens them, a term typed is checked and its
+// typing derivation drawn, a type typed gets a term found and its terms listed and counted, an
+// ill-typed term says why, and the link keeps the text and the calculus.
 
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
-import { goto, switches } from "./prover";
+import { calculus as choose, goto, newTab, switches } from "./prover";
 
 /** Opens the page with its tab in lambda-terms, in the calculus given. */
 async function lambdaTab(page: Page, calculus = "simple") {
   await goto(page);
-  const pop = await switches(page);
-  await pop.getByRole("button", { name: "Lambda-terms" }).click();
-  if (calculus !== "simple")
-    await pop.getByRole("combobox", { name: "Lambda calculus" }).selectOption(calculus);
-  await page.keyboard.press("Escape");
-  await expect(page.getByText(/A λ-term is a small program/)).toBeVisible();
+  await choose(page, ["Lambda-terms"]);
+  const use = (await switches(page)).getByRole("combobox", { name: "Lambda calculus" });
+  if (calculus !== "simple") await use.selectOption(calculus);
+  await expect(use).toHaveValue(calculus);
 }
 
 /** Types `text` into the field and reads it. */
@@ -28,16 +25,11 @@ async function read(page: Page, text: string) {
   await expect(page.locator(".lambda .method-verdict .kw").first()).toBeVisible();
 }
 
-test("the page shows nothing of lambda-terms until their button is pressed", async ({ page }) => {
+test("the page shows nothing of lambda-terms until their logic is chosen", async ({ page }) => {
   await goto(page);
-  await expect(page.getByText(/A λ-term is a small program/)).toHaveCount(0);
-  const pop = await switches(page);
-  await expect(pop.getByRole("group", { name: "Suite" }).getByRole("button")).toHaveText([
-    "Linear",
-    "Ordinary",
-  ]);
-  await expect(pop.getByRole("combobox", { name: "Lambda calculus" })).toHaveCount(0);
-  await expect(pop.getByRole("button", { name: "Lambda-terms" })).toBeVisible();
+  await expect(page.getByRole("combobox", { name: "Lambda calculus" })).toHaveCount(0);
+  await page.getByRole("button", { name: /^Lambda-terms/ }).click();
+  await expect(page.getByRole("combobox", { name: "Lambda calculus" })).toHaveValue("simple");
 });
 
 test("a term is checked and its typing derivation drawn by natural deduction's rules", async ({
@@ -51,9 +43,9 @@ test("a term is checked and its typing derivation drawn by natural deduction's r
   );
   const drawing = page.locator(".lambda .custom-drawing svg");
   await expect(drawing.locator("desc")).toContainText("f x : b, by →E from 1 and 2.");
-  await expect(page.locator(".ptab[aria-current=true] .pt-mark")).toContainText(
-    "Lambda-terms (λ→)",
-  );
+  await expect(
+    page.getByRole("tablist", { name: "Views of this sequent" }).getByRole("tab").first(),
+  ).toHaveAttribute("data-tip", "Lambda-terms, λ→");
   // The link keeps the term and the calculus, and the term is checked again on arrival.
   await expect(page).toHaveURL(/u=lambda&m=simple/);
   await page.reload();
@@ -68,7 +60,7 @@ test("a type's term is found, and its terms listed and counted", async ({ page }
   await page.getByRole("button", { name: "List its terms" }).click();
   await expect(page.locator(".lambda-terms")).toContainText("Exactly 2 terms, up to βη-equality.");
   await expect(page.locator(".lambda-terms li")).toHaveText(["λx:a. λy:a. x", "λx:a. λy:a. y"]);
-  await page.getByRole("button", { name: "New proof" }).click();
+  await newTab(page);
   await read(page, "((a -> b) -> a) -> a");
   await expect(page.locator(".lambda .kw.bad")).toHaveText("No term");
 });
@@ -77,14 +69,13 @@ test("a term that uses a variable twice is not well typed in the linear calculus
   page,
 }) => {
   await lambdaTab(page, "linear");
-  await expect(page.getByText("Every variable is used exactly once.")).toBeVisible();
   await read(page, String.raw`\x:a. x * x`);
   await expect(page.locator(".lambda .kw.bad")).toHaveText("Not well typed");
   await expect(page.locator(".lambda .method-verdict").first()).toContainText(
     "The variable x is used more than once",
   );
   // A text that is no term is marked in the field, with its place.
-  await page.getByRole("button", { name: "New proof" }).click();
+  await page.getByRole("button", { name: "New sequent", exact: true }).click();
   await page.getByRole("textbox", { name: "Sequent" }).fill(String.raw`\x. x`);
   await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
   await expect(page.getByRole("textbox", { name: "Sequent" })).toHaveAttribute(

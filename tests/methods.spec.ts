@@ -1,12 +1,13 @@
 // deduxit © Fabian Lukas Grubmüller 2026
 // Licensed under the EUPL
 
-// A classical proof's truth table and tableau: the two tabs beside Tree, what each shows, the
-// countermodel they lead to, a table past the bound on atoms, and the proof kept meanwhile.
+// A classical proof's truth table and tableau: two views added by "+ view", each a cell of the
+// rail, what each shows, the countermodel they lead to, a table past the bound on atoms, and the
+// proof kept meanwhile.
 
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
-import { calculus, goto } from "./prover";
+import { addView, calculus, goto } from "./prover";
 
 /** Starts a sequent in an ordinary tab of `logic`. */
 async function ordinary(page: Page, logic: string, sequent: string) {
@@ -19,18 +20,31 @@ async function ordinary(page: Page, logic: string, sequent: string) {
 
 test("the table and the tableau are offered for a classical proof alone", async ({ page }) => {
   await ordinary(page, "Intuitionistic", "a |- a");
-  await expect(page.getByRole("tab", { name: "Table", exact: true })).toHaveCount(0);
+  await page.getByRole("button", { name: "Add a view" }).click();
+  const list = page.getByRole("dialog", { name: "Add a view" });
+  await expect(list.getByRole("button", { name: "Truth table" })).toHaveAttribute(
+    "aria-disabled",
+    "true",
+  );
+  await page.keyboard.press("Escape");
   // A new calculus restarts the sequent in it.
   await calculus(page, ["Classical"]);
-  await expect(page.getByRole("tab", { name: "Table", exact: true })).toBeVisible();
-  await expect(page.getByRole("tab", { name: "Tableau" })).toBeVisible();
+  await page.getByRole("button", { name: "Add a view" }).click();
+  await expect(list.getByRole("button", { name: "Truth table" })).not.toHaveAttribute(
+    "aria-disabled",
+    "true",
+  );
+  await expect(list.getByRole("button", { name: "Tableau", exact: true })).not.toHaveAttribute(
+    "aria-disabled",
+    "true",
+  );
 });
 
 test("the truth table marks the row that falsifies the sequent and leads to its countermodel", async ({
   page,
 }) => {
   await ordinary(page, "Classical", "a -> b |- b -> a");
-  await page.getByRole("tab", { name: "Table", exact: true }).click();
+  await addView(page, "Truth table");
   const view = page.getByRole("region", { name: "Truth table" });
   await expect(view.getByRole("status")).toContainText(
     "Not valid With a false, b true, every formula left of ⊢ is true and every formula right of it false: row 3.",
@@ -53,7 +67,7 @@ test("the truth table marks the row that falsifies the sequent and leads to its 
 
 test("a valid sequent's table has no falsifying row", async ({ page }) => {
   await ordinary(page, "Classical", "|- a \\/ ~a");
-  await page.getByRole("tab", { name: "Table", exact: true }).click();
+  await addView(page, "Truth table");
   const view = page.getByRole("region", { name: "Truth table" });
   await expect(view.getByRole("status")).toContainText("Valid No row makes");
   await expect(view.locator("tbody tr[data-falsifies]")).toHaveCount(0);
@@ -64,7 +78,7 @@ test("the tableau numbers its lines, cites their rules and says how each branch 
   page,
 }) => {
   await ordinary(page, "Classical", "a /\\ b |- b /\\ a");
-  await page.getByRole("tab", { name: "Tableau" }).click();
+  await addView(page, "Tableau");
   const view = page.getByRole("region", { name: "Tableau" });
   await expect(view.getByRole("status")).toContainText("Valid Every branch closes");
   const lines = view.locator(".tb-line");
@@ -82,7 +96,7 @@ test("an open branch of the tableau gives its assignment and the countermodel", 
   page,
 }) => {
   await ordinary(page, "Classical", "a -> b |- b -> a");
-  await page.getByRole("tab", { name: "Tableau" }).click();
+  await addView(page, "Tableau");
   const view = page.getByRole("region", { name: "Tableau" });
   await expect(view.getByRole("status")).toContainText(
     "Not valid A branch stays open, with a false, b true",
@@ -93,7 +107,7 @@ test("an open branch of the tableau gives its assignment and the countermodel", 
 
 test("a table past the bound on atoms says so and draws on request", async ({ page }) => {
   await ordinary(page, "Classical", "a, b, c, d, e, f, g, h, i, j, k |- a");
-  await page.getByRole("tab", { name: "Table", exact: true }).click();
+  await addView(page, "Truth table");
   const view = page.getByRole("region", { name: "Truth table" });
   await expect(view).toContainText("This sequent has 11 atoms, so its truth table has 2048 rows");
   await view.getByRole("button", { name: "Draw all 2048 rows" }).click();
@@ -104,27 +118,32 @@ test("a table past the bound on atoms says so and draws on request", async ({ pa
 test("the proof stays as it was behind the table and comes back with Tree", async ({ page }) => {
   await ordinary(page, "Classical", "a /\\ b |- b /\\ a");
   await expect(page.getByRole("button", { name: /^a ∧ b, formula/ })).toBeVisible();
-  await page.getByRole("tab", { name: "Table", exact: true }).click();
+  await addView(page, "Truth table");
   await expect(page.getByRole("button", { name: /^a ∧ b, formula/ })).toBeHidden();
-  await page.getByRole("tab", { name: "Tree" }).click();
+  await page
+    .getByRole("tab", {
+      name: /^(Sequent calculus|Natural deduction|Classical linear|Intuitionistic linear)/,
+    })
+    .click();
   await expect(page.getByRole("button", { name: /^a ∧ b, formula/ })).toBeVisible();
   await expect(page.getByRole("region", { name: "Truth table" })).toHaveCount(0);
 });
 
-test("a key that changes the proof under the table brings the tree back to show it", async ({
-  page,
-}) => {
+test("the keys act on the view shown: C on the table changes nothing", async ({ page }) => {
   await ordinary(page, "Classical", "a /\\ b |- b /\\ a");
-  await page.getByRole("tab", { name: "Table", exact: true }).click();
+  await addView(page, "Truth table");
   await expect(page.getByRole("region", { name: "Truth table" })).toBeVisible();
   await page.keyboard.press("C");
-  await expect(page.getByRole("tab", { name: "Tree" })).toHaveAttribute("aria-selected", "true");
-  await expect(page.getByRole("status").filter({ hasText: "Proved" })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Truth table" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  await expect(page.getByRole("status").filter({ hasText: "Proved." })).toHaveCount(0);
 });
 
 test("a tableau closed by ⊥ says only that every branch closes", async ({ page }) => {
   await ordinary(page, "Classical", "false |- a");
-  await page.getByRole("tab", { name: "Tableau" }).click();
+  await addView(page, "Tableau");
   const view = page.getByRole("region", { name: "Tableau" });
   await expect(view.getByRole("status")).toHaveText(
     "Valid Every branch closes, so no assignment makes every formula left of ⊢ true and every formula right of it false.",
@@ -134,26 +153,23 @@ test("a tableau closed by ⊥ says only that every branch closes", async ({ page
 
 test("a proof of another logic shows its tree, never a stale table", async ({ page }) => {
   await ordinary(page, "Classical", "a |- a");
-  await page.getByRole("tab", { name: "Table", exact: true }).click();
+  await addView(page, "Truth table");
   await calculus(page, ["Intuitionistic"]);
-  await expect(page.getByRole("tab", { name: "Table", exact: true })).toHaveCount(0);
-  await expect(page.getByRole("tab", { name: "Tree" })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("tab", { name: "Truth table" })).toHaveCount(0);
+  await expect(
+    page.getByRole("tab", {
+      name: /^(Sequent calculus|Natural deduction|Classical linear|Intuitionistic linear)/,
+    }),
+  ).toHaveAttribute("aria-selected", "true");
   await expect(page.getByRole("region", { name: "Truth table" })).toHaveCount(0);
 });
 
-test("the restore bar leaves the view's sentence in sight", async ({ page }) => {
+test("the table's sentence stands clear of the toggles over the stage", async ({ page }) => {
   await ordinary(page, "Classical", "a -> b |- b -> a");
-  await page.reload();
-  await expect(page.getByRole("region", { name: "Restore" })).toBeVisible();
-  // A proof started meanwhile, the last visit's still waiting behind the bar.
-  await calculus(page, ["Ordinary", "Classical"]);
-  await page.getByRole("textbox", { name: "Sequent" }).fill("a -> b |- b -> a");
-  await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
-  await expect(page.getByRole("region", { name: "Restore" })).toBeVisible();
-  await page.getByRole("tab", { name: "Table", exact: true }).click();
+  await addView(page, "Truth table");
   const sentence = page.getByRole("region", { name: "Truth table" }).getByRole("status");
   await expect(sentence).toBeVisible();
-  const bar = await page.getByRole("region", { name: "Restore" }).boundingBox();
+  const toggles = await page.getByRole("group", { name: "Calculus of this view" }).boundingBox();
   const said = await sentence.boundingBox();
-  expect(bar && said && said.y >= bar.y + bar.height).toBe(true);
+  expect(toggles && said && said.y >= toggles.y + toggles.height).toBe(true);
 });

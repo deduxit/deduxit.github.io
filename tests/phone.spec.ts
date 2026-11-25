@@ -2,7 +2,7 @@
 // Licensed under the EUPL
 
 import { expect, test } from "./fixtures";
-import { calculus, rule, start } from "./prover";
+import { calculus, newTab, proved, rule, start, tool } from "./prover";
 
 test("a proof goes at a phone's width, and the page does not scroll sideways", async ({ page }) => {
   await start(page, "A * B |- B * A");
@@ -10,68 +10,49 @@ test("a proof goes at a phone's width, and the page does not scroll sideways", a
   await rule(page, /^B ⊗ A/, "⊗");
   await page.getByRole("button", { name: /^B⊥, formula 2/ }).click();
   await page.getByRole("dialog", { name: "Split" }).getByRole("button", { name: "Apply" }).click();
-  await page.getByRole("button", { name: "Close all" }).click();
-  await expect(
-    page.getByRole("status").filter({ hasText: "Proved: every goal is closed" }),
-  ).toBeVisible();
+  await tool(page, "Close all").click();
+  await expect(proved(page)).toBeVisible();
   const overflow = await page.evaluate(
     () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
   );
   expect(overflow).toBe(0);
 });
 
-test("Learn's frame takes the lower half at a phone's width, with no sideways scroll", async ({
-  page,
-}) => {
+test("Settings links the privacy page at a phone's width", async ({ page }) => {
   await page.goto("/");
-  await page.locator("footer").getByRole("button", { name: "Learn" }).click();
-  const frame = page.getByRole("complementary", { name: "Learn" });
-  await frame.getByRole("button", { name: "Lesson 2: The multiplicatives" }).click();
-  await frame.getByRole("button", { name: "Prove Tensor commutes" }).click();
-  await expect(page.locator(".ptab .pt-go .m")).toHaveText("A ⊗ B ⊢ B ⊗ A");
-  const [frameBox, stage] = [await frame.boundingBox(), await page.locator(".stage").boundingBox()];
-  expect(frameBox && stage && frameBox.y >= stage.y + stage.height).toBe(true);
-  const overflow = await page.evaluate(
-    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
-  );
-  expect(overflow).toBe(0);
-});
-
-test("More's sheet links the privacy page at a phone's width", async ({ page }) => {
-  await page.goto("/");
-  await page.locator("footer").getByRole("button", { name: "More" }).click();
-  await page.getByRole("dialog", { name: "More" }).getByRole("link", { name: "Privacy" }).click();
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await page.getByRole("link", { name: "Privacy" }).click();
   await expect(page.getByRole("heading", { level: 1, name: "Privacy" })).toBeVisible();
 });
 
-test("Practice is in the bottom band at a phone's width, and a problem opens from it", async ({
+test("the top row, the views and the tools' bar fit from 320 pixels, with no sideways scroll", async ({
   page,
 }) => {
+  await start(page, "A * B |- B * A");
   for (const width of [320, 360, 412]) {
     await page.setViewportSize({ width, height: 800 });
-    await page.goto("/");
-    const button = page.locator("footer").getByRole("button", { name: "Practice", exact: true });
-    await expect(button, `${width}`).toBeVisible();
-    const box = await button.boundingBox();
-    expect(box && box.x >= 0 && box.x + box.width <= width, `${width}`).toBe(true);
+    for (const control of [
+      page.getByRole("button", { name: "New sequent", exact: true }),
+      page.getByRole("button", { name: "Settings", exact: true }),
+      tool(page, "More"),
+      page.getByRole("button", { name: "Enter" }),
+    ]) {
+      const box = await control.boundingBox();
+      expect(box && box.x >= 0 && box.x + box.width <= width, `${width}`).toBe(true);
+    }
     const overflow = await page.evaluate(
       () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
     );
     expect(overflow, `${width}`).toBe(0);
   }
-  await page.locator("footer").getByRole("button", { name: "Practice", exact: true }).click();
-  const practice = page.getByRole("dialog", { name: "Practice" });
-  await practice.getByRole("button", { name: /^Prove A & B ⊢ A,/ }).click();
-  await expect(practice).toBeHidden();
-  await expect(page.locator(".ptab[aria-current=true] .pt-go .m")).toHaveText("A & B ⊢ A");
 });
 
-test("the goal bar keeps one row at a phone's width, Cut and the new tab's button in it", async ({
+test("the goal bar keeps one row at a phone's width, the new tab's button in it", async ({
   page,
 }) => {
   await start(page, "A * B |- B * A");
   const bar = page.locator(".dock .gbar");
-  await expect(bar.getByRole("button", { name: "Cut", exact: true })).toBeVisible();
+  await expect(bar.getByRole("button", { name: "Open this goal in a new tab" })).toBeVisible();
   const rows = await bar.evaluate((element) => {
     const tops = [...element.children].map((child) => {
       const r = child.getBoundingClientRect();
@@ -87,12 +68,10 @@ test("a finished proof's λ-term shows in Export from More's sheet at a phone's 
 }) => {
   await start(page, "|- (a -o b) -o (b -o c) -o a -o c");
   await calculus(page, ["Intuitionistic"]);
-  await page.getByRole("button", { name: "Close all" }).click();
-  await expect(
-    page.getByRole("status").filter({ hasText: "Proved: every goal is closed" }),
-  ).toBeVisible();
-  await page.locator("footer").getByRole("button", { name: "More" }).click();
-  await page.getByRole("dialog", { name: "More" }).getByRole("button", { name: "Export" }).click();
+  await tool(page, "Close all").click();
+  await expect(proved(page)).toBeVisible();
+  await tool(page, "More").click();
+  await tool(page, "Export").click();
   const item = page
     .getByRole("menu", { name: "Export" })
     .getByRole("menuitem", { name: /^λ-term/ });
@@ -117,16 +96,19 @@ test("a tap opens a rule's hint, and a tap elsewhere closes it", async ({ page }
   await expect(hint).toHaveCount(0);
 });
 
-test("with Learn open, a fitted goal's buttons lie over its formulas, and its dock clears the stage's controls", async ({
+test("a fitted goal's buttons lie over its formulas, and its dock clears the stage's controls", async ({
   page,
 }) => {
-  // Lesson 7's search that gives up: a long sequent fitted small, its dock three rows high.
+  // A long sequent fitted small, its dock three rows high with the search's long reason.
   await page.goto("/");
-  await page.locator("footer").getByRole("button", { name: "Learn" }).click();
-  await page.getByRole("button", { name: "Lesson 7: When there is no proof" }).click();
-  await page.getByRole("button", { name: "Ask deduxit about A false case" }).click();
-  await page.getByRole("button", { name: "Search it with a budget of 20 units" }).click();
-  await expect(page.getByRole("button", { name: "Try 40 units" })).toBeVisible();
+  await newTab(page);
+  await calculus(page, ["Intuitionistic"]);
+  await page
+    .getByRole("textbox", { name: "Sequent" })
+    .fill("!(a -o a * a * a), !(a -o a), a |- a * (a + 0)");
+  await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
+  await page.getByRole("button", { name: "Close goal" }).click();
+  await expect(page.locator(".dock .note").getByRole("button", { name: "more" })).toBeVisible();
   const placed = await page.evaluate(() => {
     const off: string[] = [];
     for (const button of document.querySelectorAll<HTMLElement>(".fb[data-active]")) {
@@ -170,10 +152,14 @@ test("with Learn open, a fitted goal's buttons lie over its formulas, and its do
         : `${String(Math.round(dock.top))} for ${String(Math.round(above))} or ${String(Math.round(below))}`;
     });
   const steps = [await docked()];
-  await page.mouse.move(200, 300);
+  // The field's empty part at the stage's lower left, under the goal, left of the zoom.
+  const field = await page.locator(".stage").boundingBox();
+  const x = (field?.x ?? 0) + 8;
+  const y = (field?.y ?? 0) + (field?.height ?? 0) - 12;
+  await page.mouse.move(x, y);
   await page.mouse.down();
   for (let step = 1; step <= 5; step++) {
-    await page.mouse.move(200, 300 - 10 * step);
+    await page.mouse.move(x, y - 10 * step);
     steps.push(await docked());
   }
   await page.mouse.up();

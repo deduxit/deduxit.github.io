@@ -55,20 +55,22 @@ const SIMULATED = 8;
 const FULL = 15;
 
 /**
- * Which colours are seen together, each pair of a group to stay apart: a
- * drawing's colours with one another and with every colour of the bands
- * around it, the tabs' states and the selection.
+ * Which colours are seen together, each pair of a group to stay apart: the verdicts' signs with
+ * what is chosen (a proved chip is the chosen one), the chosen formula among the others, and a
+ * net's colours with one another and with the verdicts at the top. A net is drawn only for a
+ * finished proof, where no goal is open and nothing on the drawing is chosen, so lapis is not
+ * among a net's colours; the edge and the hairlines mark no state.
  */
-const BANDS = ["ok", "warn", "bad", "accent", "line"];
+const VERDICTS = ["good", "bad"];
 const GROUPS: Readonly<Record<string, readonly string[]>> = {
-  // A proof's state: the tabs' marks side by side, the keywords, the dock's note.
-  verdicts: BANDS,
-  // The active goal and the selection among the other formulas, inside Learn's frame.
-  focus: ["accent", "ink", "learn"],
-  // A net, under the bands: its plain edges and its ⅋ edges (a witness is never drawn here).
-  net: [...BANDS, "ink", "net-par"],
-  // An essential net, under the bands: its input side and its dominator lines.
-  essential: [...BANDS, "ink", "net-input", "net-dominator"],
+  // A sequent's state on its chip and a view's cell, beside the chosen one's edge and ground.
+  verdicts: [...VERDICTS, "lapis"],
+  // The active goal and the chosen formula among the other formulas.
+  focus: ["lapis", "ink"],
+  // A net, under the chips' verdicts: its plain edges and its ⅋ edges (a witness is never drawn here).
+  net: [...VERDICTS, "ink", "net-par"],
+  // An essential net, under the chips' verdicts: its input side and its dominator lines.
+  essential: [...VERDICTS, "ink", "net-input", "net-dominator"],
   // Every colour deduxit may draw in one net, a witness's among them.
   "net drawing": ["ink", "net-par", "net-highlight"],
   "essential drawing": ["ink", "net-input", "net-dominator", "net-highlight"],
@@ -176,9 +178,9 @@ describe("the colours that carry a meaning", () => {
 });
 
 describe("the mark's lapis", () => {
-  it("stands out from the band and the field it is drawn on, as SC 1.4.11 asks of a graphic", () => {
+  it("stands out from the band and the paper it is drawn on, as SC 1.4.11 asks of a graphic", () => {
     for (const scheme of schemes)
-      for (const ground of ["panel", "field"])
+      for (const ground of ["band", "paper"])
         expect(
           contrast(colour("logo")[scheme], colour(ground)[scheme]),
           `logo on ${ground}, ${scheme}`,
@@ -210,36 +212,44 @@ describe("the mark's lapis", () => {
   });
 });
 
-/** A wash token's colour and opacity in each scheme. */
-function wash(name: string): Readonly<Record<(typeof schemes)[number], readonly [Rgb, number]>> {
-  const rgba = "rgb\\((\\d+) (\\d+) (\\d+) / ([0-9.]+)\\)";
-  const match = new RegExp(`--color-${name}-wash: light-dark\\(${rgba}, ${rgba}\\);`).exec(tokens);
-  if (!match) throw new Error(`tokens.css: no --color-${name}-wash pair`);
-  const at = (i: number) =>
-    [[Number(match[i]), Number(match[i + 1]), Number(match[i + 2])], Number(match[i + 3])] as const;
-  return { light: at(1), dark: at(5) };
-}
-
-/** `top` at `alpha` laid over the colour `under`, as hex. */
-function over([top, alpha]: readonly [Rgb, number], under: string): string {
-  const channel = (c: number, i: number) =>
-    Math.round(c * alpha + Number.parseInt(under.slice(1 + 2 * i, 3 + 2 * i), 16) * (1 - alpha))
-      .toString(16)
-      .padStart(2, "0");
-  return `#${top.map(channel).join("")}`;
-}
-
-describe("a keyword's colour", () => {
-  it("reads at 4.5:1 on its wash, which app.css lays on the panel (SC 1.4.3)", () => {
-    const low: string[] = [];
-    for (const tone of ["ok", "warn", "bad", "accent"])
-      for (const scheme of schemes) {
-        const ratio = contrast(
-          colour(tone)[scheme],
-          over(wash(tone)[scheme], colour("panel")[scheme]),
-        );
-        if (ratio < 4.5) low.push(`${tone}, ${scheme}: ${ratio.toFixed(2)}`);
+/** Every pair of a colour on a ground below a ratio, in both schemes. */
+function below(colours: readonly string[], grounds: readonly string[], ratio: number): string[] {
+  const low: string[] = [];
+  for (const scheme of schemes)
+    for (const c of colours)
+      for (const g of grounds) {
+        const r = contrast(colour(c)[scheme], colour(g)[scheme]);
+        if (r < ratio) low.push(`${c} on ${g}, ${scheme}: ${r.toFixed(2)}`);
       }
-    expect(low).toEqual([]);
+  return low;
+}
+
+describe("the guide's pairs (SC 1.4.3 and 1.4.11)", () => {
+  it("set text in ink, ink2 or soft at 4.5:1 on paper, band, wash and over", () => {
+    expect(below(["ink", "ink2", "soft"], ["paper", "band", "wash", "over"], 4.5)).toEqual([]);
+  });
+
+  it("draw a field's edge at 3:1 on paper and band", () => {
+    expect(below(["edge"], ["paper", "band"], 3)).toEqual([]);
+  });
+
+  it("set text on lapis in paper", () => {
+    expect(below(["paper"], ["lapis"], 4.5)).toEqual([]);
+  });
+
+  it("set a link, a verdict and what is chosen at 4.5:1 on paper, band and wash", () => {
+    expect(below(["lapis", "deep", "good", "bad"], ["paper", "band", "wash"], 4.5)).toEqual([]);
+  });
+
+  it("draw a net's colours at 4.5:1 on the paper", () => {
+    expect(
+      below(["net-par", "net-input", "net-dominator", "net-highlight"], ["paper"], 4.5),
+    ).toEqual([]);
+  });
+
+  it("keep faint for what cannot act: under 4.5:1 on paper, so that it never passes for text", () => {
+    const light = contrast(colour("faint").light, colour("paper").light);
+    expect(light).toBeLessThan(4.5);
+    expect(light).toBeGreaterThan(3);
   });
 });

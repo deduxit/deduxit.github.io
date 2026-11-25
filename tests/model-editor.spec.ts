@@ -8,14 +8,14 @@
 
 import type { Locator, Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
-import { calculus, goto, switches } from "./prover";
+import { addView, calculus, goto, switches } from "./prover";
 
 /** Opens the page with its tab in modal logic, in `system`, and decides `sequent`. */
 async function modal(page: Page, system: string, sequent: string) {
   await goto(page);
-  const pop = await switches(page);
-  await pop.getByRole("button", { name: "Modal logic" }).click();
-  if (system !== "K") await pop.getByRole("combobox", { name: "System" }).selectOption(system);
+  await calculus(page, ["Modal logic"]);
+  if (system !== "K")
+    await (await switches(page)).getByRole("combobox", { name: "System" }).selectOption(system);
   await page.keyboard.press("Escape");
   await page.getByRole("textbox", { name: "Sequent" }).fill(sequent);
   await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
@@ -53,13 +53,23 @@ async function drag(page: Page, from: number, ...through: { x: number; y: number
 test("nothing of the editor shows until a model is asked for", async ({ page }) => {
   await ordinary(page, "Intuitionistic", "a |- a");
   await expect(page.locator(".kripke")).toHaveCount(0);
-  const pop = await switches(page);
-  await pop.getByRole("button", { name: "Check a model" }).click();
+  await addView(page, "A model of your own");
   await expect(page.locator(".kripke-canvas")).toBeVisible();
-  await expect(page.getByRole("tab", { name: "Model" })).toHaveAttribute("aria-selected", "true");
-  await page.getByRole("tab", { name: "Tree" }).click();
+  await expect(page.getByRole("tab", { name: "A model of your own" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  await page
+    .getByRole("tab", {
+      name: /^(Sequent calculus|Natural deduction|Classical linear|Intuitionistic linear)/,
+    })
+    .click();
   await expect(page.locator(".kripke")).toHaveCount(0);
-  await expect(page.getByRole("tab", { name: "Model" })).toHaveCount(0);
+  // The view stays in the rail, to come back to.
+  await expect(page.getByRole("tab", { name: "A model of your own" })).toHaveAttribute(
+    "aria-selected",
+    "false",
+  );
 });
 
 test("a modal countermodel is changed by dragging: an arrow, a loop, a world moved", async ({
@@ -171,14 +181,17 @@ test("an ordinary countermodel opens in the model view; a model of another logic
   await view.getByRole("button", { name: "Check the model" }).click();
   await expect(view.locator(".modal-check")).toContainText("No model of intuitionistic logic");
   await expect(view.locator(".modal-check")).toContainText("does not force all it forces.");
-  await page.getByRole("tab", { name: "Tree" }).click();
+  await page
+    .getByRole("tab", {
+      name: /^(Sequent calculus|Natural deduction|Classical linear|Intuitionistic linear)/,
+    })
+    .click();
   await expect(view).toHaveCount(0);
 });
 
 test("in minimal logic a world of one's own model may force ⊥", async ({ page }) => {
   await ordinary(page, "Minimal", "~~a |- a");
-  const pop = await switches(page);
-  await pop.getByRole("button", { name: "Check a model" }).click();
+  await addView(page, "A model of your own");
   const view = page.getByRole("region", { name: "Model" });
   await expect(view).toContainText("A model of minimal logic");
   await view.getByRole("checkbox", { name: "World 0 forces ⊥" }).check();

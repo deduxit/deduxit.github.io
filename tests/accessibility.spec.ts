@@ -12,30 +12,24 @@ import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
 import { goto, proveCommuted, start } from "./prover";
 import {
-  answers,
-  attempting,
-  cutting,
-  fonts,
-  learning,
-  menus,
-  methods,
-  transforms,
   clausal,
-  linking,
-  coursing,
-  customising,
+  cutting,
   deducing,
+  fonts,
   lambdaing,
+  linking,
+  menus,
+  framePages,
+  methods,
   modalising,
-  packing,
   ordinary,
+  packing,
   pixel,
-  practising,
   proving,
   reasons,
   restoring,
-  toLessons,
   touring,
+  transforms,
   type Visit,
   witnessing,
 } from "./states";
@@ -43,105 +37,14 @@ import {
 /** The rule sets run: WCAG 2.0, 2.1 and 2.2 at A and AA, and axe's best practices. */
 const TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22a", "wcag22aa", "best-practice"];
 
-/** The names of the rules Learn's Reference draws, read once from the built page. */
-let drawn: Promise<ReadonlySet<string>> | undefined;
-
-/**
- * The names of the rules Learn's Reference draws, each schema's name, read in a context of its
- * own (a second page of the same context would set the first one's proofs aside).
- */
-function inTheReference(page: Page): Promise<ReadonlySet<string>> {
-  drawn ??= (async () => {
-    const context = await page.context().browser()?.newContext();
-    if (!context) throw new Error("no browser to read the Reference in");
-    try {
-      const reference = await context.newPage();
-      await reference.goto(new URL("/", page.url()).href);
-      await reference.getByRole("button", { name: "Learn" }).click();
-      const frame = reference.getByRole("complementary", { name: "Learn" });
-      await frame.getByRole("tab", { name: "Reference" }).click();
-      // Every place of the text that holds rules has its list.
-      await reference.waitForFunction(() => {
-        const places = [...document.querySelectorAll(".frame div")].filter((d) =>
-          d.getAttributeNames().some((a) => a.startsWith("data-rules")),
-        );
-        return places.length > 0 && places.every((d) => d.querySelector(".rule-list > li"));
-      });
-      const names = await frame
-        .locator(".rule-list .schema")
-        .evaluateAll((schemas) => schemas.map((s) => s.getAttribute("aria-label") ?? ""));
-      return new Set(names.map((name) => name.slice(0, name.indexOf(": from "))));
-    } finally {
-      await context.close();
-    }
-  })();
-  return drawn;
-}
-
-/**
- * Whether a violation is one SC 2.5.8 excepts: a rule label's button under 24 pixels, or partly
- * under the stage's view controls or a sheet over the stage, whose rule Learn's Reference also
- * draws (`reference`, by name; `rules.test.ts` holds each label to the same hint there). The Reference's controls meet the criterion, so the label's function is achieved
- * through an equivalent control (the criterion's "equivalent" exception). A label's button
- * that overlaps another button of the drawing is never excepted: each label shares the gap with
- * its neighbours (`spread`), and `crowded` names those that overlap, measured here, since axe
- * names no covering element for a target under 24 pixels. A screen reader hears the hint as the
- * label's description in every case.
- */
-const excepted = (
-  rule: string,
-  html: string,
-  crowded: readonly string[],
-  reference: ReadonlySet<string>,
-) => {
-  const name = /^<button[^>]* class="lb"[^>]* aria-label="([^"]*)"/
-    .exec(html)?.[1]
-    ?.replaceAll("&amp;", "&");
-  const label = name === undefined ? undefined : /^Rule (.+), step \d+$/.exec(name)?.[1];
-  return (
-    rule === "target-size" &&
-    name !== undefined &&
-    label !== undefined &&
-    reference.has(label) &&
-    !crowded.includes(name)
-  );
-};
-
-/** The names of the rule labels' buttons that overlap another button over the drawing. */
-async function crowding(page: Page): Promise<string[]> {
-  return page.evaluate(() => {
-    const drawn = [...document.querySelectorAll<HTMLElement>(".hits button")].map((b) => ({
-      b,
-      r: b.getBoundingClientRect(),
-    }));
-    const across = (a: number, b: number, c: number, d: number) => Math.min(b, d) - Math.max(a, c);
-    return drawn
-      .filter(
-        ({ b, r }) =>
-          b.classList.contains("lb") &&
-          drawn.some(
-            (o) =>
-              o.b !== b &&
-              across(r.left, r.right, o.r.left, o.r.right) > 0.5 &&
-              across(r.top, r.bottom, o.r.top, o.r.bottom) > 0.5,
-          ),
-      )
-      .map(({ b }) => b.getAttribute("aria-label") ?? "");
-  });
-}
-
 /** axe's violations on the page as it stands, one line per rule and element, with axe's reason. */
 async function violations(page: Page, state: string): Promise<string[]> {
   const results = await new AxeBuilder({ page }).withTags(TAGS).analyze();
-  const crowded = await crowding(page);
-  const reference = await inTheReference(page);
   return results.violations.flatMap((rule) =>
-    rule.nodes
-      .filter((node) => !excepted(rule.id, node.html, crowded, reference))
-      .map((node) => {
-        const why = [...node.any, ...node.all, ...node.none].map((check) => check.message);
-        return `${state}: ${rule.id} at ${node.target.join(" ")}: ${why.join("; ") || rule.help}`;
-      }),
+    rule.nodes.map((node) => {
+      const why = [...node.any, ...node.all, ...node.none].map((check) => check.message);
+      return `${state}: ${rule.id} at ${node.target.join(" ")}: ${why.join("; ") || rule.help}`;
+    }),
   );
 }
 
@@ -176,36 +79,28 @@ async function pages(page: Page, visit: Visit) {
   await visit("rocq-linlog");
 }
 
-/** A proof begun, then the restore bar after a reload. */
+/** A proof begun, then the new tab view's "Restore N proofs" and "Close every sequent". */
 async function restored(page: Page, visit: Visit) {
   await start(page, "A * B |- B * A");
   await restoring(page, visit);
 }
 
-/** The band's menus, the status and the calculus, on a proof closed. */
-async function band(page: Page, visit: Visit) {
+/** The tools' panels and the list of views, on a proof closed. */
+async function panels(page: Page, visit: Visit) {
   await proveCommuted(page);
   await menus(page, visit);
 }
 
-/** Practice and the tour, from the empty page. */
-async function studying(page: Page, visit: Visit) {
-  await goto(page);
-  await practising(page, visit);
+/** Settings, the keys, the guide, the restart warning, the new tab view's examples and About. */
+async function settled(page: Page, visit: Visit) {
+  await proveCommuted(page);
+  await framePages(page, visit);
+}
+
+/** The tour, from the new tab view. */
+async function toured(page: Page, visit: Visit) {
+  await proveCommuted(page);
   await touring(page, visit);
-}
-
-/** Learn's places and a worked lesson, from the empty page. */
-async function lessons(page: Page, visit: Visit) {
-  await goto(page);
-  await learning(page, visit);
-}
-
-/** The lessons on an attempt, a cut's elimination and a refusal, from Learn's list. */
-async function attempts(page: Page, visit: Visit) {
-  await goto(page);
-  await toLessons(page);
-  await attempting(page, visit);
 }
 
 /** The stage in each math font, from the empty page. */
@@ -218,24 +113,20 @@ async function typeset(page: Page, visit: Visit) {
 const WALKS: readonly (readonly [string, (page: Page, visit: Visit) => Promise<void>])[] = [
   ["the other pages", pages],
   ["a proof and its popovers", proving],
-  ["the band's menus, the status and the calculus", band],
-  ["Practice and the tour", studying],
-  ["Learn", lessons],
-  ["Learn's attempts", attempts],
-  ["the restore bar", restored],
+  ["the tools' panels and the list of views", panels],
+  ["Settings, the keys, the guide and About", settled],
+  ["the tour", toured],
+  ["restoring and closing every sequent", restored],
   ["a goal's reasons", reasons],
-  ["Learn's answers", answers],
-  ["an ordinary tab", ordinary],
+  ["an ordinary sequent", ordinary],
   ["a classical proof's truth table and tableau", methods],
   ["a classical proof's translations and interpolants", transforms],
   ["a classical proof's normal forms and resolution", clausal],
-  ["the workspace of linked tabs", linking],
-  ["a calculus of one's own", customising],
+  ["a translation proved and a copy", linking],
   ["modal logic", modalising],
   ["lambda-terms", lambdaing],
   ["course packs", packing],
   ["natural deduction", deducing],
-  ["the ordinary course", coursing],
   ["the witness chooser", witnessing],
   ["the cut chooser and the elimination", cutting],
   ["the stage in each math font", typeset],

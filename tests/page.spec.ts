@@ -3,7 +3,7 @@
 
 import type { Locator, Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
-import { goto } from "./prover";
+import { start } from "./prover";
 
 test("the page loads without an error in both schemes", async ({ page }) => {
   for (const colorScheme of ["light", "dark"] as const) {
@@ -51,7 +51,7 @@ test("the policy is in force: inline code the build did not hash is refused", as
   expect(outcome.blocked).toEqual(expect.arrayContaining(["script-src-elem", "style-src-attr"]));
 });
 
-test("the header and the 404 page show deduxit's word mark, its long marks in lapis", async ({
+test("the top row and the 404 page show deduxit's word mark, its long marks in lapis", async ({
   page,
 }) => {
   const macrons = (mark: Locator) =>
@@ -64,14 +64,14 @@ test("the header and the 404 page show deduxit's word mark, its long marks in la
       .first()
       .evaluate((path: Element) => getComputedStyle(path).fill);
   for (const [scheme, lapis, ink] of [
-    ["light", "rgb(36, 86, 201)", "rgb(18, 26, 46)"],
-    ["dark", "rgb(122, 167, 255)", "rgb(227, 232, 244)"],
+    ["light", "rgb(36, 86, 201)", "rgb(21, 24, 33)"],
+    ["dark", "rgb(122, 167, 255)", "rgb(236, 238, 243)"],
   ] as const) {
     await page.emulateMedia({ colorScheme: scheme });
     await page.goto("/");
-    const mark = page.locator("header.band.top").getByRole("button", { name: "deduxit" });
+    const mark = page.locator("header.top-row .mark-word");
     await expect(mark).toBeVisible();
-    expect((await mark.boundingBox())?.height).toBeCloseTo(30, 0);
+    expect((await mark.locator("svg").boundingBox())?.height).toBeCloseTo(30, 0);
     expect(await macrons(mark)).toEqual([lapis, lapis]);
     expect(await letters(mark)).toBe(ink);
     await page.goto("/no-such-page");
@@ -82,71 +82,6 @@ test("the header and the 404 page show deduxit's word mark, its long marks in la
   }
 });
 
-/** The dictionary line of the mark's word, as the page sets it. */
-const DICTIONARY =
-  'dēdūxit [deːˈduːk.sɪt] Latin, verb: "it has derived", the perfect of dēdūcō, to lead down, derive.';
-
-test("the band's mark shows its dictionary line on hover, keeps it under the pointer, and Escape dismisses it", async ({
-  page,
-}) => {
-  await page.goto("/");
-  const mark = page.locator("header.band.top").getByRole("button", { name: "deduxit" });
-  const card = page.getByRole("tooltip").filter({ hasText: "dēdūxit" });
-  await expect(card).toBeHidden();
-  await mark.hover();
-  await expect(card).toBeVisible();
-  await expect(card).toHaveText(DICTIONARY);
-  // The pointer moves from the mark onto the card, across the gap, and back, and the card stays.
-  const from = await mark.boundingBox();
-  const to = await card.boundingBox();
-  if (!from || !to) throw new Error("the mark or its card has no box");
-  const onMark = [from.x + from.width / 2, from.y + from.height / 2] as const;
-  await page.mouse.move(...onMark);
-  await page.mouse.move(to.x + to.width / 2, to.y + to.height / 2, { steps: 8 });
-  await expect(card).toBeVisible();
-  await page.mouse.move(...onMark, { steps: 8 });
-  await expect(card).toBeVisible();
-  // Escape dismisses it with the pointer still on the mark, until the pointer leaves.
-  await page.keyboard.press("Escape");
-  await expect(card).toBeHidden();
-  await page.mouse.move(onMark[0] + 4, onMark[1]);
-  await expect(card).toBeHidden();
-  await page.getByRole("textbox", { name: "Sequent" }).hover();
-  await mark.hover();
-  await expect(card).toBeVisible();
-});
-
-test("the band's mark is reached by the keyboard and by a click, describes itself by its dictionary line, and Escape dismisses it", async ({
-  page,
-}) => {
-  await page.goto("/");
-  const mark = page.locator("header.band.top").getByRole("button", { name: "deduxit" });
-  await expect(mark).toHaveAccessibleDescription(DICTIONARY);
-  const card = page.getByRole("tooltip").filter({ hasText: "dēdūxit" });
-  // The keyboard reaches the mark back from the sequent field, which the page opens with.
-  await page.getByRole("textbox", { name: "Sequent" }).focus();
-  const focused = () => mark.evaluate((el) => el === document.activeElement);
-  for (let stops = 0; stops < 10 && !(await focused()); stops++)
-    await page.keyboard.press("Shift+Tab");
-  await expect(mark).toBeFocused();
-  await expect(card).toBeVisible();
-  await page.keyboard.press("Escape");
-  await expect(card).toBeHidden();
-  await expect(mark).toBeFocused();
-  await page.keyboard.press("Tab");
-  await expect(mark).not.toBeFocused();
-  await page.keyboard.press("Shift+Tab");
-  await expect(card).toBeVisible();
-  // A click keeps the card under the mark until the focus leaves.
-  await page.getByRole("textbox", { name: "Sequent" }).click();
-  await expect(card).toBeHidden();
-  await mark.click();
-  await page.getByRole("textbox", { name: "Sequent" }).hover();
-  await expect(card).toBeVisible();
-  await page.getByRole("textbox", { name: "Sequent" }).click();
-  await expect(card).toBeHidden();
-});
-
 test("the Rocq library's old address forwards to its new one", async ({ page }) => {
   const forward = await page.goto("/rocq-linlog/");
   expect(forward?.status()).toBe(200);
@@ -154,38 +89,51 @@ test("the Rocq library's old address forwards to its new one", async ({ page }) 
   await expect(page.getByRole("heading", { name: "rocq-deduxit's documentation" })).toBeVisible();
 });
 
-test("the pictograms are Lucide's, hidden from a screen reader, each action named", async ({
+test("the pictograms are Lucide's, hidden from a screen reader, each control named", async ({
   page,
 }) => {
-  await page.goto("/");
-  const icons = page.locator(".band svg.lucide");
+  await start(page, "A * B |- B * A");
+  const icons = page.locator(":is(.top-row, .tools) svg.lucide");
   expect(await icons.count()).toBeGreaterThanOrEqual(14);
   for (const icon of await icons.all()) {
     await expect(icon).toHaveAttribute("aria-hidden", "true");
     await expect(icon).toHaveAttribute("class", /lucide-[a-z0-9-]+/);
   }
-  // An icon alone names its action, and shows its tip on focus as on hover.
-  for (const name of ["Undo", "Redo", "New proof"]) {
+  // An icon alone names its control, and shows its tip on focus as on hover.
+  for (const name of ["Undo", "Redo", "New sequent"]) {
     await expect(page.getByRole("button", { name, exact: true })).toBeAttached();
   }
-  await page.getByRole("button", { name: "New proof" }).focus();
-  await expect(page.getByRole("tooltip")).toHaveText(/A new proof/);
+  await page.getByRole("button", { name: "New sequent", exact: true }).focus();
+  await expect(page.getByRole("tooltip")).toHaveText(/New sequent/);
 });
 
 /**
- * Each of the bottom band's actions that overlaps another, or whose icon, label or key is drawn
- * outside it or over another of its parts, described.
+ * Each control of the top row and of the tools that overlaps another, or whose icon or name is
+ * drawn outside it or over another of its parts, described.
  */
-async function bandClashes(page: Page): Promise<string[]> {
+async function frameClashes(page: Page): Promise<string[]> {
   return page.evaluate(() => {
     const name = (b: Element) => b.getAttribute("aria-label") ?? b.textContent?.trim() ?? "";
     const across = (a: number, b: number, c: number, d: number) => Math.min(b, d) - Math.max(a, c);
     const overlap = (r: DOMRect, q: DOMRect) =>
       across(r.left, r.right, q.left, q.right) > 0.5 &&
       across(r.top, r.bottom, q.top, q.bottom) > 0.5;
-    const actions = [...document.querySelectorAll(".band.bottom :is(button, a[href])")]
+    /** A control's box as it is seen: cut to every ancestor that scrolls (the row of chips). */
+    const seen = (b: Element) => {
+      const r = b.getBoundingClientRect();
+      let [left, right] = [r.left, r.right];
+      for (let a = b.parentElement; a; a = a.parentElement) {
+        if (getComputedStyle(a).overflowX === "visible") continue;
+        const c = a.getBoundingClientRect();
+        left = Math.max(left, c.left);
+        right = Math.min(right, c.right);
+      }
+      return new DOMRect(left, r.top, Math.max(0, right - left), r.height);
+    };
+    const actions = [...document.querySelectorAll(":is(.top-row, .tools) :is(button, a[href])")]
       .filter((b) => b.checkVisibility({ visibilityProperty: true }))
-      .map((b) => ({ b, r: b.getBoundingClientRect() }));
+      .map((b) => ({ b, r: b.getBoundingClientRect(), v: seen(b) }))
+      .filter(({ v }) => v.width > 0);
     const clashes: string[] = [];
     for (const { b, r } of actions) {
       // A label kept for a screen reader alone is clipped away and draws nothing.
@@ -202,33 +150,29 @@ async function bandClashes(page: Page): Promise<string[]> {
         for (const { p: o, q: s } of parts.slice(i + 1))
           if (overlap(q, s)) clashes.push(`${part} over its ${o.tagName.toLowerCase()}`);
       }
-      for (const { b: o, r: q } of actions)
-        if (o !== b && !b.contains(o) && !o.contains(b) && overlap(r, q))
+      for (const { b: o, v: q } of actions)
+        if (o !== b && !b.contains(o) && !o.contains(b) && overlap(seen(b), q))
           clashes.push(`${name(b)} over ${name(o)}`);
     }
     return clashes;
   });
 }
 
-test("the bottom band's actions and their labels stand apart at every width, Learn off and on", async ({
+test("the top row's and the tools' controls and their names stand apart at every width, the guide off and on", async ({
   page,
 }) => {
-  const widths = [320, 412, 641, 800, 1024, 1280, 1920, 2560];
-  await goto(page);
-  for (const learn of [false, true]) {
-    if (learn) {
-      await page.setViewportSize({ width: 1280, height: 800 });
-      await page.getByRole("button", { name: "Learn" }).click();
-      await expect(page.getByRole("complementary", { name: "Learn" })).toBeVisible();
-    }
+  const widths = [320, 412, 599, 600, 800, 839, 840, 1024, 1280, 1920, 2560];
+  await start(page, "A * B |- B * A");
+  for (const guide of [false, true]) {
+    if (guide) await page.getByRole("button", { name: "Guide", exact: true }).click();
     for (const width of widths) {
       await page.setViewportSize({ width, height: 800 });
-      expect(await bandClashes(page), `${width}, Learn ${learn ? "on" : "off"}`).toEqual([]);
+      expect(await frameClashes(page), `${width}, the guide ${guide ? "on" : "off"}`).toEqual([]);
     }
   }
 });
 
-test("the privacy page is served, names who is responsible, cites a source for each statement, and About and the band link it", async ({
+test("the privacy page is served, names who is responsible, cites a source for each statement, and About and Settings link it", async ({
   page,
 }) => {
   const response = await page.goto("/privacy/");
@@ -252,10 +196,14 @@ test("the privacy page is served, names who is responsible, cites a source for e
   await expect(main).toContainText("information, not legal advice");
 
   await page.goto("/");
-  await page.locator("footer").getByRole("link", { name: "Privacy" }).click();
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await page.getByRole("link", { name: "Privacy" }).click();
   await expect(page).toHaveURL(/\/privacy\/$/);
   await page.goto("/");
-  await page.locator("footer").getByRole("button", { name: "About" }).click();
+  await page
+    .getByRole("region", { name: "New sequent" })
+    .getByRole("button", { name: "About" })
+    .click();
   const line = page.getByRole("dialog", { name: "About" }).locator(".privacy");
   await expect(line).toContainText("logs every visitor's IP address");
   await line.getByRole("link", { name: "the privacy page" }).click();

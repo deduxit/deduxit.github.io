@@ -2,88 +2,80 @@
    Licensed under the EUPL */
 
 /*
- * The design tokens: colour roles, type, spacing, radii and motion, the
- * visual reference's ("Instrument") token system. Nothing anywhere else names
- * a raw colour or size; app.css and the island read these variables.
+ * The design tokens: the scale of the design guide (design/redesign.md, "The
+ * scale"): colours, type, spacing, corners, borders, controls and motion.
+ * Nothing anywhere else names a raw colour or size; app.css and the island
+ * read these variables.
  *
  * `@theme static' makes each token both a CSS variable on :root and a
- * Tailwind utility (`bg-panel', `text-dim', `font-math'), and emits every
- * variable even where no utility uses it. Tailwind's own palette, fonts and
- * type scale are switched off (`--color-*: initial', ...), so a utility can
- * only name a token.
+ * Tailwind utility, and emits every variable even where no utility uses it.
+ * Tailwind's own palette, fonts and type scale are switched off
+ * (`--color-*: initial', ...), so a utility can only name a token.
  *
- * Colour roles are `light-dark(<light>, <dark>)'. Which half applies follows
+ * Colours are `light-dark(<light>, <dark>)'. Which half applies follows
  * `color-scheme' (below): the system's preference, unless <html data-theme>
- * pins one. Contrast (WCAG): every text role is AA on the field and on a
- * panel in both schemes; --line meets 3:1 for control borders (1.4.11);
- * --edge and --dot are decorative. Every colour that carries a meaning stays
- * apart from the colours seen with it under simulated protanopia,
- * deuteranopia and tritanopia (colours.test.ts), and has a word, a sign or a
- * shape beside it.
+ * pins one. colours.test.ts holds the guide's pairs: text (ink, ink2, soft)
+ * at 4.5:1 on paper, band, wash and over; edge at 3:1 on paper and band;
+ * paper on lapis; and the colours that carry a meaning apart under simulated
+ * colour-vision deficiencies.
  */
 @theme static {
   --color-*: initial;
-  /* The stage and the sequent field. */
-  --color-field: light-dark(#e9edf4, #0c1222);
-  /* The bands, clusters, popovers and menus. */
-  --color-panel: light-dark(#fbfcfe, #151c30);
-  --color-panel-2: light-dark(#f1f4fa, #1b2340);
-  /* Text and the drawing. */
-  --color-ink: light-dark(#121a2e, #e3e8f4);
-  /* Secondary text. */
-  --color-dim: light-dark(#46506c, #9ba5c2);
-  /* The search's rule labels, set apart from the student's. */
-  --color-faint: light-dark(#5a6482, #7d88a8);
-  /* Selection and the active goal. */
-  --color-accent: light-dark(#6b46cf, #958ad5);
-  --color-accent-wash: light-dark(rgb(107 70 207 / 0.12), rgb(149 138 213 / 0.14));
+  /* The page, boxes, fields. */
+  --color-paper: light-dark(#ffffff, #14171f);
+  /* The top row, the rail, code blocks. */
+  --color-band: light-dark(#f2f3f5, #1c2029);
+  /* Text, the bottom box's edge, a popover's edge. */
+  --color-ink: light-dark(#151821, #eceef3);
+  /* Second-rank text: labels, an option not chosen. */
+  --color-ink2: light-dark(#4a5163, #a5acbc);
+  /* Third-rank text. */
+  --color-soft: light-dark(#5a6172, #969dae);
+  /* Inactive controls only, and a switch that is off; never text that says something. */
+  --color-faint: light-dark(#8a90a0, #7b8394);
+  /* The edge of a text field and a list, at 3:1. */
+  --color-edge: light-dark(#7e8494, #8891a3);
+  /* The edge of a toggle's box, the tools, a panel: where the box is not what tells the control. */
+  --color-line: light-dark(#b9beca, #474e60);
+  /* Hairlines between rows and regions. */
+  --color-hair: light-dark(#d5d8df, #333949);
+  /* What is chosen; an open goal; the focus ring; links. */
+  --color-lapis: light-dark(#2456c9, #7aa7ff);
+  /* A link under the pointer. */
+  --color-deep: light-dark(#173e96, #a9c6ff);
+  /* The ground of what is chosen, and of a control while pressed. */
+  --color-wash: light-dark(#e8eefb, #1e2c4d);
+  /* Proved, valid, holds. */
+  --color-good: light-dark(#075e55, #86e2ba);
+  /* No proof, not valid, fails. */
+  --color-bad: light-dark(#b3261e, #ff8f85);
+  /* The stage's dots. */
+  --color-dot: light-dark(#a9b2c8, #39404f);
+  /* A control under the pointer. */
+  --color-over: light-dark(#e2e5ea, #2a2f3b);
   /* The mark's long marks: the lapis of its files (src/logo/), fixed, the
      project's identity rather than a meaning, so it stays out of the colours
-     of meaning; colours.test.ts holds it to 3:1 on the band and the field and
+     of meaning; colours.test.ts holds it to 3:1 on the band and the paper and
      to the mark alone. */
   --color-logo: light-dark(#2456c9, #7aa7ff);
-  /* A checked proof, and nothing else. */
-  --color-ok: light-dark(#0d430d, #06b68c);
-  --color-ok-wash: light-dark(rgb(13 67 13 / 0.12), rgb(6 182 140 / 0.14));
-  /* Unknown, and a search running or given up. */
-  --color-warn: light-dark(#715301, #f5cb4d);
-  --color-warn-wash: light-dark(rgb(113 83 1 / 0.12), rgb(245 203 77 / 0.14));
-  /* A refusal, and unprovable. */
-  --color-bad: light-dark(#b23554, #ec6e52);
-  --color-bad-wash: light-dark(rgb(178 53 84 / 0.1), rgb(236 110 82 / 0.13));
-  /* Control borders, at 3:1. */
-  --color-line: light-dark(#7d86a0, #5e6a90);
-  /* Hairlines. */
-  --color-edge: light-dark(#b9c1d4, #2a3352);
-  /* The stage's dotted grid. */
-  --color-dot: light-dark(#a9b2c8, #2e3858);
-  /* Learn's frame, the page's one mode, and its panel. */
-  --color-learn: light-dark(#730e73, #f197ed);
-  --color-learn-wash: light-dark(#f3e6f5, #2a1e3a);
   /* The net's colours, each a hue of Okabe and Ito's palette at 4.5:1 on the
-     field: the ⅋ edges of a net and the input side of an essential net blue
+     paper: the ⅋ edges of a net and the input side of an essential net blue
      (the two never share a drawing), the dominator lines reddish purple, and
      a witness's edges vermilion. */
-  --color-net-par: light-dark(#045383, #80c6ff);
-  --color-net-input: light-dark(#045383, #80c6ff);
-  --color-net-dominator: light-dark(#6d2351, #ef99c8);
-  --color-net-highlight: light-dark(#933f02, #d05c03);
-  /* The drawing's glow on the dark field; none by day. */
-  --color-glow: light-dark(rgb(52 70 200 / 0), rgb(170 185 255 / 0.35));
-  --color-shadow-near: light-dark(rgb(18 26 46 / 0.06), rgb(0 0 0 / 0.3));
-  --color-shadow-far: light-dark(rgb(18 26 46 / 0.25), rgb(0 0 0 / 0.8));
-  --color-scrim: light-dark(rgb(18 26 46 / 0.55), rgb(4 7 15 / 0.72));
-
-  /* The floating clusters, a little translucent over the field, and the
-     hairline of light along their top edge. */
-  --color-glass: light-dark(rgb(251 252 254 / 0.96), rgb(21 28 48 / 0.95));
-  --color-sheen: light-dark(rgb(255 255 255 / 0.9), rgb(255 255 255 / 0.06));
+  --color-net-par: light-dark(#0071b6, #74bcf5);
+  --color-net-input: light-dark(#0071b6, #74bcf5);
+  --color-net-dominator: light-dark(#5d2045, #b37b99);
+  --color-net-highlight: light-dark(#933e00, #d45e00);
+  /* The shade behind a sheet in a compact window. */
+  --color-scrim: light-dark(rgb(21 24 33 / 0.4), rgb(0 0 0 / 0.6));
 
   --font-*: initial;
   /* Every word of the interface. */
-  --font-text: "Figtree Variable", system-ui, sans-serif;
-  /* The sequent field alone, where ASCII input is typed. */
-  --font-mono: "Space Mono", ui-monospace, monospace;
+  --font-text: "Ysabeau Office", system-ui, sans-serif;
+  /* The word mark and a page's headings. */
+  --font-head: "Gentium Book Plus", Georgia, serif;
+  /* What a text export writes. */
+  --font-mono: ui-monospace, monospace;
   /* Every formula and rule name. */
   --font-math: "Euler Math", "Neo Euler", serif;
   /* The other math fonts Settings may set the formulas in. */
@@ -94,130 +86,199 @@
 
   --font-weight-*: initial;
   --font-weight-normal: 400;
+  /* An option not chosen, a button's name. */
+  --font-weight-medium: 500;
+  /* What is chosen, a heading in a panel, a verdict's keyword. */
   --font-weight-semibold: 600;
+  /* The word mark and a page's headings. */
   --font-weight-bold: 700;
 
-  /* The type scale: the interface's five steps, a page's title, and the
-     logic's three in Euler Math (a tab's sequent, a premise, a popover's
-     formula and a rule's name). */
+  /* The interface's four sizes, the two headings, and the formulas' own. */
   --text-*: initial;
-  --text-label: 11px;
-  --text-small: 12.5px;
-  --text-body: 14px;
-  --text-panel: 15px;
-  --text-head: 18px;
-  --text-title: 32px;
-  --text-math: 17px;
-  --text-math-large: 20px;
+  /* Counts and signs on a cell, a group's heading in a list, "soon". */
+  --text-sign: 0.75rem;
+  /* A toggle's cell; a panel's labels and fields; a rail cell's longer name. */
+  --text-control: 0.875rem;
+  /* The body: rows, notes, buttons, tools' names with the guide on. */
+  --text-body: 0.9375rem;
+  /* A rail cell's name of one or two letters; text in a field on a touch screen. */
+  --text-field: 1rem;
+  /* A section, a pack's title, a logic's name on the new tab view. */
+  --text-head: 1.25rem;
+  /* A page's title. */
+  --text-title: 1.875rem;
+  /* A formula in a row, a chip, the bottom box. */
+  --text-math: 1.0625rem;
+  /* A rule's button in the popover. */
+  --text-math-large: 1.1875rem;
   /* The model editor's words on its canvas, in its own units (scaled with the canvas). */
   --text-canvas: 10px;
   --text-canvas-math: 15px;
 
   --leading-*: initial;
   --leading-none: 1;
-  --leading-snug: 1.25;
-  --leading-normal: 1.45;
+  /* Two stacked signs in a cell. */
+  --leading-tight: 1.05;
+  /* A label of two lines. */
+  --leading-snug: 1.2;
+  /* Text. */
+  --leading-normal: 1.35;
 
-  /* The one spacing scale: every gap, padding, margin and offset is a step
-     of it. */
+  /* The spacing scale: 4, 8, 12, 16, 24, 32 and 48, and 2 inside a control. */
   --spacing: 4px;
-  --spacing-0-5: 2px;
-  --spacing-1: 4px;
-  --spacing-1-5: 6px;
-  --spacing-2: 8px;
-  --spacing-3: 12px;
-  --spacing-4: 16px;
-  --spacing-5: 24px;
-  --spacing-6: 32px;
-  --spacing-7: 48px;
-  --spacing-8: 96px;
+  --spacing-0-5: 0.125rem;
+  --spacing-1: 0.25rem;
+  --spacing-2: 0.5rem;
+  --spacing-3: 0.75rem;
+  --spacing-4: 1rem;
+  --spacing-5: 1.5rem;
+  --spacing-6: 2rem;
+  --spacing-7: 3rem;
   /* The least target size anywhere (WCAG 2.2, 2.5.8). */
-  --spacing-target: 24px;
+  --spacing-target: 1.5rem;
 
+  /* Corners. A nested corner is its parent's less the border and the padding
+     between them, so that both curves have one centre (the guide's pairs). */
   --radius-*: initial;
-  /* Clusters, menus and cards; a control; a key cap or a small mark. */
-  --radius-cluster: 10px;
-  --radius-control: 6px;
-  --radius-key: 4px;
+  /* A field, a button, a badge, a cell in a toggle's box, Enter. */
+  --radius-control: 0.5rem;
+  /* A row in a panel. */
+  --radius-row: 0.5625rem;
+  /* A chip; a tool inside the tools. */
+  --radius-chip: 0.625rem;
+  /* A toggle's box. */
+  --radius-toggle: 0.6875rem;
+  /* A rail cell, a note, a cell in a capsule. */
+  --radius-cell: 0.75rem;
+  /* The tools' column. */
+  --radius-tools: 0.9375rem;
+  /* A panel, a popover, the bottom box, a capsule. */
+  --radius-panel: 1rem;
+  /* A checkbox. */
+  --radius-check: 0.3125rem;
+  /* A switch and a round button: half their height. */
   --radius-round: 999px;
 
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
-  /* Popovers, a label settling, the camera, a refusal's shake; all 0 under
-     reduced motion (app.css). */
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  /* A change of scheme fades every colour. */
+  --duration-scheme: 500ms;
+  /* A panel that opens moves the drawing aside. */
+  --duration-panel: 200ms;
+  /* A switch's knob. */
+  --duration-knob: 150ms;
+  /* A popover appearing, the camera's glide, a refusal's shake. */
   --duration-fast: 120ms;
-  --duration-mid: 220ms;
   --duration-camera: 380ms;
   --duration-shake: 240ms;
 }
 
 /*
- * The sizes of things that are not spacing: the controls (every button,
- * field and switch is one of two heights, both 44 pixels on a phone, WCAG's
- * enhanced target size), icons, marks, and the widths of the panels; the
- * lines, the layers, the opacities and the blur. Plain variables, since
- * Tailwind has no namespace for them.
+ * The sizes of things that are not spacing (the guide's "Controls" and "The
+ * frame"), the lines, the layers and the opacities. Plain variables, since
+ * Tailwind has no namespace for them. A compact window and a coarse pointer
+ * make every target 44 pixels (below).
  */
 :root {
-  --size-control: 32px;
-  --size-control-small: 28px;
-  --size-chip: 24px;
-  --size-band: 48px;
-  /* The panel of linked tabs where it docks left of the stage, and a tab's
-     card in the workspace's graph. */
-  --size-workspace: 320px;
-  --size-card: 240px;
-  /* The word mark's height (about its em) in the top band, larger than the
-     band's 18-pixel words so that the ring reads as a ring, and on About and
-     the 404 page. */
-  --size-wordmark: 30px;
-  --size-wordmark-large: 32px;
-  --size-icon: 18px;
-  --size-icon-small: 16px;
-  --size-key: 18px;
-  --size-badge: 16px;
-  --size-lamp: 10px;
-  --size-switch: 32px;
-  --size-switch-height: 18px;
-  --size-knob: 12px;
-  --size-rung: 12px;
-  --size-rung-height: 4px;
-  --size-label-column: 96px;
-  --size-premise-column: 44px;
-  --size-field: 380px;
-  --size-field-share: 60vw;
+  /* A plain button, a text field, a list. */
+  --size-button: 1.875rem;
+  /* The type in a text field: 16 on a touch screen, where iOS zooms into a field with less. */
+  --size-input-text: var(--text-control);
+  /* A toggle's cell and its box. */
+  --size-toggle: 1.5rem;
+  --size-toggle-box: 1.875rem;
+  /* A tool and a top-row button. */
+  --size-tool: 2.125rem;
+  --size-tool-width: 2.25rem;
+  /* The tools' column. */
+  --size-tools: 2.875rem;
+  /* The caret under "Close all". */
+  --size-caret: 1.5rem;
+  /* A sequent's chip: its height, least and most width. */
+  --size-chip: 2.125rem;
+  --size-chip-least: 5.25rem;
+  --size-chip-most: 18.75rem;
+  /* A rail cell, the graph's cell, the rail. */
+  --size-cell: 2.75rem;
+  --size-cell-short: 1.875rem;
+  --size-rail: 3.75rem;
+  /* The compact window's row of views and bar of tools. */
+  --size-views: 3.25rem;
+  /* The top row. */
+  --size-top: 3rem;
+  /* The bottom box with its notes as the page measures it (Frame.tsx), the box alone at first. */
+  --size-bottom: var(--size-box);
+  /* The bottom box, its Enter, its most width. */
+  --size-box: 3.375rem;
+  --size-enter: 2.375rem;
+  --size-box-most: 35rem;
+  /* A rule's button in the popover. */
+  --size-rule: 2.5rem;
+  --size-rule-least: 3.75rem;
+  /* A switch and its knob. */
+  --size-switch: 1.75rem;
+  --size-switch-height: 1rem;
+  --size-knob: 0.75rem;
+  /* A checkbox and its row. */
+  --size-check: 1.125rem;
+  --size-check-row: 2.25rem;
+  /* A logic on the new tab view. */
+  --size-logic: 11.5rem;
+  --size-logic-sign: 5.75rem;
+  /* The gap between the stage's dots. */
+  --size-dots: 1.25rem;
+  /* The frame's own offsets: a region's inset from the stage's edge, the gap
+     between rail cells and toggles' boxes, the bottom box from the stage's
+     bottom, the top row's padding at the right. */
+  --size-inset: 0.625rem;
+  --size-gap: 0.375rem;
+  --size-box-inset: 1.5rem;
+  /* The word mark's height in the top row, and on About and the 404 page. */
+  --size-wordmark: 1.875rem;
+  --size-wordmark-large: 2rem;
+  --size-icon: 1.125rem;
+  --size-icon-small: 1rem;
+  --size-sign: 0.875rem;
+  --size-key: 1.125rem;
+  --size-badge: 1rem;
+  --size-lamp: 0.625rem;
+  --size-rung: 0.75rem;
+  --size-rung-height: 0.25rem;
+  --size-label-column: 6rem;
+  --size-premise-column: 2.75rem;
   --size-grid-dot: 1.1px;
-  --size-grid-fade: 1.6px;
-  --size-tab: 240px;
-  --size-popover: 200px;
-  --size-popover-wide: 340px;
-  --size-menu: 400px;
-  --size-practice: 920px;
-  --size-frame: 360px;
+  --size-popover: 12.5rem;
+  --size-popover-wide: 21.25rem;
+  /* A panel, the Export panel, the Settings page, running text. */
+  --size-panel: 22.5rem;
+  --size-panel-wide: 35rem;
+  --size-page: 40rem;
+  --size-text: 40rem;
   /* The tallest a countermodel's drawing stands under its note before it scales down. */
-  --size-model: 240px;
+  --size-model: 15rem;
   /* A tableau's line: its number, its sign, and the indent of a branch's end under the formulas. */
   --size-tableau-number: 2.5em;
   --size-tableau-sign: 1.25em;
   --size-tableau-indent: 3.75em;
-  --size-tour: 320px;
-  --size-text: 640px;
-  --size-ledger-label: 160px;
-  --size-number: 160px;
-  --size-textarea: 84px;
-  --size-learn-sheet: 46vh;
+  --size-tour: 20rem;
+  --size-ledger-label: 10rem;
+  --size-number: 10rem;
+  --size-textarea: 5.25rem;
+  /* The model editor's canvas: its tallest. */
+  --size-canvas: 22.5rem;
+  /* Borders are 1 pixel; 2 for the focus ring and an open goal's dashed line. */
   --line: 1px;
   --line-strong: 2px;
-  /* The model editor's canvas: its tallest, its arrows, its marks' outlines and dashes. */
-  --size-canvas: 360px;
   --line-arrow: 1.5px;
-  --line-focus: 3px;
   --line-failing: 3.5px;
+  /* An icon's stroke, at 18 pixels and inside a plain button at 16; a check or a cross. */
+  --stroke-icon: 1.6;
+  --stroke-icon-small: 1.8;
+  --stroke-sign: 2;
   --dash-missing: 5 4;
   --dash-mark: 5 3;
   --dash-preview: 3 3;
   --press: 1px;
-  --blur-hud: 10px;
-  --opacity-disabled: 0.42;
   --opacity-dimmed: 0.45;
   --layer-stage: 4;
   --layer-hud: 5;
@@ -228,16 +289,23 @@
   --layer-tip: 90;
 }
 
-/* A phone: every control 44 by 44 pixels. */
-@media (max-width: 640px) {
+/* A compact window and a coarse pointer: every target 44 by 44 pixels, text in a field 16. */
+@media (width < 600px), (pointer: coarse) {
   :root {
-    --size-control: 44px;
-    --size-control-small: 44px;
-    --size-switch: 40px;
-    --size-switch-height: 24px;
-    --size-knob: 16px;
-    --size-band: 52px;
-    --size-tab: 30vw;
+    --size-button: 2.75rem;
+    --size-toggle: 2.75rem;
+    --size-toggle-box: 3.125rem;
+    --size-enter: 2.75rem;
+    --size-tool: 2.75rem;
+    --size-tool-width: 2.75rem;
+    --size-caret: 2.75rem;
+    --size-chip: 2.75rem;
+    --size-rule: 2.75rem;
+    --size-check-row: 2.75rem;
+    --size-switch: 2.5rem;
+    --size-switch-height: 1.5rem;
+    --size-knob: 1rem;
+    --size-input-text: var(--text-field);
   }
 }
 
@@ -253,17 +321,19 @@
 
 @media (prefers-contrast: more) {
   :root {
-    --color-faint: var(--color-dim);
-    --color-line: var(--color-ink);
-    --color-edge: var(--color-line);
-    --color-dot: var(--color-line);
+    --color-soft: var(--color-ink2);
+    --color-line: var(--color-edge);
+    --color-hair: var(--color-edge);
+    --color-dot: var(--color-edge);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   :root {
+    --duration-scheme: 0ms;
+    --duration-panel: 0ms;
+    --duration-knob: 0ms;
     --duration-fast: 0ms;
-    --duration-mid: 0ms;
     --duration-camera: 0ms;
     --duration-shake: 0ms;
   }

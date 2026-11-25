@@ -2,11 +2,11 @@
 // Licensed under the EUPL
 
 import { expect, test } from "./fixtures";
-import { calculus, start } from "./prover";
+import { calculus, start, tool } from "./prover";
 
 /** Cuts the active goal on `formula`, the goal's formulas named by `left` going to the premise proving it. */
 async function cut(page: import("@playwright/test").Page, formula: string, left: RegExp[]) {
-  await page.getByRole("button", { name: "Cut", exact: true }).click();
+  await tool(page, "Cut").click();
   const chooser = page.getByRole("dialog", { name: "Cut" });
   await chooser.getByRole("textbox").fill(formula);
   for (const name of left) await page.getByRole("button", { name }).first().click();
@@ -20,7 +20,7 @@ async function provedWithCut(page: import("@playwright/test").Page) {
   await cut(page, "A -o B", [/^A ⊗ B⊥, formula 2/]);
   await page.getByRole("button", { name: "Close all" }).first().click();
   await expect(
-    page.getByRole("status").filter({ hasText: "Proved: every goal is closed" }),
+    page.getByRole("status").filter({ hasText: "Proved. Every goal is closed." }),
   ).toBeVisible();
 }
 
@@ -28,7 +28,7 @@ test("a cut is typed in the tab's syntax, its formulas chosen, and both premises
   page,
 }) => {
   await start(page, "A, A -o B |- B");
-  await page.getByRole("button", { name: "Cut", exact: true }).click();
+  await tool(page, "Cut").click();
   const chooser = page.getByRole("dialog", { name: "Cut" });
   await chooser.getByRole("textbox").fill("A -o");
   await chooser.getByRole("button", { name: "Cut", exact: true }).click();
@@ -95,7 +95,7 @@ test("a proof's cuts are eliminated step by step on the derivation, each step un
 
 test("a proof's cut links are eliminated step by step on its net", async ({ page }) => {
   await provedWithCut(page);
-  await page.getByRole("tab", { name: "Net" }).click();
+  await page.getByRole("tab", { name: "Proof net" }).click();
   const panel = page.getByRole("region", { name: "Cut elimination" });
   await panel.getByRole("button", { name: "Eliminate the cuts" }).click();
   await expect(panel).toContainText("on the net");
@@ -118,7 +118,7 @@ test("a proof's cut links are eliminated step by step on its net", async ({ page
 
 test("an elimination to the end says which bound stopped it", async ({ page }) => {
   await provedWithCut(page);
-  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
   const steps = page.getByRole("spinbutton", { name: "Elimination steps" });
   await steps.fill("1");
   await steps.press("Enter");

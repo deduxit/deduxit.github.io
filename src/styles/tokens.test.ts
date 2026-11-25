@@ -31,7 +31,8 @@ function raw(value: string): string[] {
       n === 0 ||
       (n === 1 && (unit === "" || unit === "fr")) ||
       ((n === 100 || n === 50 || n === -50) && unit === "%") ||
-      (n === 100 && (unit === "vw" || unit === "vh"));
+      // The page's height is the visible height (the guide's "Window sizes").
+      (n === 100 && (unit === "vw" || unit === "vh" || unit === "dvh"));
     if (!allowed) found.push(whole);
   }
   return found;
@@ -63,28 +64,30 @@ describe("the stylesheet", () => {
     expect(raw("translateX(-50%) minmax(0, 1fr)")).toEqual([]);
   });
 
-  it("has a spacing scale of its own", () => {
-    const steps = [...css("tokens.css").matchAll(/--spacing-[\d-]+:\s*(\d+)px/g)].map((m) =>
-      Number(m[1]),
+  it("has the guide's spacing scale, in rem: 4, 8, 12, 16, 24, 32, 48, and 2 inside a control", () => {
+    const steps = [...css("tokens.css").matchAll(/--spacing-[\d-]+:\s*([\d.]+)rem/g)].map(
+      (m) => Number(m[1]) * 16,
     );
-    expect(steps.length).toBeGreaterThan(8);
-    expect(steps.slice(0, -1).every((step, i) => step <= (steps[i + 1] as number))).toBe(true);
+    expect(steps).toEqual([2, 4, 8, 12, 16, 24, 32, 48]);
   });
 });
 
-/** A media query's width: the one breakpoint, the same in every stylesheet and in the island. */
-const MEDIA = /\(max-width: (\d+)px\)/g;
+/** A media query's width or height, in the range syntax the stylesheets write. */
+const MEDIA = /\((width|height) (<|>=) (\d+)px\)/g;
 
-describe("the phone's breakpoint", () => {
-  it("is one width everywhere", () => {
+describe("the window's classes", () => {
+  it("are compact under 600 pixels, expanded from 840, short under 480 high, everywhere", () => {
     const dir = new URL("../islands/", import.meta.url);
     const sources = [
       css("app.css"),
       css("tokens.css"),
       ...readdirSync(dir).map((name) => readFileSync(new URL(name, dir), "utf8")),
     ];
-    const widths = new Set(sources.flatMap((text) => [...text.matchAll(MEDIA)].map((m) => m[1])));
-    expect([...widths]).toEqual(["640"]);
+    const bounds = new Set(
+      sources.flatMap((text) => [...text.matchAll(MEDIA)].map((m) => `${m[1]} ${m[3]}`)),
+    );
+    expect([...bounds].sort()).toEqual(["height 480", "width 600", "width 840"]);
+    expect(sources.filter((text) => /\((max|min)-(width|height):/.test(text))).toEqual([]);
   });
 });
 

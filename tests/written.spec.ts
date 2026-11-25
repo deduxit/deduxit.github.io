@@ -8,7 +8,7 @@
 
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
-import { calculus, goto, switches } from "./prover";
+import { addView, calculus, goto } from "./prover";
 
 /** Starts `sequent` in classical logic and opens the tableau to write. */
 async function written(page: Page, sequent: string) {
@@ -17,9 +17,8 @@ async function written(page: Page, sequent: string) {
   await page.getByRole("textbox", { name: "Sequent" }).fill(sequent);
   await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
   await expect(page.locator(".stage .fb").first()).toBeVisible();
-  const pop = await switches(page);
-  await pop.getByRole("button", { name: "Check a tableau" }).click();
-  await expect(page.getByRole("tab", { name: "Your tableau" })).toHaveAttribute(
+  await addView(page, "Tableau by hand");
+  await expect(page.getByRole("tab", { name: "Tableau by hand" })).toHaveAttribute(
     "aria-selected",
     "true",
   );

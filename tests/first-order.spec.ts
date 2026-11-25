@@ -3,7 +3,7 @@
 
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
-import { calculus, start } from "./prover";
+import { calculus, start, tool } from "./prover";
 
 /** Opens the rules of the formula whose button's name starts with `formula` and picks `name`. */
 async function pick(page: Page, formula: string, name: string) {
@@ -51,7 +51,7 @@ test("a sequent with quantifiers and terms is proved with a witness typed and on
   await expect(chooser).toBeHidden();
   await pick(page, "r(b, a)", "ax");
   await expect(
-    page.getByRole("status").filter({ hasText: "Proved: every goal is closed" }),
+    page.getByRole("status").filter({ hasText: "Proved. Every goal is closed." }),
   ).toBeVisible();
   // The derivation is drawn with its instances, the open witness filled.
   const drawing = page.locator(".drawing svg");
@@ -78,7 +78,7 @@ test("the eigenvariable condition is refused in words", async ({ page }) => {
 test("a cut at first order names an eigenvariable made below its goal", async ({ page }) => {
   await intuitionistic(page, "forall x. (p(x) -o q(x)), forall x. p(x) |- forall y. q(y)");
   await pick(page, "∀y. q(y)", "∀R");
-  await page.getByRole("button", { name: "Cut", exact: true }).click();
+  await tool(page, "Cut").click();
   const chooser = page.getByRole("dialog", { name: "Cut" });
   await chooser.getByRole("textbox").fill("r(a)");
   await chooser.getByRole("button", { name: "Cut", exact: true }).click();
@@ -90,7 +90,7 @@ test("a cut at first order names an eigenvariable made below its goal", async ({
   await expect(page.locator(".gn")).toContainText("of 2");
   await page.getByRole("button", { name: "Close all" }).first().click();
   await expect(
-    page.getByRole("status").filter({ hasText: "Proved: every goal is closed" }),
+    page.getByRole("status").filter({ hasText: "Proved. Every goal is closed." }),
   ).toBeVisible();
   await expect(page.locator(".drawing svg")).toContainText("cut");
   await expect(page.locator(".drawing svg")).toContainText("p(a) ⊢ p(a)");
@@ -135,7 +135,7 @@ test("the first-order bounds are settings, and a search says which one stopped i
   page,
 }) => {
   await start(page, "forall x. p(x) |- p(f(f(c)))");
-  await page.getByRole("button", { name: "Settings" }).first().click();
+  await page.getByRole("button", { name: "Settings", exact: true }).first().click();
   const depth = page.getByRole("spinbutton", { name: "Witness depth" });
   await expect(depth).toHaveValue("64");
   await expect(page.getByRole("spinbutton", { name: "Instances" })).toHaveValue("65536");

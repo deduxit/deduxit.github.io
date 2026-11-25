@@ -62,7 +62,7 @@ async function blockers(page: Page): Promise<string[]> {
       document.body,
       document.querySelector("header"),
       document.querySelector("footer"),
-      document.querySelector(".ptab"),
+      document.querySelector(".chip"),
     ]) {
       if (!element) continue;
       const wheel = new WheelEvent("wheel", {

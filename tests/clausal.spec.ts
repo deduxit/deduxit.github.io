@@ -7,7 +7,7 @@
 
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
-import { calculus, goto, switches } from "./prover";
+import { addView, calculus, goto } from "./prover";
 
 /** Starts a sequent in an ordinary tab of `logic`. */
 async function ordinary(page: Page, logic: string, sequent: string) {
@@ -18,13 +18,32 @@ async function ordinary(page: Page, logic: string, sequent: string) {
   await expect(page.locator(".stage .fb").first()).toBeVisible();
 }
 
-/** Opens a sheet from the Logic popover by its button's name, and returns it. */
+/** The entry of "+ view" that opens each sheet, by the sheet's name. */
+const ENTRIES: Readonly<Record<string, string>> = {
+  "Translate into intuitionistic logic": "Into intuitionistic logic",
+  "Find an interpolant": "Interpolant",
+  "Rewrite into a normal form": "Normal form",
+  "Refute by resolution": "Resolution",
+};
+
+/** Opens a sheet from "+ view" by its name, and returns it. */
 async function sheet(page: Page, name: string) {
-  const pop = await switches(page);
-  await pop.getByRole("button", { name }).click();
+  await addView(page, ENTRIES[name] ?? name);
   const opened = page.getByRole("dialog", { name });
   await expect(opened).toBeVisible();
   return opened;
+}
+
+/** Whether "+ view" offers an entry: listed and not faint. */
+async function offered(page: Page, entry: string) {
+  await page.getByRole("button", { name: "Add a view" }).click();
+  const button = page.getByRole("dialog", { name: "Add a view" }).getByRole("button", {
+    name: entry,
+    exact: true,
+  });
+  const yes = (await button.getAttribute("aria-disabled")) !== "true";
+  await page.keyboard.press("Escape");
+  return yes;
 }
 
 /** A clause's button in the sheet's list, by its number. */
@@ -38,19 +57,12 @@ const drawn = (view: ReturnType<Page["getByRole"]>, n: number) =>
 test("normal forms and resolution are offered for a started classical proof alone", async ({
   page,
 }) => {
-  await goto(page);
-  await calculus(page, ["Ordinary", "Classical"]);
-  let pop = await switches(page);
-  await expect(pop.getByRole("button", { name: "Refute by resolution" })).toHaveCount(0);
-  await page.keyboard.press("Escape");
   await ordinary(page, "Intuitionistic", "a |- a");
-  pop = await switches(page);
-  await expect(pop.getByRole("button", { name: "Rewrite into a normal form" })).toHaveCount(0);
-  await page.keyboard.press("Escape");
+  expect(await offered(page, "Normal form")).toBe(false);
+  expect(await offered(page, "Resolution")).toBe(false);
   await calculus(page, ["Classical"]);
-  pop = await switches(page);
-  await expect(pop.getByRole("button", { name: "Rewrite into a normal form" })).toBeVisible();
-  await expect(pop.getByRole("button", { name: "Refute by resolution" })).toBeVisible();
+  expect(await offered(page, "Normal form")).toBe(true);
+  expect(await offered(page, "Resolution")).toBe(true);
 });
 
 test("a normal form says its check first, and steps through each law", async ({ page }) => {

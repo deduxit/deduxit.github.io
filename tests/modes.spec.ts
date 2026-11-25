@@ -1,16 +1,19 @@
 // deduxit © Fabian Lukas Grubmüller 2026
 // Licensed under the EUPL
 
-// The calculus is each tab's own: a goal opened in a new tab keeps the whole mode of the tab
-// it came from, and a change of one tab's mode leaves the others alone, across a reload. Its
-// switches are on the tab's mark alone, and the status writes it in their words.
+// The calculus is each sequent's own: a goal opened in a new tab keeps the whole mode of the
+// sequent it came from, and a change of one sequent's mode leaves the others alone, across a
+// reload. Its toggles stand at the stage's top left, and the view's cell names it in words.
 
 import { devices, type Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
-import { calculus, rule, start } from "./prover";
+import { calculus, newTab, rule, start } from "./prover";
 
-/** The current tab's calculus mark. */
-const mark = (page: Page) => page.locator(".ptab[aria-current=true] .pt-mark");
+/** The chosen sequent's proof, its cell in the rail, whose hover names its calculus. */
+const mark = (page: Page) =>
+  page.getByRole("tablist", { name: "Views of this sequent" }).getByRole("tab").first();
+/** A calculus's short mark as the cell's hover ends in it. */
+const ends = (shown: string) => new RegExp(`, ${shown.replaceAll("+", "\\+")}$`);
 
 for (const [label, sequent, switches, shown, formula, name, left] of [
   [
@@ -39,7 +42,7 @@ for (const [label, sequent, switches, shown, formula, name, left] of [
   }) => {
     await start(page, sequent);
     await calculus(page, switches);
-    await expect(mark(page)).toContainText(shown);
+    await expect(mark(page)).toHaveAttribute("data-tip", ends(shown));
     // A goal below the root: a step first.
     await rule(page, formula, name);
     const split = page.getByRole("dialog", { name: "Split" });
@@ -47,50 +50,38 @@ for (const [label, sequent, switches, shown, formula, name, left] of [
     if (await split.isVisible()) await split.getByRole("button", { name: "Apply" }).click();
     await expect(split).toBeHidden();
     await page.getByRole("button", { name: "Open this goal in a new tab" }).click();
-    await expect(page.locator(".ptab")).toHaveCount(2);
-    await expect(mark(page)).toContainText(shown);
+    await expect(page.locator(".chip")).toHaveCount(2);
+    await expect(mark(page)).toHaveAttribute("data-tip", ends(shown));
     await expect(page.locator(".stage .fb").first()).toBeVisible();
   });
 }
 
-test("each tab keeps its own calculus, across a reload", async ({ page }) => {
+test("each sequent keeps its own calculus, across a reload", async ({ page }) => {
   await start(page, "A * B |- B * A");
   await start(page, "|- A * B, ~A, ~B", false);
   await calculus(page, ["Mix"]);
   await start(page, "A, A -o B |- B", false);
   await calculus(page, ["Intuitionistic", "Affine"]);
-  // Each tab's short mark and fragment (a wide screen also names the suite beside the mark).
-  const marks = () =>
-    page
-      .locator(".ptab .pt-mark")
-      .evaluateAll((all) =>
-        all.map(
-          (m) =>
-            `${m.querySelector(".mk .phone-only")?.textContent ?? ""}${m.querySelector(".frag")?.textContent ?? ""}`,
-        ),
-      );
-  await expect.poll(marks).toEqual(["LLMLL", "LL+mixMLL", "ILL+affIMLL"]);
-  // A change of one tab's calculus leaves the others alone.
-  await page.locator(".ptab").nth(1).locator(".pt-go").click();
+  /** Each sequent's calculus, its chip pressed and its proof's cell read. */
+  const marks = async () => {
+    const all: string[] = [];
+    for (const chip of await page.locator(".chip").all()) {
+      await chip.click();
+      all.push((await mark(page).getAttribute("data-tip")) ?? "");
+    }
+    return all.map((tip) => tip.slice(tip.lastIndexOf(", ") + 2));
+  };
+  await expect.poll(marks).toEqual(["LL", "LL+mix", "ILL+aff"]);
+  // A change of one sequent's calculus leaves the others alone.
+  await page.locator(".chip").nth(1).click();
   await calculus(page, ["Affine"]);
-  await expect.poll(marks).toEqual(["LLMLL", "LL+aff+mixMLL", "ILL+affIMLL"]);
+  await expect.poll(marks).toEqual(["LL", "LL+aff+mix", "ILL+aff"]);
   await page.waitForTimeout(500);
+  // A plain visit with no other tab of the page open brings them back by itself.
   await page.goto("/");
-  await page.getByRole("button", { name: "Restore" }).click();
-  await expect.poll(marks).toEqual(["LLMLL", "LL+aff+mixMLL", "ILL+affIMLL"]);
+  await expect(page.locator(".chip")).toHaveCount(3);
+  await expect.poll(marks).toEqual(["LL", "LL+aff+mix", "ILL+aff"]);
 });
-
-/** Opens the current tab's calculus switches by its mark, by a press or by a key. */
-async function openMark(page: Page, key: boolean) {
-  const chip = page.locator(".ptab[aria-current=true] .pt-mark");
-  if (key) {
-    await chip.focus();
-    await page.keyboard.press("Enter");
-  } else {
-    await chip.click();
-  }
-  return page.getByRole("dialog", { name: "Logic" });
-}
 
 for (const phone of [false, true]) {
   test.describe(phone ? "at a phone's width" : "at a desktop's width", () => {
@@ -99,58 +90,27 @@ for (const phone of [false, true]) {
       test.use(pixel);
     }
 
-    test("the calculus's switches are on the tab's mark alone, never on the stage", async ({
-      page,
-    }) => {
-      await start(page, "A, A -o B |- B");
-      const calculusGroup = page.getByRole("group", { name: "Calculus" });
-      await expect(page.locator(".stage .fb").first()).toBeVisible();
-      await expect(calculusGroup).toHaveCount(0);
-      const pop = await openMark(page, false);
-      await expect(pop.getByRole("group", { name: "Calculus" })).toBeVisible();
-      await expect(calculusGroup).toHaveCount(1);
-      await expect(page.locator(".stage").getByRole("group", { name: "Calculus" })).toHaveCount(0);
-    });
-
-    test("the tab's calculus mark opens its switches, by a press and by a key", async ({
+    test("the toggles stand at the stage's top left, on the new tab view and on a proof", async ({
       page,
     }) => {
       await start(page, "|- A * B, ~A, ~B");
-      const switches = await openMark(page, false);
-      // Shown, not clipped by the row of tabs: its middle is its own.
-      const shown = await switches.evaluate((pop) => {
-        const r = pop.getBoundingClientRect();
-        return pop.contains(document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2));
-      });
-      expect(shown).toBe(true);
-      await switches.locator("label.sw", { hasText: "Mix" }).click();
-      await expect(mark(page)).toContainText("LL+mix");
-      await page.keyboard.press("Escape");
-      await expect(switches).toBeHidden();
-      // By the keyboard: the switches take the focus, and Escape gives it back to the mark.
-      await openMark(page, true);
-      await expect(switches).toBeVisible();
-      expect(await switches.evaluate((pop) => pop.contains(document.activeElement))).toBe(true);
-      await page.keyboard.press("Escape");
-      await expect(switches).toBeHidden();
-      await expect(mark(page)).toBeFocused();
-      // A new tab's calculus is set by its mark before it starts.
-      await page.getByRole("button", { name: "New proof" }).click();
-      await (await openMark(page, false))
-        .getByRole("button", {
-          name: "Intuitionistic",
-          exact: true,
-        })
-        .click();
-      await expect(mark(page)).toContainText("ILL");
-      if (phone) {
-        // The switches have left More's sheet.
-        await page.keyboard.press("Escape");
-        await page.locator("footer").getByRole("button", { name: "More" }).click();
-        const more = page.getByRole("dialog", { name: "More" });
-        await expect(more).toBeVisible();
-        await expect(more.getByRole("group", { name: "Calculus" })).toHaveCount(0);
-      }
+      const toggles = page.getByRole("group", { name: "Calculus of this view" });
+      const stage = await page.locator(".stage-area").boundingBox();
+      const box = await toggles.boundingBox();
+      expect((box?.x ?? 0) - (stage?.x ?? 0)).toBeLessThan(16);
+      expect((box?.y ?? 0) - (stage?.y ?? 0)).toBeLessThan(16);
+      await toggles.getByRole("button", { name: "Mix", exact: true }).click();
+      await expect(toggles.getByRole("button", { name: "Mix", exact: true })).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      );
+      await expect(mark(page)).toHaveAttribute("data-tip", ends("LL+mix"));
+      // A new sequent's calculus is set by the toggles before it is entered.
+      await newTab(page);
+      await toggles.getByRole("button", { name: "Intuitionistic", exact: true }).click();
+      await page.getByRole("textbox", { name: "Sequent" }).fill("A |- A");
+      await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
+      await expect(mark(page)).toHaveAttribute("data-tip", ends("ILL"));
     });
   });
 }
@@ -164,9 +124,9 @@ test("a goal's hypothesis A ⊸ B opens in a new tab as A ⊸ B, and the split c
   await expect(page.getByRole("button", { name: /^A ⊸ B, formula/ })).toHaveCount(2);
   await rule(page, /^A ⊸ B, formula 2/, "⊸R");
   await page.getByRole("button", { name: "Open this goal in a new tab" }).click();
-  await expect(page.locator(".ptab")).toHaveCount(2);
-  await expect(page.locator(".ptab[aria-current=true] .pt-go .m")).toHaveText("A ⊸ B, A ⊢ B");
-  await expect(mark(page)).toContainText("ILL");
+  await expect(page.locator(".chip")).toHaveCount(2);
+  await expect(page.locator(".chip[aria-selected=true] .chip-text")).toHaveText("A ⊸ B, A ⊢ B");
+  await expect(mark(page)).toHaveAttribute("data-tip", ends("ILL"));
   // The split of ⊸L in the new tab: the lists say A and B, not their one-sided forms.
   await rule(page, /^A ⊸ B, formula/, "⊸L");
   const split = page.getByRole("dialog", { name: "Split" });
@@ -180,17 +140,11 @@ test("a goal's hypothesis A ⊸ B opens in a new tab as A ⊸ B, and the split c
   await expect(split.locator(".prem").last()).toHaveText(/^Right\s*B$/);
 });
 
-test("the status popover writes the calculus in the switches' words", async ({ page }) => {
+test("the proof's cell names its calculus in words, with its state", async ({ page }) => {
   await start(page, "A |- A");
   await calculus(page, ["Intuitionistic", "Affine"]);
-  await expect(mark(page)).toContainText("ILL+aff");
-  await page
-    .locator(".ptab[aria-current=true]")
-    .getByRole("button", { name: /^Status/ })
-    .click();
-  const status = page.getByRole("dialog", { name: "Status" });
-  await expect(status.locator("dt", { hasText: "Logic" }).locator("+ dd")).toHaveText(
-    "Intuitionistic, affine",
+  await expect(mark(page)).toHaveAccessibleName(
+    "Intuitionistic linear logic, ILL+aff, 1 goal open",
   );
-  await expect(status).not.toContainText("intuitionistic-affine");
+  await expect(mark(page)).not.toHaveAccessibleName(/intuitionistic-affine/);
 });

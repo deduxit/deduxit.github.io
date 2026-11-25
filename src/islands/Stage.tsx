@@ -13,8 +13,6 @@
 import {
   ChevronLeft,
   ChevronRight,
-  Compass,
-  GraduationCap,
   Info,
   Maximize,
   SquareArrowOutUpRight,
@@ -33,7 +31,8 @@ import {
   onMount,
   Show,
 } from "solid-js";
-import { engineLabel, engineName, engineOf, engineTip } from "../lib/engines";
+import { engineLabel, engineOf, engineTip } from "../lib/engines";
+import { keyAction } from "../lib/keys";
 import { type Box, spread } from "../lib/gap";
 import {
   type CutShown,
@@ -47,16 +46,7 @@ import {
 import { countermodelOf, isOrdinary, type OrdinaryOutcome, sequentText } from "../lib/ordinary";
 import { goalAt, paths, searchMade, subtree } from "../lib/steps";
 import { intuitionistic, isNatural } from "../lib/suites";
-import {
-  formulaText,
-  lost,
-  openGoal,
-  readingOf,
-  rungs,
-  type Said,
-  shown,
-  stepLine,
-} from "../lib/words";
+import { formulaText, lost, openGoal, rungs, type Said, shown, stepLine } from "../lib/words";
 import {
   type Elim,
   lookJson,
@@ -69,17 +59,15 @@ import {
   viewJson,
 } from "./state";
 import { ModelFigure } from "./Countermodel";
+import { CustomPanel } from "./Custom";
 import { ModelView } from "./ModelCheck";
 import { TableauCheckView } from "./TableauCheck";
-import { usePacks } from "./Packs";
-import { isHandin, readHandin } from "../lib/pack";
-import { CustomPanel } from "./Custom";
 import { LambdaPanel } from "./Lambda";
 import { ModalPanel } from "./Modal";
 import { type Method, MethodView } from "./Methods";
 import { NaturalView } from "./Natural";
 import { hinted, titled } from "./RuleHint";
-import { ladderKey, phone, token, type Ui, Why, Words } from "./ui";
+import { compact, ladderKey, token, type Ui, Why } from "./ui";
 
 /** A formula's button over the drawing, in the drawing's own pixels. */
 interface Hit {
@@ -162,7 +150,6 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
   const prover = () => props.prover;
   const proof = () => props.prover.current();
   const { ui, setUi, drawn, setDrawn } = props.ui;
-  const packs = usePacks();
   let stage!: HTMLElement;
   let world!: HTMLDivElement;
   let host!: HTMLDivElement;
@@ -439,7 +426,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
     const origin = host.getBoundingClientRect();
     const k = camera().k;
     const at = rendered();
-    const least = token("--size-control-small") / k;
+    const least = token("--size-button") / k;
     const next = e.reached.next;
     const found: CutHit[] = [];
     for (const cut of e.reached.cuts) {
@@ -493,7 +480,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
     if (ui.tab === "net" || !host.firstChild) return [];
     const origin = host.getBoundingClientRect();
     const at = rendered();
-    const least = token("--size-control-small") / camera().k;
+    const least = token("--size-button") / camera().k;
     const found: { label: string; step: number; ink: Box }[] = [];
     for (const group of host.querySelectorAll("g[id]")) {
       if (!/^i\d+$/.test(group.id)) continue;
@@ -530,6 +517,35 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
   createEffect(() => {
     setLabelHits(labelTargets(hits(), cutHits()));
   });
+  // A drawing fitted to a small stage can set its rule labels so close that a label's button,
+  // cut at half the gap to its neighbour, is under a target's least size (WCAG 2.2, 2.5.8): zoom
+  // in until each is a target high and wide, unless the visitor zoomed by hand.
+  createEffect(
+    on(
+      labelHits,
+      (labels) => {
+        if (byHand || labels.length === 0) return;
+        const target = token("--spacing-target");
+        const c = camera();
+        const needed = Math.min(
+          4,
+          Math.max(
+            0,
+            ...labels.map((l) => (l.h > 0 && l.h * c.k < target ? target / l.h : 0)),
+            ...labels.map((l) => (l.w > 0 && l.w * c.k < target ? target / l.w : 0)),
+          ),
+        );
+        if (needed <= c.k * 1.001) return;
+        const at = { x: stage.clientWidth / 2, y: stage.clientHeight / 2 };
+        move({
+          k: needed,
+          x: at.x - ((at.x - c.x) * needed) / c.k,
+          y: at.y - ((at.y - c.y) * needed) / c.k,
+        });
+      },
+      { defer: true },
+    ),
+  );
 
   /** The inference whose premise an inference is, or -1 for the root. */
   function parentOf(inference: number): number {
@@ -548,7 +564,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
     const origin = host.getBoundingClientRect();
     const k = camera().k;
     const at = rendered();
-    const least = token("--size-control-small") / k;
+    const least = token("--size-button") / k;
     const pad = token("--spacing-1") / k;
     const found: Hit[] = [];
     for (const goal of goals) {
@@ -662,14 +678,19 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
     const H = stage.clientHeight;
     if (!w || !h) return;
     const margin = token("--spacing-7");
-    const top = token("--spacing-8");
-    const fit = Math.max(0.2, Math.min(1, (W - margin) / w, (H - top - margin) / h));
+    // The toggles stand over the stage's top; the bottom box over its bottom, but for a compact
+    // window, whose stage ends above the box.
+    const top = token("--size-toggle-box") + 2 * token("--size-inset");
+    const bottom = compact()
+      ? token("--spacing-4")
+      : token("--size-box") + 2 * token("--size-box-inset");
+    const fit = Math.max(0.2, Math.min(1, (W - margin) / w, (H - top - bottom) / h));
     const k = Math.max(fit, floor());
     if (k > fit) {
       move({ k, x: (W - w * k) / 2, y: top });
       queueMicrotask(() => bringIntoView(false));
     } else {
-      move({ k, x: (W - w * k) / 2, y: Math.max(top, (H - h * k) / 2) });
+      move({ k, x: (W - w * k) / 2, y: Math.max(top, top + (H - top - bottom - h * k) / 2) });
     }
   }
 
@@ -678,7 +699,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
     const goal = active();
     const formulas = (view()?.goals ?? []).filter((g) => g.goal === goal);
     const k = camera().k;
-    const least = token("--size-control-small");
+    const least = token("--size-button");
     // A button's width on screen is its formula and gaps, which scale with the zoom, and its
     // padding past the formula's ends, which does not: the zoom at which each is a control wide.
     const needed = targets(formulas).map((t) => {
@@ -698,8 +719,8 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
     const r = element.getBoundingClientRect();
     const s = stage.getBoundingClientRect();
     const edge = token("--spacing-4");
-    const above = token("--spacing-8");
-    const below = token("--spacing-8");
+    const above = token("--spacing-7");
+    const below = token("--spacing-7");
     let { x, y } = camera();
     // A goal wider than the stage shows its start.
     if (r.right > s.right - edge) x -= r.right - (s.right - edge);
@@ -769,7 +790,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
     const above = goalTop - s.top - height - gap;
     const below = goalBottom - s.top + gap;
     // Below, the dock must end over the stage's controls, which would cover its buttons (a
-    // short stage: a phone with Learn open). Where it would not, the goal moves down until
+    // short stage: a phone held sideways). Where it would not, the goal moves down until
     // the dock fits above it, if the goal then still clears the controls, and unless the
     // visitor moved the drawing there.
     const floorY =
@@ -790,50 +811,6 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
     dock.style.top = `${top}px`;
   });
 
-  // A lesson's reason beside the rule label of the inference it played, with Learn on.
-  const reason = () => {
-    const r = ui.reason;
-    return ui.learn && r && proof()?.id === r.tab ? r : null;
-  };
-  const [because, setBecause] = createSignal<HTMLElement>();
-  createEffect(() => {
-    camera();
-    drawn();
-    const r = reason();
-    const box = because();
-    const session = proof()?.session;
-    if (!box) return;
-    const at = r && session ? goalAt(session, r.path) : undefined;
-    const label =
-      at === undefined ? null : host.querySelector(`#i${drawingIndex(at)}`)?.nextElementSibling;
-    // The rule label is a text, or a group where its name has a subscript (⊕₁, &L₂).
-    if (!(label instanceof SVGGraphicsElement) || ui.tab === "net") {
-      box.style.visibility = "hidden";
-      return;
-    }
-    const l = label.getBoundingClientRect();
-    const s = stage.getBoundingClientRect();
-    const d = host.firstElementChild?.getBoundingClientRect() ?? l;
-    const gap = token("--spacing-2");
-    // On the rule label's row, past the drawing's right edge so that it covers no goal; where
-    // the stage has no room there, under the drawing, below the label; on a phone's narrow
-    // stage, above the stage's controls.
-    const beside = Math.max(l.right, d.right) - s.left + gap;
-    const fits = beside + box.offsetWidth <= s.width - gap;
-    const controls = stage.querySelector(".stage-ctl")?.getBoundingClientRect();
-    const x = fits ? beside : phone() ? gap : l.left - s.left;
-    const y = fits
-      ? l.top + l.height / 2 - s.top - box.offsetHeight / 2
-      : phone() && controls
-        ? controls.top - s.top - box.offsetHeight - gap
-        : d.bottom - s.top + gap;
-    const left = Math.max(gap, Math.min(x, s.width - box.offsetWidth - gap));
-    const top = Math.max(gap, Math.min(y, s.height - box.offsetHeight - gap));
-    box.style.visibility = "visible";
-    box.style.left = `${left}px`;
-    box.style.top = `${top}px`;
-  });
-
   // The rule popover beside the selected formula; the split and cut choosers
   // under the goal's row, so that every formula of the goal stays clickable; on
   // a narrow stage each sits at its bottom, as a sheet.
@@ -849,7 +826,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
     const goal = under?.goal ?? selected?.goal;
     if (!popover || goal === undefined) return;
     const s = stage.getBoundingClientRect();
-    const narrow = phone();
+    const narrow = compact();
     const gap = token("--spacing-2");
     const anchor = under
       ? host.querySelector(`#i${drawingIndex(goal)}`)
@@ -960,13 +937,29 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
     stage.addEventListener("pointercancel", up);
     stage.addEventListener("wheel", wheel, { passive: false });
     for (const type of ["gesturestart", "gesturechange"]) stage.addEventListener(type, gesture);
-    resized.observe(stage);
+    // A panel that opens narrows the stage: the drawing moves aside with its middle, so that the
+    // panel does not cover it (and back when the panel closes).
+    let width = stage.clientWidth;
+    const narrowed = new ResizeObserver(() => {
+      const now = stage.clientWidth;
+      if (width > 0 && now !== width) move({ ...camera(), x: camera().x + (now - width) / 2 });
+      width = now;
+      setDrawn((n) => n + 1);
+    });
+    narrowed.observe(stage);
+    onCleanup(() => narrowed.disconnect());
+    // The zoom's keys (src/lib/keys.ts): a single key, so only while Settings' "Single keys" is on.
     const keys = (event: KeyboardEvent) => {
-      if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey) return;
-      if ((event.target as Element).closest("input, textarea, select")) return;
-      if (event.key === "+" || event.key === "=") zoom(1.25);
-      else if (event.key === "-") zoom(0.8);
-      else if (event.key === "f") fitView();
+      if (event.defaultPrevented) return;
+      const inField = !!(event.target as Element).closest("input, textarea, select");
+      const action = keyAction(event, {
+        inField,
+        singleKeys: props.prover.settings().singleKeys,
+      });
+      if (action === "zoomIn") zoom(1.25);
+      else if (action === "zoomOut") zoom(0.8);
+      else if (action === "zoomReset") zoom(1 / camera().k);
+      else if (action === "fit") fitView();
       else return;
       event.preventDefault();
     };
@@ -976,30 +969,6 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
       window.removeEventListener("keydown", keys);
     });
   });
-
-  // Drops of a .json file onto the stage import it.
-  const [dropping, setDropping] = createSignal(false);
-  const dropped = async (event: DragEvent) => {
-    event.preventDefault();
-    setDropping(false);
-    const file = event.dataTransfer?.files[0];
-    if (!file) return;
-    const content = await file.text();
-    // A hand-in opens in the check view, the open tabs left as they are.
-    if (isHandin(content) && packs) {
-      const handin = readHandin(content);
-      if ("problem" in handin) setUi("live", `Not imported: ${handin.problem}.`);
-      else await packs.check(handin);
-      return;
-    }
-    const outcome = await props.prover.open(content);
-    setUi(
-      "live",
-      "kind" in outcome
-        ? `Imported a ${outcome.kind} from ${file.name}.`
-        : `${outcome.problem.keyword}: not imported.`,
-    );
-  };
 
   /** Opens a formula's rules, or in the split chooser sends it left or right. */
   async function pick(hit: Hit) {
@@ -1120,12 +1089,17 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
   }
 
   /** Opens the cut chooser at a goal. */
-  function openCut(goal: number) {
-    props.prover.clearNote();
-    setCutSaid(null);
-    setUi({ selected: null, offered: null, split: null, cutting: { goal, left: [] } });
-    queueMicrotask(() => popover?.querySelector<HTMLInputElement>("input")?.focus());
-  }
+  // The cut chooser, opened by the tools' Cut: a fresh one, its field taking the focus.
+  createEffect(
+    on(
+      () => ui.cutting?.goal,
+      (goal, before) => {
+        if (goal === undefined || goal === before) return;
+        setCutSaid(null);
+        queueMicrotask(() => popover?.querySelector<HTMLInputElement>("input")?.focus());
+      },
+    ),
+  );
 
   /** Makes the cut the chooser holds; what deduxit refused stays said in it. */
   async function applyCut() {
@@ -1256,15 +1230,6 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
     const verdict: string | undefined = proof()?.verdict?.outcome?.verdict;
     return verdict === "unprovable" || verdict === "not_valid";
   };
-  /** Why the Net tab is greyed: no net for this proof, or the proof not finished yet. */
-  const noNet = () => {
-    const net = view()?.net;
-    return net
-      ? `No net: ${net.message.replace(/^not a proof net: /, "")}`
-      : "The net is drawn once the proof is finished";
-  };
-  /** The proof whose greyed Net tab was pressed, until Tree is pressed: its reason stays in view. */
-  const [netAsked, setNetAsked] = createSignal<string | null>(null);
   /** Whether the proof's sequent has a truth table and a tableau: a started classical ordinary one. */
   const decidable = () => {
     const p = proof();
@@ -1335,7 +1300,6 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
       class="stage"
       aria-label="The proof"
       ref={stage}
-      data-dropping={dropping() ? "" : undefined}
       data-method={
         proof()?.calculus.suite === "rules"
           ? "custom"
@@ -1351,12 +1315,6 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
                     ? "written"
                     : (method() ?? undefined)
       }
-      onDragOver={(event) => {
-        event.preventDefault();
-        setDropping(true);
-      }}
-      onDragLeave={() => setDropping(false)}
-      onDrop={dropped}
     >
       <div class="world" ref={world} data-glide={glide() ? "" : undefined}>
         <div class="drawing" ref={host} />
@@ -1409,7 +1367,6 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
                     : undefined
                 }
                 aria-label={`${hit.text}, formula ${hit.position + 1} of goal ${goalNumber(hit.goal)}`}
-                data-tip={ui.learn ? readingOf(hit.text) : undefined}
                 aria-pressed={
                   ui.split?.goal === hit.goal
                     ? ui.split.left.includes(hit.position)
@@ -1469,83 +1426,8 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
         <LambdaPanel prover={props.prover} />
       </Show>
 
-      <Show when={proof()?.banner}>
-        {(banner) => (
-          <div class="cluster banner said-banner">
-            <span class="kw warn">{banner().keyword}</span>
-            <Why said={banner()} />
-          </div>
-        )}
-      </Show>
-
       <Show when={problem()}>
         {(text) => <p class="banner kw warn">The drawing failed: {text()}</p>}
-      </Show>
-
-      <Show
-        when={
-          !proof()?.session &&
-          proof()?.calculus.suite !== "rules" &&
-          proof()?.calculus.suite !== "modal" &&
-          proof()?.calculus.suite !== "lambda"
-        }
-      >
-        <div class="empty">
-          <p>
-            Type a sequent, or open one from{" "}
-            <button
-              type="button"
-              class="linkish"
-              onClick={() => props.ui.setUi("menu", "practice")}
-            >
-              Practice
-            </button>
-            .
-          </p>
-          <p class="sub">
-            {proof()?.calculus.suite === "ordinary"
-              ? "For example A /\\ B |- B /\\ A: /\\ is ∧, \\/ is ∨, -> is →, ~ is ¬, |- is ⊢."
-              : "For example A * B |- B * A: * is ⊗, | is ⅋, -o is ⊸, |- is ⊢."}
-          </p>
-          {/* Help on offer, never started by itself. */}
-          <Show when={!ui.learn && ui.tour === null}>
-            <p class="row start">
-              <button
-                type="button"
-                class="btn"
-                onClick={() => setUi({ learn: "tutorial", lesson: 1, reason: null, menu: null })}
-              >
-                <GraduationCap aria-hidden="true" />
-                Start lesson 1
-              </button>
-              <button
-                type="button"
-                class="btn"
-                onClick={() => {
-                  setUi({ menu: null, tour: null });
-                  setUi("tour", 0);
-                }}
-              >
-                <Compass aria-hidden="true" />
-                Take the tour
-              </button>
-            </p>
-          </Show>
-        </div>
-      </Show>
-
-      <Show when={proof()?.view?.complete && ui.tab === "tree"}>
-        <p class="done kw ok" role="status">
-          Proved: every goal is closed
-        </p>
-      </Show>
-
-      <Show when={reason()}>
-        {(r) => (
-          <p class="because" ref={setBecause} role="note" aria-label="Why this step">
-            <Words text={r().text} />
-          </p>
-        )}
       </Show>
 
       <Show when={view()?.complete && ((view()?.cuts.length ?? 0) > 0 || elim())}>
@@ -1589,19 +1471,6 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
                     return last ? `${stepLine(e().taken.length, last)} · ${count}` : count;
                   })()}
                 </p>
-                <Show
-                  when={
-                    ui.learn && e().shown === null
-                      ? ui.cases?.[e().taken.at(-1)?.case ?? ""]
-                      : undefined
-                  }
-                >
-                  {(text) => (
-                    <p class="line case-why" role="note" aria-label="Why this elimination step">
-                      <Words text={text()} />
-                    </p>
-                  )}
-                </Show>
                 <Show when={e().stopped}>
                   {(said) => (
                     <p class="line warn" role="alert">
@@ -1778,20 +1647,6 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
               >
                 Close goal
               </button>
-              <Show when={proof()?.calculus.suite === "linear"}>
-                <button
-                  type="button"
-                  class="btn btn-s"
-                  data-tip="Cut this goal on a formula you type: two premises, one proving it, one using it"
-                  aria-expanded={ui.cutting !== null}
-                  onClick={() => {
-                    const goal = active();
-                    if (goal !== undefined) openCut(goal);
-                  }}
-                >
-                  Cut
-                </button>
-              </Show>
               <button
                 type="button"
                 class="btn btn-s icon"
@@ -2185,95 +2040,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
         )}
       </Show>
 
-      {/* A press on the greyed Net tab says why, in view: a tip follows no touch. */}
-      <Show when={netAsked() === proof()?.id && !netReady()}>
-        <p class="cluster said-why net-why" role="status">
-          {noNet().replace(/\.?$/, ".")}
-        </p>
-      </Show>
-      <div class="cluster stage-ctl">
-        <div class="tabs" role="tablist" aria-label="View">
-          <button
-            type="button"
-            role="tab"
-            class="tab"
-            aria-selected={
-              ui.tab === "tree" ||
-              (ui.tab !== "net" && method() === null && !modelShown() && !writtenShown())
-            }
-            data-tip="The derivation"
-            data-key="V"
-            onClick={() => {
-              setNetAsked(null);
-              setUi("tab", "tree");
-            }}
-          >
-            Tree
-          </button>
-          <button
-            type="button"
-            role="tab"
-            class="tab"
-            aria-selected={ui.tab === "net"}
-            aria-disabled={!netReady()}
-            data-tip={netReady() ? "The finished proof's net" : noNet()}
-            data-key="V"
-            onClick={() => {
-              if (netReady()) setUi("tab", "net");
-              else setNetAsked(proof()?.id ?? null);
-            }}
-          >
-            Net
-          </button>
-          {/* A tableau written by hand, a tab only while it shows: Tree goes back. */}
-          <Show when={writtenShown()}>
-            <button
-              type="button"
-              role="tab"
-              class="tab"
-              aria-selected="true"
-              data-tip="Your tableau, checked by deduxit"
-            >
-              Your tableau
-            </button>
-          </Show>
-          {/* A model to change and check, a tab only while it shows: Tree goes back. */}
-          <Show when={modelShown()}>
-            <button
-              type="button"
-              role="tab"
-              class="tab"
-              aria-selected="true"
-              data-tip="A Kripke model, to change and check"
-            >
-              Model
-            </button>
-          </Show>
-          {/* A classical sequent's two other ways of deciding it, shown only where asked for. */}
-          <Show when={decidable()}>
-            <button
-              type="button"
-              role="tab"
-              class="tab"
-              aria-selected={method() === "table"}
-              data-tip="The truth table: every assignment of the atoms"
-              onClick={() => setUi("tab", "table")}
-            >
-              Table
-            </button>
-            <button
-              type="button"
-              role="tab"
-              class="tab"
-              aria-selected={method() === "tableau"}
-              data-tip="The tableau: the formulas taken apart, branch by branch"
-              onClick={() => setUi("tab", "tableau")}
-            >
-              Tableau
-            </button>
-          </Show>
-        </div>
-        <span class="sep" />
+      <fieldset class="cluster stage-ctl zoom" aria-label="Zoom">
         <button
           type="button"
           class="btn icon"
@@ -2305,36 +2072,19 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
         >
           <Maximize aria-hidden="true" />
         </button>
-      </div>
-
-      <Show when={dropping()}>
-        <div class="drop">
-          <p class="kw-label">Drop a session or a sequent (.json) to import it</p>
-        </div>
-      </Show>
+      </fieldset>
     </section>
   );
 }
 
-/**
- * The engine whose work a note or a hint is, by name: its source on hover,
- * and a press opens Learn's reference at it.
- */
+/** The engine whose work a note or a hint is, by name, with its source on hover. */
 export function EngineChip(props: { outcome: Outcome | undefined | null; ui: Ui }) {
   return (
     <Show when={engineOf(props.outcome)}>
       {(engine) => (
-        <button
-          type="button"
-          class="kw engine"
-          data-tip={engineTip(engine())}
-          aria-label={`By the ${engineName(engine())}: its source in Learn's reference`}
-          onClick={() => {
-            props.ui.setUi({ learn: "reference", spot: `engine-${engine()}` });
-          }}
-        >
+        <span class="kw engine" data-tip={engineTip(engine())}>
           {engineLabel(engine())}
-        </button>
+        </span>
       )}
     </Show>
   );

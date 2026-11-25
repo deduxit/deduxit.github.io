@@ -8,41 +8,21 @@
 // practice set, and the field's Enter while a search runs.
 
 import { expect, test } from "./fixtures";
-import { calculus, goto, start } from "./prover";
+import { calculus, start, tool, viewCell } from "./prover";
 
 /** Sends the visible proof to intuitionistic mode before any step. */
 async function intuitionistic(page: import("@playwright/test").Page) {
   await calculus(page, ["Intuitionistic"]);
-  await expect(page.locator(".ptab[aria-current=true] .pt-mark")).toContainText("ILL");
+  await expect(viewCell(page)).toHaveAttribute("data-tip", /ILL/);
 }
 
-test("a search names its engine beside its work, with its source on hover and in Learn", async ({
-  page,
-}) => {
+test("a search names its engine beside its work, with its source on hover", async ({ page }) => {
   await start(page, "A & B |- A * B");
   await page.getByRole("button", { name: "Close goal" }).click();
-  const chip = page.locator(".dline").getByRole("button", { name: /^By the focused search/ });
+  const chip = page.locator(".dline .kw.engine");
   await expect(chip).toHaveText("Focused search");
   await chip.hover();
   await expect(page.getByRole("tooltip")).toContainText("Andreoli 1992");
-  await chip.click();
-  const reference = page.getByRole("complementary", { name: "Learn" });
-  await expect(reference.getByRole("tab", { name: "Reference" })).toHaveAttribute(
-    "aria-selected",
-    "true",
-  );
-  const focus = reference.locator("#engine-focus");
-  await expect(focus).toHaveAttribute("data-highlight", "");
-  await expect(reference.locator("#engine-focus + dd a")).toHaveAttribute(
-    "href",
-    "https://doi.org/10.1093/logcom/2.3.297",
-  );
-  // A graft is marked with its engine beside its rule; the hint names its own.
-  await start(page, "A * B |- B * A", false);
-  await page.locator("footer").getByRole("button", { name: "Hint" }).click();
-  await expect(page.locator(".dline.hint .kw.engine")).toHaveText("Focused search");
-  await page.getByRole("button", { name: "Close goal" }).click();
-  await expect(page.locator(".drawing svg text.engine")).toHaveText("Focused search");
 });
 
 test("a saturation refutation is shown checked, by the inverse method", async ({ page }) => {
@@ -57,8 +37,8 @@ test("a saturation refutation is shown checked, by the inverse method", async ({
   await expect(note).not.toContainText("checker confirmed the set");
   await note.getByRole("button", { name: "more" }).click();
   await expect(note).toContainText("checker confirmed the set");
-  await expect(page.locator(".ptab[aria-current=true] .dot")).toHaveAttribute("data-tone", "bad");
-  await page.locator("footer").getByRole("button", { name: "Export" }).click();
+  await expect(page.locator(".chip[aria-selected=true] svg.lucide-x")).toBeVisible();
+  await tool(page, "Export").click();
   // Why the item is greyed is a line of the item itself.
   await expect(page.getByRole("menuitem", { name: /Not derivable/ })).toContainText(
     "no Rocq certificate",
@@ -69,7 +49,7 @@ test("Settings forces an engine: those that take the sequent, the others greyed 
   page,
 }) => {
   await start(page, "A * B |- B * A");
-  await page.locator("footer").getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
   const engines = page.getByRole("radiogroup", { name: "Engine" });
   await expect(engines.getByRole("radio", { name: /^Automatic/ })).toBeChecked();
   await expect(engines.getByText("here the focused search")).toBeVisible();
@@ -80,7 +60,7 @@ test("Settings forces an engine: those that take the sequent, the others greyed 
   await expect(engines.getByRole("radio", { name: /^Proof-net search/ })).toBeChecked();
   await page.keyboard.press("Escape");
   await page.getByRole("button", { name: "Close goal" }).click();
-  await expect(page.getByText("Proved: every goal is closed")).toBeVisible();
+  await expect(page.getByText("Proved. Every goal is closed.")).toBeVisible();
   await expect(page.locator(".drawing svg text.engine")).toHaveText("Proof-net search");
   // A sequent with a unit is no net's: the forced engine's refusal is said at the goal.
   await start(page, "|- 1, bot", false);
@@ -94,8 +74,8 @@ test("a forced engine holds for the visit: the next visit starts on Automatic, e
   page,
 }) => {
   await start(page, "A * B |- B * A");
-  await page.locator("footer").getByRole("button", { name: "Settings" }).click();
-  const settings = page.getByRole("dialog", { name: "Settings" });
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  const settings = page.getByRole("region", { name: "Settings" });
   await settings
     .getByRole("radiogroup", { name: "Engine" })
     .getByRole("radio", { name: /^Proof-net search/ })
@@ -107,8 +87,8 @@ test("a forced engine holds for the visit: the next visit starts on Automatic, e
   expect(await stored()).toMatchObject({ net: "compact" });
   expect(await stored()).not.toHaveProperty("engine");
   await page.reload();
-  await expect(page.locator(".ptab")).not.toHaveCount(0);
-  await page.locator("footer").getByRole("button", { name: "Settings" }).click();
+  await expect(page.locator(".chip")).not.toHaveCount(0);
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
   await expect(
     settings.getByRole("radiogroup", { name: "Engine" }).getByRole("radio", { name: /^Automatic/ }),
   ).toBeChecked();
@@ -124,37 +104,9 @@ test("Enter in the sequent field while a search runs waits for it, and is not lo
   await start(page, "!(a -o a * a * a), !(a -o a), a |- a * (a + 0)");
   await intuitionistic(page);
   await page.getByRole("button", { name: "Close goal" }).click();
-  await page.getByRole("button", { name: "New proof" }).click();
+  await page.getByRole("button", { name: "New sequent", exact: true }).click();
   await page.getByRole("textbox", { name: "Sequent" }).fill("A |- A");
   await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
   await expect(page.getByRole("button", { name: /^A, formula 2 of goal 1/ })).toBeVisible();
-  await expect(page.locator(".ptab")).toHaveCount(2);
-});
-
-test("practice is grouped by lesson, writes negation as the drawings do, and answers the visitor's decision at once", async ({
-  page,
-}) => {
-  await goto(page);
-  await page.locator("footer").getByRole("button", { name: "Learn" }).click();
-  const frame = page.getByRole("complementary", { name: "Learn" });
-  // All eleven lessons are written, each holding its practice.
-  await expect(frame.locator(".lesson-open")).toHaveCount(11);
-  await expect(frame.locator("summary.prac-h")).toHaveCount(0);
-  await frame.getByRole("button", { name: "Lesson 1: Reading a sequent" }).click();
-  const card = frame.locator(".exercise").filter({ hasText: "Two strangers" });
-  await expect(card.locator(".ex-seq")).toHaveText("⊢ A⊥, B");
-  await expect(frame.locator(".ex-seq").filter({ hasText: "~" })).toHaveCount(0);
-  // The answer and its reason come once the visitor decides, right or not.
-  const decide = card.getByRole("group", { name: "Does Two strangers have a proof?" });
-  await expect(card.getByRole("status")).toHaveCount(0);
-  await decide.getByRole("button", { name: "Has a proof" }).click();
-  await expect(card.getByRole("status")).toContainText("Not quite It has no proof.");
-  await decide.getByRole("button", { name: "No proof" }).click();
-  await expect(decide.getByRole("button", { name: "No proof" })).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  );
-  await expect(card.getByRole("status")).toContainText("Right It has no proof.");
-  // The difficulty is the store's one scale, its level named beside its stair.
-  await expect(card.locator(".diff")).toHaveText("Moderate");
+  await expect(page.locator(".chip")).toHaveCount(2);
 });

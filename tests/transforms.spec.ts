@@ -7,7 +7,7 @@
 
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
-import { calculus, goto, switches } from "./prover";
+import { addView, calculus, goto, viewCell } from "./prover";
 
 /** Starts a sequent in an ordinary tab of `logic`. */
 async function ordinary(page: Page, logic: string, sequent: string) {
@@ -18,36 +18,43 @@ async function ordinary(page: Page, logic: string, sequent: string) {
   await expect(page.locator(".stage .fb").first()).toBeVisible();
 }
 
-/** Opens a sheet from the Logic popover by its button's name, and returns it. */
+/** The entry of "+ view" that opens each sheet, by the sheet's name. */
+const ENTRIES: Readonly<Record<string, string>> = {
+  "Translate into intuitionistic logic": "Into intuitionistic logic",
+  "Find an interpolant": "Interpolant",
+  "Rewrite into a normal form": "Normal form",
+  "Refute by resolution": "Resolution",
+};
+
+/** Opens a sheet from "+ view" by its name, and returns it. */
 async function sheet(page: Page, name: string) {
-  const pop = await switches(page);
-  await pop.getByRole("button", { name }).click();
+  await addView(page, ENTRIES[name] ?? name);
   const opened = page.getByRole("dialog", { name });
   await expect(opened).toBeVisible();
   return opened;
 }
 
+/** Whether "+ view" offers an entry: listed and not faint. */
+async function offered(page: Page, entry: string) {
+  await page.getByRole("button", { name: "Add a view" }).click();
+  const button = page.getByRole("dialog", { name: "Add a view" }).getByRole("button", {
+    name: entry,
+    exact: true,
+  });
+  const yes = (await button.getAttribute("aria-disabled")) !== "true";
+  await page.keyboard.press("Escape");
+  return yes;
+}
+
 test("a translation and an interpolant are offered for a started classical proof alone", async ({
   page,
 }) => {
-  await goto(page);
-  await calculus(page, ["Ordinary", "Classical"]);
-  let pop = await switches(page);
-  // Nothing typed yet: no sequent to translate.
-  await expect(pop.getByRole("button", { name: "Find an interpolant" })).toHaveCount(0);
-  await page.keyboard.press("Escape");
   await ordinary(page, "Intuitionistic", "a |- a");
-  pop = await switches(page);
-  await expect(
-    pop.getByRole("button", { name: "Translate into intuitionistic logic" }),
-  ).toHaveCount(0);
-  await page.keyboard.press("Escape");
+  expect(await offered(page, "Into intuitionistic logic")).toBe(false);
+  expect(await offered(page, "Interpolant")).toBe(false);
   await calculus(page, ["Classical"]);
-  pop = await switches(page);
-  await expect(
-    pop.getByRole("button", { name: "Translate into intuitionistic logic" }),
-  ).toBeVisible();
-  await expect(pop.getByRole("button", { name: "Find an interpolant" })).toBeVisible();
+  expect(await offered(page, "Into intuitionistic logic")).toBe(true);
+  expect(await offered(page, "Interpolant")).toBe(true);
 });
 
 test("a translation says both verdicts first, and the translated sequent", async ({ page }) => {
@@ -87,13 +94,13 @@ test("the translated sequent opens as a proof of its own in its logic", async ({
   await expect(view.getByRole("status")).toContainText("minimal logic");
   await view.getByRole("button", { name: "Prove it in minimal logic" }).click();
   await expect(view).toBeHidden();
-  await expect(page.locator(".ptab")).toHaveCount(2);
-  const tab = page.locator(".ptab[aria-current=true]");
+  await expect(page.locator(".chip")).toHaveCount(2);
+  const tab = page.locator(".chip[aria-selected=true]");
   await expect(tab).toContainText("¬¬a → ¬¬b ⊢");
-  await expect(tab.locator(".pt-mark")).toHaveAccessibleName(/minimal/);
+  await expect(viewCell(page)).toHaveAttribute("data-tip", "Sequent calculus, LM");
   // The proof it came from is kept as it was.
-  await page.locator(".ptab").first().click();
-  await expect(page.locator(".ptab[aria-current=true]")).toContainText("a → b ⊢ ¬b → ¬a");
+  await page.locator(".chip").first().click();
+  await expect(page.locator(".chip[aria-selected=true]")).toContainText("a → b ⊢ ¬b → ¬a");
 });
 
 test("an interpolant comes with its three checks, and follows the partition", async ({ page }) => {

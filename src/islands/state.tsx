@@ -67,6 +67,7 @@ import {
   type Shelf,
   type StoredProof,
   dropAside,
+  SHELF_PREFIX,
   saveShelf,
   setAside,
   type Store,
@@ -273,8 +274,10 @@ export interface Proof {
 export interface Settings {
   /** The search's work budget per call, `limits.work`. */
   budget: number;
-  /** Whether the actions print their keys beside their names. */
-  showKeys: boolean;
+  /** Whether the single keys act (Settings, "Keys"); off, only the keys with Ctrl or Cmd do (WCAG 2.2, 2.1.4). */
+  singleKeys: boolean;
+  /** Whether the guide is on: the tools' names, a sentence of help, the examples. */
+  guide: boolean;
   /** How a net is drawn, `styles.svg.net`: every formula written, or compact. */
   net: NetDrawing;
   /** How a net looks, `styles.svg.net_look`: deduxit's own look, the textbooks', or a mix. */
@@ -393,7 +396,8 @@ function loadSettings(): Settings {
     return {
       budget:
         typeof stored.budget === "number" && stored.budget > 0 ? stored.budget : DEFAULT_BUDGET,
-      showKeys: stored.showKeys === true,
+      singleKeys: stored.singleKeys !== false,
+      guide: stored.guide === true,
       net: stored.net === "compact" ? "compact" : "formulas",
       netLook: storedLook(stored.netLook),
       engine: null,
@@ -413,7 +417,8 @@ function loadSettings(): Settings {
   } catch {
     return {
       budget: DEFAULT_BUDGET,
-      showKeys: false,
+      singleKeys: true,
+      guide: false,
       net: "formulas",
       netLook: DEDUXIT_LOOK,
       engine: null,
@@ -1554,7 +1559,7 @@ export function createProver(say: (text: string) => void = () => undefined) {
       }
     },
 
-    /** At the page's start: sets the last visit's proofs aside for the restore bar. */
+    /** At the page's start: sets the last visit's proofs aside, to be restored. */
     begin() {
       setAsideShelf(setAside(storage(), visit));
     },
@@ -1562,7 +1567,7 @@ export function createProver(say: (text: string) => void = () => undefined) {
     /**
      * Before a link pasted into the open page is opened, as a new load would: stops the work
      * under way, closes every proof and starts a new visit in classical linear logic, so that
-     * the closed proofs are in the restore bar with those set aside before.
+     * the closed proofs are set aside to restore with those set aside before.
      */
     leave() {
       if (busy()) api.cancel();
@@ -1633,6 +1638,9 @@ export function createProver(say: (text: string) => void = () => undefined) {
     },
 
     save,
+
+    /** This visit's shelf key, which the visit holds a lock of the same name on while it is open. */
+    shelfKey: () => SHELF_PREFIX + visit,
 
     /** Reads the view of a stored session again. */
     async refresh(id: string) {
