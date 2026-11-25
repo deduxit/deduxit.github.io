@@ -831,6 +831,10 @@ The author went through this group on 2026-11-25 and found it fine.
   a row per hand-in and a column per problem (c). The current page checks
   one hand-in at a time; the table is my addition.
 
+The toggles are smaller since 2026-11-25 (the author found them too big):
+a toggle's box is 30 pixels high where it was 38, its type 14 pixels where
+it was 16, on every board.
+
 A proof view looks the same on every board (the author found D13's
 without the controls of ordinary logic, and asked that all boards be
 complete). On D13, D14, D16, D18 and D19 a proof in ordinary logic now
