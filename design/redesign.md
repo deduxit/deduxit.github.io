@@ -490,11 +490,11 @@ ids and one tab's later steps would be lost without a word. Decided:
 
 Decided here by the author: the first restored proof opens at once.
 
-Not decided in this group:
-
-- What Enter does in the bottom box of a sequent that already has a
-  proof: replace that sequent, or start a new one beside it. D1 starts a
-  new one.
+Enter in the bottom box of a sequent that already has steps does nothing
+to the proof (the author). It shows a small dark button over the enter
+button, "Reset?". A press on it takes every step back, and Redo brings
+them again; any other press takes the button away. D2 and D6 play it. A
+new sequent is started with "+".
 
 For the rebuild, two faults of the current page that the same session
 found while checking: a sequent in JSON that names its logic
@@ -621,8 +621,9 @@ Its recommendation, which I share: one call of the library per formula
 that returns every candidate rule as "applies", "needs a split, a witness
 or values", or "refused" with the refusal. The first two exist and the
 third is computed and dropped in natural deduction. That is a wish for
-deduxit, so it is the author's to decide. Until then the page can try
-each rule itself when a popover opens.
+deduxit. The author decided for it and had me ask that session to put
+it into deduxit's future plans (2026-11-25). Until the call exists the
+page can try each rule itself when a popover opens.
 
 D2 also plays the rule for a change of logic. On the first sequent a
 proof in LK replays in LJ step for step, so "Intuitionistic" renames the
@@ -637,7 +638,7 @@ the bottom box says why, and LK keeps its proof.
 | Close the goal worked on | "Close" beside the goal | Press the goal's `⊢`, then the check: the search closes that goal alone, or a line says it found no proof | Settled (D2, D6) |
 | Close every goal | "Close all" in the bottom band | The view's tools; the search's steps carry a grey rule name in the drawing and "search" in the list of steps. What it cannot close stays open, and a line over the bottom box says so | Settled (D2) |
 | Stop a search | "Stop the search" in the tool's place | The same | Proposed, not drawn |
-| Get a hint, a little at a time | "Hint", three rungs at the goal | "Hint" among the tools; with the guide on, the next step stands above the bottom box | Proposed (D4); the rungs not drawn |
+| Get a hint, a little at a time | "Hint", three rungs at the goal | "Hint" among the tools goes on from where the visitor is: a formula, then its rule, then what a split or a cut still needs (see group 2) | Settled (D2, D6) |
 | Read a verdict and its reason | A note at the goal and the tab's status | A check or a cross on the sequent and on the view's cell; the reason at the goal | Proposed (D6, D9); the reason not drawn |
 | Search longer after "Unknown" | "Try N units" in the note | The same, at the goal | Open |
 | Go back to where a proof still exists | "Go back" beside the verdict | The same, at the goal | Open |
