@@ -734,8 +734,8 @@ page uses deduxit's normal budget and bounds as its defaults.
 
 | A visitor wants to | Now | New design | State |
 |---|---|---|---|
-| Hand out a set of problems | A course pack: a link, a printed handout | "Course pack" among the tools opens a panel: the title, the sequents at the top as problems to tick, whether the search may help, then the link, the embed code and the printed sheet | Proposed (D18) |
-| Work on a pack | A bar over the stage | The pack is one entry at the top, with its count done, and has a page of its own that lists the problems with their calculus and state. A press on a row opens the problem; a press on the entry goes back to the page. The page has no bottom box and no view's tools. A pack that bars the search greys "Hint" and "Close all", and its problems' calculus cannot be changed | Settled (D17) |
+| Hand out a set of problems | A course pack: a link, a printed handout | "Course pack" among the tools opens a panel: the title and the sequents at the top as problems to tick, then the link, the embed code and the printed sheet. A sequent need not be proved to go in | Settled (D18): "lgtm"; whether the tool stays beside Export's entry is open |
+| Work on a pack | A bar over the stage | The pack is one entry at the top, with its count done, and has a page of its own that lists the problems with their calculus and state. A press on a row opens the problem; a press on the entry goes back to the page. The page has no bottom box and no view's tools. A problem's calculus cannot be changed; "Hint" and "Close all" work as anywhere | Settled (D17) |
 | Hand answers in | A link or a file | Left out (the author: "I don't need a hand in functionality for students") | Left out |
 | Check answers handed in | The check view, one hand-in at a time | Left out with handing in | Left out |
 
@@ -868,7 +868,13 @@ The author went through this group on 2026-11-25 and found it fine.
   between problems costs a second press. The author had the bottom box
   taken off the pack's page, where it serves nothing; the view's tools
   go there too, and the guide's sentence stands under the list.
-- **D18**, a course pack made by the teacher.
+- **D18**, a course pack made by the teacher, played to the author and
+  found fine.
+- A pack cannot bar the search (the author, 2026-11-25: "A student
+  should be honest to themselves"). The current page's switch "The
+  search may close goals and give hints" goes, and with it the greyed
+  "Hint" and "Close all" on a pack's problems. A pack of the current
+  page that bars the search would open with the search allowed.
 - Handing in is gone (the author, 2026-11-25, on seeing D17a played).
   The first drafts had "Hand in" among a pack's tools, with a link or a
   file for the teacher, and two boards on which a teacher checked one
