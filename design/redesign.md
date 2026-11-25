@@ -640,11 +640,11 @@ the bottom box says why, and LK keeps its proof.
 | Stop a search | "Stop the search" in the tool's place | "Close all" turns into "Stop" while the search runs; a line says that nothing was changed | Settled (D2) |
 | Get a hint, a little at a time | "Hint", three rungs at the goal | "Hint" among the tools goes on from where the visitor is: a formula, then its rule, then what a split or a cut still needs (see group 2) | Settled (D2, D6) |
 | Read a verdict and its reason | A note at the goal and the tab's status | A check or a cross on the sequent and on the view's cell; a line over the bottom box for what a search found: no proof, or unknown | Settled (D2, D6, D9) |
-| Search longer after "Unknown" | "Try N units" in the note | The line that says "Unknown" has "Search longer", with the doubled budget in brackets, and a button to the search's settings (engine, budget, bounds) | Proposed (D2) |
-| Go back to where a proof still exists | "Go back" beside the verdict | A goal the search shows to have no proof is marked: its dashed line and its `⊢` red, "no proof" beside the line, a cross on the sequent if the sequent itself has none. Its `⊢` then offers "Go back", which takes back the steps since every open goal had a proof. The marking is a setting, on at first (the author) | Proposed (D2) |
+| Search longer after "Unknown" | "Try N units" in the note | The line that says "Unknown" has "Search longer", with the doubled budget in brackets, and a caret that opens the settings of that one search (engine, budget) | Settled (D2): "lgtm" |
+| Go back to where a proof still exists | "Go back" beside the verdict | A goal the search shows to have no proof is marked by a red cross at the end of its dashed line, which turns red, and no words (the author). A sequent with no proof has the cross beside it at the top. The goal's `⊢` then offers "Go back", which takes back the steps since every open goal had a proof. The marking is a setting, on at first | Settled (D2) |
 | See a countermodel | A figure under the note | A view of its own, `⊭` | Settled (D9) |
-| Change the model and check it again | The model editor in the drawing's place | The countermodel's view, made editable | Open |
-| See or choose the engine | A chip by the note; Settings | The Settings page, under "Search", with the budget and the first-order bounds; reached from the top row and from an "Unknown" line | Proposed (D10) |
+| Change the model and check it again | The model editor in the drawing's place | In the countermodel's own view (my recommendation, the author agreed): a press on a dot flips where a predicate holds, "+" adds an element, "−" takes one away. The sequent's checks and crosses follow at once, and the sign between its sides reads `⊭` while the structure refutes the sequent and `⊨` when it no longer does. Undo and Redo are the view's tools | Settled (D9) |
+| See or choose the engine | A chip by the note; Settings | For one search: the caret beside each button that searches. As a default: the Settings page, "Search", per logic | Settled (D2, D10) |
 
 The mark on a goal with no proof needs the page to ask the search about
 every open goal after each step. On the boards that costs nothing. On the
@@ -783,8 +783,7 @@ the colours fine, close to the current page's.
 The switch fades (the author: "very smooth"): every token is a registered
 colour that takes half a second to change, so all that uses it, the
 dotted field and the drawings too, fades together. No fade where the
-visitor asks for reduced motion. Published on D1, D2, D3, D6 and D10;
-D4, D7, D8 and D9 are regenerated and still to publish.
+visitor asks for reduced motion. It is on every board.
 
 A search has settings of its own (the author). Each button that searches
 has a small caret beside it: "Close all" among the tools, "Close by
