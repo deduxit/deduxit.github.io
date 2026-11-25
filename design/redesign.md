@@ -518,8 +518,8 @@ script of the board's own for `→`, `∧`, `∨` and `ax`, not deduxit.
 | Give a witness (`∃R`, `∀L`) | A second popover | A small box in the rule's popover | Settled (D8) |
 | Split the context (linear `⊗`) | A chooser under the goal, with "Passes" and "Cannot close" | The two premises the rule would make appear over the goal, dashed, with the goal's other formulas as chips inside them. A press on a chip moves it to the other premise. A button at the line's end, the rule's sign and an enter arrow, applies the rule. Every split is legal, so the button is never greyed | Proposed (D6) |
 | Cut (linear) | "Cut" beside the goal, then a chooser | "Cut" among a linear view's tools opens a small box over the goal for the cut formula. Once it reads, the two premises appear as for a split and are filled the same way; a text that is no formula is said under the box | Proposed (D6) |
-| Prove a goal apart | "Open this goal in a new tab" | A new sequent beside this one, linked to the goal | Open |
-| Close a goal by a proof made apart | "Fill from" a finished tab | Offered at the goal when a finished sequent fits | Open |
+| Prove a goal apart | "Open this goal in a new tab" | Press the goal's `⊢`, then "Prove apart": the goal opens as a sequent of its own at the top, in the same calculus. Its hover says which sequent's goal it is | Proposed (D2) |
+| Close a goal by a proof made apart | "Fill from" a finished tab | Press the goal's `⊢`: once a sequent with the goal's formulas is proved in the same calculus, a third action uses its proof. The steps it brings are grey in the drawing and marked "apart" in the list | Proposed (D2) |
 | Have the invertible rules applied | A switch in Settings | The same switch, in the menu | Proposed |
 | Use the keyboard for all of it | The keys in the Keys list | The same keys | Proposed, not drawn |
 
@@ -556,6 +556,16 @@ split, and rang the formula again. Now it reads the state:
 
 The same holds for every rule that asks for something before it applies,
 so for a witness too: the hint would point at the box and name a term.
+
+A goal has actions of its own, and they sit behind its `⊢` (my
+proposal, on D2). The formulas of a goal are pressed for their rules;
+the sign between them stands for the goal as a whole. A press on it opens
+a popover like a formula's, with a drawing per action and, with the
+guide on, its name: close this goal by the search, prove it apart, and,
+when a proof made apart fits, use that proof. This gives a place to three
+things the current page puts beside the goal as words ("Close", "Open in
+a new tab", "Fill from"). The cut is an action on a goal too, and could
+move there from a linear view's tools; D6 still has it among the tools.
 
 A rule that does not apply is never offered as if it did (the author):
 it stands greyed in the popover with its reason on hover. A refusal after
@@ -610,7 +620,7 @@ the bottom box says why, and LK keeps its proof.
 
 | A visitor wants to | Now | New design | State |
 |---|---|---|---|
-| Close the goal worked on | "Close" beside the goal | Not placed: the view's tools hold "Close all" alone | Open |
+| Close the goal worked on | "Close" beside the goal | Press the goal's `⊢`, then the check: the search closes that goal alone, or a line says it found no proof | Proposed (D2) |
 | Close every goal | "Close all" in the bottom band | The view's tools; the search's steps carry a grey rule name in the drawing and "search" in the list of steps. What it cannot close stays open, and a line over the bottom box says so | Settled (D2) |
 | Stop a search | "Stop the search" in the tool's place | The same | Proposed, not drawn |
 | Get a hint, a little at a time | "Hint", three rungs at the goal | "Hint" among the tools; with the guide on, the next step stands above the bottom box | Proposed (D4); the rungs not drawn |
