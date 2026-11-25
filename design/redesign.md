@@ -294,6 +294,10 @@ that is not needed. D is A's colours and type with those changes.
     view's tools: weakenings and contractions (LK), two-sided (classical
     linear logic, drawn in D6 as `·⊢·`; it read `Γ⊢Δ` until the author
     asked for the shorter sign).
+  - Such a switch has the same box as the other tools, 36 by 34 pixels,
+    its sign centred, and is pressed when on. The first boards stacked
+    the sign over a small sliding track, which sat badly in the column
+    (the author). With the guide on it is a track beside its name.
 - **"+ view" lists what the toggles do not reach** (the author): under
   "Prove" the tableau and resolution, then the truth table, the
   translations and what is read off a proof. The sequent calculus and
