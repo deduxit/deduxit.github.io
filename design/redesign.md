@@ -637,14 +637,20 @@ the bottom box says why, and LK keeps its proof.
 |---|---|---|---|
 | Close the goal worked on | "Close" beside the goal | Press the goal's `⊢`, then the check: the search closes that goal alone, or a line says it found no proof | Settled (D2, D6) |
 | Close every goal | "Close all" in the bottom band | The view's tools; the search's steps carry a grey rule name in the drawing and "search" in the list of steps. What it cannot close stays open, and a line over the bottom box says so | Settled (D2) |
-| Stop a search | "Stop the search" in the tool's place | The same | Proposed, not drawn |
+| Stop a search | "Stop the search" in the tool's place | "Close all" turns into "Stop" while the search runs; a line says that nothing was changed | Settled (D2) |
 | Get a hint, a little at a time | "Hint", three rungs at the goal | "Hint" among the tools goes on from where the visitor is: a formula, then its rule, then what a split or a cut still needs (see group 2) | Settled (D2, D6) |
-| Read a verdict and its reason | A note at the goal and the tab's status | A check or a cross on the sequent and on the view's cell; the reason at the goal | Proposed (D6, D9); the reason not drawn |
-| Search longer after "Unknown" | "Try N units" in the note | The same, at the goal | Open |
-| Go back to where a proof still exists | "Go back" beside the verdict | The same, at the goal | Open |
+| Read a verdict and its reason | A note at the goal and the tab's status | A check or a cross on the sequent and on the view's cell; a line over the bottom box for what a search found: no proof, or unknown | Settled (D2, D6, D9) |
+| Search longer after "Unknown" | "Try N units" in the note | The line that says "Unknown" has "Search longer", with the doubled budget in brackets, and a button to the search's settings (engine, budget, bounds) | Proposed (D2) |
+| Go back to where a proof still exists | "Go back" beside the verdict | A goal the search shows to have no proof is marked: its dashed line and its `⊢` red, "no proof" beside the line, a cross on the sequent if the sequent itself has none. Its `⊢` then offers "Go back", which takes back the steps since every open goal had a proof. The marking is a setting, on at first (the author) | Proposed (D2) |
 | See a countermodel | A figure under the note | A view of its own, `⊭` | Settled (D9) |
 | Change the model and check it again | The model editor in the drawing's place | The countermodel's view, made editable | Open |
-| See or choose the engine | A chip by the note; Settings | Settings in the menu; the engine named with the reason | Proposed |
+| See or choose the engine | A chip by the note; Settings | The Settings page, under "Search", with the budget and the first-order bounds; reached from the top row and from an "Unknown" line | Proposed (D10) |
+
+The mark on a goal with no proof needs the page to ask the search about
+every open goal after each step. On the boards that costs nothing. On the
+page each question is a search within the budget, so the mark may come a
+moment late, and a goal the budget does not decide gets no mark. The mark
+forbids nothing: the step that led there was legal.
 
 ### 4. Choose the calculus
 
@@ -714,11 +720,19 @@ the bottom box says why, and LK keeps its proof.
 
 ### 10. Settings and the rest
 
+The settings are one page for the whole site (the author), D10, reached
+by the button at the top row's right end, which replaces the three dots.
+What is chosen is kept in the browser, as the light or dark scheme is.
+
 | A visitor wants to | Now | New design | State |
 |---|---|---|---|
-| Set the search's budget and bounds | Settings | The menu | Proposed |
-| See every key | Keys | The menu | Proposed |
-| Read what the page is, its licences, privacy | About, and the privacy page | The menu | Proposed |
+| Switch between light and dark | Settings | A button in the top row, a moon in light and a sun in dark; the Settings page also has Light, Dark and System | Settled as asked (every board) |
+| Choose the font of the formulas, how nets are drawn | Settings | The Settings page, "Look" | Proposed (D10) |
+| Choose the search's engine, budget and bounds | Settings | The Settings page, "Search" | Proposed (D10) |
+| Mark goals that have no proof, or not | Not there | The Settings page, "Proving", on at first | Proposed (D10) |
+| Have the invertible rules applied | Settings | The Settings page, "Proving" | Proposed (D10) |
+| Close every sequent | "Discard" on the restore bar | The Settings page, "This browser"; it can be undone | Proposed (D10, the button alone) |
+| See every key; read what the page is, its licences, privacy | Keys, About, the privacy page | The Settings page, "About", as three rows that open them | Proposed (D10, the rows alone) |
 | Use the page offline, install it | The service worker | The same | Unchanged |
 
 ### What goes
@@ -738,6 +752,35 @@ the bottom box says why, and LK keeps its proof.
   step. A link or a stored proof of the current page that holds a
   calculus of one's own would have nowhere to open; what the page says
   then is not decided.
+
+## Light and dark
+
+Every board has both schemes and a switch in its top row (the author).
+Each colour is a token with two values:
+
+| Token | Light | Dark |
+| --- | --- | --- |
+| paper | `#FFFFFF` | `#14171F` |
+| band | `#F2F3F5` | `#1C2029` |
+| ink | `#151821` | `#ECEEF3` |
+| ink, second | `#4A5163` | `#A5ACBC` |
+| ink, soft | `#5A6172` | `#969DAE` |
+| ink, faint (greyed) | `#8A90A0` | `#7B8394` |
+| line | `#B9BECA` | `#474E60` |
+| hairline | `#D5D8DF` | `#333949` |
+| lapis (chosen, open goal) | `#2456C9` | `#7AA7FF` |
+| lapis, deep | `#173E96` | `#A9C6FF` |
+| lapis wash | `#E8EEFB` | `#1E2C4D` |
+| good | `#0A6B4F` | `#6FCBA4` |
+| bad | `#B3261E` | `#FF8F85` |
+| the field's dots | `#A9B2C8` | `#39404F` |
+| hover | `#E2E5EA` | `#2A2F3B` |
+
+Text on lapis or on ink is the paper's colour in both schemes: white on
+dark lapis in light, near-black on light lapis in dark. The dark values
+are mine and unseen by me; the author has not judged them yet. A board
+keeps the scheme for itself where the canvas gives it no storage;
+elsewhere the boards share it, as the page's tabs would.
 
 ## What the drawings do not show yet
 
@@ -760,4 +803,4 @@ the bottom box says why, and LK keeps its proof.
 - The translations written out (the linear one above all) are examples,
   not deduxit's output.
 - The keys in B (`1`, `h`, `c`, `u`, `/`) are a proposal.
-- Dark for D and a phone's width.
+- A phone's width.
