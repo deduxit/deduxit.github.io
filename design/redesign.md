@@ -714,8 +714,9 @@ page uses deduxit's normal budget and bounds as its defaults.
 | A visitor wants to | Now | New design | State |
 |---|---|---|---|
 | Keep the work without doing anything | Saved in the browser | The same | Unchanged |
-| Save a proof in a format (LaTeX, Typst, SVG, PNG, PDF, Rocq, JSON) | Export's menu | "Export" among the view's tools; it exports the view shown | Proposed, two options (D16a, D16b) |
-| Share a link, with the proof or the sequent alone | Export's menu | The same menu or panel, under "Link" | Proposed (D16a, D16b) |
+| Save a proof in a format (LaTeX, Typst, SVG, PNG, PDF, Rocq, JSON) | Export's menu | "Export" among the view's tools opens a panel for the view shown: the formats at its left, each with a sign of its own; at its right the chosen format's settings, what a text format writes, and "Copy" and "Save" | Settled (D16) |
+| Set how an export looks | One choice, the font of SVG, PNG and PDF | In the panel, per format: a picture's font, background and scale; the form of the rule names; a whole document for LaTeX and Typst; the text tree's line; the Rocq lemma's name | Settled (D16): the author asked for settings where a picture's preview stood |
+| Share a link, with the proof or the sequent alone | Export's menu | The same panel, under "Link": the link is shown, with "Copy" | Settled (D16) |
 | Embed the page, print | A link's `e=1`; the browser's print | The same | Unchanged, not drawn |
 
 ### 8. Learn
@@ -845,9 +846,19 @@ The author went through this group on 2026-11-25 and found it fine.
   with the author's leave. For the page: this repository commits no
   third-party file, so the logo needs either the author's exception or a
   way in through a package.
-- **D16a and D16b**, export. A menu whose every entry saves or copies at
-  once (a), or a panel that shows what a format writes before it is
-  copied or saved, with "Whole document" for LaTeX and Typst (b).
+- **D16**, export. Two boards were drawn and played to the author: a
+  menu whose every entry saves or copies at once (a), and a panel that
+  shows what a format writes before it is copied or saved (b). The
+  author took (b), my recommendation: copying a derivation's LaTeX is the
+  commonest export, and the menu cannot do it. For pictures the author
+  wanted the format's settings where the preview stood, so the panel now
+  has settings for every format that has any. They are the ones deduxit's
+  manual names for `--style` (docs/src/output-formats.md): a picture's
+  font, the SVG's background, a PNG's scale, the form of the rule names,
+  LaTeX's and Typst's whole document, the text tree's line, the Rocq
+  lemma's name. Which of them the page passes on is for the rebuild; the
+  current page passes only the font and the PDF's date. The board's text
+  previews follow the settings; its pictures are not rendered.
 - **D17a and D17b**, a course pack for the student. Its problems stand
   among the sequents at the top after a label (a), or the pack is one
   entry at the top with a page that lists the problems and their state
