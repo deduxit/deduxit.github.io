@@ -735,7 +735,7 @@ page uses deduxit's normal budget and bounds as its defaults.
 | A visitor wants to | Now | New design | State |
 |---|---|---|---|
 | Hand out a set of problems | A course pack: a link, a printed handout | "Course pack" among the tools opens a panel: the title, the sequents at the top as problems to tick, whether the search may help, then the link, the embed code and the printed sheet | Proposed (D18) |
-| Work on a pack | A bar over the stage | The pack's problems among the sequents at the top after a label with the count done, or the pack as one entry with a page that lists them. A pack that bars the search greys "Hint" and "Close all", and its problems' calculus cannot be changed | Proposed, two options (D17a, D17b) |
+| Work on a pack | A bar over the stage | The pack is one entry at the top, with its count done, and has a page of its own that lists the problems with their calculus and state. A press on a row opens the problem; a press on the entry goes back to the page. The page has no bottom box and no view's tools. A pack that bars the search greys "Hint" and "Close all", and its problems' calculus cannot be changed | Settled (D17) |
 | Hand answers in | A link or a file | Left out (the author: "I don't need a hand in functionality for students") | Left out |
 | Check answers handed in | The check view, one hand-in at a time | Left out with handing in | Left out |
 
@@ -859,10 +859,15 @@ The author went through this group on 2026-11-25 and found it fine.
   lemma's name. Which of them the page passes on is for the rebuild; the
   current page passes only the font and the PDF's date. The board's text
   previews follow the settings; its pictures are not rendered.
-- **D17a and D17b**, a course pack for the student. Its problems stand
-  among the sequents at the top after a label (a), or the pack is one
-  entry at the top with a page that lists the problems and their state
-  (b). Both show how many are done.
+- **D17**, a course pack for the student. Two places were drawn and
+  played to the author: the pack's problems among the sequents at the
+  top after a label (a), or the pack as one entry at the top with a page
+  that lists the problems and their state (b). The author took (b), my
+  recommendation: a pack is a unit, real packs have more than three
+  problems, and the page gives the count and each state a home. Moving
+  between problems costs a second press. The author had the bottom box
+  taken off the pack's page, where it serves nothing; the view's tools
+  go there too, and the guide's sentence stands under the list.
 - **D18**, a course pack made by the teacher.
 - Handing in is gone (the author, 2026-11-25, on seeing D17a played).
   The first drafts had "Hand in" among a pack's tools, with a link or a
