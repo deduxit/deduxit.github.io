@@ -777,8 +777,8 @@ implement all of them, and compare when we get there).
 - **D15a, D15b and D15c**, a net moved and zoomed. The zoom's buttons
   stand at the stage's lower right (a), among the view's tools (b), or
   nowhere until the drawing has left its fitted place, when one button
-  shows the zoom and fits it again (c). Dragging and the wheel are wired
-  on all three; whether the canvas passes them on is not checked.
+  shows the zoom and fits it again (c). Dragging and the wheel work
+  on all three.
 - **D16a and D16b**, export. A menu whose every entry saves or copies at
   once (a), or a panel that shows what a format writes before it is
   copied or saved, with "Whole document" for LaTeX and Typst (b).
@@ -816,6 +816,13 @@ while they are open; D11's model stood far under its sequent. The label
 `¬¬` is not readable at the size of a rail cell or of the list of views,
 so D13 marks the four translations by letters, Gl, Ku, GG and Ko. D3's
 list still shows `¬¬`.
+
+Once the author had signed in, I played three of the boards in the canvas
+itself. They draw there as in my pictures. On D11a the list of systems,
+a sequent typed and entered, and the changes to the countermodel work;
+on D13 the list of views, a view added and the tableau by hand; on D15c
+the wheel zooms and a drag moves the drawing. The other new boards I have
+not played in the canvas.
 
 ### What goes
 
