@@ -668,9 +668,10 @@ page uses deduxit's normal budget and bounds as its defaults.
 | Change the logic or the proof method | The Logic popover, with a restart warning | The toggles at the stage's top left; the proof stays or a view opens | Settled (D2, D6, D7) |
 | Draw weakenings and contractions | A switch in the popover | A switch among the view's tools | Settled (D2) |
 | Draw a classical linear proof two-sided | A switch in the popover | A switch among the view's tools | Settled (D6) |
-| Prove in natural deduction, backwards or forwards | Its own panel: goals, numbered lines, two step lists | "Natural" or "Fitch"; a proof under way not drawn | Open |
-| Decide a modal sequent | A button in the popover, then a panel | A symbol on the new tab view; its fifteen systems as a chooser where the toggles are | Open |
-| Check or find a lambda-term | A button in the popover, then a panel | A symbol on the new tab view; its three calculi as a toggle | Open |
+| Prove in natural deduction, backwards or forwards | Its own panel: goals, numbered lines, two step lists | Press the goal for a rule that works backwards (`→I`, `∧I`, `hyp`); press a line in force for a rule that works forwards (`→E`, `∧E`). A rule that does not apply is greyed, with its reason on hover. "Natural" draws Gentzen's tree and "Fitch" the numbered lines: two drawings of one proof | Proposed (D7) |
+| Decide a modal sequent | A button in the popover, then a panel | A symbol on the new tab view. The sequent is decided on Enter and again when the system changes. A countermodel is a view of its own, `⊭`, changed by pressing. The system is chosen where the toggles are | Proposed, two options (D11a, D11b) |
+| Prove a valid modal sequent step by step | "Prove it step by step" under the verdict | "Prove step by step" among the tools of a valid sequent makes a view in the labelled calculus | Proposed (D11, the open goal alone) |
+| Check or find a lambda-term | A button in the popover, then a panel | A symbol on the new tab view; its three calculi as a toggle. The box takes a term, which is checked and drawn with its typing derivation, or a type, for which a term is found. "List its terms" among the tools | Proposed (D12) |
 | Prove in rules of one's own | A button in the popover, then a panel | Left out, at least for now (the author) | Left out |
 
 ### 5. Look at a sequent in another way
@@ -679,33 +680,36 @@ page uses deduxit's normal budget and bounds as its defaults.
 |---|---|---|---|
 | See what else can be done with a sequent | Spread over tabs of the stage, the popover and four sheets | "+ view", one list | Settled (D3) |
 | See a linear proof's net | The stage's Net tab | A view in one capsule with its proof | Settled (D6) |
-| Truth table, tableau, resolution | Two tabs of the stage and a sheet | Views from "+ view" | Settled as entries (D3); the views not drawn |
-| Translate into another logic and prove it there | A sheet, then "Prove it in" on a new tab | A view from "+ view", marked with how it was made | Settled as entries (D2, D3) |
-| Interpolant, normal form | Two sheets | Views from "+ view" | Settled as entries (D3) |
-| Eliminate a proof's cuts | A cluster on the stage, on the tree and on the net | A view made from the proof | Open |
-| Read a finished proof as a lambda-term | The last item of Export | A view under "Read off" | Open |
-| Check a tableau written by hand | A button in the popover | A way of the tableau view | Open |
-| Check a model of one's own | A button in the popover | "+ view" | Open |
-| Work on a copy of a proof | "Duplicate this proof" | "+ view", the same calculus again | Open |
-| See how the views depend on each other | The Workspace panel and its graph | The rail: a sign for how a view was made, a capsule for views that depend on each other | Proposed (D2) |
-| Bring a view up to date after its source changed | "Update", "Start again", "Check" in the panel | A mark on the view's cell and one action there | Open |
+| Truth table | A tab of the stage | A view from "+ view": the table, a red cross at each row that refutes the sequent | Proposed (D13) |
+| Tableau | A tab of the stage | A view from "+ view" with a toggle, "Search" or "By hand" | Proposed (D13) |
+| Resolution | A sheet: Search, DPLL, By hand | A view from "+ view" with the same toggle: the clauses as numbered lines, each new one with the two it came from | Proposed (D13); DPLL not drawn |
+| Translate into another logic and prove it there | A sheet, then "Prove it in" on a new tab | A view from "+ view": the translated sequent and one button, "Prove it in LJ", which opens it as a sequent at the top | Proposed (D13) |
+| Interpolant | A sheet | A view from "+ view": each formula carries the number of its part and a press moves it to the other part; the interpolant and its two sequents follow | Proposed (D13) |
+| Normal form | A sheet | A view from "+ view" with a toggle, NNF, CNF or DNF | Proposed (D13); Tseitin, Plaisted–Greenbaum and the stepper not drawn |
+| Eliminate a proof's cuts | A cluster on the stage, on the tree and on the net | A view made from the proof, "CE". "Next step" and "To the end" among its tools, Undo steps back, "Steps" lists the cases; the cut worked on next is drawn in lapis | Proposed (D14) |
+| Read a finished proof as a lambda-term | The last item of Export | A view made from the proof, `λ`, with "Copy as text" | Proposed (D14) |
+| Check a tableau written by hand | A button in the popover, then a text to type | "By hand" in the tableau view: a press on a line expands it, a branch closes by itself | Proposed (D13) |
+| Check a model of one's own | A button in the popover | A view from "+ view", "M": a press on an atom makes it true or false | Proposed (D13) |
+| Work on a copy of a proof | "Duplicate this proof" | "+ view", "A copy of this proof" | Proposed (D13, D14) |
+| See how the views depend on each other | The Workspace panel and its graph | The rail: a short line joins a view to the one above it that it was made from | Proposed (D13, D14) |
+| Bring a view up to date after its source changed | "Update", "Start again", "Check" in the panel | The view's cell gets a dashed border and a red "!"; the view is drawn faint with one button, "Update", or "Start again" when it has steps of its own | Proposed (D14) |
 
 ### 6. Look at the drawing
 
 | A visitor wants to | Now | New design | State |
 |---|---|---|---|
-| Pan and zoom, fit to the window | Drag, pinch, the wheel, `+` `−` `F`, buttons on the stage | The same gestures and keys; the buttons not placed | Open |
+| Pan and zoom, fit to the window | Drag, pinch, the wheel, `+` `−` `F`, buttons on the stage | The same gestures and keys; the buttons in one of three places | Proposed, three options (D15a, D15b, D15c) |
 | Choose the font of the formulas | Settings | The menu | Proposed |
 | Light or dark | Settings | The menu; dark not drawn | Open |
-| Choose how a net is drawn | Settings, "Net drawing" | A switch among the net view's tools | Proposed |
+| Choose how a net is drawn | Settings, "Net drawing" | A toggle where the calculus toggles are, "Formulas" or "Compact", as "Natural" and "Fitch" are two drawings of one proof | Proposed (D15) |
 
 ### 7. Keep and share
 
 | A visitor wants to | Now | New design | State |
 |---|---|---|---|
 | Keep the work without doing anything | Saved in the browser | The same | Unchanged |
-| Save a proof in a format (LaTeX, Typst, SVG, PNG, PDF, Rocq, JSON) | Export's menu | "Export" among the view's tools; it exports the view shown | Proposed (D2); the menu not drawn |
-| Share a link, with the proof or the sequent alone | Export's menu | The same menu | Proposed |
+| Save a proof in a format (LaTeX, Typst, SVG, PNG, PDF, Rocq, JSON) | Export's menu | "Export" among the view's tools; it exports the view shown | Proposed, two options (D16a, D16b) |
+| Share a link, with the proof or the sequent alone | Export's menu | The same menu or panel, under "Link" | Proposed (D16a, D16b) |
 | Embed the page, print | A link's `e=1`; the browser's print | The same | Unchanged, not drawn |
 
 ### 8. Learn
@@ -723,9 +727,10 @@ page uses deduxit's normal budget and bounds as its defaults.
 
 | A visitor wants to | Now | New design | State |
 |---|---|---|---|
-| Hand out a set of problems | A course pack: a link, a printed handout | Not placed | Open |
-| Hand answers in | A link or a file | Not placed | Open |
-| Check answers handed in | The check view | Not placed | Open |
+| Hand out a set of problems | A course pack: a link, a printed handout | "Course pack" among the tools opens a panel: the title, the sequents at the top as problems to tick, whether the search may help, then the link, the embed code and the printed sheet | Proposed (D18a) |
+| Work on a pack | A bar over the stage | The pack's problems among the sequents at the top, or the pack as one entry with a page that lists them | Proposed, two options (D17a, D17b) |
+| Hand answers in | A link or a file | "Hand in" among the tools: how much is done, then "Copy the link" or "Save the file". A pack that bars the search greys "Hint" and "Close all" | Proposed (D17a, D17b) |
+| Check answers handed in | The check view, one hand-in at a time | The hand-in opens as an entry at the top with its check as a page; "Open" puts an answer among the sequents | Proposed, two options (D18b, D18c) |
 
 ### 10. Settings and the rest
 
@@ -743,6 +748,62 @@ What is chosen is kept in the browser, as the light or dark scheme is.
 | Close every sequent | "Discard" on the restore bar | The Settings page, "This browser"; it can be undone | Proposed (D10, the button alone) |
 | See every key; read what the page is, its licences, privacy | Keys, About, the privacy page | The Settings page, "About", as three rows that open them | Proposed (D10, the rows alone) |
 | Use the page offline, install it | The service worker | The same | Unchanged |
+
+### The boards for groups 4 to 9
+
+All of them respond, and each stands in the canvas's second row. Where I
+saw more than one good way, each way is a board of its own (the author:
+implement all of them, and compare when we get there).
+
+- **D7**, natural deduction, on `p → q, q → r ⊢ p → r` and
+  `p ∧ q ⊢ q ∧ p`. In the tree an open goal shows its lines in force as
+  small buttons over its dashed line. It has no search budget, no mark on
+  a goal without a proof and no menu behind a goal yet.
+- **D11a and D11b**, modal logic. The box reads a sequent with `[]` and
+  `<>`. D11a chooses the system from a list of the fifteen. D11b puts it
+  together from five conditions on what a world sees (serial, reflexive,
+  symmetric, transitive, euclidean); the system's name follows, and a
+  condition that follows from the others shows as on. In the countermodel
+  a press on an atom changes where it holds; a press on a world's name
+  and then on a world adds or takes away an arrow. A model that breaks
+  the system's conditions gets a line that says which, and the missing
+  arrow dashed in red.
+- **D12**, lambda-terms, with the three calculi as a toggle.
+- **D13**, the other views of a sequent, each computed for the sequent in
+  the box.
+- **D14**, views made from a proof: cut elimination, the λ-term and a
+  copy. Undo in the proof marks the views made from it; "Close all" then
+  finds a proof without a cut, and "Update" brings each view up to date.
+- **D15a, D15b and D15c**, a net moved and zoomed. The zoom's buttons
+  stand at the stage's lower right (a), among the view's tools (b), or
+  nowhere until the drawing has left its fitted place, when one button
+  shows the zoom and fits it again (c). Dragging and the wheel are wired
+  on all three; whether the canvas passes them on is not checked.
+- **D16a and D16b**, export. A menu whose every entry saves or copies at
+  once (a), or a panel that shows what a format writes before it is
+  copied or saved, with "Whole document" for LaTeX and Typst (b).
+- **D17a and D17b**, a course pack for the student. Its problems stand
+  among the sequents at the top after a label (a), or the pack is one
+  entry at the top with a page that lists the problems and their state
+  (b).
+- **D18a, D18b and D18c**, the teacher's side: a pack made (a), one
+  hand-in checked as a list (b), a class's hand-ins checked in one table,
+  a row per hand-in and a column per problem (c). The current page checks
+  one hand-in at a time; the table is my addition.
+
+What these boards compute themselves, with scripts of their own and not
+deduxit: D11 decides by looking for a model of up to three worlds, so a
+sequent that needs four is called valid there; D12 checks terms with `→`
+alone and finds terms up to a depth; D13 reads `¬`, `∧`, `∨` and `→` with
+up to four atoms. D14, D17 and D18 show proofs written out by hand. The
+texts D16 writes (LaTeX, Typst, the session, Rocq, the links) are examples
+of their kind.
+
+Every board that responds is now pressed at random by a script, which
+checks in each state it reaches that the drawing gets every value it asks
+for. The first run found a fault on D2, D6 and D7: after Undo and then a
+step back in "Steps", Redo brought the steps back in the wrong order. It
+is fixed on all three.
 
 ### What goes
 
@@ -826,6 +887,7 @@ elsewhere the boards share it, as the page's tabs would.
   boards' ink). The first drafts set the word in Gentium with two drawn
   lines, which was not the mark (the author).
 - The translations written out (the linear one above all) are examples,
-  not deduxit's output.
+  not deduxit's output. So is every text D16 exports.
+- A self-loop in D11's countermodel is a plain ring with no arrow head.
 - The keys in B (`1`, `h`, `c`, `u`, `/`) are a proposal.
 - A phone's width.
