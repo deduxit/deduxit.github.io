@@ -748,13 +748,22 @@ What is chosen is kept in the browser, as the light or dark scheme is.
 | A visitor wants to | Now | New design | State |
 |---|---|---|---|
 | Switch between light and dark | Settings | A button in the top row, a moon in light and a sun in dark; the Settings page also has Light, Dark and System | Settled as asked (every board) |
-| Choose the font of the formulas, how nets are drawn | Settings | The Settings page, "Look" | Proposed (D10) |
-| Choose the search's engine, budget and bounds | Settings | The Settings page, "Search" | Proposed (D10) |
-| Mark goals that have no proof, or not | Not there | The Settings page, "Proving", on at first | Proposed (D10) |
-| Have the invertible rules applied | Settings | The Settings page, "Proving" | Proposed (D10) |
+| Choose the font of the formulas, how nets are drawn | Settings | The Settings page, "Look" | Settled (D10) |
+| Choose the search's engine, budget and bounds | Settings | The Settings page, "Search"; the panel under "Close all" starts from these values, and its "Defaults" link opens this section | Settled (D10) |
+| Mark goals that have no proof, or not | Not there | The Settings page, "Proving", on at first | Settled (D10) |
+| Have the invertible rules applied | Settings | The Settings page, "Proving" | Settled (D10) |
 | Close every sequent | "Discard" on the restore bar | The Settings page, "This browser"; it can be undone | Proposed (D10, the button alone) |
 | See every key; read what the page is, its licences, privacy | Keys, About, the privacy page | The Settings page, "About", as three rows that open them | Proposed (D10, the rows alone) |
 | Use the page offline, install it | The service worker | The same | Unchanged |
+
+Every control of one kind has one size on every page (the author, for
+visual consistency):
+- a toggle's cell is 24 pixels high with 14-pixel type, in a box with 2
+  pixels of padding, so the box is 30 pixels high;
+- a switch is 28 by 16 pixels with a 12-pixel knob, grey when off and
+  lapis when on;
+- a text field, a list and a plain button are 30 pixels high, as high
+  as a toggle's box.
 
 ### The boards for groups 4 to 9
 
