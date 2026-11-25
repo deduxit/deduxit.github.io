@@ -173,8 +173,9 @@ that is not needed. D is A's colours and type with those changes.
   (the author); a proof net with square links was tried in between. A
   small sign above the name says how the view's sequent was made:
   `¬¬` a negative translation, `!` the linear one. Views that depend on
-  each other share a capsule (the net with its linear proof). A ring marks
-  open goals. The rail never widens, with the guide on or off: a view's
+  each other share a capsule (the net with its linear proof). A small
+  number on a cell counts its open goals (the author; a ring stood there
+  first, which said that goals were open and not how many). The rail never widens, with the guide on or off: a view's
   full name shows when the pointer or the keyboard is on its cell.
 - **The page without the guide has almost no words**: the sequents, the
   calculus names, the rule's sign. Every control has its name for screen
@@ -521,13 +522,13 @@ script of the board's own for `→`, `∧`, `∨` and `ax`, not deduxit.
 | Choose among several rules | The popover lists them; the keys 1 to 9 pick | The popover holds one button per rule, side by side, the ones that do not apply greyed among them; each shows its drawing on hover | Settled (D2); the keys not drawn |
 | See the rule explained | A hint on every rule label: name, schema and a sentence | A card over the popover draws the rule, premises over conclusion, while the pointer or the keyboard is on it; no name, no sentence (the author) | Settled (D2; D4 draws the card); a touch screen has no hover, and the drawing's label in the derivation is not drawn |
 | Learn that a rule does not apply | The rule is offered; applying it leaves a note at the goal, with "Other rules" | The rule is greyed in the popover and cannot be pressed; its hover card says why under its drawing (the author). On a touch screen, which has no hover, a press on the greyed rule shows the reason as a note over the goal | Settled (D2); the touch part is my addition |
-| See which goals are open | The goal bar, "Open goal 1 of 2" | A dashed lapis line over each open goal; a ring on the view's cell while any is open, a check on the sequent once none is | Settled (D2); D6 shows the count as a small number on the view's cell |
+| See which goals are open | The goal bar, "Open goal 1 of 2" | A dashed lapis line over each open goal; the number of open goals, small, on the view's cell in the rail; a check on the sequent once none is open | Settled (every board) |
 | Go to another open goal | The keys `[` and `]`, or a press | A press on any formula of it | Settled (D2); the keys not drawn |
 | Undo, redo | The bottom band | The view's tools, greyed when there is nothing to undo or redo | Settled (D2) |
 | Go back to an earlier step | "Steps", a list | "Steps" opens a list beside the tools: 0 for the start, then each step by its rule and formula; a press goes back to it and Redo goes forward again | Settled (D2) |
 | Be told what to do next | The hint ladder at the goal | "Hint" points at the next press from where the visitor is, and takes nothing back: a formula to press; with a formula chosen, the rule to take in the open popover; with a split or a cut open, the formulas to move and then the button that applies it. With the guide on a line over the bottom box says it in words. Where no rule leads on, a line says so and to undo | Settled (D2, D6); a witness not drawn |
 | Give a witness (`∃R`, `∀L`) | A second popover | A small box in the rule's popover | Settled (D8) |
-| Split the context (linear `⊗`) | A chooser under the goal, with "Passes" and "Cannot close" | The two premises the rule would make appear over the goal, dashed, with the goal's other formulas as chips inside them. A press on a chip moves it to the other premise. A button at the line's end, the rule's sign and an enter arrow, applies the rule. Every split is legal, so the button is never greyed | Proposed (D6) |
+| Split the context (linear `⊗`) | A chooser under the goal, with "Passes" and "Cannot close" | The two premises the rule would make appear over the goal, dashed, with the goal's other formulas as chips inside them. A press on a chip moves it to the other premise. A button at the line's end, the rule's sign and an enter arrow, applies the rule. Every split is legal, so the button is never greyed | Settled (D6): "lgtm" |
 | Cut (linear) | "Cut" beside the goal, then a chooser | "Cut" among a linear view's tools opens a small box over the goal for the cut formula. Once it reads, the two premises appear as for a split and are filled the same way; a text that is no formula is said under the box | Proposed (D6) |
 | Prove a goal apart | "Open this goal in a new tab" | Press the goal's `⊢`, then "Prove apart": the goal opens as a sequent of its own at the top, in the same calculus. Its hover says which sequent's goal it is | Proposed (D2) |
 | Close a goal by a proof made apart | "Fill from" a finished tab | Press the goal's `⊢`: once a sequent with the goal's formulas is proved in the same calculus, a third action uses its proof. The steps it brings are grey in the drawing and marked "apart" in the list | Proposed (D2) |
