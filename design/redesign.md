@@ -683,14 +683,14 @@ page uses deduxit's normal budget and bounds as its defaults.
 | See what else can be done with a sequent | Spread over tabs of the stage, the popover and four sheets | "+ view", one list | Settled (D3) |
 | See a linear proof's net | The stage's Net tab | A view in one capsule with its proof | Settled (D6) |
 | Truth table | A tab of the stage | A view from "+ view": the table, a red cross at each row that refutes the sequent | Proposed (D13) |
-| Tableau | A tab of the stage | A view from "+ view" with a toggle, "Search" or "By hand" | Proposed (D13) |
-| Resolution | A sheet: Search, DPLL, By hand | A view from "+ view" with the same toggle: the clauses as numbered lines, each new one with the two it came from | Proposed (D13); DPLL not drawn |
-| Translate into another logic and prove it there | A sheet, then "Prove it in" on a new tab | A view from "+ view": the translated sequent and one button, "Prove it in LJ", which opens it as a sequent at the top | Proposed (D13) |
+| Tableau | A tab of the stage | A view from "+ view" with a toggle, "Search" or "By hand" | Settled (D13) |
+| Resolution | A sheet: Search, DPLL, By hand | A view from "+ view" with a toggle, "Search", "DPLL" or "By hand": the clauses as numbered lines, each new one with the two it came from. DPLL lists what it does line by line, indented under each atom it tries | Settled (D13) |
+| Translate into another logic and prove it there | A sheet, then "Prove it in" on a new tab | A view from "+ view": the translated sequent and one button, "Prove it in LJ", which opens it as a sequent at the top. A double-negation translation is marked `¬¬` with its letters under it, Gl, Ku, GG or Ko (the author) | Settled (D13, D3) |
 | Interpolant | A sheet | A view from "+ view": each formula carries the number of its part and a press moves it to the other part; the interpolant and its two sequents follow | Proposed (D13) |
-| Normal form | A sheet | A view from "+ view" with a toggle, NNF, CNF or DNF | Proposed (D13); Tseitin, Plaisted–Greenbaum and the stepper not drawn |
+| Normal form | A sheet | A view from "+ view" with a toggle of five kinds: NNF, CNF, DNF, Tseitin, Plaisted–Greenbaum. It shows the steps as numbered lines, each with the law that gave it, and opens at the last; Undo steps back, "Next step" and "To the end" go forward | Settled (D13) |
 | Eliminate a proof's cuts | A cluster on the stage, on the tree and on the net | A view made from the proof, "CE". "Next step" and "To the end" among its tools, Undo steps back, "Steps" lists the cases; the cut worked on next is drawn in lapis | Proposed (D14) |
 | Read a finished proof as a lambda-term | The last item of Export | A view made from the proof, `λ`, with "Copy as text" | Proposed (D14) |
-| Check a tableau written by hand | A button in the popover, then a text to type | "By hand" in the tableau view: a press on a line expands it, a branch closes by itself | Proposed (D13) |
+| Check a tableau written by hand | A button in the popover, then a text to type | "By hand" in the tableau view: a press on a line expands it, a branch closes by itself. Typing a tableau as text goes (the author) | Settled (D13) |
 | Check a model of one's own | A button in the popover | A view from "+ view", "M": a press on an atom makes it true or false | Proposed (D13) |
 | Work on a copy of a proof | "Duplicate this proof" | "+ view", "A copy of this proof" | Proposed (D13, D14) |
 | See how the views depend on each other | The Workspace panel and its graph | The rail: a short line joins a view to the one above it that it was made from | Proposed (D13, D14) |
@@ -698,7 +698,7 @@ page uses deduxit's normal budget and bounds as its defaults.
 | Go to a sequent's main view, or to its graph | Not there | A press on the sequent at the top opens its main view. A press on it while the main view shows opens the graph (the author) | Drawn as the author asked (D19) |
 | Go to the page's start | Not there | The word mark leads to the new tab view; with one open already, to that one. It is a plain link to the site's address | Settled (every board) |
 | Read what the page is | About, in the bottom band | "About" on the new tab view, beside "Learn" and "Practice", and on the Settings page | Proposed (D1, D10) |
-| Bring a view up to date after its source changed | "Update", "Start again", "Check" in the panel | The view's cell gets a dashed border and a red "!"; the view is drawn faint with one button, "Update", or "Start again" when it has steps of its own | Proposed (D14) |
+| Bring a view up to date after its source changed | "Update", "Start again", "Check" in the panel | The view's cell gets a dashed border and a red "!"; the view is drawn faint with one button, "Update", or "Start again" when it has steps of its own. "Check" goes as a button of its own: bringing a view up to date checks it | Proposed (D14); the author has not objected to "Check" going |
 
 ### 6. Look at the drawing
 
