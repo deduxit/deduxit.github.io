@@ -809,7 +809,9 @@ The author went through this group on 2026-11-25 and found it fine.
   a sequent made from a translation hangs under that translation, shaped
   like the entries at the top, and a press opens it. A graph of more
   than six views draws its nodes lower and closer. D2, D6 and D7, built
-  before the shared frame, do not have it yet.
+  before the shared frame, have it too (the author: add it). There the
+  views that are only drawn, D2's two translations and D7's proof in LK,
+  stand in the graph as nodes that do nothing on a press.
 - **D15a, D15b and D15c**, a net moved and zoomed. The zoom's buttons
   stand at the stage's lower right (a), among the view's tools (b), or
   nowhere until the drawing has left its fitted place, when one button
