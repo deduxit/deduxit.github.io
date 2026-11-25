@@ -685,7 +685,7 @@ page uses deduxit's normal budget and bounds as its defaults.
 | Truth table | A tab of the stage | A view from "+ view": the table, a red cross at each row that refutes the sequent | Proposed (D13) |
 | Tableau | A tab of the stage | A view from "+ view" with a toggle, "Search" or "By hand" | Settled (D13) |
 | Resolution | A sheet: Search, DPLL, By hand | A view from "+ view" with a toggle, "Search", "DPLL" or "By hand": the clauses as numbered lines, each new one with the two it came from. DPLL lists what it does line by line, indented under each atom it tries | Settled (D13) |
-| Translate into another logic and prove it there | A sheet, then "Prove it in" on a new tab | A view from "+ view": the translated sequent and one button, "Prove it in LJ", which opens it as a sequent at the top. A double-negation translation is marked `¬¬` with its letters under it, Gl, Ku, GG or Ko (the author) | Settled (D13, D3) |
+| Translate into another logic and prove it there | A sheet, then "Prove it in" on a new tab | A view from "+ view": the translated sequent and one button, "Prove it in LJ", which opens it as a sequent at the top. A double-negation translation is marked `¬¬` with its letters under it, Gl, Ku, GG or Ko (the author). "Prove it in" is a small outlined button at the sequent's end, the sign of "Prove apart" alone, with its words while the guide is on; the first draft's dark button under the sequent was too loud (the author) | Settled (D13, D3) |
 | Interpolant | A sheet | A view from "+ view": each formula carries the number of its part and a press moves it to the other part; the interpolant and its two sequents follow | Proposed (D13) |
 | Normal form | A sheet | A view from "+ view" with a toggle of five kinds: NNF, CNF, DNF, Tseitin, Plaisted–Greenbaum. It shows the steps as numbered lines, each with the law that gave it, and opens at the last; Undo steps back, "Next step" and "To the end" go forward | Settled (D13) |
 | Eliminate a proof's cuts | A cluster on the stage, on the tree and on the net | A view made from the proof, "CE". "Next step" and "To the end" among its tools, Undo steps back, "Steps" lists the cases; the cut worked on next is drawn in lapis | Proposed (D14) |
@@ -804,9 +804,12 @@ The author went through this group on 2026-11-25 and found it fine.
   downwards like the rail, rounder arrows, a smaller cell, and for the
   press on the sequent to lead to the main view first and to the graph
   from there. D19 has both ways in.
-  Not drawn: sequents made from this one, a translation opened at the
-  top or a goal proved apart, which would stand in the graph as nodes
-  shaped like the entries at the top.
+  The graph is now on every newer board whose sequent has two views or
+  more (the author missed it on D13): D11, D13, D14, D15 and D19. On D13
+  a sequent made from a translation hangs under that translation, shaped
+  like the entries at the top, and a press opens it. A graph of more
+  than six views draws its nodes lower and closer. D2, D6 and D7, built
+  before the shared frame, do not have it yet.
 - **D15a, D15b and D15c**, a net moved and zoomed. The zoom's buttons
   stand at the stage's lower right (a), among the view's tools (b), or
   nowhere until the drawing has left its fitted place, when one button
