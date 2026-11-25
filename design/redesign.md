@@ -514,7 +514,7 @@ script of the board's own for `→`, `∧`, `∨` and `ax`, not deduxit.
 | Go to another open goal | The keys `[` and `]`, or a press | A press on any formula of it | Settled (D2); the keys not drawn |
 | Undo, redo | The bottom band | The view's tools, greyed when there is nothing to undo or redo | Settled (D2) |
 | Go back to an earlier step | "Steps", a list | "Steps" opens a list beside the tools: 0 for the start, then each step by its rule and formula; a press goes back to it and Redo goes forward again | Settled (D2) |
-| Be told what to do next | The hint ladder at the goal | "Hint" rings the formula to press, and once it is pressed the rule to take; with the guide on a line over the bottom box says it in words. Where no rule leads on, a line says so and to undo | Settled (D2); the ladder's later rungs not drawn |
+| Be told what to do next | The hint ladder at the goal | "Hint" points at the next press from where the visitor is, and takes nothing back: a formula to press; with a formula chosen, the rule to take in the open popover; with a split or a cut open, the formulas to move and then the button that applies it. With the guide on a line over the bottom box says it in words. Where no rule leads on, a line says so and to undo | Settled (D2, D6); a witness not drawn |
 | Give a witness (`∃R`, `∀L`) | A second popover | A small box in the rule's popover | Settled (D8) |
 | Split the context (linear `⊗`) | A chooser under the goal, with "Passes" and "Cannot close" | The two premises the rule would make appear over the goal, dashed, with the goal's other formulas as chips inside them. A press on a chip moves it to the other premise. A button at the line's end, the rule's sign and an enter arrow, applies the rule. Every split is legal, so the button is never greyed | Proposed (D6) |
 | Cut (linear) | "Cut" beside the goal, then a chooser | "Cut" among a linear view's tools opens a small box over the goal for the cut formula. Once it reads, the two premises appear as for a split and are filled the same way; a text that is no formula is said under the box | Proposed (D6) |
@@ -537,6 +537,24 @@ context is never refused for where it leads, and the current page's
 "Passes" and "Cannot close" go. The first D6 greyed a split that could
 not close; the author had it removed. "Hint" and "Close all" still say
 when the search finds no proof of what is left.
+
+The hint goes on from where the visitor is (the author). The first
+boards' hint threw away whatever was open, a popover or a half-chosen
+split, and rang the formula again. Now it reads the state:
+
+- Nothing chosen: it rings a formula.
+- A formula chosen, its popover open: it rings the rule to take, and the
+  popover stays. If no rule of that formula leads to a proof, it rings
+  another formula.
+- A split or a cut open: it rings the formulas to move to the other
+  premise, and once they stand right, the button that applies it. The
+  premises are not filled for the visitor. If no split leads to a proof,
+  a line says so and the split stays open.
+- A cut whose formula is not typed yet: a line says that the search does
+  not use the cut.
+
+The same holds for every rule that asks for something before it applies,
+so for a witness too: the hint would point at the box and name a term.
 
 A rule that does not apply is never offered as if it did (the author):
 it stands greyed in the popover with its reason on hover. A refusal after
