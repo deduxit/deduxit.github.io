@@ -327,7 +327,7 @@ Open with the author:
 ## Learning in groups and views (proposal; the author: "sounds good")
 
 Left for later (the author): Learn and Practice come back once the core
-is right. Until then their buttons stay where they are and are inactive,
+is right, some time after the new design is on the main page. Until then their buttons stay where they are and are inactive,
 with the hint "Coming soon" (D1, and the view's tools on D4). The lesson
 board, D5, is gone from the canvas; what it drew is described below.
 
@@ -483,9 +483,10 @@ ids and one tab's later steps would be lost without a word. Decided:
   the page must not restore by itself: the visitor followed a link, a
   course pack or a hand-in, which opens alone; or the page is open in
   another tab. D1 draws this case, and the button's hover says so.
-- "Discard" goes. "Close all" in the menu closes every sequent and can be
-  undone. It serves a shared computer, where the next person should not
-  meet the last person's proofs. Not drawn.
+- "Discard" goes. "Close all" on the Settings page, under "This
+  browser", closes every sequent and can be undone. It serves a shared
+  computer, where the next person should not meet the last person's
+  proofs. D10 draws the button; the undoing is not drawn.
 - An embedded exercise restores nothing, as now.
 
 Decided here by the author: the first restored proof opens at once.
@@ -534,7 +535,7 @@ script of the board's own for `→`, `∧`, `∨` and `ax`, not deduxit.
 | Cut (linear) | "Cut" beside the goal, then a chooser | "Cut" among a linear view's tools opens a small box over the goal for the cut formula. Once it reads, the two premises appear as for a split and are filled the same way; a text that is no formula is said under the box | Settled (D6): "looks fine" |
 | Prove a goal apart | "Open this goal in a new tab" | Press the goal's `⊢`, then "Prove apart": the goal opens as a sequent of its own at the top, in the same calculus. Its hover says which sequent's goal it is | Settled (D2, D6) |
 | Close a goal by a proof made apart | "Fill from" a finished tab | Press the goal's `⊢`: once a sequent with the goal's formulas is proved in the same calculus, a third action uses its proof. The steps it brings are grey in the drawing and marked "apart" in the list | Settled (D2, D6) |
-| Have the invertible rules applied | A switch in Settings | The same switch, in the menu | Proposed |
+| Have the invertible rules applied | A switch in Settings | The same switch, on the Settings page under "Proving" | Settled (D10) |
 | Use the keyboard for all of it | The keys in the Keys list | The same keys | Proposed, not drawn |
 
 D6 plays the split and the cut, on `A ⊗ B ⊢ B ⊗ A`, with a script of the
@@ -705,8 +706,8 @@ page uses deduxit's normal budget and bounds as its defaults.
 | A visitor wants to | Now | New design | State |
 |---|---|---|---|
 | Pan and zoom, fit to the window | Drag, pinch, the wheel, `+` `−` `F`, buttons on the stage | The same gestures and keys. The buttons are one group at the stage's lower right: zoom out, the zoom's number, zoom in, fit | Settled (D15) |
-| Choose the font of the formulas | Settings | The menu | Proposed |
-| Light or dark | Settings | The menu; dark not drawn | Open |
+| Choose the font of the formulas | Settings | The Settings page, "Look" | Settled (D10) |
+| Light or dark | Settings | A button in the top row; the Settings page has Light, Dark and System | Settled (every board) |
 | Choose how a net is drawn | Settings, "Net drawing" | A toggle where the calculus toggles are, "Formulas" or "Compact", as "Natural" and "Fitch" are two drawings of one proof | Settled (D15): "looks good" |
 
 ### 7. Keep and share
