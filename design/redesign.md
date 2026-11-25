@@ -823,6 +823,11 @@ The author went through this group on 2026-11-25 and found it fine.
   the number; (c) is the calmest and leaves such a visitor no way in.
   While the graph shows, the group and the calculus toggles are hidden,
   on every board.
+- In Export's list every entry has a sign of its own (the author: one
+  download sign on all of them says nothing): a curve with its two points
+  for SVG, a framed picture for PNG, a page for PDF, TeX's dropped E,
+  Typst's t, lines for text, braces for the session, a checked seal for
+  Rocq, a derivation, a turnstile and a box for the three links.
 - **D16a and D16b**, export. A menu whose every entry saves or copies at
   once (a), or a panel that shows what a format writes before it is
   copied or saved, with "Whole document" for LaTeX and Typst (b).
