@@ -987,5 +987,8 @@ elsewhere the boards share it, as the page's tabs would.
 - The translations written out (the linear one above all) are examples,
   not deduxit's output. So is every text D16 exports.
 - A self-loop in D11's countermodel is a plain ring with no arrow head.
+- D15 first wrote a dual as `A⊥` on one line (the author asked why). That
+  was the board's shortcut for text. The sign is now raised and smaller,
+  as deduxit's own drawing sets it and as D6 already did.
 - The keys in B (`1`, `h`, `c`, `u`, `/`) are a proposal.
 - A phone's width.
