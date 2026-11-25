@@ -292,8 +292,9 @@ that is not needed. D is A's colours and type with those changes.
       could then fill the new view.
   - What changes only the drawing and has no toggle is a switch among the
     view's tools: weakenings and contractions (LK), two-sided (classical
-    linear logic, drawn in D6 as `·⊢·`; it read `Γ⊢Δ` until the author
-    asked for the shorter sign).
+    linear logic, drawn in D6 as a turnstile with a dot on each side,
+    in the tools' own stroke, the dots level with the turnstile's bar;
+    it was the text `Γ⊢Δ` and then `·⊢·` before, at the author's word).
   - Such a switch has the same box as the other tools, 36 by 34 pixels,
     its sign centred, and is pressed when on. The first boards stacked
     the sign over a small sliding track, which sat badly in the column
