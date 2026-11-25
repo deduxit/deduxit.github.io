@@ -828,6 +828,15 @@ The author went through this group on 2026-11-25 and found it fine.
   for SVG, a framed picture for PNG, a page for PDF, TeX's dropped E,
   Typst's t, lines for text, braces for the session, a checked seal for
   Rocq, a derivation, a turnstile and a box for the three links.
+  The list's four groups are Picture, Text, Proof and Link. "Proof"
+  holds the session and Rocq: both carry the proof itself, the session to
+  open on the page again, Rocq to have it checked there. The first draft
+  had them under "To open again", which is wrong for Rocq (the author).
+  For Rocq the author wants Rocq's own logo. Its site says the logo "is
+  released under the UNLICENSE" (rocq-prover.org/logo, read 2026-11-25)
+  and asks that it not be recoloured, so it would stand in its orange
+  among signs drawn in ink. The board keeps the checked seal until the
+  logo's file is fetched.
 - **D16a and D16b**, export. A menu whose every entry saves or copies at
   once (a), or a panel that shows what a format writes before it is
   copied or saved, with "Whole document" for LaTeX and Typst (b).
