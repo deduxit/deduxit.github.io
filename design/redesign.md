@@ -734,10 +734,10 @@ page uses deduxit's normal budget and bounds as its defaults.
 
 | A visitor wants to | Now | New design | State |
 |---|---|---|---|
-| Hand out a set of problems | A course pack: a link, a printed handout | "Course pack" among the tools opens a panel: the title, the sequents at the top as problems to tick, whether the search may help, then the link, the embed code and the printed sheet | Proposed (D18a) |
-| Work on a pack | A bar over the stage | The pack's problems among the sequents at the top, or the pack as one entry with a page that lists them | Proposed, two options (D17a, D17b) |
-| Hand answers in | A link or a file | "Hand in" among the tools: how much is done, then "Copy the link" or "Save the file". A pack that bars the search greys "Hint" and "Close all" | Proposed (D17a, D17b) |
-| Check answers handed in | The check view, one hand-in at a time | The hand-in opens as an entry at the top with its check as a page; "Open" puts an answer among the sequents | Proposed, two options (D18b, D18c) |
+| Hand out a set of problems | A course pack: a link, a printed handout | "Course pack" among the tools opens a panel: the title, the sequents at the top as problems to tick, whether the search may help, then the link, the embed code and the printed sheet | Proposed (D18) |
+| Work on a pack | A bar over the stage | The pack's problems among the sequents at the top after a label with the count done, or the pack as one entry with a page that lists them. A pack that bars the search greys "Hint" and "Close all", and its problems' calculus cannot be changed | Proposed, two options (D17a, D17b) |
+| Hand answers in | A link or a file | Left out (the author: "I don't need a hand in functionality for students") | Left out |
+| Check answers handed in | The check view, one hand-in at a time | Left out with handing in | Left out |
 
 ### 10. Settings and the rest
 
@@ -862,31 +862,13 @@ The author went through this group on 2026-11-25 and found it fine.
 - **D17a and D17b**, a course pack for the student. Its problems stand
   among the sequents at the top after a label (a), or the pack is one
   entry at the top with a page that lists the problems and their state
-  (b).
-- **D18a, D18b and D18c**, the teacher's side: a pack made (a), one
-  hand-in checked as a list (b), a class's hand-ins checked in one table,
-  a row per hand-in and a column per problem (c). The current page checks
-  one hand-in at a time; the table is my addition.
-
-The toggles are smaller since 2026-11-25 (the author found them too big):
-a toggle's box is 30 pixels high where it was 38, its type 14 pixels where
-it was 16, on every board.
-
-A proof view looks the same on every board (the author found D13's
-without the controls of ordinary logic, and asked that all boards be
-complete). On D13, D14, D16, D18 and D19 a proof in ordinary logic now
-has the two toggles at the top left and, among its tools, "Steps",
-"Hint", "Close all" with its caret and the switch for weakenings and
-contractions. D15 and the linear sequent a translation opens on D13 have
-the linear toggles, "Cut" and the two-sided switch. On D17 the toggles
-stand in their state and cannot be changed, with the reason on hover: a
-pack sets a problem's calculus.
-
-These controls are complete as a drawing, not as a prover. On these
-boards the toggles' other options lead to the boards that play them, D2
-for a change of logic and D7 for natural deduction; "Steps", "Hint" and
-the switches do nothing; a formula cannot be pressed for its rules.
-Proving by hand is played on D2, D6 and D7.
+  (b). Both show how many are done.
+- **D18**, a course pack made by the teacher.
+- Handing in is gone (the author, 2026-11-25, on seeing D17a played).
+  The first drafts had "Hand in" among a pack's tools, with a link or a
+  file for the teacher, and two boards on which a teacher checked one
+  hand-in as a list or a class's hand-ins as a table. A student who
+  wants to show a proof still has Export's session and links.
 
 What these boards compute themselves, with scripts of their own and not
 deduxit: D11 decides by looking for a model of up to three worlds, so a
@@ -950,6 +932,8 @@ it would follow the pack.
   (all in "+ view" and the toggles).
 - The bottom band (its actions are the view's tools, the rest is in the
   menu).
+- Handing answers in, and the view that checks them (the author). A
+  course pack stays: a set of problems to work on.
 - **A calculus of one's own**, "at least for now" (the author): no symbol
   on the new tab view, no rule file to edit, no starters. The current
   page builds two other things on the same part of deduxit, and both
