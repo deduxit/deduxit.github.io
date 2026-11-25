@@ -832,11 +832,17 @@ The author went through this group on 2026-11-25 and found it fine.
   holds the session and Rocq: both carry the proof itself, the session to
   open on the page again, Rocq to have it checked there. The first draft
   had them under "To open again", which is wrong for Rocq (the author).
-  For Rocq the author wants Rocq's own logo. Its site says the logo "is
-  released under the UNLICENSE" (rocq-prover.org/logo, read 2026-11-25)
-  and asks that it not be recoloured, so it would stand in its orange
-  among signs drawn in ink. The board keeps the checked seal until the
-  logo's file is fetched.
+  For Rocq the entry carries Rocq's own logo (the author), in its small
+  form, the bird alone. Its site says the logo "is released under the
+  UNLICENSE" (rocq-prover.org/logo, read 2026-11-25) and asks that it not
+  be stretched, turned or recoloured. The project publishes the bird in
+  black, white, blue and orange; the boards show the black one in the
+  light scheme and the white one in the dark, so it sits with the signs
+  drawn in ink. The shape is the path of `icon-rocq-black.svg` from
+  `rocq-id/logos/SVG` in github.com/rocq-prover/rocq-prover.org, fetched
+  with the author's leave. For the page: this repository commits no
+  third-party file, so the logo needs either the author's exception or a
+  way in through a package.
 - **D16a and D16b**, export. A menu whose every entry saves or copies at
   once (a), or a panel that shows what a format writes before it is
   copied or saved, with "Whole document" for LaTeX and Typst (b).
