@@ -692,7 +692,10 @@ page uses deduxit's normal budget and bounds as its defaults.
 | Check a model of one's own | A button in the popover | A view from "+ view", "M": a press on an atom makes it true or false | Proposed (D13) |
 | Work on a copy of a proof | "Duplicate this proof" | "+ view", "A copy of this proof" | Proposed (D13, D14) |
 | See how the views depend on each other | The Workspace panel and its graph | The rail: a short line joins a view to the one above it that it was made from | Proposed (D13, D14) |
-| See a sequent's views as a graph | "Show as graph" in the Workspace panel, from three rows | A view of the group: the sequent, each view made from it, each view made from a proof. A press on a node opens the view; a view out of date is dashed, and "Update all" is among the tools | Proposed, two options (D19a, D19b) |
+| See a sequent's views as a graph | "Show as graph" in the Workspace panel, from three rows | A view of the group, its cell the first in the rail and lower than a view's: the sequent and its views run downwards in the rail's order, each hanging by a rounded arrow from what it was made from. A press on a node opens the view; a view out of date is dashed, and "Update all" is among the tools | Drawn as the author asked (D19) |
+| Go to a sequent's main view, or to its graph | Not there | A press on the sequent at the top opens its main view. A press on it while the main view shows opens the graph (the author) | Drawn as the author asked (D19) |
+| Go to the page's start | Not there | The word mark leads to the new tab view; with one open already, to that one. It is a plain link to the site's address | Settled (every board) |
+| Read what the page is | About, in the bottom band | "About" on the new tab view, beside "Learn" and "Practice", and on the Settings page | Proposed (D1, D10) |
 | Bring a view up to date after its source changed | "Update", "Start again", "Check" in the panel | The view's cell gets a dashed border and a red "!"; the view is drawn faint with one button, "Update", or "Start again" when it has steps of its own | Proposed (D14) |
 
 ### 6. Look at the drawing
@@ -775,14 +778,14 @@ implement all of them, and compare when we get there).
 - **D14**, views made from a proof: cut elimination, the λ-term and a
   copy. Undo in the proof marks the views made from it; "Close all" then
   finds a proof without a cut, and "Update" brings each view up to date.
-- **D19a and D19b**, the graph of a group's views (the author asked for
-  it), on D14's proof with its three views. The graph is the first cell
-  of the rail, shown once the group has two views (a), or it opens by a
-  press on the group's entry at the top while that group is open (b).
-  My recommendation is (a): all that belongs to one sequent is in its
-  rail, and the cell can be seen. (b) costs no room, as a pack's entry
-  opens the pack's page on D17b, but nothing shows that it is there.
-  Not drawn: sequents made from this group, a translation opened at the
+- **D19**, the graph of a sequent's views (the author asked for it), on
+  D14's proof with its three views. Two first drafts ran from left to
+  right and differed in the way in: a cell of the rail, or a press on
+  the sequent at the top. The author asked for one drawing that runs
+  downwards like the rail, rounder arrows, a smaller cell, and for the
+  press on the sequent to lead to the main view first and to the graph
+  from there. D19 has both ways in.
+  Not drawn: sequents made from this one, a translation opened at the
   top or a goal proved apart, which would stand in the graph as nodes
   shaped like the entries at the top.
 - **D15a, D15b and D15c**, a net moved and zoomed. The zoom's buttons
