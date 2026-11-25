@@ -548,7 +548,8 @@ split, and rang the formula again. Now it reads the state:
   another formula.
 - A split or a cut open: it rings the formulas to move to the other
   premise, and once they stand right, the button that applies it. The
-  premises are not filled for the visitor. If no split leads to a proof,
+  premises are not filled for the visitor (the author: ring them). If no
+  split leads to a proof,
   a line says so and the split stays open.
 - A cut whose formula is not typed yet: a line says that the search does
   not use the cut.
