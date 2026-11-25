@@ -805,6 +805,18 @@ for. The first run found a fault on D2, D6 and D7: after Undo and then a
 step back in "Steps", Redo brought the steps back in the wrong order. It
 is fixed on all three.
 
+I have looked at the boards for groups 4 to 9 as pictures, each in several
+of its states. The pictures come from a script of mine that fills a
+board's drawing with its values and from the project's headless browser,
+not from the canvas, which asks my browser to sign in. What the pictures
+showed and I changed: in a wide derivation a rule's name ran into the
+next premise's line, so sibling premises now keep clear of it; D16b's
+panel and D18a's panel covered the derivation, which now moves aside
+while they are open; D11's model stood far under its sequent. The label
+`¬¬` is not readable at the size of a rail cell or of the list of views,
+so D13 marks the four translations by letters, Gl, Ku, GG and Ko. D3's
+list still shows `¬¬`.
+
 ### What goes
 
 - The restart warning on a change of logic (the proof stays or a view
