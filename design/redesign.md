@@ -668,10 +668,12 @@ page uses deduxit's normal budget and bounds as its defaults.
 | Change the logic or the proof method | The Logic popover, with a restart warning | The toggles at the stage's top left; the proof stays or a view opens | Settled (D2, D6, D7) |
 | Draw weakenings and contractions | A switch in the popover | A switch among the view's tools | Settled (D2) |
 | Draw a classical linear proof two-sided | A switch in the popover | A switch among the view's tools | Settled (D6) |
-| Prove in natural deduction, backwards or forwards | Its own panel: goals, numbered lines, two step lists | Press the goal for a rule that works backwards (`→I`, `∧I`, `hyp`); press a line in force for a rule that works forwards (`→E`, `∧E`). A rule that does not apply is greyed, with its reason on hover. "Natural" draws Gentzen's tree and "Fitch" the numbered lines: two drawings of one proof | Proposed (D7) |
-| Decide a modal sequent | A button in the popover, then a panel | A symbol on the new tab view. The sequent is decided on Enter and again when the system changes. A countermodel is a view of its own, `⊭`, changed by pressing. The system is chosen where the toggles are | Proposed, two options (D11a, D11b) |
+| Prove in natural deduction, backwards or forwards | Its own panel: goals, numbered lines, two step lists | Press the goal for a rule that works backwards (`→I`, `∧I`, `hyp`); press a line in force for a rule that works forwards (`→E`, `∧E`). A rule that does not apply is greyed, with its reason on hover. "Natural" draws Gentzen's tree and "Fitch" the numbered lines: two drawings of one proof | Settled (D7): "lgtm" |
+| A natural deduction goal's own actions | Beside the goal, as words | A small `?` stands where the goal's rule will be named: at the end of its dashed line in the tree, in the number's place in Fitch's lines. A press opens the same actions as `⊢` does in a sequent calculus. On a goal with no proof the `?` is a red cross | Proposed (D7) |
+| Decide a modal sequent | A button in the popover, then a panel | A symbol on the new tab view. The sequent is decided on Enter and again when the system changes. A countermodel is a view of its own, `⊭`, changed by pressing. Where the toggles are stand the system's name and five conditions on what a world sees; the conditions make the system, and a press on the name opens the list of the fifteen | Settled (D11): the author took my recommendation |
 | Prove a valid modal sequent step by step | "Prove it step by step" under the verdict | "Prove step by step" among the tools of a valid sequent makes a view in the labelled calculus | Proposed (D11, the open goal alone) |
-| Check or find a lambda-term | A button in the popover, then a panel | A symbol on the new tab view; its three calculi as a toggle. The box takes a term, which is checked and drawn with its typing derivation, or a type, for which a term is found. "List its terms" among the tools | Proposed (D12) |
+| Check or find a lambda-term | A button in the popover, then a panel | A symbol on the new tab view. One toggle says how often a variable may be used: "Unrestricted", "Linear", "Affine". The box takes a term, which is checked and drawn with its typing derivation, or a type, for which a term is found. "List its terms" among the tools | Proposed (D12) |
+| Work with untyped lambda-terms | Not there, and not in deduxit | A second toggle, "Typed" or "Untyped". An untyped term is reduced step by step, the part reduced next in lapis, with "Next step" and "To the end" as for cut elimination; a line says which simple type it would have, or that none fits | Proposed (D12); needs deduxit, asked for |
 | Prove in rules of one's own | A button in the popover, then a panel | Left out, at least for now (the author) | Left out |
 
 ### 5. Look at a sequent in another way
@@ -759,20 +761,33 @@ All of them respond, and each stands in the canvas's second row. Where I
 saw more than one good way, each way is a board of its own (the author:
 implement all of them, and compare when we get there).
 
-- **D7**, natural deduction, on `p → q, q → r ⊢ p → r` and
-  `p ∧ q ⊢ q ∧ p`. In the tree an open goal shows its lines in force as
-  small buttons over its dashed line. It has no search budget, no mark on
-  a goal without a proof and no menu behind a goal yet.
-- **D11a and D11b**, modal logic. The box reads a sequent with `[]` and
-  `<>`. D11a chooses the system from a list of the fifteen. D11b puts it
-  together from five conditions on what a world sees (serial, reflexive,
-  symmetric, transitive, euclidean); the system's name follows, and a
-  condition that follows from the others shows as on. In the countermodel
-  a press on an atom changes where it holds; a press on a world's name
-  and then on a world adds or takes away an arrow. A model that breaks
-  the system's conditions gets a line that says which, and the missing
-  arrow dashed in red.
-- **D12**, lambda-terms, with the three calculi as a toggle.
+- **D7**, natural deduction, on `p → q, q → r ⊢ p → r`, `p ∧ q ⊢ q ∧ p`
+  and `p → q ⊢ q → p`, which has no proof. In the tree an open goal shows
+  its lines in force as small buttons over its dashed line. It has what
+  D2 and D6 have (the author: add it if reasonable): a budget for the
+  search with "Unknown" and "Search longer", "Stop", settings for one
+  search, the red cross on a goal with no proof, and a goal's actions
+  behind its `?`: close by search, prove apart, use a proof made apart.
+  "Go back" is left out: in natural deduction no legal step turns a goal
+  with a proof into one without, so there is nowhere to go back to.
+- **D11**, modal logic. The box reads a sequent with `[]` and `<>`. The
+  first drafts were two boards, the system from a list (a) or from five
+  conditions (b: serial, reflexive, symmetric, transitive, euclidean);
+  the author chose my recommendation, the conditions with the list
+  behind the system's name. A condition that follows from the others
+  shows as on. In the countermodel a press on an atom changes where it
+  holds; a press on a world's name and then on a world adds or takes
+  away an arrow. A model that breaks the system's conditions gets a line
+  that says which, and the missing arrow dashed in red.
+- **D12**, lambda-terms on two axes. deduxit's three calculi are all
+  typed, each λ naming its variable's type, and differ in how often a
+  variable may be used (the author saw that "Simply typed", the current
+  page's name for one of them, fits all three). So that toggle now reads
+  "Unrestricted", "Linear", "Affine". "Untyped" is a second axis the
+  author asked about. deduxit has no untyped terms; the session that
+  plans deduxit was asked to put them into its future plans
+  (2026-11-25). The board reduces untyped terms with a script of its
+  own, leftmost outermost, up to 24 steps.
 - **D13**, the other views of a sequent, each computed for the sequent in
   the box.
 - **D14**, views made from a proof: cut elimination, the λ-term and a
