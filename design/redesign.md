@@ -836,9 +836,10 @@ The author went through this group on 2026-11-25 and found it fine.
   form, the bird alone. Its site says the logo "is released under the
   UNLICENSE" (rocq-prover.org/logo, read 2026-11-25) and asks that it not
   be stretched, turned or recoloured. The project publishes the bird in
-  black, white, blue and orange; the boards show the black one in the
-  light scheme and the white one in the dark, so it sits with the signs
-  drawn in ink. The shape is the path of `icon-rocq-black.svg` from
+  black, white, blue and orange. The boards draw it in the ink of the
+  page's scheme, as every other sign (the author: the Unlicense allows
+  it, and ink in each scheme stands for the project's own black and
+  white, not for another colour). The shape is the path of `icon-rocq-black.svg` from
   `rocq-id/logos/SVG` in github.com/rocq-prover/rocq-prover.org, fetched
   with the author's leave. For the page: this repository commits no
   third-party file, so the logo needs either the author's exception or a
