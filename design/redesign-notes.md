@@ -1,6 +1,7 @@
 # The page redesigned: working notes
 
 The agreed design is in [redesign.md](redesign.md), the design guide.
+The author settled it on 2026-11-25.
 These notes are how it came about: the three first directions, each
 round with the author, and the drafts that were dropped. Where the two
 disagree, the guide holds.
