@@ -22,9 +22,10 @@ pinned input `deduxit` and builds no Rust itself. A change the page needs from t
 or the bindings is a change of deduxit, made there (in a jj workspace of its own), and
 reaches this repository by moving the input. deduxit's `plan/web/README.md` is the front
 end's plan and `plan/web/design.md` its design (D1 to D60, fixed with the author); the
-visual reference is deduxit's `plan/web/mockup/`. This repository follows the author's two
-sites (`~/Projects/own/website/docs/stack-spec.md`, `~/Projects/own/website-learn`), from
-which its flake, its tooling and its Claude Code setup are taken.
+visual reference is deduxit's `plan/web/mockup/`. Its stack is the author's stack spec
+(`~/Projects/own/website-stack/stack-spec.md`), with this site's own decisions as §5 in
+`docs/stack-spec.md` (hosting on GitHub Pages); its flake, its tooling and its Claude Code
+setup follow the author's site `~/Projects/own/website-learn`.
 
 ## Hard rules
 

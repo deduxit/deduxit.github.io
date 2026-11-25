@@ -15,7 +15,7 @@ browser's storage and the URL in `onMount` without a hydration mismatch to fear.
 signature in `node_modules/solid-js/types/` before using it from memory. Solid 2.0
 (v2.solidjs.com) is a different API: none of its names (`Loading`, `Errored`, `onSettled`,
 `merge`, `omit`, `@solidjs/web`) until the port, which the author's stack specification
-(`~/Projects/own/website/docs/stack-spec.md` §3.4, "Moving to Solid 2.0") schedules.
+(`~/Projects/own/website-stack/stack-spec.md` §3.4, "Moving to Solid 2.0") schedules.
 
 **No React, ever.**
 
