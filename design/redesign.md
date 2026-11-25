@@ -292,7 +292,8 @@ that is not needed. D is A's colours and type with those changes.
       could then fill the new view.
   - What changes only the drawing and has no toggle is a switch among the
     view's tools: weakenings and contractions (LK), two-sided (classical
-    linear logic, drawn in D6 as `Γ⊢Δ`).
+    linear logic, drawn in D6 as `·⊢·`; it read `Γ⊢Δ` until the author
+    asked for the shorter sign).
 - **"+ view" lists what the toggles do not reach** (the author): under
   "Prove" the tableau and resolution, then the truth table, the
   translations and what is read off a proof. The sequent calculus and
