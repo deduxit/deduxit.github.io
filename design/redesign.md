@@ -319,10 +319,8 @@ that is not needed. D is A's colours and type with those changes.
 - Radii: 8 to 10 for a control, 12 for a rail cell, 14 to 16 for the
   popover and the bottom box, 18 for a logic's button.
 
-Open with the author:
-
-- whether "?" reads as the guide's switch;
-- whether the toggles sit well at the stage's top left.
+"?" stays as the guide's switch, with the hover "Guide" (the author);
+whether it reads as that is to be seen in the prototype.
 
 ## Learning in groups and views (proposal; the author: "sounds good")
 
@@ -672,7 +670,7 @@ page uses deduxit's normal budget and bounds as its defaults.
 | Prove in natural deduction, backwards or forwards | Its own panel: goals, numbered lines, two step lists | Press the goal for a rule that works backwards (`→I`, `∧I`, `hyp`); press a line in force for a rule that works forwards (`→E`, `∧E`). A rule that does not apply is greyed, with its reason on hover. "Natural" draws Gentzen's tree and "Fitch" the numbered lines: two drawings of one proof | Settled (D7): "lgtm" |
 | A natural deduction goal's own actions | Beside the goal, as words | A small `?` stands where the goal's rule will be named: at the end of its dashed line in the tree, in the number's place in Fitch's lines. A press opens the same actions as `⊢` does in a sequent calculus. On a goal with no proof the `?` is a red cross | Settled (D7) |
 | Decide a modal sequent | A button in the popover, then a panel | A symbol on the new tab view. The sequent is decided on Enter and again when the system changes. A countermodel is a view of its own, `⊭`, changed by pressing. Where the toggles are stand the system's name and five conditions on what a world sees; the conditions make the system, and a press on the name opens the list of the fifteen | Settled (D11): the author took my recommendation |
-| Prove a valid modal sequent step by step | "Prove it step by step" under the verdict | "Prove step by step" among the tools of a valid sequent makes a view in the labelled calculus | Proposed (D11, the open goal alone) |
+| Prove a valid modal sequent step by step | "Prove it step by step" under the verdict | "Prove step by step" among the tools of a valid sequent makes a view in the labelled calculus | Settled (D11, the open goal alone) |
 | Check or find a lambda-term | A button in the popover, then a panel | A symbol on the new tab view. One toggle says how often a variable may be used: "Unrestricted", "Linear", "Affine". The box takes a term, which is checked and drawn with its typing derivation, or a type, for which a term is found. "List its terms" among the tools | Settled (D12) |
 | Work with untyped lambda-terms | Not there, and not in deduxit | A second toggle, "Typed" or "Untyped". An untyped term is reduced step by step, the part reduced next in lapis, with "Next step" and "To the end" as for cut elimination; a line says which simple type it would have, or that none fits | Settled as a drawing (D12); needs deduxit, asked for |
 | Prove in rules of one's own | A button in the popover, then a panel | Left out, at least for now (the author) | Left out |
@@ -683,23 +681,23 @@ page uses deduxit's normal budget and bounds as its defaults.
 |---|---|---|---|
 | See what else can be done with a sequent | Spread over tabs of the stage, the popover and four sheets | "+ view", one list | Settled (D3) |
 | See a linear proof's net | The stage's Net tab | A view in one capsule with its proof | Settled (D6) |
-| Truth table | A tab of the stage | A view from "+ view": the table, a red cross at each row that refutes the sequent | Proposed (D13) |
+| Truth table | A tab of the stage | A view from "+ view": the table, a red cross at each row that refutes the sequent | Settled (D13) |
 | Tableau | A tab of the stage | A view from "+ view" with a toggle, "Search" or "By hand" | Settled (D13) |
 | Resolution | A sheet: Search, DPLL, By hand | A view from "+ view" with a toggle, "Search", "DPLL" or "By hand": the clauses as numbered lines, each new one with the two it came from. DPLL lists what it does line by line, indented under each atom it tries | Settled (D13) |
 | Translate into another logic and prove it there | A sheet, then "Prove it in" on a new tab | A view from "+ view": the translated sequent and one button, "Prove it in LJ", which opens it as a sequent at the top. A double-negation translation is marked `¬¬` with its letters under it, Gl, Ku, GG or Ko (the author). "Prove it in" is a small outlined button at the sequent's end, the sign of "Prove apart" alone, with its words while the guide is on; the first draft's dark button under the sequent was too loud (the author) | Settled (D13, D3) |
-| Interpolant | A sheet | A view from "+ view": each formula carries the number of its part and a press moves it to the other part; the interpolant and its two sequents follow | Proposed (D13) |
+| Interpolant | A sheet | A view from "+ view": each formula carries the number of its part and a press moves it to the other part; the interpolant and its two sequents follow | Settled (D13) |
 | Normal form | A sheet | A view from "+ view" with a toggle of five kinds: NNF, CNF, DNF, Tseitin, Plaisted–Greenbaum. It shows the steps as numbered lines, each with the law that gave it, and opens at the last; Undo steps back, "Next step" and "To the end" go forward | Settled (D13) |
-| Eliminate a proof's cuts | A cluster on the stage, on the tree and on the net | A view made from the proof, "CE". "Next step" and "To the end" among its tools, Undo steps back, "Steps" lists the cases; the cut worked on next is drawn in lapis | Proposed (D14) |
-| Read a finished proof as a lambda-term | The last item of Export | A view made from the proof, `λ`, with "Copy as text" | Proposed (D14) |
+| Eliminate a proof's cuts | A cluster on the stage, on the tree and on the net | A view made from the proof, "CE". "Next step" and "To the end" among its tools, Undo steps back, "Steps" lists the cases; the cut worked on next is drawn in lapis | Settled (D14) |
+| Read a finished proof as a lambda-term | The last item of Export | A view made from the proof, `λ`, with "Copy as text" | Settled (D14) |
 | Check a tableau written by hand | A button in the popover, then a text to type | "By hand" in the tableau view: a press on a line expands it, a branch closes by itself. Typing a tableau as text goes (the author) | Settled (D13) |
-| Check a model of one's own | A button in the popover | A view from "+ view", "M": a press on an atom makes it true or false | Proposed (D13) |
-| Work on a copy of a proof | "Duplicate this proof" | "+ view", "A copy of this proof" | Proposed (D13, D14) |
-| See how the views depend on each other | The Workspace panel and its graph | The rail: a short line joins a view to the one above it that it was made from | Proposed (D13, D14) |
+| Check a model of one's own | A button in the popover | A view from "+ view", "M": a press on an atom makes it true or false | Settled (D13) |
+| Work on a copy of a proof | "Duplicate this proof" | "+ view", "A copy of this proof" | Settled (D13, D14) |
+| See how the views depend on each other | The Workspace panel and its graph | The rail: a short line joins a view to the one above it that it was made from | Settled (D13, D14) |
 | See a sequent's views as a graph | "Show as graph" in the Workspace panel, from three rows | A view of the group, its cell the first in the rail and lower than a view's: the sequent and its views run downwards in the rail's order, each hanging by a rounded arrow from what it was made from. A press on a node opens the view; a view out of date is dashed, and "Update all" is among the tools | Drawn as the author asked (D19) |
 | Go to a sequent's main view, or to its graph | Not there | A press on the sequent at the top opens its main view. A press on it while the main view shows opens the graph (the author) | Drawn as the author asked (D19) |
 | Go to the page's start | Not there | The word mark leads to the new tab view; with one open already, to that one. It is a plain link to the site's address | Settled (every board) |
-| Read what the page is | About, in the bottom band | "About" on the new tab view, beside "Learn" and "Practice", and on the Settings page | Proposed (D1, D10) |
-| Bring a view up to date after its source changed | "Update", "Start again", "Check" in the panel | The view's cell gets a dashed border and a red "!"; the view is drawn faint with one button, "Update", or "Start again" when it has steps of its own. "Check" goes as a button of its own: bringing a view up to date checks it | Proposed (D14); the author has not objected to "Check" going |
+| Read what the page is | About, in the bottom band | "About" on the new tab view, beside "Learn" and "Practice", and on the Settings page | Settled (D1, D10) |
+| Bring a view up to date after its source changed | "Update", "Start again", "Check" in the panel | The view's cell gets a dashed border and a red "!"; the view is drawn faint with one button, "Update", or "Start again" when it has steps of its own. "Check" goes as a button of its own: bringing a view up to date checks it | Settled (D14); the author has not objected to "Check" going |
 
 ### 6. Look at the drawing
 
@@ -724,18 +722,18 @@ page uses deduxit's normal budget and bounds as its defaults.
 
 | A visitor wants to | Now | New design | State |
 |---|---|---|---|
-| Have the page explain itself | Learn on: a frame, every label | The guide's switch, "?" | Settled (D4); whether "?" reads as that is open |
+| Have the page explain itself | Learn on: a frame, every label | The guide's switch, "?", with the hover "Guide" | Settled (D4) |
 | Follow a lesson | Learn's panel beside the stage | Left for later; "Learn" stays as an inactive button with the hint "Coming soon" | Left for later |
-| Open the lessons, practice, the tour | The bottom band | The view's tools while the guide is on; "Learn" and "Practice" inactive there, the tour works | Proposed (D4) |
+| Open the lessons, practice, the tour | The bottom band | The view's tools while the guide is on; "Learn" and "Practice" inactive there, the tour works | Settled (D4) |
 | Look a rule or an engine up | Learn's Reference | Left for later, with Learn | Left for later |
 | Pick a practice problem | Practice, a sheet with filters | Left for later; "Practice" stays as an inactive button with the hint "Coming soon" | Left for later |
-| Take the tour | The bottom band, and a button on the empty stage | "Tour" with the guide on | Proposed |
+| Take the tour | The bottom band, and a button on the empty stage | "Tour" with the guide on | Settled, not drawn |
 
 ### 9. Teach
 
 | A visitor wants to | Now | New design | State |
 |---|---|---|---|
-| Hand out a set of problems | A course pack: a link, a printed handout | "Course pack" among the tools opens a panel: the title and the sequents at the top as problems to tick, then the link, the embed code and the printed sheet. A sequent need not be proved to go in | Settled (D18): "lgtm"; whether the tool stays beside Export's entry is open |
+| Hand out a set of problems | A course pack: a link, a printed handout | "Course pack" is an entry of Export, under "Link", and nowhere else (the author). Its form stands where a format's settings and preview stand: the title, the sequents at the top as problems to tick, then the link, the embed code and the printed sheet. A sequent need not be proved to go in | Settled (D18) |
 | Work on a pack | A bar over the stage | The pack is one entry at the top, with its count done, and has a page of its own that lists the problems with their calculus and state. A press on a row opens the problem; a press on the entry goes back to the page. The page has no bottom box and no view's tools. A problem's calculus cannot be changed; "Hint" and "Close all" work as anywhere | Settled (D17) |
 | Hand answers in | A link or a file | Left out (the author: "I don't need a hand in functionality for students") | Left out |
 | Check answers handed in | The check view, one hand-in at a time | Left out with handing in | Left out |
@@ -753,8 +751,8 @@ What is chosen is kept in the browser, as the light or dark scheme is.
 | Choose the search's engine, budget and bounds | Settings | The Settings page, "Search"; the panel under "Close all" starts from these values, and its "Defaults" link opens this section | Settled (D10) |
 | Mark goals that have no proof, or not | Not there | The Settings page, "Proving", on at first | Settled (D10) |
 | Have the invertible rules applied | Settings | The Settings page, "Proving" | Settled (D10) |
-| Close every sequent | "Discard" on the restore bar | The Settings page, "This browser"; it can be undone | Proposed (D10, the button alone) |
-| See every key; read what the page is, its licences, privacy | Keys, About, the privacy page | The Settings page, "About", as three rows that open them | Proposed (D10, the rows alone) |
+| Close every sequent | "Discard" on the restore bar | The Settings page, "This browser"; it can be undone | Settled (D10, the button alone) |
+| See every key; read what the page is, its licences, privacy | Keys, About, the privacy page | The Settings page, "About", as three rows that open them | Settled (D10, the rows alone) |
 | Use the page offline, install it | The service worker | The same | Unchanged |
 
 Every control of one kind has one size on every page (the author, for
@@ -853,9 +851,10 @@ The author went through this group on 2026-11-25 and found it fine.
   it, and ink in each scheme stands for the project's own black and
   white, not for another colour). The shape is the path of `icon-rocq-black.svg` from
   `rocq-id/logos/SVG` in github.com/rocq-prover/rocq-prover.org, fetched
-  with the author's leave. For the page: this repository commits no
-  third-party file, so the logo needs either the author's exception or a
-  way in through a package.
+  with the author's leave. For the page the author decided (2026-11-25):
+  the logo's file is downloaded and served by the site with its
+  attribution, beside the licences the site serves. It is the one
+  third-party file this repository holds.
 - **D16**, export. Two boards were drawn and played to the author: a
   menu whose every entry saves or copies at once (a), and a panel that
   shows what a format writes before it is copied or saved (b). The
@@ -879,7 +878,11 @@ The author went through this group on 2026-11-25 and found it fine.
   taken off the pack's page, where it serves nothing; the view's tools
   go there too, and the guide's sentence stands under the list.
 - **D18**, a course pack made by the teacher, played to the author and
-  found fine.
+  found fine as a panel opened by a tool of its own. That tool is gone
+  (the author): the form is now the Export panel's entry "Course pack",
+  and D18 is D16's panel opened on it, with four sequents at the top, one
+  of them unproved. Every other entry works there too for the sequent
+  shown; Rocq says that it needs a finished proof.
 - A pack cannot bar the search (the author, 2026-11-25: "A student
   should be honest to themselves"). The current page's switch "The
   search may close goals and give hints" goes, and with it the greyed
@@ -949,7 +952,8 @@ Not changed: the canvas played the boards 800 pixels wide, and at that
 width D15a's zoom buttons lie over the bottom box and the panels of D16b
 and D18a push the derivation off the stage. The boards are laid out for
 1280 pixels; a narrow window is still to be designed, with the phone's
-width. D18a's pack code stays the same when the pack changes; on the page
+width. The author takes the narrow window up after every other open
+point, on request. D18a's pack code stays the same when the pack changes; on the page
 it would follow the pack.
 
 ### What goes
