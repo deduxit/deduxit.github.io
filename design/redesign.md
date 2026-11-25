@@ -777,8 +777,25 @@ Each colour is a token with two values:
 | hover | `#E2E5EA` | `#2A2F3B` |
 
 Text on lapis or on ink is the paper's colour in both schemes: white on
-dark lapis in light, near-black on light lapis in dark. The dark values
-are mine and unseen by me; the author has not judged them yet. A board
+dark lapis in light, near-black on light lapis in dark. The author found
+the colours fine, close to the current page's.
+
+The switch fades (the author: "very smooth"): every token is a registered
+colour that takes half a second to change, so all that uses it, the
+dotted field and the drawings too, fades together. No fade where the
+visitor asks for reduced motion. Published on D1, D2, D3, D6 and D10;
+D4, D7, D8 and D9 are regenerated and still to publish.
+
+A search has settings of its own (the author). Each button that searches
+has a small caret beside it: "Close all" among the tools, "Close by
+search" behind a goal's `⊢`, and "Search longer" on an "Unknown" line.
+The caret opens a panel with the engine and the budget for that one
+search, prefilled from the settings of the proof's logic. What is set
+there changes that search alone, so each goal can be searched with
+another engine. The Settings page keeps the defaults per logic
+(Ordinary, Linear, Modal), each with its own engines; "Defaults" in the
+panel leads there. D2 plays the panel and D10 the defaults. D6 has no
+such panel yet. A board
 keeps the scheme for itself where the canvas gives it no storage;
 elsewhere the boards share it, as the page's tabs would.
 
