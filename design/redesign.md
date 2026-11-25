@@ -704,10 +704,10 @@ page uses deduxit's normal budget and bounds as its defaults.
 
 | A visitor wants to | Now | New design | State |
 |---|---|---|---|
-| Pan and zoom, fit to the window | Drag, pinch, the wheel, `+` `−` `F`, buttons on the stage | The same gestures and keys; the buttons in one of three places | Proposed, three options (D15a, D15b, D15c) |
+| Pan and zoom, fit to the window | Drag, pinch, the wheel, `+` `−` `F`, buttons on the stage | The same gestures and keys. The buttons are one group at the stage's lower right: zoom out, the zoom's number, zoom in, fit | Settled (D15) |
 | Choose the font of the formulas | Settings | The menu | Proposed |
 | Light or dark | Settings | The menu; dark not drawn | Open |
-| Choose how a net is drawn | Settings, "Net drawing" | A toggle where the calculus toggles are, "Formulas" or "Compact", as "Natural" and "Fitch" are two drawings of one proof | Proposed (D15) |
+| Choose how a net is drawn | Settings, "Net drawing" | A toggle where the calculus toggles are, "Formulas" or "Compact", as "Natural" and "Fitch" are two drawings of one proof | Settled (D15): "looks good" |
 
 ### 7. Keep and share
 
@@ -814,11 +814,15 @@ The author went through this group on 2026-11-25 and found it fine.
   stand in the graph as nodes that do nothing on a press. D9 has it as
   well, so every board that responds and has two views or more has the
   graph. D3, D4 and D8, which are drawings, do not.
-- **D15a, D15b and D15c**, a net moved and zoomed. The zoom's buttons
-  stand at the stage's lower right (a), among the view's tools (b), or
-  nowhere until the drawing has left its fitted place, when one button
-  shows the zoom and fits it again (c). Dragging and the wheel work
-  on all three.
+- **D15**, a net moved and zoomed. Three places for the zoom's buttons
+  were drawn and played to the author: a group at the stage's lower right
+  (a), among the view's tools (b), and nowhere until the drawing has left
+  its fitted place, when one button shows the zoom and fits it again (c).
+  The author took my recommendation, (a): it alone both shows the zoom's
+  number and lets a visitor with a plain mouse zoom. (b) has no place for
+  the number; (c) is the calmest and leaves such a visitor no way in.
+  While the graph shows, the group and the calculus toggles are hidden,
+  on every board.
 - **D16a and D16b**, export. A menu whose every entry saves or copies at
   once (a), or a panel that shows what a format writes before it is
   copied or saved, with "Whole document" for LaTeX and Typst (b).
