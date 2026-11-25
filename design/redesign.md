@@ -637,20 +637,28 @@ the bottom box says why, and LK keeps its proof.
 |---|---|---|---|
 | Close the goal worked on | "Close" beside the goal | Press the goal's `⊢`, then the check: the search closes that goal alone, or a line says it found no proof | Settled (D2, D6) |
 | Close every goal | "Close all" in the bottom band | The view's tools; the search's steps carry a grey rule name in the drawing and "search" in the list of steps. What it cannot close stays open, and a line over the bottom box says so | Settled (D2) |
-| Stop a search | "Stop the search" in the tool's place | "Close all" turns into "Stop" while the search runs; a line says that nothing was changed | Settled (D2) |
+| Stop a search | "Stop the search" in the tool's place | "Close all" turns into "Stop" while the search runs; a line says that nothing was changed | Settled (D2, D6) |
 | Get a hint, a little at a time | "Hint", three rungs at the goal | "Hint" among the tools goes on from where the visitor is: a formula, then its rule, then what a split or a cut still needs (see group 2) | Settled (D2, D6) |
 | Read a verdict and its reason | A note at the goal and the tab's status | A check or a cross on the sequent and on the view's cell; a line over the bottom box for what a search found: no proof, or unknown | Settled (D2, D6, D9) |
-| Search longer after "Unknown" | "Try N units" in the note | The line that says "Unknown" has "Search longer", with the doubled budget in brackets, and a caret that opens the settings of that one search (engine, budget) | Settled (D2): "lgtm" |
-| Go back to where a proof still exists | "Go back" beside the verdict | A goal the search shows to have no proof is marked by a red cross at the end of its dashed line, which turns red, and no words (the author). A sequent with no proof has the cross beside it at the top. The goal's `⊢` then offers "Go back", which takes back the steps since every open goal had a proof. The marking is a setting, on at first | Settled (D2) |
+| Search longer after "Unknown" | "Try N units" in the note | The line that says "Unknown" has "Search longer", with the doubled budget in brackets, and a caret that opens the settings of that one search (engine, budget) | Settled (D2, D6): "lgtm" |
+| Go back to where a proof still exists | "Go back" beside the verdict | A goal the search shows to have no proof is marked by a red cross at the end of its dashed line, which turns red, and no words (the author). A sequent with no proof has the cross beside it at the top. The goal's `⊢` then offers "Go back", which takes back the steps since every open goal had a proof. The marking is a setting, on at first | Settled (D2, D6) |
 | See a countermodel | A figure under the note | A view of its own, `⊭` | Settled (D9) |
 | Change the model and check it again | The model editor in the drawing's place | In the countermodel's own view (my recommendation, the author agreed): a press on a dot flips where a predicate holds, "+" adds an element, "−" takes one away. The sequent's checks and crosses follow at once, and the sign between its sides reads `⊭` while the structure refutes the sequent and `⊨` when it no longer does. Undo and Redo are the view's tools | Settled (D9) |
-| See or choose the engine | A chip by the note; Settings | For one search: the caret beside each button that searches. As a default: the Settings page, "Search", per logic | Settled (D2, D10) |
+| See or choose the engine | A chip by the note; Settings | For one search: the caret beside each button that searches. As a default: the Settings page, "Search", per logic | Settled (D2, D6, D10) |
 
 The mark on a goal with no proof needs the page to ask the search about
 every open goal after each step. On the boards that costs nothing. On the
 page each question is a search within the budget, so the mark may come a
 moment late, and a goal the budget does not decide gets no mark. The mark
 forbids nothing: the step that led there was legal.
+
+The two playable proof boards, D2 for ordinary logic and D6 for linear
+logic, do the same things: a budget for the search, "Unknown" with
+"Search longer", "Stop", settings for one search, the red cross on a goal
+with no proof, and "Go back". On D6 the cross shows after a split of the
+context that cannot close: the step was legal, and the mark says where
+it led. The boards' budgets are small on purpose (4 steps on D2, 2 on D6)
+so that "Unknown" can be met.
 
 ### 4. Choose the calculus
 
@@ -793,8 +801,8 @@ search, prefilled from the settings of the proof's logic. What is set
 there changes that search alone, so each goal can be searched with
 another engine. The Settings page keeps the defaults per logic
 (Ordinary, Linear, Modal), each with its own engines; "Defaults" in the
-panel leads there. D2 plays the panel and D10 the defaults. D6 has no
-such panel yet. A board
+panel leads there. D2 and D6 play the panel, each with its logic's
+engines, and D10 the defaults. A board
 keeps the scheme for itself where the canvas gives it no storage;
 elsewhere the boards share it, as the page's tabs would.
 
