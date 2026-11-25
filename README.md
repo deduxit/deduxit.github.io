@@ -87,8 +87,8 @@ licensed under CC BY 4.0 too (`src/logo/LICENSE.txt`); the name deduxit and its 
 identify this project, and may not be used to suggest its endorsement of anything else.
 Its word is Gentium ExtraBold outlined, so no font file goes with it.
 The fonts are under the SIL Open Font License 1.1: Euler Math, STIX Two Math,
-Garamond-Math and Asana Math (from deduxit), Figtree and Space Mono (from Fontsource); New
-Computer Modern Math (from deduxit) is under the GUST Font License, which is the LaTeX
+Garamond-Math and Asana Math (from deduxit), Gentium Book Plus and Ysabeau Office (from
+Fontsource); New Computer Modern Math (from deduxit) is under the GUST Font License, which is the LaTeX
 Project Public License 1.3c. Each is served beside its licence under `/fonts/`. The site
 serves the notices of the npm packages in its bundle (`/licenses/bundle.txt`) and of the
 Rust crates in deduxit's module (`/licenses/THIRD-PARTY-NOTICES.txt`).

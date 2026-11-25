@@ -93,8 +93,8 @@ families = {
     "Garamond-Math": ("Garamond-Math", "OFL", OFL),
     "Asana-Math": ("Asana-Math", "OFL", OFL),
     "NewCMMath-": ("NewCMMath", "LICENSE", "gust font license"),
-    "figtree-": ("Figtree", "OFL", OFL),
-    "space-mono-": ("SpaceMono", "OFL", OFL),
+    "gentium-book-plus-": ("GentiumBookPlus", "OFL", OFL),
+    "ysabeau-office-": ("YsabeauOffice", "OFL", OFL),
 }
 for path in sorted(p for p in site.rglob("*") if p.suffix in FONT_FILES):
     name = path.relative_to(site)

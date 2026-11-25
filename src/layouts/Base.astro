@@ -8,8 +8,10 @@
 // the stylesheet, the mark's icons and link preview (/logo/, written by
 // src/integrations/offline.ts), and the theme applied before the first
 // paint. The Content-Security-Policy's <meta> is Astro's (astro.config.ts).
-import "@fontsource-variable/figtree";
-import "@fontsource/space-mono/400.css";
+import "@fontsource/gentium-book-plus/700.css";
+import "@fontsource/ysabeau-office/400.css";
+import "@fontsource/ysabeau-office/500.css";
+import "@fontsource/ysabeau-office/600.css";
 import { panelColors } from "../lib/colors";
 import { PREPAINT } from "../lib/theme";
 import "../styles/global.css";
@@ -30,7 +32,7 @@ const preview = new URL("/logo/og.png", Astro.site).href;
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content" />
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="icon" href="/logo/favicon-32.png" sizes="32x32" type="image/png" />

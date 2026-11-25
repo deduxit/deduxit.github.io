@@ -57,14 +57,14 @@ export const FONTS: readonly { family: string; files: string; licence: string; o
     ofl: false,
   },
   {
-    family: "Figtree",
-    files: "figtree-",
-    licence: "node_modules/@fontsource-variable/figtree/LICENSE",
+    family: "GentiumBookPlus",
+    files: "gentium-book-plus-",
+    licence: "node_modules/@fontsource/gentium-book-plus/LICENSE",
   },
   {
-    family: "SpaceMono",
-    files: "space-mono-",
-    licence: "node_modules/@fontsource/space-mono/LICENSE",
+    family: "YsabeauOffice",
+    files: "ysabeau-office-",
+    licence: "node_modules/@fontsource/ysabeau-office/LICENSE",
   },
 ];
 
