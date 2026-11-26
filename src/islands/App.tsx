@@ -272,7 +272,7 @@ export default function App(props: {
 
   /** Closes a chip with the views beside it, or the pack a problem is of; the notice's Undo puts them back. */
   const closeChip = (chip: string) => {
-    if (ui.packPage || packs.isProblem(chip)) {
+    if (packs.isProblem(chip)) {
       closePack();
       return;
     }
@@ -296,6 +296,13 @@ export default function App(props: {
         },
       },
     });
+  };
+
+  /** Closes the chosen sequent: the pack while its page is shown, else the chip of the proof shown. */
+  const closeChosen = () => {
+    if (ui.packPage && packs.open()) return closePack();
+    const p = prover.current();
+    if (p) closeChip(prover.chipOf(p.id));
   };
 
   /** Opens the new tab view: the empty sequent there is, or a new one. */
@@ -737,10 +744,7 @@ export default function App(props: {
         previousGoal: () => proving && prover.cycle(-1),
         nextSequent: () => cycleSequent(1),
         previousSequent: () => cycleSequent(-1),
-        closeSequent: () => {
-          const p = prover.current();
-          if (p) closeChip(prover.chipOf(p.id));
-        },
+        closeSequent: () => closeChosen(),
         graph: () => {
           const p = prover.current();
           if (!p) return;
@@ -866,10 +870,7 @@ export default function App(props: {
                       ui={view}
                       hint={() => void hint()}
                       tour={tour}
-                      closeSequent={() => {
-                        const p = prover.current();
-                        if (p) closeChip(prover.chipOf(p.id));
-                      }}
+                      closeSequent={closeChosen}
                     />
                   </Show>
                   <TogglesPlace prover={prover} ui={view} />

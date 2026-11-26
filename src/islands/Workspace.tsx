@@ -661,12 +661,13 @@ export function createWorkspace(prover: Prover, ui: Ui) {
     /**
      * "Prove it in" on the embedding's view: one action, "embedding", that joins the shown tab,
      * embeds its sequent into linear logic (the logic's default embedding) and starts a proof of
-     * the image, which opens as a chip linked to it, so that the graph of views shows it.
+     * the image, which opens as a chip linked to it, so that the graph of views shows it. True
+     * once the chip is open.
      */
-    proveEmbedding: (tab: string, mode: "classical" | "intuitionistic") =>
+    proveEmbedding: (tab: string, mode: "classical" | "intuitionistic"): Promise<boolean> =>
       queued(async () => {
         const join = await joining(tab, 0);
-        if (!join) return;
+        if (!join) return false;
         const at = join.edits.length;
         const made = await act({
           name: "embedding",
@@ -682,15 +683,19 @@ export function createWorkspace(prover: Prover, ui: Ui) {
         await checkNode(image);
         if (!state.view?.nodes.find((n) => n.node === proof)?.value) await runNodes([proof]);
         const value = state.view?.nodes.find((n) => n.node === proof)?.value;
-        if (!value) return;
+        if (!value) return false;
         const done = await prover.open(JSON.stringify(value), linear(mode));
-        if ("problem" in done) return;
+        if ("problem" in done) return false;
         const chip = prover.current()?.id;
         if (chip) {
           opened.add(chip);
           link(chip, proof);
         }
-      }).catch(said),
+        return true;
+      }).catch((thrown: unknown) => {
+        said(thrown);
+        return false;
+      }),
 
     /** "Duplicate this proof": one action, "copy", a new tab with the same proof, linked. */
     duplicate: (tab: string) =>

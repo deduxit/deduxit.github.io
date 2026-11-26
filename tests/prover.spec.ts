@@ -324,6 +324,10 @@ test("every export downloads, its settings passed on, and both links are copied"
   await expect(panel.locator("pre")).toContainText("Lemma commuted");
   await panel.getByRole("textbox", { name: "Lemma's name" }).fill("2x");
   await expect(panel).toContainText("Not a name");
+  // A keyword of Rocq is no name either: deduxit would refuse every format's settings.
+  await panel.getByRole("textbox", { name: "Lemma's name" }).fill("Lemma");
+  await expect(panel).toContainText("Not a name");
+  await panel.getByRole("textbox", { name: "Lemma's name" }).fill("2x");
   await expect(panel.getByRole("button", { name: "Save" })).toBeDisabled();
   await exportEntry(page, "PNG");
   await panel.getByRole("group", { name: "Scale" }).getByRole("button", { name: "1×" }).click();

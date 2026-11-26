@@ -6,7 +6,7 @@
  * "Link", each with its sign; at its right the chosen entry's settings, what a text format
  * writes, and "Copy" and "Save". Every setting is one of deduxit's `--style` options, kept with
  * the page's settings. The entry "Course pack" has the pack's form in that place (`PackForm`).
- * In a compact window the entries are one row that scrolls sideways, the rest under it.
+ * In a compact window the entries wrap in rows above the rest.
  */
 
 import { createResource, createSignal, For, type JSX, Show } from "solid-js";
@@ -103,6 +103,54 @@ const [chosen, setChosen] = createSignal<Entry>("latex");
 /** A Rocq lemma's name as Rocq reads one: a letter or `_` first, then letters, digits, `_` and `'`. */
 const ROCQ_NAME = /^[A-Za-z_][A-Za-z0-9_']*$/;
 
+/** Rocq's keywords, which deduxit refuses as a lemma's name (its `rocq::KEYWORDS`). */
+const ROCQ_KEYWORDS: ReadonlySet<string> = new Set([
+  "_",
+  "Axiom",
+  "CoFixpoint",
+  "Definition",
+  "Fixpoint",
+  "Hypothesis",
+  "IF",
+  "Lemma",
+  "Parameter",
+  "Proof",
+  "Prop",
+  "Qed",
+  "SProp",
+  "Set",
+  "Theorem",
+  "Type",
+  "Variable",
+  "as",
+  "at",
+  "by",
+  "cofix",
+  "discriminated",
+  "else",
+  "end",
+  "exists",
+  "exists2",
+  "fix",
+  "for",
+  "forall",
+  "fun",
+  "if",
+  "in",
+  "lazymatch",
+  "let",
+  "match",
+  "multimatch",
+  "return",
+  "then",
+  "using",
+  "where",
+  "with",
+]);
+
+/** Whether Rocq reads a text as a lemma's name: its form, and no keyword. */
+const rocqName = (name: string) => ROCQ_NAME.test(name) && !ROCQ_KEYWORDS.has(name);
+
 export function ExportPanel(props: {
   prover: Prover;
   ui: Ui;
@@ -169,7 +217,7 @@ export function ExportPanel(props: {
         typst: { form, labels: l.labels },
         text: { labels: l.labels, bar: l.bar },
         // A name Rocq does not read would refuse every format's settings: deduxit's stands in.
-        rocq: { form: "standalone", ...(ROCQ_NAME.test(l.lemma) ? { lemma: l.lemma } : {}) },
+        rocq: { form: "standalone", ...(rocqName(l.lemma) ? { lemma: l.lemma } : {}) },
         svg: {
           ids: false,
           labels: l.labels,
@@ -223,7 +271,7 @@ export function ExportPanel(props: {
     () => {
       const entry = chosen();
       if (!TEXTS.has(entry) || off(entry) || !proof()?.session) return undefined;
-      if (entry === "rocq" && !ROCQ_NAME.test(look().lemma)) return undefined;
+      if (entry === "rocq" && !rocqName(look().lemma)) return undefined;
       return { entry, json: settings(), session: proof()?.session };
     },
     ({ entry, json }) =>
@@ -449,10 +497,10 @@ export function ExportPanel(props: {
                 onInput={(event) => setLook({ lemma: event.currentTarget.value })}
               />
             </Row>
-            <Show when={!ROCQ_NAME.test(look().lemma)}>
+            <Show when={!rocqName(look().lemma)}>
               <p class="said-why">
                 <span class="kw bad">Not a name</span> A Rocq name starts with a letter or _, then
-                letters, digits, _ and '.
+                letters, digits, _ and ', and is none of Rocq's keywords.
               </p>
             </Show>
           </>
@@ -559,7 +607,7 @@ export function ExportPanel(props: {
                 <button
                   type="button"
                   class="btn btn-primary"
-                  disabled={chosen() === "rocq" && !ROCQ_NAME.test(look().lemma)}
+                  disabled={chosen() === "rocq" && !rocqName(look().lemma)}
                   onClick={() => void save()}
                 >
                   <Sign name="save" />

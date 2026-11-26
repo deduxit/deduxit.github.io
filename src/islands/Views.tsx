@@ -651,8 +651,9 @@ export function EmbeddingView(props: {
                 onPress={() =>
                   void (async () => {
                     // The new sequent is linked to this one, so that the graph shows it.
-                    if (workspace) await workspace.proveEmbedding(props.proof, mode());
-                    else {
+                    if (workspace) {
+                      if (!(await workspace.proveEmbedding(props.proof, mode()))) return;
+                    } else {
                       const opened = await props.prover.open(
                         JSON.stringify(m().value),
                         linear(mode()),

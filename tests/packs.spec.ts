@@ -156,6 +156,23 @@ test("closing the pack's chip closes its problems, and Undo opens it again", asy
   await expect(packPage(page)).toBeVisible();
 });
 
+test("with the pack's page shown, another sequent's close closes that sequent alone", async ({
+  page,
+}) => {
+  await page.goto(packLink(BY_HAND));
+  await expect(packPage(page)).toBeVisible();
+  await page.getByRole("button", { name: "New sequent", exact: true }).click();
+  await page.getByRole("textbox", { name: "Sequent" }).fill("A |- A");
+  await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
+  await chip(page).click();
+  await expect(packPage(page)).toBeVisible();
+  const other = page.getByRole("tab", { name: /^A ⊢ A/ });
+  await other.focus();
+  await page.keyboard.press("Delete");
+  await expect(other).toHaveCount(0);
+  await expect(chip(page)).toBeVisible();
+});
+
 test("embedded, the page keeps the pack and leaves the site's places out", async ({ page }) => {
   await page.goto(packLink({ ...BY_HAND, problems: BY_HAND.problems.slice(0, 1) }, true));
   await expect(packPage(page)).toBeVisible();
