@@ -32,6 +32,7 @@ import {
   touring,
   transforms,
   type Visit,
+  windowSizes,
   witnessing,
   countermodeling,
 } from "./states";
@@ -134,6 +135,7 @@ const WALKS: readonly (readonly [string, (page: Page, visit: Visit) => Promise<v
   ["the countermodel view of a first-order sequent", countermodeling],
   ["the cut chooser and the elimination", cutting],
   ["the stage in each math font", typeset],
+  ["the frame at the window sizes where its regions met", windowSizes],
 ];
 
 for (const colorScheme of ["light", "dark"] as const) {

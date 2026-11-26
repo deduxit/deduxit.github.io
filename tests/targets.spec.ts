@@ -33,6 +33,7 @@ import {
   touring,
   transforms,
   type Visit,
+  windowSizes,
   witnessing,
   countermodeling,
 } from "./states";
@@ -201,8 +202,20 @@ test("the witness's box and the countermodel view are targets of 24 by 24 pixels
   expect(await measured(page, 24, countermodeling)).toEqual([]);
 });
 
+test("the frame's controls are targets of 24 by 24 pixels at least at every window size", async ({
+  page,
+}) => {
+  expect(await measured(page, 24, windowSizes)).toEqual([]);
+});
+
 test.describe("at a phone's width", () => {
   test.use(pixel);
+
+  test("the frame's controls are 44 by 44 pixels at least at every window size", async ({
+    page,
+  }) => {
+    expect(await measured(page, 44, windowSizes)).toEqual([]);
+  });
 
   test("natural deduction's controls are 44 by 44 pixels at least", async ({ page }) => {
     expect(await measured(page, 44, deducing)).toEqual([]);

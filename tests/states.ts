@@ -114,6 +114,31 @@ export async function menus(page: Page, visit: Visit) {
 }
 
 /**
+ * The frame at the window sizes where its regions met: the new tab view and a proved sequent with
+ * Steps open in a medium window, Steps beside the drawing at 840, a short window as 200 % zoom
+ * makes one, and a compact one 200 high (400 %), whose page scrolls.
+ */
+export async function windowSizes(page: Page, visit: Visit) {
+  await page.setViewportSize({ width: 700, height: 900 });
+  await goto(page);
+  await visit("new tab, a medium window");
+  await start(page, "A * B |- B * A", false);
+  await tool(page, "Close all").click();
+  await expect(page.getByRole("status").filter({ hasText: "Proved." })).toBeVisible();
+  await visit("proved, a medium window");
+  await tool(page, "Steps").click();
+  await expect(page.getByRole("dialog", { name: "Steps" })).toBeVisible();
+  await visit("Steps, a medium window");
+  await page.setViewportSize({ width: 840, height: 900 });
+  await visit("Steps, an expanded window 840 wide");
+  await page.keyboard.press("Escape");
+  await page.setViewportSize({ width: 640, height: 400 });
+  await visit("proved, a short window");
+  await page.setViewportSize({ width: 320, height: 200 });
+  await visit("proved, a compact window 200 high");
+}
+
+/**
  * The Export panel on a finished proof: a text format with what it writes, a picture's settings,
  * the Rocq lemma's name refused, a link; then a refuted goal, which Rocq says it cannot write.
  */
