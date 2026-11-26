@@ -356,3 +356,20 @@ test("an ordinary proof is kept where its steps hold in the logic chosen, and cl
   await expect(page.getByRole("button", { name: /^b, formula/ })).toHaveCount(0);
   await expect(page.locator(".drawing g.search").first()).toBeAttached();
 });
+
+test("an ordinary goal is closed by a proof made apart of its formulas in another order", async ({
+  page,
+}) => {
+  await ordinary(page, "classical", "c, a, a -> b |- b /\\ c");
+  await rule(page, /^b ∧ c, formula/, "∧R");
+  await newTab(page);
+  await ordinary(page, "classical", "a -> b, c, a |- b", false);
+  await rule(page, /^a → b, formula/, "→L");
+  await rule(page, /^a, formula/, "ax");
+  await rule(page, /^b, formula/, "ax");
+  await expect(checked(page)).toBeVisible();
+  await page.getByRole("tab", { name: /^c, a, a → b ⊢ b ∧ c/ }).click();
+  await (await goalMenu(page)).getByRole("button", { name: "Use its proof" }).click();
+  await expect(page.getByRole("button", { name: /^b, formula/ })).toHaveCount(0);
+  await expect(page.locator(".drawing g.search").first()).toBeAttached();
+});

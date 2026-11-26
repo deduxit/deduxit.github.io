@@ -79,6 +79,7 @@ import {
   type Decided,
   goalAt,
   lettered,
+  placesOf,
   paths,
   type Path,
   retract,
@@ -1398,21 +1399,59 @@ export function createProver(say: (text: string) => void = () => undefined) {
     return false;
   }
 
+  /** Each proof's sequent as its first goal shows it, by the proof and its sequent's document. */
+  const sequentsShown = new Map<string, readonly GoalFormula[]>();
+
+  /**
+   * A proof's sequent as a goal shows it (its formulas, each with its side of ⊢), read from
+   * deduxit's start of the proof's sequent without a step; undefined where deduxit refuses it.
+   */
+  async function rootOf(q: Proof): Promise<readonly GoalFormula[] | undefined> {
+    const session = unwrap(q.session);
+    if (!session) return undefined;
+    const key = `${q.id} ${JSON.stringify(session.sequent)}`;
+    const known = sequentsShown.get(key);
+    if (known) return known;
+    const started = await attempt(async () =>
+      isOrdinary(session)
+        ? asView(
+            (
+              await api.ordinary.start(
+                JSON.stringify(session.sequent),
+                session.logic,
+                ordinaryJson(),
+              )
+            ).view,
+          )
+        : (await api.start(session.sequent, session.mode, replaying())).view,
+    );
+    const formulas = started.ok ? started.value.goals[0]?.formulas : undefined;
+    if (formulas) sequentsShown.set(key, formulas);
+    return formulas;
+  }
+
   /**
    * Takes a proof's steps again on the goal at `base` of another session, in order, each checked
    * by deduxit there, and a goal the search closed in the proof is closed by the search again.
-   * Answers the session reached, with no goal left open under `base`, or the number of the first
-   * step (from 1) that did not hold; 0 where every step held but a goal stayed open.
+   * With `mapped`, the proof's sequent is the goal's in another order: each step's formulas are
+   * found in the goal it acts on by how deduxit writes them (`placesOf`), never by position, as
+   * equal formulas serve alike; no substitution is made. Answers the session reached, with no
+   * goal left open under `base`, or the number of the first step (from 1) that did not hold; 0
+   * where every step held but a goal stayed open.
    */
   async function replayOnto(
     source: Proof,
     start: { session: Session; view: View },
     base: Path,
+    mapped = false,
   ): Promise<{ played: { session: Session; view: View } } | { failed: number }> {
     if (!source.session) return { failed: 1 };
     let played = start;
     let taken = 0;
     const at = (path: Path) => goalAt(played.session, [...base, ...path]);
+    /** The formulas of the goal `goal` of the session as played so far. */
+    const goalShown = (goal: number) =>
+      played.view.goals.find((g) => g.goal === goal)?.formulas ?? [];
     if (isOrdinary(source.session)) {
       // A step's run of weakenings and contractions differs between LK and LJ, so the goals are
       // followed step by step, each premise the source made to the goal the replay opened for it,
@@ -1425,12 +1464,25 @@ export function createProver(say: (text: string) => void = () => undefined) {
       const same =
         isOrdinary(start.session) &&
         JSON.stringify(start.session.sequent) === JSON.stringify(source.session.sequent);
-      for (const { goal: goalOf, step, formula, premises } of replaySteps(source.session)) {
+      // In another order, each step's formula is found by how deduxit writes it.
+      const doc = source.session;
+      const texts =
+        mapped && !same ? await attempt(() => api.ordinaryPrincipals(doc, ordinaryJson())) : null;
+      if (texts && !texts.ok) return { failed: 1 };
+      for (const { goal: goalOf, step, formula, premises } of replaySteps(doc)) {
         taken += 1;
         const target = into.get(goalOf);
         if (target === undefined || !isOrdinary(played.session)) return { failed: taken };
         const session = played.session;
-        const position = same ? placeOf(session, target, step.side, formula) : step.position;
+        const wanted = texts?.ok ? texts.value[doc.history.indexOf(goalOf)] : undefined;
+        const side = step.side === "left" ? "input" : "output";
+        const position = same
+          ? placeOf(session, target, step.side, formula)
+          : texts
+            ? goalShown(target)
+                .filter((f) => f.side === side)
+                .findIndex((f) => f.text === wanted)
+            : step.position;
         if (position < 0) return { failed: taken };
         const done = await attempt(() =>
           api.ordinary.apply(session, target, { ...step, position }, ordinaryJson()),
@@ -1461,7 +1513,12 @@ export function createProver(say: (text: string) => void = () => undefined) {
         ? { played: reached }
         : { failed: 0 };
     } else {
-      for (const action of actionsOf(source.session, source.view?.cuts, source.view)) {
+      const doc = source.session;
+      const todo = actionsOf(doc, source.view?.cuts, source.view);
+      // In another order, each step's formulas are found by how deduxit writes them.
+      const operands = mapped ? await attempt(() => api.principals(doc, todo, replaying())) : null;
+      if (operands && !operands.ok) return { failed: 1 };
+      for (const [index, action] of todo.entries()) {
         taken += 1;
         const target = at(action.path);
         if (target === undefined || isOrdinary(played.session)) return { failed: taken };
@@ -1469,17 +1526,34 @@ export function createProver(say: (text: string) => void = () => undefined) {
         // A recorded witness or cut formula names each eigenvariable by its step's path: the
         // letter that step took here, as `play` reads it.
         const here = (text: string) => lettered(text, { session, view: played.view }, base);
+        const found = operands?.ok ? operands.value[index] : undefined;
+        const goal = goalShown(target);
+        const free = goal.map(() => false);
         let call: () => Promise<{ session: Session; view: View }>;
         if (action.kind === "step") {
           const recorded = action.step.witness;
           const witness = recorded === undefined ? undefined : here(recorded);
           if (recorded !== undefined && witness === undefined) return { failed: taken };
-          const step = witness === undefined ? action.step : { ...action.step, witness };
-          call = () => api.apply(session, target, step, replaying());
+          let step: StepForm = witness === undefined ? action.step : { ...action.step, witness };
+          if (operands) {
+            // An axiom acts on its whole goal and names no formula of its own.
+            const principal = doc.inferences[doc.history[index] ?? -1]?.principal;
+            const [position] =
+              principal === undefined
+                ? [step.position]
+                : (placesOf(goal, found?.principal ?? [], free) ?? []);
+            const left = found?.left && placesOf(goal, found.left, free);
+            if (!found || position === undefined || (found.left && !left)) return { failed: taken };
+            step = { ...step, position, ...(left ? { left } : {}) };
+          }
+          const form = step;
+          call = () => api.apply(session, target, form, replaying());
         } else if (action.kind === "cut") {
           const formula = here(action.formula);
           if (formula === undefined) return { failed: taken };
-          call = () => api.cut(session, target, formula, action.left, replaying());
+          const left = operands ? placesOf(goal, found?.left ?? [], free) : action.left;
+          if (!left) return { failed: taken };
+          call = () => api.cut(session, target, formula, left, replaying());
         } else call = () => api.close(session, target, replaying());
         const done = await attempt<{ session: Session; view: View }>(call);
         if (!done.ok) return { failed: taken };
@@ -3097,22 +3171,29 @@ export function createProver(say: (text: string) => void = () => undefined) {
     }),
 
     /**
-     * The finished proof made apart of a goal, by "Prove apart": a sequent at the top opened from
-     * this goal, in the same calculus, with no goal open. Its sequent is the goal's as written, so
-     * its steps' positions are the goal's.
+     * The finished proofs made apart that can close a goal: every other sequent at the top in the
+     * same calculus, with no goal open, whose formulas are the goal's on each side of ⊢, in any
+     * order; the one opened from this goal by "Prove apart" first.
      */
-    apartFor(goal: number): { id: string; tab: string } | null {
+    async apartFor(goal: number): Promise<{ id: string; tab: string }[]> {
       const p = current();
-      if (!p?.session) return null;
+      const formulas = p?.view?.goals.find((g) => g.goal === goal)?.formulas;
+      if (!p?.session || !formulas) return [];
+      const id = p.id;
+      const calculus = p.calculus;
       const path = pathKey(pathOf(p, goal));
-      const q = store.proofs.find(
-        (x) =>
-          x.origin?.from === p.id &&
-          pathKey(x.origin.path) === path &&
-          x.view?.complete === true &&
-          sameCalculus(x.calculus, p.calculus),
-      );
-      return q ? { id: q.id, tab: short(displayed(q.input)) } : null;
+      const made = (x: Proof) => x.origin?.from === id && pathKey(x.origin.path) === path;
+      const found: { id: string; tab: string }[] = [];
+      const candidates = store.proofs
+        .filter((x) => x.id !== id && x.view?.complete === true && x.session)
+        .filter((x) => sameCalculus(x.calculus, calculus))
+        .sort((a, b) => Number(made(b)) - Number(made(a)));
+      for (const q of candidates) {
+        const root = await rootOf(q);
+        if (root?.length === formulas.length && placesOf(formulas, root))
+          found.push({ id: q.id, tab: short(displayed(q.input)) });
+      }
+      return found;
     },
 
     /**
@@ -3158,7 +3239,13 @@ export function createProver(say: (text: string) => void = () => undefined) {
             tone: "bad",
           };
         });
-      const reached = await replayOnto(q, { session: p.session, view: p.view }, base);
+      // A sequent written in another order than the goal has its steps' positions mapped.
+      const goalFormulas = p.view.goals.find((g) => g.goal === goal)?.formulas ?? [];
+      const root = await rootOf(q);
+      const inOrder =
+        root?.length === goalFormulas.length &&
+        root.every((f, i) => f.text === goalFormulas[i]?.text && f.side === goalFormulas[i]?.side);
+      const reached = await replayOnto(q, { session: p.session, view: p.view }, base, !inOrder);
       if ("failed" in reached) return refused();
       update(p.id, (x) => {
         x.redo = [];

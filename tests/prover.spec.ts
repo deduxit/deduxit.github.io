@@ -980,6 +980,34 @@ test("a goal is closed by its proof made apart: its steps taken again, grey, and
   await expect(steps).not.toContainText("apart");
 });
 
+test("a goal is closed by a proof made apart of its formulas in another order, and no other sequent's", async ({
+  page,
+}) => {
+  await start(page, "A * B |- B * A");
+  await rule(page, /^A⊥ ⅋ B⊥/, "⅋");
+  // The goal ⊢ A⊥, B⊥, B ⊗ A, typed apart in another order and proved by hand.
+  await start(page, "|- B * A, ~B, ~A", false);
+  await rule(page, /^B ⊗ A/, "⊗");
+  const split = page.getByRole("group", { name: /^Split for ⊗/ });
+  await split.getByRole("button", { name: "B⊥", exact: true }).click();
+  await split.getByRole("button", { name: "Apply ⊗" }).click();
+  await tool(page, "Close all").click();
+  await expect(page.getByText("Proved. Every goal is closed.")).toBeVisible();
+  // A sequent of other formulas, proved too, is not offered.
+  await start(page, "|- A * B, ~B, ~A", false);
+  await tool(page, "Close all").click();
+  await expect(page.getByText("Proved. Every goal is closed.")).toBeVisible();
+  await page.locator(".chip").first().click();
+  const menu = await goalMenu(page);
+  await expect(menu.getByRole("button", { name: /^Use / })).toHaveCount(1);
+  await menu.getByRole("button", { name: "Use its proof" }).click();
+  await expect(page.getByText("Proved. Every goal is closed.")).toBeVisible();
+  await tool(page, "Steps").click();
+  await expect(
+    page.getByRole("dialog", { name: "Steps" }).getByRole("button").nth(2),
+  ).toContainText("⊗ on B ⊗ A apart");
+});
+
 test("a net's view has the toggle Formulas or Compact where the calculus's toggles stand", async ({
   page,
 }) => {

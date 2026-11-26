@@ -735,13 +735,20 @@ board and the guide disagree, the guide holds.
 - **The goal's menu at its `⊢`** (`GoalMenu` in `Goal.tsx`, `ui.goalMenu`; the `⊢`'s button is
   `.gt` over the text `⊢` of the goal's group, at least a control's size): Close goal (key C)
   with a caret for that search's settings, Prove apart (`openGoal`: a new chip whose `origin` is
-  the goal), "Use its proof" once that chip's proof is finished in the same calculus
-  (`apartFor`, `useApart`), and Go back on a goal marked as having no proof while the sequent
+  the goal), "Use its proof" for each finished proof at the top in the same calculus whose
+  sequent has the goal's formulas on each side, in any order ("Use the proof of ⟨tab⟩" each,
+  where there are several; `apartFor`, asked when the menu opens, `useApart`), and Go back on a goal marked as having no proof while the sequent
   may still have one. Its buttons show their names with the guide on. Natural deduction has a
   `?` beside the goal
   in its panel with Prove apart alone: the rules suite has no search.
-- **A proof made apart closes its goal by its steps** (`useApart`, `replayOnto`): its
-  sequent is the goal's as written, so the positions are the goal's; each step is applied
+- **A proof made apart closes its goal by its steps** (`useApart`, `replayOnto`). Its sequent
+  is read as deduxit's start writes it (`rootOf`, cached per proof and sequent) and matched to
+  the goal's formulas by text and side (`placesOf` of `steps.ts`: formulas written alike are one
+  formula, so any of them serves): no substitution, no unification. Written as the goal, in the
+  same order, the positions are the goal's; in another order (`mapped`), each step's formulas
+  are found again in the goal it acts on by their text, the source's read off its own replay
+  (`principals`: the principal and what a split or cut sent left; an ordinary step's principal by
+  `principalTexts`), so a position is never carried over. Each step is applied
   again on the goal's subtree (a linear proof's actions by path; an ordinary proof's steps by
   `replaySteps` of `ordinary.ts`: the rule above each step's structural run, its formula found in
   the target goal by its id in the sequent document when both sessions share that document, and

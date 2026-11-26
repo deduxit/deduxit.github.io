@@ -293,12 +293,14 @@ function MenuButton(props: {
 
 /**
  * The goal's menu at its `⊢`: close this goal by the search, with a caret for that search's
- * settings; prove the goal apart as a sequent of its own; once that proof is finished, use it
- * here; and on a goal the search showed to have no proof, go back to where every goal had one.
+ * settings; prove the goal apart as a sequent of its own; use a finished proof of a sequent with
+ * the goal's formulas, in any order; and on a goal the search showed to have no proof, go back to
+ * where every goal had one.
  */
 export function GoalMenu(props: {
   ref: (el: HTMLDivElement) => void;
-  apart: { id: string; tab: string } | null;
+  /** The finished proofs made apart whose sequent is the goal's, in any order. */
+  apart: readonly { id: string; tab: string }[];
   canBack: boolean;
   settingsOpen: boolean;
   close: () => void;
@@ -330,16 +332,16 @@ export function GoalMenu(props: {
         sign={<Sign name="apart" />}
         onClick={props.proveApart}
       />
-      <Show when={props.apart}>
+      <For each={props.apart}>
         {(apart) => (
           <MenuButton
-            name="Use its proof"
-            tip={`Close this goal with the proof of ${apart().tab}, made apart`}
+            name={props.apart.length === 1 ? "Use its proof" : `Use the proof of ${apart.tab}`}
+            tip={`Close this goal with the proof of ${apart.tab}, made apart`}
             sign={<Sign name="use" />}
-            onClick={() => props.useApart(apart().id)}
+            onClick={() => props.useApart(apart.id)}
           />
         )}
-      </Show>
+      </For>
       <Show when={props.canBack}>
         <MenuButton
           name="Go back"

@@ -96,6 +96,20 @@ export async function proving(page: Page, visit: Visit) {
   await page.getByRole("tab", { name: "Proof net" }).click();
   await visit("net");
   await page.getByRole("tab", { name: /^Classical linear logic/ }).click();
+  // Two proofs made apart of a goal's formulas, each in another order: the goal's menu offers both.
+  await start(page, "A * B |- B * A", false);
+  await rule(page, /^A⊥ ⅋ B⊥, formula/, "⅋");
+  for (const apart of ["|- B * A, ~B, ~A", "|- ~B, B * A, ~A"]) {
+    await start(page, apart, false);
+    await press(page, "Close all");
+    await expect(page.getByText("Proved. Every goal is closed.")).toBeVisible();
+  }
+  await page.locator(".chip").filter({ hasText: "A ⊗ B ⊢ B ⊗ A" }).last().click();
+  await expect(
+    (await goalMenu(page)).getByRole("button", { name: /^Use the proof of / }),
+  ).toHaveCount(2);
+  await visit("goal menu with proofs made apart");
+  await page.keyboard.press("Escape");
 }
 
 /** On a proof closed: the tools' panels and the list of views to add. */

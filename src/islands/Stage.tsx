@@ -14,6 +14,7 @@ import {
   createEffect,
   createMemo,
   createRenderEffect,
+  createResource,
   createSignal,
   For,
   on,
@@ -1837,13 +1838,15 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
       <Show when={ui.goalMenu !== null && ui.tab === "tree" ? { at: ui.goalMenu } : undefined}>
         {(menu) => {
           const goal = () => menu().at;
+          // Which proofs made apart fit asks deduxit how each one's sequent reads.
+          const [apart] = createResource(goal, (at) => props.prover.apartFor(at));
           return (
             <GoalMenu
               ref={(el) => {
                 menuEl = el;
                 placeSoon();
               }}
-              apart={props.prover.apartFor(goal())}
+              apart={apart() ?? []}
               canBack={dead(goal()) && props.prover.rootMarked(proof()?.id ?? "") !== "none"}
               settingsOpen={ui.menu === "search"}
               close={() => {
