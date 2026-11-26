@@ -210,6 +210,8 @@
   --size-bottom: var(--size-box);
   /* The bottom box, its Enter, its most width. */
   --size-box: 3.375rem;
+  /* The bottom box in a compact window. */
+  --size-box-compact: 3rem;
   --size-enter: 2.375rem;
   --size-box-most: 35rem;
   /* A rule's button in the popover. */

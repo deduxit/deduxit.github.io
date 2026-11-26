@@ -203,7 +203,13 @@ export function cellsOf(prover: Prover, ui: Ui, proof: Proof | undefined): reado
     { view: "tree", short: cellName(proof.calculus), name: calculusName(proof.calculus) },
   ];
   if (netReady(proof)) own.push({ view: "net", short: "◇", name: "Proof net" });
-  for (const view of ui.ui.added[proof.id] ?? []) {
+  // A view shown by a button of its own (a countermodel's "Change this model", a tableau's
+  // countermodel) has its cell as an added one does.
+  const shownHere = ui.ui.tab;
+  const added = [...(ui.ui.added[proof.id] ?? [])];
+  if ((shownHere === "model" || shownHere === "written") && !added.includes(shownHere))
+    added.push(shownHere);
+  for (const view of added) {
     const added = ADDED[view as keyof typeof ADDED];
     if (added && (view === "model" || decidable(prover, proof))) own.push({ view, ...added });
   }
@@ -230,6 +236,28 @@ function rove(event: KeyboardEvent, vertical: boolean) {
   event.preventDefault();
   items[next]?.focus();
   if (group.getAttribute("role") === "tablist") items[next]?.click();
+}
+
+/**
+ * Keeps one tool of a toolbar the toolbar's stop of Tab: the one that had it, or else the first
+ * that can act, as its tools come, go and turn faint.
+ */
+function oneStop(bar: HTMLElement) {
+  const keep = () => {
+    const tools = [...bar.querySelectorAll<HTMLButtonElement>("[data-rove]")];
+    const open = tools.filter((t) => !t.disabled && t.offsetParent !== null);
+    const stop = open.find((t) => t.tabIndex === 0) ?? open[0];
+    for (const t of tools) t.tabIndex = t === stop ? 0 : -1;
+  };
+  keep();
+  const watch = new MutationObserver(keep);
+  watch.observe(bar, {
+    subtree: true,
+    childList: true,
+    attributes: true,
+    attributeFilter: ["disabled"],
+  });
+  onCleanup(() => watch.disconnect());
 }
 
 /** The top row: the word mark, the open sequents, "+", the guide's switch, light or dark, Settings. */
@@ -276,7 +304,7 @@ export function TopRow(props: {
                   data-rove=""
                   data-proof={proof.id}
                   aria-selected={chosen()}
-                  tabindex={chosen() ? 0 : -1}
+                  tabindex={props.prover.store.active === proof.id ? 0 : -1}
                   aria-label={`${proof.input ? tabText(proof) : "New sequent"}, ${stateWords(proof)}`}
                   data-tip={proof.input ? tabText(proof) : "New sequent"}
                   onClick={() => {
@@ -522,10 +550,32 @@ export function Rail(props: { prover: Prover; ui: Ui }) {
                 cell.view === "net" || (cell.view === "tree" && netReady(proof())) ? "" : undefined
               }
               aria-selected={shown(cell.view)}
-              tabindex={shown(cell.view) ? 0 : -1}
+              tabindex={
+                shown(cell.view) || (!cells().some((c) => shown(c.view)) && cell === cells()[0])
+                  ? 0
+                  : -1
+              }
               aria-label={`${cell.name}${cell.view === "tree" && proof() ? `, ${stateWords(proof() as Proof)}` : ""}`}
               data-tip={cell.name}
-              onClick={() => setUi({ tab: cell.view, menu: null })}
+              onClick={() => {
+                // A model is the sequent's own: one of another sequent shown before is set aside.
+                const p = proof();
+                const session = p?.session;
+                if (
+                  cell.view === "model" &&
+                  p?.calculus.suite === "ordinary" &&
+                  session &&
+                  isOrdinary(session) &&
+                  ui.modelSeed?.sequent !== sequentText(session)
+                )
+                  setUi("modelSeed", {
+                    model: ONE_WORLD,
+                    sequent: sequentText(session),
+                    logic: p.calculus.logic,
+                    found: false,
+                  });
+                setUi({ tab: cell.view, menu: null });
+              }}
             >
               <span
                 class="cell-name"
@@ -565,6 +615,15 @@ export function Rail(props: { prover: Prover; ui: Ui }) {
       </button>
       <Show when={ui.menu === "views"}>
         <div class="views-list panel menu" role="dialog" aria-label="Add a view">
+          <button
+            type="button"
+            class="tool sheet-close"
+            aria-label="Close"
+            data-tip="Close"
+            onClick={() => setUi("menu", null)}
+          >
+            <X aria-hidden="true" />
+          </button>
           <For each={["Prove", "Decide", "Translate", "Read off"] as const}>
             {(group) => (
               <section aria-label={group}>
@@ -681,6 +740,7 @@ export function Tools(props: { prover: Prover; ui: Ui; hint: () => void; tour: (
   };
   const say = (text: string) => setUi("notice", { text });
   let toolbar!: HTMLDivElement;
+  onMount(() => oneStop(toolbar));
 
   return (
     <div
@@ -1175,12 +1235,18 @@ export function Examples(props: { prover: Prover; samples: readonly Sample[] }) 
 
 /** A dialog over the page with a heading and a close button, closed by Escape too. */
 export function Dialog(props: { label: string; onClose: () => void; children: JSX.Element }) {
+  let close!: HTMLButtonElement;
+  // The dialog takes the focus, and gives it back where it was when it closes.
+  const before = document.activeElement as HTMLElement | null;
+  onMount(() => close.focus());
+  onCleanup(() => before?.focus?.());
   return (
     <div class="dialog-scrim">
-      <div class="dialog panel menu" role="dialog" aria-modal="false" aria-label={props.label}>
+      <div class="dialog panel menu" role="dialog" aria-modal="true" aria-label={props.label}>
         <div class="dialog-head">
           <h2>{props.label}</h2>
           <button
+            ref={close}
             type="button"
             class="tool"
             aria-label="Close"

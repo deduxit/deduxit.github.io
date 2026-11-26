@@ -132,6 +132,14 @@ test("the tools are a toolbar: one stop of Tab, the arrow keys move, each names 
   const tools = page.getByRole("toolbar", { name: "Tools" });
   await expect(tool(page, "Undo")).toHaveAttribute("aria-keyshortcuts", "Control+Z U");
   await expect(tool(page, "Hint")).toHaveAttribute("aria-keyshortcuts", "H");
+  // Tab reaches the toolbar once, at a tool that can act, from the rail.
+  await page.getByRole("button", { name: "Add a view" }).focus();
+  const inTools = () => tools.evaluate((bar) => bar.contains(document.activeElement));
+  for (let presses = 0; presses < 30 && !(await inTools()); presses++)
+    await page.keyboard.press("Tab");
+  expect(await inTools()).toBe(true);
+  await expect(tools.locator("[tabindex='0']")).toHaveCount(1);
+  await expect(tools.locator("[tabindex='0']")).toBeEnabled();
   await tool(page, "Hint").focus();
   await page.keyboard.press("ArrowDown");
   await expect(tool(page, "Close all")).toBeFocused();
@@ -232,6 +240,20 @@ test("light or dark from the top row is kept and read before the first paint", a
   await page.getByRole("button", { name: "Settings", exact: true }).click();
   await page.getByRole("button", { name: "System", exact: true }).click();
   await expect(page.locator("html")).not.toHaveAttribute("data-theme", /./);
+});
+
+test("each sequent's model view checks a model of its own sequent", async ({ page }) => {
+  await goto(page);
+  for (const sequent of ["a |- a", "b |- b"]) {
+    await newTab(page);
+    await page.getByRole("button", { name: /^Ordinary logic/ }).click();
+    await page.getByRole("textbox", { name: "Sequent" }).fill(sequent);
+    await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
+    await addView(page, "A model of your own");
+  }
+  await page.locator(".chip").first().click();
+  await page.getByRole("tab", { name: /^A model of your own/ }).click();
+  await expect(page.getByRole("region", { name: "Model" })).toContainText("a ⊢ a");
 });
 
 test("the Settings page takes the stage's place, and closing every sequent can be undone", async ({
@@ -355,6 +377,9 @@ test.describe("a compact window", () => {
     await tool(page, "Export").click();
     await expect(page.getByRole("menu", { name: "Export" })).toBeVisible();
     await expect(tool(page, "Export")).toBeHidden();
+    // The panel is a sheet, with a close button.
+    await page.getByRole("button", { name: "Close", exact: true }).click();
+    await expect(page.getByRole("menu", { name: "Export" })).toBeHidden();
   });
 });
 

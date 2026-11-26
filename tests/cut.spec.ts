@@ -122,7 +122,8 @@ test("an elimination to the end says which bound stopped it", async ({ page }) =
   const steps = page.getByRole("spinbutton", { name: "Elimination steps" });
   await steps.fill("1");
   await steps.press("Enter");
-  await page.keyboard.press("Escape");
+  // Settings is a page: its own button leaves it.
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
   const panel = page.getByRole("region", { name: "Cut elimination" });
   await panel.getByRole("button", { name: "Eliminate the cuts" }).click();
   await panel.getByRole("button", { name: "To the end" }).click();

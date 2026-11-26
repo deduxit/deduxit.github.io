@@ -24,7 +24,8 @@ test("the switch is off by default, kept with the settings, and applies the rule
   const off = await invertible(page);
   await expect(off).not.toBeChecked();
   await off.check();
-  await page.keyboard.press("Escape");
+  // Settings is a page: its own button leaves it.
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
   // ⅋ was applied to the open goal at once: its subformulas are the goal's.
   await expect(page.getByRole("button", { name: /^A⊥ ⅋ B⊥/ })).toHaveCount(0);
   await expect(page.getByRole("button", { name: /^A⊥, formula 1 of goal 2/ })).toBeVisible();

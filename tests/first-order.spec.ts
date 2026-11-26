@@ -135,14 +135,15 @@ test("the first-order bounds are settings, and a search says which one stopped i
   page,
 }) => {
   await start(page, "forall x. p(x) |- p(f(f(c)))");
-  await page.getByRole("button", { name: "Settings", exact: true }).first().click();
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
   const depth = page.getByRole("spinbutton", { name: "Witness depth" });
   await expect(depth).toHaveValue("64");
   await expect(page.getByRole("spinbutton", { name: "Instances" })).toHaveValue("65536");
   await expect(page.getByRole("spinbutton", { name: "Terms" })).toHaveValue("1000000");
   await depth.fill("1");
   await depth.press("Enter");
-  await page.keyboard.press("Escape");
+  // Settings is a page: its own button leaves it.
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
   await page.getByRole("button", { name: "Close goal" }).click();
   const note = page.locator(".dock .kw.warn");
   await expect(note).toHaveText("Unknown: gave up");

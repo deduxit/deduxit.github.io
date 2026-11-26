@@ -4,7 +4,7 @@
 /**
  * A Kripke model of ordinary logic to change and check, in the drawing's place: a countermodel
  * deduxit found, opened from its figure, or a model of the visitor's own, from "Check a model"
- * in the More menu. deduxit checks it against the sequent (`ordinary_model`): that it is a model
+ * from "+ view". deduxit checks it against the sequent (`ordinary_model`): that it is a model
  * of the logic, then where the sequent fails, with what that world forces of each formula.
  */
 

@@ -1626,7 +1626,7 @@ export function createProver(say: (text: string) => void = () => undefined) {
       save();
     },
 
-    /** Takes out of the restore bar the proofs open already (a link's). */
+    /** Takes out of the proofs to restore those open already (a link's). */
     prune() {
       if (!aside()) return;
       setAsideShelf(dropAside(storage(), (stored) => !store.proofs.some((p) => isOpen(p, stored))));

@@ -331,10 +331,6 @@ kbd {
   cursor: pointer;
   color: var(--color-ink);
   font: inherit;
-  transition:
-    background-color var(--duration-fast) var(--ease-out),
-    border-color var(--duration-fast) var(--ease-out),
-    color var(--duration-fast) var(--ease-out);
 }
 :is(
   .btn,
@@ -1329,6 +1325,10 @@ svg.sign {
   pointer-events: none;
 }
 
+/* A sheet's close button: a compact window's alone, where the panels are sheets. */
+.sheet-close {
+  display: none;
+}
 .menu .h {
   display: block;
   margin: var(--spacing-2) 0 var(--spacing-1);
@@ -2654,8 +2654,22 @@ textarea {
 .menu .h:first-child {
   margin-top: 0;
 }
-/* A panel moves the drawing aside in an expanded window; it lies over it in a medium one. */
+/* The toggles keep one line in an expanded window and wrap in a narrower one. */
 @media (width >= 840px) {
+  .toggles {
+    flex-wrap: nowrap;
+  }
+}
+
+/* A panel moves the drawing aside on a stage as wide as an expanded window's (840 less the
+   rail); on a narrower one it lies over the drawing. The panels size themselves by the stage. */
+@container stage (width < 35rem) {
+  .panels > .menu.export,
+  .panels > .menu.transform {
+    width: calc(100% - var(--size-tools) - 3 * var(--size-inset));
+  }
+}
+@container stage (width >= 48.75rem) {
   .stage-area:has(.panels > .menu) > .stage {
     right: min(var(--size-panel), 50%);
   }
@@ -2844,16 +2858,42 @@ table.keys th {
     border-radius: 0 var(--radius-cell) var(--radius-cell) 0;
   }
   .views-list,
-  .panels > .menu,
-  .panels > .menu.export,
-  .panels > .menu.transform {
+  .panels:has(> .menu) {
     position: fixed;
     top: auto;
     left: var(--spacing-2);
     right: var(--spacing-2);
     bottom: calc(var(--size-views) + var(--spacing-2) + env(safe-area-inset-bottom));
+    z-index: var(--layer-menu);
     width: auto;
     max-height: 50%;
+  }
+  .panels:has(> .menu) {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: var(--line) solid var(--color-line);
+    border-radius: var(--radius-panel);
+    background: var(--color-paper);
+  }
+  .panels > .menu,
+  .panels > .menu.export,
+  .panels > .menu.transform {
+    position: static;
+    width: auto;
+    max-height: none;
+    flex: 1;
+    min-height: 0;
+    border: 0;
+    border-radius: 0;
+  }
+  .sheet-close {
+    display: inline-flex;
+    flex: none;
+    align-self: flex-end;
+  }
+  .views-list .sheet-close {
+    float: right;
   }
   .tools {
     top: auto;
@@ -2911,7 +2951,7 @@ table.keys th {
     width: calc(100% - 2 * var(--spacing-2));
   }
   .box {
-    height: var(--size-button);
+    height: var(--size-box-compact);
   }
   .box .field {
     font-size: var(--text-field);

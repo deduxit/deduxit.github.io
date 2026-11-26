@@ -1,7 +1,7 @@
 // deduxit © Fabian Lukas Grubmüller 2026
 // Licensed under the EUPL
 
-// A classical proof's translations and interpolants: offered in the Logic popover of a started
+// A classical proof's translations and interpolants: offered in "+ view" of a started
 // classical proof alone, each sheet's verdict first, the translated sequent opened as a proof of
 // its own, and the interpolant's checks as the partition changes.
 

@@ -1,7 +1,7 @@
 // deduxit © Fabian Lukas Grubmüller 2026
 // Licensed under the EUPL
 
-// A classical proof's normal forms and resolution: offered in the Logic popover of a started
+// A classical proof's normal forms and resolution: offered in "+ view" of a started
 // classical proof alone, each sheet's verdict first, a normal form stepped through one law at a
 // time, a refutation's list and graph in step, and a refutation by hand that deduxit checks.
 

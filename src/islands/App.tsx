@@ -12,6 +12,7 @@
  * Math also the drawings'.
  */
 
+import { X } from "lucide-solid";
 import { createEffect, createSignal, For, on, onCleanup, onMount, Show } from "solid-js";
 import { unwrap } from "solid-js/store";
 import {
@@ -68,6 +69,21 @@ import { InterpolateSheet, TranslateSheet } from "./Transforms";
 import { createWorkspace, WorkspaceContext } from "./Workspace";
 import { Tour } from "./Tour";
 import { createUi, ladderKey, Why } from "./ui";
+
+/** The menus that open as a panel beside the tools, a sheet in a compact window. */
+const PANELS: readonly string[] = [
+  "steps",
+  "search",
+  "export",
+  "import",
+  "translate",
+  "interpolate",
+  "normalize",
+  "resolve",
+  "pack",
+  "handin",
+  "check",
+];
 
 /** The browser's storage, or undefined where it is refused. */
 const storage = () => {
@@ -653,6 +669,13 @@ export default function App(props: {
   onMount(() => {
     const keys = (event: KeyboardEvent) => {
       if (event.defaultPrevented) return;
+      const inField = !!(event.target as Element).closest("input, textarea, select");
+      // In a field, Escape leaves the field and closes nothing around it.
+      if (event.key === "Escape" && inField) {
+        (event.target as HTMLElement).blur();
+        event.preventDefault();
+        return;
+      }
       if (event.key === "Escape") {
         if (ui.menu === null && !ui.pendingCalculus && !ui.more) return;
         setTip(null);
@@ -660,7 +683,8 @@ export default function App(props: {
         event.preventDefault();
         return;
       }
-      const inField = !!(event.target as Element).closest("input, textarea, select");
+      // A dialog open (the keys, About) takes no key but Escape.
+      if (ui.menu === "keys" || ui.menu === "about") return;
       const action = keyAction(event, { inField, singleKeys: prover.settings().singleKeys });
       if (!action) return;
       const proof = prover.current();
@@ -783,6 +807,18 @@ export default function App(props: {
                 </Show>
                 <TogglesPlace prover={prover} ui={view} />
                 <div class="panels">
+                  {/* In a compact window a panel is a sheet, and a sheet has a close button. */}
+                  <Show when={PANELS.includes(ui.menu ?? "")}>
+                    <button
+                      type="button"
+                      class="tool sheet-close"
+                      aria-label="Close"
+                      data-tip="Close"
+                      onClick={() => setUi("menu", null)}
+                    >
+                      <X aria-hidden="true" />
+                    </button>
+                  </Show>
                   <Show when={ui.menu === "steps"}>
                     <StepsPanel prover={prover} />
                   </Show>

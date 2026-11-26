@@ -58,7 +58,8 @@ test("Settings forces an engine: those that take the sequent, the others greyed 
   await expect(twoSided).toHaveAccessibleName(/not in classical mode/);
   await engines.getByRole("radio", { name: /^Proof-net search/ }).check();
   await expect(engines.getByRole("radio", { name: /^Proof-net search/ })).toBeChecked();
-  await page.keyboard.press("Escape");
+  // Settings is a page: its own button leaves it.
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
   await page.getByRole("button", { name: "Close goal" }).click();
   await expect(page.getByText("Proved. Every goal is closed.")).toBeVisible();
   await expect(page.locator(".drawing svg text.engine")).toHaveText("Proof-net search");
@@ -81,7 +82,8 @@ test("a forced engine holds for the visit: the next visit starts on Automatic, e
     .getByRole("radio", { name: /^Proof-net search/ })
     .check();
   await settings.getByRole("button", { name: "Compact" }).click();
-  await page.keyboard.press("Escape");
+  // Settings is a page: its own button leaves it.
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
   const stored = () =>
     page.evaluate(() => JSON.parse(localStorage.getItem("deduxit-settings") ?? "{}"));
   expect(await stored()).toMatchObject({ net: "compact" });

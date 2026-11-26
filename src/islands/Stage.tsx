@@ -1633,6 +1633,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
               }
             >
               <button
+                aria-keyshortcuts="C"
                 type="button"
                 class="btn btn-s"
                 data-tip={
@@ -2045,6 +2046,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
           type="button"
           class="btn icon"
           aria-label="Zoom out"
+          aria-keyshortcuts="-"
           data-tip="Zoom out"
           data-key="−"
           onClick={() => zoom(0.8)}
@@ -2056,6 +2058,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
           type="button"
           class="btn icon"
           aria-label="Zoom in"
+          aria-keyshortcuts="+"
           data-tip="Zoom in"
           data-key="+"
           onClick={() => zoom(1.25)}
@@ -2066,6 +2069,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
           type="button"
           class="btn icon"
           aria-label="Fit the drawing"
+          aria-keyshortcuts="F"
           data-tip="Fit the drawing"
           data-key="F"
           onClick={fitView}

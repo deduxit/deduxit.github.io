@@ -1,7 +1,7 @@
 // deduxit © Fabian Lukas Grubmüller 2026
 // Licensed under the EUPL
 
-// A finished proof's program: the bottom band's Export menu shows the λ-term of an intuitionistic
+// A finished proof's program: the Export panel shows the λ-term of an intuitionistic
 // proof as its typing judgement and copies it as text, in the linear suite and in the ordinary
 // one, and says why a proof has none.
 

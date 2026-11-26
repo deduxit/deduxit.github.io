@@ -128,7 +128,8 @@ test("an unprovable goal's close says why, checked; a search that gives up offer
   await page.getByRole("button", { name: "Settings", exact: true }).click();
   await page.getByRole("spinbutton", { name: "Budget" }).fill("1");
   await page.getByRole("spinbutton", { name: "Budget" }).press("Enter");
-  await page.keyboard.press("Escape");
+  // Settings is a page: its own button leaves it.
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
   await start(page, "!A |- A * A", false);
   await page.getByRole("button", { name: "Close goal" }).click();
   await expect(page.locator(".dock .kw.warn")).toHaveText("Unknown: gave up");
@@ -305,7 +306,8 @@ test("Settings sets the formulas' font: the drawing laid out in it, every formul
   expect(fetched.some((path) => path.startsWith("/fonts/STIXTwoMath-"))).toBe(false);
   await page.getByRole("button", { name: "Settings", exact: true }).click();
   await page.getByRole("radio", { name: "STIX Two Math" }).check();
-  await page.keyboard.press("Escape");
+  // Settings is a page: its own button leaves it.
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
   await expect(page.locator(".drawing svg")).toHaveAttribute("font-family", /'STIX Two Math'/);
   expect(await drawn()).not.toEqual(euler);
   expect(fetched.some((path) => path.startsWith("/fonts/STIXTwoMath-"))).toBe(true);
@@ -406,7 +408,7 @@ test("the link in the fragment restores the proof, or says it could not", async 
   const fresh = await browser.newPage();
   await fresh.goto(url);
   await expect(fresh.getByRole("button", { name: /^A⊥, formula 1 of goal 2/ })).toBeVisible();
-  // The proof the link opened is not offered again by the restore bar, on a reload either.
+  // The proof the link opened is not offered again to restore, on a reload either.
   await fresh.waitForTimeout(500);
   await fresh.reload();
   await expect(fresh.getByRole("button", { name: /^A⊥, formula 1 of goal 2/ })).toBeVisible();
@@ -702,7 +704,8 @@ test("Settings' net drawing writes every formula or draws the net compact, in th
     .getByRole("region", { name: "Settings" })
     .getByRole("button", { name: "Compact" })
     .click();
-  await page.keyboard.press("Escape");
+  // Settings is a page: its own button leaves it.
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
   await expect(page.locator(".drawing svg circle")).toHaveCount(2);
   await page.getByRole("button", { name: "Export" }).click();
   const download = page.waitForEvent("download");
@@ -734,7 +737,8 @@ test("Settings' net look draws the net as the textbooks do, by the preset or fie
   for (const name of ["Textbook", "Plain", "At the bottom", "Its rules"]) {
     await expect(pressed(name)).toHaveAttribute("aria-pressed", "true");
   }
-  await page.keyboard.press("Escape");
+  // Settings is a page: its own button leaves it.
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
   // The weakening is a ?w node, the copy's dereliction a ?d, and no edge is dashed.
   await expect(weakening).toHaveCount(1);
   await expect(page.locator(".drawing svg text", { hasText: "?d" })).toHaveCount(1);
@@ -750,7 +754,8 @@ test("Settings' net look draws the net as the textbooks do, by the preset or fie
   await pressed("Dashed").click();
   await expect(pressed("Textbook")).toHaveAttribute("aria-pressed", "false");
   await expect(pressed("Default")).toHaveAttribute("aria-pressed", "false");
-  await page.keyboard.press("Escape");
+  // Settings is a page: its own button leaves it.
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
   await expect(dashed).toHaveCount(1);
   await expect(weakening).toHaveCount(1);
 });
@@ -840,7 +845,8 @@ test("the net view fits the whole net, drawn afresh with each drawing", async ({
     .getByRole("region", { name: "Settings" })
     .getByRole("button", { name: "Compact" })
     .click();
-  await page.keyboard.press("Escape");
+  // Settings is a page: its own button leaves it.
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
   await expect(page.locator(".drawing svg circle").first()).toBeVisible();
   await expect.poll(inside).toBe(true);
 });

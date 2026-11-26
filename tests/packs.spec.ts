@@ -257,7 +257,8 @@ test("with the search barred, the invertible rules wait for the student too", as
   const settings = page.getByRole("region", { name: "Settings" });
   await settings.getByRole("checkbox", { name: "Apply invertible rules by themselves" }).check();
   await expect(settings).toContainText("This pack asks for every step by hand.");
-  await page.keyboard.press("Escape");
+  // Settings is a page: its own button leaves it.
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
   // In linear logic and in LJ alike.
   for (const problem of [/^Problem 2/, /^Problem 3/]) {
     await bar(page).getByRole("button", { name: problem }).click();
