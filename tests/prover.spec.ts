@@ -529,9 +529,11 @@ test("a proof's tab shows its sequent in signs, in Euler Math", async ({ page })
   await expect
     .poll(() => page.evaluate(() => document.fonts.check('16px "Euler Math"', "⊗")))
     .toBe(true);
-  await page.goto("/#v=1&m=intuitionistic&s=A,+A+-o+B+|-+B");
-  await page.reload();
-  await expect(page.locator(".chip[aria-selected=true] .chip-text")).toHaveText("A, A ⊸ B ⊢ B");
+  // A link's load in a page of its own: a goto to another fragment of this page would open it in
+  // place, and a reload right after it races the page's own write of its link.
+  const fresh = await page.context().newPage();
+  await fresh.goto("/#v=1&m=intuitionistic&s=A,+A+-o+B+|-+B");
+  await expect(fresh.locator(".chip[aria-selected=true] .chip-text")).toHaveText("A, A ⊸ B ⊢ B");
 });
 
 test("autosave keeps every open proof, and the next plain visit brings them back", async ({
