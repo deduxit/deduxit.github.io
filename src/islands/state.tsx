@@ -9,7 +9,7 @@
  */
 
 import { batch, createSignal } from "solid-js";
-import { createStore, produce } from "solid-js/store";
+import { createStore, produce, unwrap } from "solid-js/store";
 import { type Api, createApi } from "../lib/api";
 import {
   assumptionsJson,
@@ -288,6 +288,11 @@ export interface Proof {
   engines: Record<string, string>;
   /** The tab and goal the proof was opened from ("Open in a new tab"), or null. */
   origin: { readonly from: string; readonly path: Path } | null;
+  /**
+   * The proof whose sequent this one is a view of, beside it in that chip's rail: a copy of it,
+   * or the same sequent in another calculus. Null for a proof with a chip of its own.
+   */
+  beside: Beside | null;
   /** The elimination of a finished proof's cuts on each view, never stored. */
   elim: { tree: Elim | null; net: Elim | null };
   /** The work of a proof in a calculus given as a rule file; null in the other suites. */
@@ -296,6 +301,12 @@ export interface Proof {
   modal: ModalWork | null;
   /** The work of a lambda tab; null in the other suites. */
   lambda: LambdaWork | null;
+}
+
+/** How a proof joins another's chip: as a copy of its proof, or as its sequent in another calculus. */
+export interface Beside {
+  readonly of: string;
+  readonly kind: "copy" | "calculus";
 }
 
 /** The visitor's settings, kept in the browser but for the engine, which holds for the visit. */
@@ -538,6 +549,7 @@ const blank = (calculus: Calculus): Proof => ({
   banner: null,
   engines: {},
   origin: null,
+  beside: null,
   elim: { tree: null, net: null },
   custom: customWork(calculus),
   modal: modalWork(calculus),
@@ -850,6 +862,7 @@ export function createProver(say: (text: string) => void = () => undefined) {
             ...(p.later.length ? { later: p.later } : {}),
             engines: p.engines,
             origin: p.origin,
+            ...(p.beside ? { beside: p.beside } : {}),
             saved: Date.now(),
           }),
         ),
@@ -1555,8 +1568,9 @@ export function createProver(say: (text: string) => void = () => undefined) {
     }),
 
     /**
-     * Proves a modal tab's sequent step by step: the tab becomes a session in the system's
-     * labelled calculus (`G3S4`), every formula at world w0, built as a calculus given as data.
+     * Proves a modal tab's sequent step by step: a session in the system's labelled calculus
+     * (`G3S4`), every formula at world w0, built as a calculus given as data, opens beside the
+     * decision in its chip.
      */
     modalSteps: guard(async (id: string) => {
       if (barred(id, limits().fixed)) return;
@@ -1578,12 +1592,18 @@ export function createProver(say: (text: string) => void = () => undefined) {
           });
         return;
       }
-      update(id, (q) => {
-        q.modal = null;
-        q.custom = null;
+      // The labelled calculus is a view of the sequent beside its decision, in the same chip.
+      const steps: Proof = {
+        ...blank(custom(started.value.view.calculus.name)),
+        input: p.input,
+        beside: { of: actions.chipOf(id), kind: "calculus" },
+      };
+      const at = index(id);
+      batch(() => {
+        setStore("proofs", (all) => [...all.slice(0, at + 1), steps, ...all.slice(at + 1)]);
+        setStore("active", steps.id);
       });
-      setLastCalculus(custom(started.value.view.calculus.name));
-      showCustom(id, started.value);
+      showCustom(steps.id, started.value);
       save();
     }),
 
@@ -1766,6 +1786,7 @@ export function createProver(say: (text: string) => void = () => undefined) {
             })),
             engines: { ...(stored.engines ?? {}) },
             origin: stored.origin ?? null,
+            beside: stored.beside ?? null,
             editing: !stored.session && !stored.custom?.session,
             custom: stored.custom
               ? { ...stored.custom, view: null, checked: null, problem: null, goal: null }
@@ -1844,6 +1865,64 @@ export function createProver(say: (text: string) => void = () => undefined) {
 
     activate(id: string) {
       setStore("active", id);
+    },
+
+    /** The proof whose chip a proof is shown under: the one it is beside, else itself. */
+    chipOf(id: string): string {
+      const p = store.proofs.find((q) => q.id === id);
+      const of = p?.beside?.of;
+      return of && store.proofs.some((q) => q.id === of) ? of : id;
+    },
+
+    /** The proofs a chip holds, its own first, then those beside it in the order they opened. */
+    members(chip: string): Proof[] {
+      return store.proofs.filter((p) => p.id === chip || actions.chipOf(p.id) === chip);
+    },
+
+    /** Puts a proof beside another, in that proof's chip: a copy of it, or its sequent in another calculus. */
+    setBeside(id: string, of: string, kind: Beside["kind"]) {
+      const chip = actions.chipOf(of);
+      if (chip === id) return;
+      update(id, (q) => (q.beside = { of: chip, kind }));
+      save();
+    },
+
+    /**
+     * Closes a chip with every proof beside it; the page keeps one. Returns what puts them back
+     * where they were, for the notice's Undo.
+     */
+    closeChip(chip: string): () => void {
+      const closed = actions.members(chip).map((p) => ({
+        proof: structuredClone(unwrap(p)) as Proof,
+        at: index(p.id),
+      }));
+      const active = store.active;
+      const ids = new Set(closed.map((c) => c.proof.id));
+      batch(() => {
+        const first = closed[0]?.at ?? 0;
+        setStore("proofs", (all) => all.filter((p) => !ids.has(p.id)));
+        if (active && ids.has(active))
+          setStore("active", store.proofs[Math.max(0, first - 1)]?.id ?? null);
+        if (store.proofs.length === 0) actions.add();
+      });
+      save();
+      return () => {
+        batch(() => {
+          // An empty sequent the close left in their place gives way to them.
+          setStore("proofs", (all) => {
+            const kept = all.filter(
+              (p) => p.session || p.modal?.outcome || p.lambda?.statement || p.input.trim(),
+            );
+            const back = [...kept];
+            for (const c of closed)
+              if (!back.some((p) => p.id === c.proof.id))
+                back.splice(Math.min(c.at, back.length), 0, c.proof);
+            return back;
+          });
+          setStore("active", active && ids.has(active) ? active : (store.active ?? chip));
+        });
+        save();
+      };
     },
 
     /** Closes a proof's tab; the page always keeps one. */
@@ -2005,12 +2084,13 @@ export function createProver(say: (text: string) => void = () => undefined) {
         if ("problem" in opened) return;
         const q = current();
         if (q && q.id !== id) {
-          // Beside the proof it was opened from.
+          // Beside the proof it was opened from, a view of the same sequent in that chip's rail.
           setStore("proofs", (all) => {
             const moved = all.filter((x) => x.id !== q.id);
             moved.splice(at + 1, 0, q);
             return moved;
           });
+          actions.setBeside(q.id, id, "calculus");
         }
         save();
         return { beside: kept.failed };

@@ -86,7 +86,21 @@ export async function rule(page: Page, formula: RegExp, name: string) {
 
 /** The chosen sequent's proof, its cell in the rail, whose hover names its calculus. */
 export function viewCell(page: Page) {
-  return page.getByRole("tablist", { name: "Views of this sequent" }).getByRole("tab").first();
+  // The graph's cell, first once there are two views, is no proof's.
+  return page
+    .getByRole("tablist", { name: "Views of this sequent" })
+    .locator('[role="tab"]:not([data-view="graph"])')
+    .first();
+}
+
+/** Chooses a modal system by its name, from the list its toggle opens. */
+export async function system(page: Page, name: string) {
+  await page.getByRole("button", { name: /^System / }).click();
+  await page
+    .getByRole("listbox", { name: "Systems" })
+    .getByRole("option", { name: new RegExp(`^${name} `) })
+    .click();
+  await expect(page.getByRole("button", { name: `System ${name}` })).toBeVisible();
 }
 
 /** A tool of the view shown, by its name. */

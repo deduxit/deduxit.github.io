@@ -2,49 +2,27 @@
 // Licensed under the EUPL
 
 /**
- * A classical proof's sequent translated into intuitionistic or minimal logic, and its
- * interpolant: two sheets beside the tools, opened from "+ view" and nowhere else, so that a
- * visitor who does not ask sees nothing of them. Each says its verdict in one sentence
- * first: for a translation both verdicts and that they agree, for an interpolant the formula and
- * its three checks. The translated sequent opens as a sequent of its own in its logic.
+ * A classical sequent's interpolant, a view added from "+ view", and the parts the views of a
+ * sequent share: deduxit's answer or refusal, a verdict's keyword and sentence. The interpolant
+ * is the formula with its three checks.
  */
 
 import { CircleCheck, CircleQuestionMark } from "lucide-solid";
-import {
-  createEffect,
-  createResource,
-  createSignal,
-  For,
-  type JSX,
-  on,
-  onMount,
-  Show,
-} from "solid-js";
+import { createEffect, createResource, createSignal, For, type JSX, on, Show } from "solid-js";
 import { type Failure, failure as failureOf } from "../lib/deduxit";
-import { formulaTexts, isOrdinary, type SequentForm, sequentText } from "../lib/ordinary";
-import { ordinary } from "../lib/suites";
+import { formulaTexts, type SequentForm } from "../lib/ordinary";
 import {
-  agreementWords,
-  type Comparison,
   type Half,
   halfText,
   hypotheses,
   type Interpolation,
   interpolantAtoms,
-  joinWords,
   listed,
-  logicName,
   moved,
   type Partition,
-  TRANSLATIONS,
-  type Translation,
-  translatedText,
-  verdictWords,
 } from "../lib/transforms";
-import { displayed } from "../lib/words";
 import { ModelFigure } from "./Countermodel";
 import type { Prover } from "./state";
-import { useWorkspace } from "./Workspace";
 import type { Ui } from "./ui";
 
 /** deduxit's answer: what it gave, or what it refused. */
@@ -65,32 +43,6 @@ export async function answered<T>(call: () => Promise<T>): Promise<Answer<T>> {
   }
 }
 
-/** The started classical proof's sequent: its text and its JSON, or undefined for any other proof. */
-export function classicalSequent(prover: Prover) {
-  return () => {
-    const p = prover.current();
-    const session = p?.session;
-    if (!session || !isOrdinary(session) || p.calculus.suite !== "ordinary") return undefined;
-    if (p.calculus.logic !== "classical") return undefined;
-    return { text: sequentText(session), form: session.sequent as unknown as SequentForm };
-  };
-}
-
-/** A sheet over the stage with its title, which takes the focus when the sheet opens. */
-export function Sheet(props: { ui: Ui; title: string; intro: string; children: JSX.Element }) {
-  let title: HTMLHeadingElement | undefined;
-  onMount(() => title?.focus());
-  return (
-    <div class="cluster menu transform" role="dialog" aria-label={props.title}>
-      <h2 class="pr-title" tabindex="-1" ref={title}>
-        {props.title}
-      </h2>
-      <p class="sub tf-intro">{props.intro}</p>
-      {props.children}
-    </div>
-  );
-}
-
 /** The keyword and sentence that open an answer. */
 export function Verdict(props: {
   keyword: string;
@@ -109,120 +61,24 @@ export function Refused(props: { failure: Failure }) {
   return <p class="method-verdict said-why">{props.failure.message}</p>;
 }
 
-export function TranslateSheet(props: { prover: Prover; ui: Ui }) {
-  const { setUi } = props.ui;
-  const sequent = classicalSequent(props.prover);
-  createEffect(() => {
-    if (!sequent()) setUi("menu", null);
-  });
-  const [chosen, setChosen] = createSignal<Translation>("glivenko");
-  const words = () => TRANSLATIONS.find((t) => t.key === chosen()) ?? TRANSLATIONS[0];
-  const [answer] = createResource(
-    () => {
-      const s = sequent();
-      return s ? ([s.text, chosen()] as const) : undefined;
-    },
-    ([text, translation]) =>
-      answered(() =>
-        props.prover.api.ordinary.translate(text, JSON.stringify({ translation }), "{}"),
-      ),
-  );
-  const comparison = () => given<Comparison>(answer());
-
-  const workspace = useWorkspace();
-  const prove = async (c: Comparison) => {
-    const text = translatedText(c);
-    setUi("menu", null);
-    const tab = props.prover.current()?.id;
-    // The new tab is linked to this one: the line above it says how it was made.
-    if (workspace && tab) {
-      await workspace.proveTranslation(tab, c.translation, c.target);
-      return;
-    }
-    const opened = await props.prover.open(text, ordinary(c.target));
-    if ("problem" in opened) return;
-    setUi("live", `${displayed(text)}: opened on a new tab in ${logicName(c.target)}.`);
-  };
-
-  return (
-    <Sheet
-      ui={props.ui}
-      title="Translate into intuitionistic logic"
-      intro="A negative translation adds double negations, so that intuitionistic or minimal logic proves the translated sequent exactly when classical logic proves the sequent."
-    >
-      <fieldset class="seg tf-seg" aria-label="Translation">
-        <For each={TRANSLATIONS}>
-          {(t) => (
-            <button
-              type="button"
-              class="seg-b"
-              aria-pressed={chosen() === t.key}
-              onClick={() => setChosen(t.key)}
-            >
-              {t.name}
-            </button>
-          )}
-        </For>
-      </fieldset>
-      <p class="sub">
-        {words()?.does} {joinWords(sequent()?.form.right.length ?? 0)} It translates into{" "}
-        {logicName(words()?.target ?? "intuitionistic")}.
-      </p>
-      <section class="tf-answer" aria-busy={answer.loading} aria-label="The translation">
-        <Show when={answer.loading}>
-          <p class="sub">Translating, and deciding both sequents…</p>
-        </Show>
-        <Show when={failureIn(answer())}>{(f) => <Refused failure={f()} />}</Show>
-        <Show when={!answer.loading && comparison()}>
-          {(c) => {
-            const said = () => agreementWords(c());
-            return (
-              <>
-                <Verdict keyword={said().keyword} tone={said().tone}>
-                  {said().sentence}
-                </Verdict>
-                <p class="tf-to">
-                  <span class="m">{translatedText(c())}</span>
-                </p>
-                <p class="row">
-                  <button
-                    type="button"
-                    class="btn btn-primary"
-                    disabled={props.prover.busy()}
-                    onClick={() => void prove(c())}
-                  >
-                    Prove it in {logicName(c().target)}
-                  </button>
-                </p>
-                <dl class="tf-evidence">
-                  <dt>Classical logic</dt>
-                  <dd>{verdictWords(c().classical, c().sequent)}</dd>
-                  <dt>{logicName(c().target).replace(/^./, (x) => x.toUpperCase())}</dt>
-                  <dd>{verdictWords(c().decided, c().translated)}</dd>
-                </dl>
-                <Show when={c().decided.countermodel}>
-                  <ModelFigure outcome={c().decided} prover={props.prover} ui={props.ui} />
-                </Show>
-              </>
-            );
-          }}
-        </Show>
-      </section>
-    </Sheet>
-  );
-}
-
-export function InterpolateSheet(props: { prover: Prover; ui: Ui }) {
-  const { setUi } = props.ui;
-  const sequent = classicalSequent(props.prover);
-  createEffect(() => {
-    if (!sequent()) setUi("menu", null);
+/**
+ * The interpolant view: each formula carries the number of its part, a press moves it to the
+ * other part, and the interpolant and its two sequents follow.
+ */
+export function InterpolantPanel(props: {
+  prover: Prover;
+  ui: Ui;
+  sequent: { text: string; form: unknown };
+}) {
+  const sequent = () => ({
+    text: props.sequent.text,
+    form: props.sequent.form as SequentForm,
   });
   /** The first part chosen, or null for Craig's split, the formulas left of ⊢. */
   const [chosen, setChosen] = createSignal<Partition | null>(null);
   createEffect(
     on(
-      () => sequent()?.text,
+      () => props.sequent.text,
       () => setChosen(null),
       { defer: true },
     ),
@@ -270,18 +126,13 @@ export function InterpolateSheet(props: { prover: Prover; ui: Ui }) {
   };
 
   return (
-    <Sheet
-      ui={props.ui}
-      title="Find an interpolant"
-      intro="An interpolant is a formula between the two parts of a valid sequent: the first part proves it, it proves the rest with the second part, and it uses only atoms both parts share."
-    >
-      <p class="sub">Press a formula to move it to the other part.</p>
+    <>
       <fieldset class="tf-parts" aria-label="The sequent's two parts">
-        <For each={sequent()?.form.left ?? []}>
+        <For each={sequent().form.left}>
           {(index, k) => <Part side="left" k={k()} index={index} />}
         </For>
         <span class="m tf-turnstile">⊢</span>
-        <For each={sequent()?.form.right ?? []}>
+        <For each={sequent().form.right}>
           {(index, k) => <Part side="right" k={k()} index={index} />}
         </For>
       </fieldset>
@@ -294,7 +145,7 @@ export function InterpolateSheet(props: { prover: Prover; ui: Ui }) {
           {(i) => <InterpolantView found={i()} prover={props.prover} ui={props.ui} />}
         </Show>
       </section>
-    </Sheet>
+    </>
   );
 }
 

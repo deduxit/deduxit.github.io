@@ -246,7 +246,7 @@ test("the finished MLL and MELL proofs' nets are drawn, and + view says why a ne
   await start(page, "A * B |- B * A", false);
   expect(await netEntry()).toEqual({
     faint: true,
-    why: "The net is drawn once the proof is finished.",
+    why: "Finish the proof first: its net is drawn from it.",
   });
   await expect(page.getByRole("tab", { name: "Proof net" })).toHaveCount(0);
   await closeGoal(page);
@@ -647,8 +647,14 @@ test("a toggle keeps the proof where its steps hold, else opens the new calculus
   await expect(page.getByRole("status").filter({ hasText: "opened beside" })).toContainText(
     "Step 1 does not hold",
   );
-  await expect(page.locator(".chip")).toHaveCount(3);
-  await page.locator(".chip").nth(1).click();
+  // The calculus opened beside is a view of the same sequent: a cell of its chip's rail.
+  await expect(page.locator(".chip")).toHaveCount(2);
+  await expect(page.getByRole("tab", { name: /linear logic, I?LL, / })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  // The proof kept in affine logic has B weakened away.
+  await page.getByRole("tab", { name: /linear logic, I?LL\+aff, / }).click();
   await expect(page.getByRole("button", { name: /^B, formula/ })).toHaveCount(0);
   await page.locator(".chip").first().click();
   // Intuitionistic derivations are two-sided already: the tool is not shown.

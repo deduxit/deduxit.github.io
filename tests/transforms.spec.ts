@@ -1,9 +1,9 @@
 // deduxit © Fabian Lukas Grubmüller 2026
 // Licensed under the EUPL
 
-// A classical proof's translations and interpolants: offered in "+ view" of a started
-// classical proof alone, each sheet's verdict first, the translated sequent opened as a proof of
-// its own, and the interpolant's checks as the partition changes.
+// A classical proof's translations and interpolants: views offered in "+ view" of a started
+// classical proof alone, each translation a view of its own with its verdicts, the translated
+// sequent opened as a proof of its own, and the interpolant's checks as the partition changes.
 
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
@@ -18,18 +18,18 @@ async function ordinary(page: Page, logic: string, sequent: string) {
   await expect(page.locator(".stage .fb").first()).toBeVisible();
 }
 
-/** The entry of "+ view" that opens each sheet, by the sheet's name. */
-const ENTRIES: Readonly<Record<string, string>> = {
-  "Translate into intuitionistic logic": "Into intuitionistic logic",
-  "Find an interpolant": "Interpolant",
-  "Rewrite into a normal form": "Normal form",
-  "Refute by resolution": "Resolution",
+/** The view each entry of "+ view" adds, by the entry's name. */
+const VIEWS: Readonly<Record<string, string>> = {
+  Glivenko: "Glivenko's translation",
+  Kuroda: "Kuroda's translation",
+  "Gödel–Gentzen": "Gödel and Gentzen's translation",
+  Kolmogorov: "Kolmogorov's translation",
 };
 
-/** Opens a sheet from "+ view" by its name, and returns it. */
-async function sheet(page: Page, name: string) {
-  await addView(page, ENTRIES[name] ?? name);
-  const opened = page.getByRole("dialog", { name });
+/** Adds a view from "+ view" by its entry's name, and returns it. */
+async function sheet(page: Page, entry: string) {
+  await addView(page, entry);
+  const opened = page.getByRole("region", { name: VIEWS[entry] ?? entry, exact: true });
   await expect(opened).toBeVisible();
   return opened;
 }
@@ -50,36 +50,34 @@ test("a translation and an interpolant are offered for a started classical proof
   page,
 }) => {
   await ordinary(page, "Intuitionistic", "a |- a");
-  expect(await offered(page, "Into intuitionistic logic")).toBe(false);
+  expect(await offered(page, "Glivenko")).toBe(false);
   expect(await offered(page, "Interpolant")).toBe(false);
   await calculus(page, ["Classical"]);
-  expect(await offered(page, "Into intuitionistic logic")).toBe(true);
+  expect(await offered(page, "Glivenko")).toBe(true);
   expect(await offered(page, "Interpolant")).toBe(true);
 });
 
 test("a translation says both verdicts first, and the translated sequent", async ({ page }) => {
   await ordinary(page, "Classical", "a -> b |- ~b -> ~a");
-  const view = await sheet(page, "Translate into intuitionistic logic");
-  await expect(view.getByRole("heading")).toBeFocused();
-  await expect(view.getByRole("button", { name: "Glivenko" })).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  );
+  const view = await sheet(page, "Glivenko");
   await expect(view.getByRole("status")).toHaveText(
     "Both valid The sequent is valid in classical logic, and its translation is valid in intuitionistic logic. A negative translation keeps the verdict, so the two agree.",
   );
-  await expect(view.locator(".tf-to")).toHaveText("a → b ⊢ ¬¬(¬b → ¬a)");
-  await view.getByRole("button", { name: "Kolmogorov" }).click();
-  await expect(view).toContainText("It translates into minimal logic.");
-  await expect(view.getByRole("status")).toContainText("its translation is valid in minimal logic");
-  await expect(view.locator(".tf-to")).toContainText("¬¬(¬¬a → ¬¬b) ⊢");
+  await expect(view.locator(".strip .m")).toHaveText("a → b ⊢ ¬¬(¬b → ¬a)");
+  const kolmogorov = await sheet(page, "Kolmogorov");
+  await expect(kolmogorov.getByRole("status")).toContainText(
+    "its translation is valid in minimal logic",
+  );
+  await expect(kolmogorov.locator(".strip .m")).toContainText("¬¬(¬¬a → ¬¬b) ⊢");
+  // Each translation is a cell of its own, its author's letters under the sign.
+  await expect(page.getByRole("tab", { name: "Glivenko's translation, ¬¬ Gl" })).toBeVisible();
 });
 
 test("a translation that is not valid shows the falsifying values and the Kripke model", async ({
   page,
 }) => {
   await ordinary(page, "Classical", "a \\/ b |- a");
-  const view = await sheet(page, "Translate into intuitionistic logic");
+  const view = await sheet(page, "Glivenko");
   await expect(view.getByRole("status")).toContainText("Both not valid");
   await expect(view.locator(".tf-evidence")).toContainText(
     "not valid: with a false, b true, every formula left of ⊢ is true",
@@ -89,10 +87,9 @@ test("a translation that is not valid shows the falsifying values and the Kripke
 
 test("the translated sequent opens as a proof of its own in its logic", async ({ page }) => {
   await ordinary(page, "Classical", "a -> b |- ~b -> ~a");
-  const view = await sheet(page, "Translate into intuitionistic logic");
-  await view.getByRole("button", { name: "Gödel–Gentzen" }).click();
+  const view = await sheet(page, "Gödel–Gentzen");
   await expect(view.getByRole("status")).toContainText("minimal logic");
-  await view.getByRole("button", { name: "Prove it in minimal logic" }).click();
+  await view.getByRole("button", { name: "Prove it in LM" }).click();
   await expect(view).toBeHidden();
   await expect(page.locator(".chip")).toHaveCount(2);
   const tab = page.locator(".chip[aria-selected=true]");
@@ -105,7 +102,7 @@ test("the translated sequent opens as a proof of its own in its logic", async ({
 
 test("an interpolant comes with its three checks, and follows the partition", async ({ page }) => {
   await ordinary(page, "Classical", "a /\\ b |- b \\/ c");
-  const view = await sheet(page, "Find an interpolant");
+  const view = await sheet(page, "Interpolant");
   await expect(view.getByRole("button", { name: "Part 1 a ∧ b" })).toHaveAttribute(
     "aria-pressed",
     "true",
@@ -126,15 +123,13 @@ test("an interpolant comes with its three checks, and follows the partition", as
   await expect(view.locator(".tf-check").first()).toHaveText(
     "It has no atoms, so it needs none from either part.",
   );
-  await page.keyboard.press("Escape");
-  await expect(view).toBeHidden();
 });
 
 test("a sequent that is not valid has no interpolant, and shows its countermodel", async ({
   page,
 }) => {
   await ordinary(page, "Classical", "a |- b");
-  const view = await sheet(page, "Find an interpolant");
+  const view = await sheet(page, "Interpolant");
   await expect(view.getByRole("status")).toHaveText(
     "No interpolant The sequent is not valid, and only a valid sequent has one.",
   );

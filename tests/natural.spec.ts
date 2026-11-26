@@ -119,7 +119,12 @@ test("a change of logic with steps taken opens the new logic beside, and ? prove
   await customStep(page, "∧I");
   await page.getByRole("button", { name: "Classical", exact: true }).click();
   await expect(page.getByRole("status").filter({ hasText: "opened beside" })).toBeVisible();
-  await expect(page.locator(".chip")).toHaveCount(2);
+  // The new logic is a view of the same sequent, beside the NJ proof in its chip's rail.
+  await expect(page.locator(".chip")).toHaveCount(1);
+  await expect(page.getByRole("tab", { name: /^Natural deduction, NK/ })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
   // The NJ proof keeps its step.
   await page.locator(".chip").first().click();
   await page.getByRole("button", { name: "?, this goal: its actions" }).click();
@@ -127,5 +132,5 @@ test("a change of logic with steps taken opens the new logic beside, and ? prove
     .getByRole("group", { name: "This goal" })
     .getByRole("button", { name: "Prove apart" })
     .click();
-  await expect(page.locator(".chip")).toHaveCount(3);
+  await expect(page.locator(".chip")).toHaveCount(2);
 });

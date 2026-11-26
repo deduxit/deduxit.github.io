@@ -765,6 +765,12 @@ export function createWorkspace(prover: Prover, ui: Ui) {
           if (n.node === shown) tab = made;
         }
         await look();
+        // A copy joins the proof it was copied from, as a view beside it in that chip.
+        for (const row of rows()) {
+          if (row.line?.kind !== "copy") continue;
+          const from = rows().find((r) => r.node === row.line?.from)?.tab;
+          if (from) prover.setBeside(row.tab, from, "copy");
+        }
         const count = rows().length;
         if (tab) {
           prover.activate(tab);

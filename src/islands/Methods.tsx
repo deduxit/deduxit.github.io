@@ -45,8 +45,17 @@ const MOST_ATOMS = 14;
 /** deduxit's answer: the outcome, or what it refused. */
 type Answer = { readonly outcome: OrdinaryOutcome } | { readonly failure: Failure };
 
-export function MethodView(props: { prover: Prover; method: Method; ui: Ui }) {
+export function MethodView(props: {
+  prover: Prover;
+  method: Method;
+  ui: Ui;
+  sequent?: string;
+  /** What stands first in the view: that it is out of date, where it is. */
+  header?: JSX.Element;
+}) {
+  /** The sequent the view was made from, else the proof's own. */
   const sequent = () => {
+    if (props.sequent) return props.sequent;
     const session = props.prover.current()?.session;
     return session && isOrdinary(session) ? sequentText(session) : undefined;
   };
@@ -91,6 +100,7 @@ export function MethodView(props: { prover: Prover; method: Method; ui: Ui }) {
       aria-label={props.method === "table" ? "Truth table" : "Tableau"}
       aria-busy={answer.loading}
     >
+      {props.header}
       <Show when={failure()}>
         {(f) => <Refused failure={f()} method={props.method} raise={(n) => setAtoms(n)} />}
       </Show>

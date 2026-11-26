@@ -8,16 +8,16 @@
 
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
-import { addView, calculus, goto, switches } from "./prover";
+import { addView, calculus, goto, switches, system as choose, tool, viewCell } from "./prover";
 import { customStep } from "./states";
 
 /** Opens the page with its tab in modal logic, in the system given. */
 async function modalTab(page: Page, system = "K") {
   await goto(page);
   await calculus(page, ["Modal logic"]);
-  const toggles = await switches(page);
-  if (system !== "K") await toggles.getByRole("combobox", { name: "System" }).selectOption(system);
-  await expect(toggles.getByRole("combobox", { name: "System" })).toHaveValue(system);
+  await switches(page);
+  if (system !== "K") await choose(page, system);
+  await expect(page.getByRole("button", { name: `System ${system}` })).toBeVisible();
 }
 
 /** Decides `sequent` in the tab's system and waits for its verdict. */
@@ -29,9 +29,9 @@ async function decide(page: Page, sequent: string) {
 
 test("the page shows nothing of modal logic until its logic is chosen", async ({ page }) => {
   await goto(page);
-  await expect(page.getByRole("combobox", { name: "System" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /^System / })).toHaveCount(0);
   await page.getByRole("button", { name: /^Modal logic/ }).click();
-  await expect(page.getByRole("combobox", { name: "System" })).toHaveValue("K");
+  await expect(page.getByRole("button", { name: "System K" })).toBeVisible();
 });
 
 test("a sequent not valid in K shows a checked countermodel in words of seeing", async ({
@@ -44,9 +44,7 @@ test("a sequent not valid in K shows a checked countermodel in words of seeing",
   const drawing = page.locator(".modal .countermodel-drawing svg");
   await expect(drawing).toBeVisible();
   await expect(drawing.locator("desc")).toContainText("it sees world 1");
-  await expect(
-    page.getByRole("tablist", { name: "Views of this sequent" }).getByRole("tab").first(),
-  ).toHaveAttribute("data-tip", "Modal logic, K");
+  await expect(viewCell(page)).toHaveAttribute("data-tip", "Modal logic, K");
 });
 
 test("the system chosen decides again: valid in S4 with its labelled derivation", async ({
@@ -54,7 +52,7 @@ test("the system chosen decides again: valid in S4 with its labelled derivation"
 }) => {
   await modalTab(page);
   await decide(page, "[]p -> [][]p");
-  await (await switches(page)).getByRole("combobox", { name: "System" }).selectOption("S4");
+  await choose(page, "S4");
   await expect(page.locator(".modal .kw.ok")).toHaveText("Valid");
   await expect(page.locator(".modal .custom-drawing svg")).toContainText("Trans");
   await expect(page.getByText("In S4 every world sees itself")).toBeVisible();
@@ -66,12 +64,12 @@ test("a valid sequent is proved step by step in its system's labelled calculus",
   await modalTab(page, "T");
   await decide(page, "[]p |- p");
   await expect(page.locator(".modal .kw.ok")).toHaveText("Valid");
-  await page.getByRole("button", { name: "Prove it step by step" }).click();
+  await tool(page, "Prove step by step").click();
   await expect(page.getByText("Open goal 1 of 1")).toBeVisible();
   await expect(page.locator(".custom-drawing svg title")).toHaveText("w0 : □p ⊢ w0 : p");
-  await expect(
-    page.getByRole("tablist", { name: "Views of this sequent" }).getByRole("tab").first(),
-  ).toHaveAttribute("data-tip", "G3T");
+  // The labelled calculus is a view beside the decision, in the same chip.
+  await expect(page.locator(".chip")).toHaveCount(1);
+  await expect(page.getByRole("tab", { name: /^G3T/ })).toHaveAttribute("aria-selected", "true");
   await customStep(page, "Ref");
   const form = page.getByRole("form", { name: /^Give what Ref needs/ });
   await form.getByRole("textbox").first().fill("w0");
@@ -103,7 +101,7 @@ test("a changed model is checked: the failing world's values and the frame condi
   await page.getByRole("button", { name: "Check the model" }).click();
   await expect(check).toContainText("Holds");
   // In T every world must see itself.
-  await (await switches(page)).getByRole("combobox", { name: "System" }).selectOption("T");
+  await choose(page, "T");
   await expect(page.locator(".modal .kw.bad")).toHaveText("Not valid");
   await page.getByRole("checkbox", { name: "World 0 sees world 0" }).uncheck();
   await page.getByRole("button", { name: "Check the model" }).click();
@@ -117,15 +115,17 @@ test("the link keeps the sequent and the system, decided again on arrival", asyn
   await expect(page).toHaveURL(/u=modal&m=KD45/);
   await page.reload();
   await expect(page.locator(".modal .kw.ok")).toHaveText("Valid");
-  await expect(
-    page.getByRole("tablist", { name: "Views of this sequent" }).getByRole("tab").first(),
-  ).toHaveAttribute("data-tip", "Modal logic, KD45");
+  await expect(viewCell(page)).toHaveAttribute("data-tip", "Modal logic, KD45");
 });
 
-test("a copy is a sequent of its own, with the same decision", async ({ page }) => {
+test("a copy is a view beside the decision, with the same decision", async ({ page }) => {
   await modalTab(page);
   await decide(page, "[]p -> [][]p");
   await addView(page, "A copy of this proof");
-  await expect(page.locator(".chip")).toHaveCount(2);
+  await expect(page.locator(".chip")).toHaveCount(1);
+  await expect(page.getByRole("tab", { name: /^Modal logic, K, a copy/ })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
   await expect(page.locator(".modal .kw.bad")).toHaveText("Not valid");
 });

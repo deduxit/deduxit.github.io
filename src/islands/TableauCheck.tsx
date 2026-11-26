@@ -9,18 +9,24 @@
  * written in at the start; deduxit's tableau is not shown here.
  */
 
-import { createEffect, createSignal, on, Show } from "solid-js";
+import { createEffect, createSignal, type JSX, on, Show } from "solid-js";
 import { type Failure, failure as failureOf } from "../lib/deduxit";
 import { isOrdinary } from "../lib/ordinary";
 import { rootOf } from "../lib/structure";
 import { type TableauReview, reviewWords, startLines } from "../lib/written";
 import type { Prover } from "./state";
-import type { Ui } from "./ui";
+import { setCounter, type Ui } from "./ui";
 
 /** deduxit's answer: its review, or the text it could not read with the place. */
 type Answer = { readonly review: TableauReview } | { readonly failure: Failure };
 
-export function TableauCheckView(props: { prover: Prover; ui: Ui; sequent: string }) {
+export function TableauCheckView(props: {
+  prover: Prover;
+  ui: Ui;
+  sequent: string;
+  /** What stands first in the view: that it is out of date, where it is. */
+  header?: JSX.Element;
+}) {
   const [text, setText] = createSignal("");
   const [answer, setAnswer] = createSignal<Answer | null>(null);
   const [busy, setBusy] = createSignal(false);
@@ -100,6 +106,7 @@ export function TableauCheckView(props: { prover: Prover; ui: Ui; sequent: strin
 
   return (
     <section class="method written" aria-label="Your tableau">
+      {props.header}
       <p class="method-verdict">
         Write the tableau of <span class="m">{props.sequent}</span>, a line each: its number, T or
         F, the formula, and the number of the line it comes from. A branch starts with - under the
@@ -153,18 +160,18 @@ export function TableauCheckView(props: { prover: Prover; ui: Ui; sequent: strin
                       const proof = current?.id;
                       if (!proof) return;
                       const session = current?.session;
-                      props.ui.setUi({
-                        counter: {
-                          kind: "kripke",
-                          proof,
-                          ...(session && isOrdinary(session) ? { root: rootOf(session) } : {}),
-                          seed: {
-                            model: found().model,
-                            sequent: JSON.stringify(found().sequent),
-                            logic: "classical",
-                            found: true,
-                          },
+                      setCounter(props.ui, proof, {
+                        kind: "kripke",
+                        proof,
+                        ...(session && isOrdinary(session) ? { root: rootOf(session) } : {}),
+                        seed: {
+                          model: found().model,
+                          sequent: JSON.stringify(found().sequent),
+                          logic: "classical",
+                          found: true,
                         },
+                      });
+                      props.ui.setUi({
                         tab: "countermodel",
                       });
                     }}

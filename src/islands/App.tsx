@@ -38,7 +38,6 @@ import { parseTheme, type Theme } from "../lib/theme";
 import type { Rule, Sample, Stop } from "../lib/content";
 import { hintsFor } from "../lib/rules";
 import { migrate } from "../lib/storage";
-import { NormalizeSheet, ResolveSheet } from "./Clausal";
 import {
   BottomBox,
   cellsOf,
@@ -48,9 +47,12 @@ import {
   ProblemNote,
   Rail,
   started,
+  tabText,
   Tools,
   TogglesPlace,
   TopRow,
+  viewRedo,
+  viewUndo,
 } from "./Frame";
 import { CheckSheet, createPacks, HandinSheet, PackBar, PackSheet, PacksContext } from "./Packs";
 import {
@@ -63,10 +65,8 @@ import {
   StepsPanel,
 } from "./Panels";
 import { RuleHints } from "./RuleHint";
-import { redoStructure, undoStructure } from "./Structure";
 import { GoalNotes, GuideLine, pointer, Stage } from "./Stage";
 import { createProver } from "./state";
-import { InterpolateSheet, TranslateSheet } from "./Transforms";
 import { createWorkspace, WorkspaceContext } from "./Workspace";
 import { Tour } from "./Tour";
 import { createUi, ladderKey, Why } from "./ui";
@@ -77,10 +77,6 @@ const PANELS: readonly string[] = [
   "search",
   "export",
   "import",
-  "translate",
-  "interpolate",
-  "normalize",
-  "resolve",
   "pack",
   "handin",
   "check",
@@ -271,6 +267,27 @@ export default function App(props: {
       notice: {
         text: "Every sequent closed.",
         undo: { label: "Undo", run: () => prover.restore() },
+      },
+    });
+  };
+
+  /** Closes a chip with the views beside it; the notice's Undo puts them back. */
+  const closeChip = (chip: string) => {
+    const closed = prover.store.proofs.find((p) => p.id === chip);
+    const text = closed?.input ? tabText(closed) : "The new sequent";
+    const back = prover.closeChip(chip);
+    setUi({
+      menu: null,
+      tab: "tree",
+      notice: {
+        text: `${text} closed.`,
+        undo: {
+          label: "Undo",
+          run: () => {
+            back();
+            setUi("tab", "tree");
+          },
+        },
       },
     });
   };
@@ -627,14 +644,19 @@ export default function App(props: {
   const cycleView = (step: number) => {
     const cells = cellsOf(prover, view, prover.current());
     if (cells.length < 2) return;
-    const at = cells.findIndex((c) => c.view === ui.tab);
+    const at = cells.findIndex(
+      (c) => c.view === ui.tab && (c.view === "graph" || c.proof === prover.store.active),
+    );
     const next = cells[(Math.max(at, 0) + step + cells.length) % cells.length];
-    if (next) setUi({ tab: next.view, menu: null });
+    if (next) {
+      prover.activate(next.proof);
+      setUi({ tab: next.view, menu: null });
+    }
   };
   /** Shows the sequent next to the one shown in the top row, `step` chips on. */
   const cycleSequent = (step: number) => {
-    const all = prover.store.proofs;
-    const at = all.findIndex((p) => p.id === prover.store.active);
+    const all = prover.store.proofs.filter((p) => prover.chipOf(p.id) === p.id);
+    const at = all.findIndex((p) => p.id === prover.chipOf(prover.store.active ?? ""));
     const next = all[(Math.max(at, 0) + step + all.length) % all.length];
     if (next) {
       prover.activate(next.id);
@@ -672,13 +694,13 @@ export default function App(props: {
         setUi("menu", ui.menu === menu ? null : menu);
       const act: Partial<Record<typeof action, () => void>> = {
         undo: () =>
-          ui.tab === "countermodel"
-            ? undoStructure(view)
-            : (proving || !!proof?.custom?.session) && void prover.undo(),
+          ui.tab === "tree"
+            ? (proving || !!proof?.custom?.session) && void prover.undo()
+            : viewUndo(prover, view),
         redo: () =>
-          ui.tab === "countermodel"
-            ? redoStructure(view)
-            : (proving || !!proof?.custom?.session) && void prover.redo(),
+          ui.tab === "tree"
+            ? (proving || !!proof?.custom?.session) && void prover.redo()
+            : viewRedo(prover, view),
         steps: () => proving && toggle("steps"),
         hint: () => proving && void hint(),
         close: () => proving && goal !== undefined && void prover.close(goal),
@@ -689,6 +711,18 @@ export default function App(props: {
         previousGoal: () => proving && prover.cycle(-1),
         nextSequent: () => cycleSequent(1),
         previousSequent: () => cycleSequent(-1),
+        closeSequent: () => {
+          const p = prover.current();
+          if (p) closeChip(prover.chipOf(p.id));
+        },
+        graph: () => {
+          const p = prover.current();
+          if (!p) return;
+          const chip = prover.chipOf(p.id);
+          if (!cellsOf(prover, view, p).some((c) => c.view === "graph")) return;
+          prover.activate(chip);
+          setUi({ tab: ui.tab === "graph" ? "tree" : "graph", menu: null });
+        },
         nextView: () => cycleView(1),
         previousView: () => cycleView(-1),
         addView: () => started(proof) && toggle("views"),
@@ -737,7 +771,14 @@ export default function App(props: {
     <PacksContext.Provider value={packs}>
       <WorkspaceContext.Provider value={workspace}>
         <div class="app" data-guide={prover.settings().guide ? "" : undefined}>
-          <TopRow prover={prover} ui={view} theme={theme} setTheme={setTheme} newTab={newTab} />
+          <TopRow
+            prover={prover}
+            ui={view}
+            theme={theme}
+            setTheme={setTheme}
+            newTab={newTab}
+            closeChip={closeChip}
+          />
           {/* biome-ignore lint/a11y/noStaticElementInteractions: a file dropped anywhere under the top row opens; "Open a file" and Import are the controls that do the same. */}
           <div
             class="body"
@@ -814,18 +855,6 @@ export default function App(props: {
                   </Show>
                   <Show when={ui.menu === "import"}>
                     <ImportPanel prover={prover} ui={view} />
-                  </Show>
-                  <Show when={ui.menu === "translate"}>
-                    <TranslateSheet prover={prover} ui={view} />
-                  </Show>
-                  <Show when={ui.menu === "interpolate"}>
-                    <InterpolateSheet prover={prover} ui={view} />
-                  </Show>
-                  <Show when={ui.menu === "normalize"}>
-                    <NormalizeSheet prover={prover} ui={view} />
-                  </Show>
-                  <Show when={ui.menu === "resolve"}>
-                    <ResolveSheet prover={prover} ui={view} />
                   </Show>
                   <Show when={ui.menu === "pack"}>
                     <PackSheet prover={prover} ui={view} />

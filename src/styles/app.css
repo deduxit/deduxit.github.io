@@ -2768,6 +2768,328 @@ fieldset {
   font-size: var(--text-control);
   color: var(--color-soft);
 }
+/* A chip and its close: shown under the pointer and with the focus in the chip, always on a
+   touch screen. */
+.chip-wrap {
+  position: relative;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+}
+.chip-close {
+  position: absolute;
+  top: 50%;
+  right: var(--spacing-1);
+  display: grid;
+  place-items: center;
+  width: var(--size-close);
+  height: var(--size-close);
+  border-radius: var(--radius-control);
+  background: var(--color-band);
+  color: var(--color-ink2);
+  cursor: pointer;
+  translate: 0 -50%;
+  /* Over the chip's end, so that showing it moves nothing beside it. */
+  visibility: hidden;
+}
+.chip-close:hover {
+  background-color: var(--color-over);
+  color: var(--color-ink);
+}
+.chip-wrap:hover .chip-close,
+.chip-wrap:focus-within .chip-close {
+  visibility: visible;
+}
+.chip[aria-selected="true"] + .chip-close {
+  background-color: var(--color-wash);
+}
+/* A touch screen has no hover: the close stands beside the chip, always. */
+@media (pointer: coarse) {
+  .chip-close {
+    position: static;
+    translate: none;
+    visibility: visible;
+  }
+}
+/* A cell's sign above its name, and letters under it (a translation's author). */
+.cell-name {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: var(--leading-none);
+}
+.cell-name.m {
+  font-family: var(--font-math);
+  font-weight: var(--font-weight-normal);
+}
+.cell-sub {
+  font: var(--font-weight-semibold) var(--text-sign) / var(--leading-none) var(--font-text);
+}
+.cell-sign {
+  position: absolute;
+  top: var(--spacing-1);
+  left: 0;
+  right: 0;
+  font: var(--font-weight-normal) var(--text-sign) / var(--leading-none) var(--font-math);
+  text-align: center;
+}
+/* A view made from the one above it: a short line joins them. */
+.cell[data-tied]::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: calc(-1 * var(--size-gap) - var(--line));
+  width: var(--line-strong);
+  height: var(--size-gap);
+  margin-left: calc(-1 * var(--line));
+  background: var(--color-faint);
+}
+/* A view out of date: a dashed edge and a red "!". */
+.cell[data-stale] {
+  border: var(--line) dashed var(--color-bad);
+}
+.stale-mark {
+  position: absolute;
+  top: var(--spacing-1);
+  right: var(--spacing-1);
+  font: var(--font-weight-semibold) var(--text-sign) / var(--leading-none) var(--font-text);
+  color: var(--color-bad);
+}
+.cell[aria-selected="true"] .stale-mark {
+  color: var(--color-paper);
+}
+.cell[data-view="graph"] {
+  height: var(--size-graph-cell);
+}
+.badge {
+  flex-direction: column;
+  line-height: var(--leading-none);
+}
+.badge .cell-sub {
+  font-size: var(--text-sign);
+}
+/* A view of the sequent or the proof in the drawing's place; faint while it is out of date. */
+/* Its text keeps the contrast of third-rank text: faint is for what cannot act, never text. */
+.view-panel[data-stale] > :not(.stale-bar),
+.stage[data-stale] .method > :not(.stale-bar) {
+  color: var(--color-soft);
+}
+.stale-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-3);
+  max-width: var(--size-text);
+}
+.stale-bar p {
+  margin: 0;
+}
+/* A translated sequent on a strip of paper, "Prove it in" at its end. */
+.strip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  margin: 0;
+  padding: var(--spacing-1) var(--spacing-2) var(--spacing-1) var(--spacing-4);
+  border-radius: var(--radius-cell);
+  background: var(--color-paper);
+  font: var(--font-weight-normal) var(--text-math-stage) / var(--leading-snug) var(--font-math);
+}
+.prove-in {
+  flex: none;
+  min-width: var(--size-tool);
+  border: var(--line) solid var(--color-line);
+  color: var(--color-ink2);
+}
+[data-guide] .prove-in {
+  padding: 0 var(--spacing-2);
+}
+[data-guide] .prove-in .tool-name {
+  display: inline;
+}
+/* A normal form's steps: numbered lines, each with the law that gave it. */
+.nf-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-width: var(--size-page);
+}
+.nf-step {
+  display: grid;
+  grid-template-columns: var(--size-tableau-number) minmax(0, 1fr) auto;
+  gap: var(--spacing-3);
+  align-items: baseline;
+  padding: var(--spacing-1) 0;
+}
+.nf-n,
+.nf-law {
+  font: var(--font-weight-normal) var(--text-body) / var(--leading-snug) var(--font-text);
+  color: var(--color-ink2);
+}
+.nf-n {
+  text-align: right;
+}
+.nf-text {
+  font-size: var(--text-math-large);
+}
+.nf-what {
+  color: var(--color-soft);
+}
+/* The graph of a sequent's views: the sequent at the top, each view under what it was made from. */
+.graph {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+}
+.graph-sequent {
+  align-self: flex-start;
+  padding: var(--spacing-2) var(--spacing-3);
+  border: var(--line) solid var(--color-lapis);
+  border-radius: var(--radius-chip);
+  background: var(--color-wash);
+  font-size: var(--text-math-large);
+}
+.graph-node {
+  position: relative;
+  padding-left: var(--size-graph-step);
+}
+.graph-node[data-depth="2"] {
+  padding-left: calc(2 * var(--size-graph-step));
+}
+.graph-node[data-depth="3"] {
+  padding-left: calc(3 * var(--size-graph-step));
+}
+.graph-node[data-depth="4"],
+.graph-node[data-depth="5"],
+.graph-node[data-depth="6"] {
+  padding-left: calc(4 * var(--size-graph-step));
+}
+/* The line from what a node was made from: down, then a round elbow and an arrow head. */
+.graph-elbow {
+  position: absolute;
+  left: var(--spacing-5);
+  bottom: 50%;
+  width: calc(var(--size-graph-step) - var(--spacing-5) - var(--spacing-2));
+  height: calc(100% + var(--spacing-3));
+  border-left: var(--line-strong) solid var(--color-ink2);
+  border-bottom: var(--line-strong) solid var(--color-ink2);
+  border-bottom-left-radius: var(--radius-cell);
+}
+.graph-node[data-depth="2"] .graph-elbow {
+  left: calc(var(--size-graph-step) + var(--spacing-5));
+}
+.graph-node[data-depth="3"] .graph-elbow {
+  left: calc(2 * var(--size-graph-step) + var(--spacing-5));
+}
+.graph-node[data-depth="4"] .graph-elbow,
+.graph-node[data-depth="5"] .graph-elbow,
+.graph-node[data-depth="6"] .graph-elbow {
+  left: calc(3 * var(--size-graph-step) + var(--spacing-5));
+}
+.graph-node[data-stale] .graph-elbow {
+  border-style: dashed;
+}
+.graph-elbow::after {
+  content: "";
+  position: absolute;
+  right: calc(-1 * var(--spacing-2));
+  bottom: calc(-1 * var(--spacing-1) - var(--line));
+  border-left: var(--spacing-2) solid var(--color-ink2);
+  border-top: var(--spacing-1) solid transparent;
+  border-bottom: var(--spacing-1) solid transparent;
+}
+.graph-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  width: var(--size-graph-node);
+  min-height: var(--size-element);
+  padding: var(--spacing-1) var(--spacing-3) var(--spacing-1) var(--spacing-1);
+  border: var(--line) solid var(--color-ink);
+  border-radius: var(--radius-panel);
+  background: var(--color-paper);
+  text-align: left;
+}
+.graph-node[data-stale] .graph-button {
+  border-style: dashed;
+}
+.graph-node[data-chip] .graph-button {
+  width: auto;
+  border-color: var(--color-line);
+  border-radius: var(--radius-chip);
+}
+.graph-badge {
+  flex: none;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: var(--size-cell);
+  height: var(--size-tool);
+  border-radius: var(--radius-chip);
+  background: var(--color-band);
+  font: var(--font-weight-semibold) var(--text-field) / var(--leading-none) var(--font-text);
+}
+.graph-badge.m {
+  font-family: var(--font-math);
+  font-weight: var(--font-weight-normal);
+}
+.graph-words {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.graph-name {
+  font: var(--font-weight-medium) var(--text-body) / var(--leading-snug) var(--font-text);
+}
+.graph-name.m {
+  font-family: var(--font-math);
+  font-weight: var(--font-weight-normal);
+}
+.graph-state {
+  font: var(--font-weight-normal) var(--text-control) / var(--leading-snug) var(--font-text);
+  color: var(--color-ink2);
+}
+.graph-state[data-bad] {
+  color: var(--color-bad);
+}
+/* Modal logic's system: its name opens the list of the fifteen. */
+.system-pick {
+  position: relative;
+}
+.system-name {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+}
+.system-list {
+  position: absolute;
+  top: calc(100% + var(--spacing-1));
+  left: 0;
+  z-index: var(--layer-menu);
+  display: flex;
+  flex-direction: column;
+  width: max-content;
+  max-height: var(--size-popover);
+  overflow: auto;
+  padding: var(--spacing-1);
+  border: var(--line) solid var(--color-ink);
+  border-radius: var(--radius-panel);
+  background: var(--color-paper);
+  pointer-events: auto;
+}
+.system-short {
+  display: inline-block;
+  min-width: var(--size-cell);
+  font-weight: var(--font-weight-semibold);
+}
+/* A condition the system was made of carries an edge; one that follows from them, a ground alone. */
+.toggle-cell[data-own] {
+  border-color: var(--color-lapis);
+}
 /* The stage's region: the stage, its toggles, tools, zoom, panels and bottom box over it. */
 .stage-area {
   position: relative;

@@ -26,13 +26,7 @@ import { APART, engineLabel } from "../lib/engines";
 import { keyAction } from "../lib/keys";
 import { type Box, spread } from "../lib/gap";
 import { type CutShown, failure, type LinkShown, type MathFont } from "../lib/deduxit";
-import {
-  countermodelOf,
-  isOrdinary,
-  type OrdinaryOutcome,
-  sequentText,
-  structureOf,
-} from "../lib/ordinary";
+import { countermodelOf, isOrdinary, type OrdinaryOutcome, structureOf } from "../lib/ordinary";
 import { complete, rootOf, sameRoot, signatureOf } from "../lib/structure";
 import { goalAt, paths, searchMade, subtree } from "../lib/steps";
 import { intuitionistic, isNatural } from "../lib/suites";
@@ -44,6 +38,7 @@ import {
   type NetDrawing,
   type NetLook,
   type On,
+  type Proof,
   type Prover,
   pathKey,
   type Settings,
@@ -61,7 +56,20 @@ import { ModalCountermodel, ModalPanel } from "./Modal";
 import { type Method, MethodView } from "./Methods";
 import { NaturalView } from "./Natural";
 import { hinted } from "./RuleHint";
-import { compact, type Counter, ladderKey, token, type Ui, Why } from "./ui";
+import {
+  compact,
+  type Counter,
+  counterOf,
+  ladderKey,
+  setCounter,
+  token,
+  type Ui,
+  wayOf,
+  Why,
+} from "./ui";
+import { cellsOf } from "./Frame";
+import { OtherView } from "./OtherViews";
+import { addedOf, GraphView, isNegative, markSteps, StaleBar, staleOf } from "./Views";
 
 /** A formula's button over the drawing, in the drawing's own pixels. */
 interface Hit {
@@ -146,6 +154,29 @@ const drawSettings = (
     ...(twoSided ? { view: { classical: "two" } } : {}),
   });
 
+/** The settings an elimination's drawings are made with: the stage's, for the proof shown. */
+export function elimSettings(prover: Prover): string {
+  const s = prover.settings();
+  return drawSettings(
+    s.budget,
+    intuitionistic(
+      prover.current()?.calculus ?? { suite: "linear", method: "sequent", mode: "classical" },
+    ),
+    s.net,
+    s.netLook,
+    s.stageFont,
+    s.twoSided,
+    s.cutSteps,
+  );
+}
+
+/** What the cut elimination view acts on: the net where its toggle says so and there is one. */
+export function elimOn(prover: Prover, ui: Ui): On {
+  const p = prover.current();
+  const finished = !!p?.view?.complete && p.view.net === null;
+  return finished && p ? wayOf<On>(ui, p.id, "elim", "tree") : "tree";
+}
+
 /**
  * The settings of an ordinary derivation's drawing: the formulas large enough to click, in the
  * stage's font, its weakenings and contractions drawn where Settings asks it.
@@ -212,24 +243,16 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
   };
 
   /** The view an elimination acts on: the net while the net is shown, else the derivation. */
-  const onView = (): On => (ui.tab === "net" && netReady() ? "net" : "tree");
-  /** The elimination of the finished proof's cuts on the view shown, if one is under way. */
-  const elim = (): Elim | null => proof()?.elim[onView()] ?? null;
+  const onView = (): On =>
+    ui.tab === "elim"
+      ? elimOn(props.prover, props.ui)
+      : ui.tab === "net" && netReady()
+        ? "net"
+        : "tree";
+  /** The cut elimination shown: the view CE's, while it is shown. */
+  const elim = (): Elim | null => (ui.tab === "elim" ? (proof()?.elim[onView()] ?? null) : null);
   /** The settings of the stage's drawing, which an elimination's drawings are made with. */
-  const drawJson = () => {
-    const s = props.prover.settings();
-    return drawSettings(
-      s.budget,
-      intuitionistic(
-        proof()?.calculus ?? { suite: "linear", method: "sequent", mode: "classical" },
-      ),
-      s.net,
-      s.netLook,
-      s.stageFont,
-      s.twoSided,
-      s.cutSteps,
-    );
-  };
+  const drawJson = () => elimSettings(props.prover);
   /** The drawing an elimination shows: the proof or net reached, or a step's, before it. */
   const elimDrawing = (e: Elim) =>
     e.shown === null ? e.reached.drawing : (e.taken[e.shown - 1]?.drawing ?? null);
@@ -248,6 +271,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
           props.prover.settings().stageFont,
           props.prover.settings().twoSided,
           props.prover.settings().structural,
+          elimOn(props.prover, props.ui),
           proof()?.elim.tree?.reached,
           proof()?.elim.tree?.shown,
           proof()?.elim.net?.reached,
@@ -262,8 +286,12 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
           setGoalHits([]);
           return;
         }
-        const net = tab === "net" && v.complete && v.net === null;
-        const eliminating = proof()?.elim[net ? "net" : "tree"] ?? null;
+        const finished = v.complete && v.net === null;
+        const net =
+          finished &&
+          (tab === "net" || (tab === "elim" && elimOn(props.prover, props.ui) === "net"));
+        // The elimination is drawn on its own view, CE; the proof's view keeps the proof.
+        const eliminating = tab === "elim" ? (proof()?.elim[net ? "net" : "tree"] ?? null) : null;
         let svg: string;
         try {
           if (eliminating) {
@@ -376,7 +404,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
       setGoalHits([]);
       return;
     }
-    const eliminating = proof()?.elim[net ? "net" : "tree"];
+    const eliminating = ui.tab === "elim" ? proof()?.elim[net ? "net" : "tree"] : null;
     if (eliminating) {
       setHits([]);
       setGoalHits([]);
@@ -703,7 +731,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
     on(
       () => active(),
       () => {
-        if (host.firstChild) decorate(ui.tab === "net" && netReady());
+        if (host.firstChild) decorate(onView() === "net");
         setDrawn((n) => n + 1);
       },
       { defer: true },
@@ -1313,16 +1341,31 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
       prover().limits().search(p.id) === null
     );
   };
+  /** The view added to the proof shown that the stage shows now, with whether it is out of date. */
+  const addedShown = () => {
+    const p = proof();
+    if (!p || ui.tab === "tree" || ui.tab === "net" || ui.tab === "countermodel") return null;
+    const added = addedOf(props.ui, p.id, ui.tab);
+    return added ? { proof: p, added, stale: staleOf(p, added) } : null;
+  };
+  /** The sequent a view of the sequent was made from, as text and JSON, or null. */
+  const madeFrom = () => addedShown()?.added.sequent ?? null;
   /** The truth table or the tableau the stage shows in the drawing's place, or null. */
   const method = (): Method | null =>
-    (ui.tab === "table" || ui.tab === "tableau") && decidable() ? ui.tab : null;
+    (ui.tab === "table" ||
+      (ui.tab === "tableau" &&
+        wayOf<string>(props.ui, proof()?.id ?? "", "tableau", "search") === "search")) &&
+    decidable() &&
+    madeFrom()
+      ? ui.tab
+      : null;
   /**
    * Whether the stage shows the proof by natural deduction in the drawing's place: a started
    * ordinary sequent whose calculus's method the visitor set to natural deduction.
    */
   const deduced = () => {
     const p = proof();
-    return !!p?.session && isNatural(p.calculus);
+    return !!p?.session && isNatural(p.calculus) && ui.tab === "tree";
   };
   /** The Kripke model the stage shows in the drawing's place, to change and check, or null. */
   const modelShown = () => {
@@ -1331,7 +1374,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
       suite !== "rules" &&
       suite !== "modal" &&
       suite !== "lambda" &&
-      !deduced()
+      !isNatural(proof()?.calculus ?? { suite: "linear", method: "sequent", mode: "classical" })
       ? ui.modelSeed
       : null;
   };
@@ -1345,8 +1388,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
       return !p.modal?.outcome || p.modal.outcome.verdict === "not_valid"
         ? { kind: "modal", proof: p.id }
         : null;
-    const c = ui.counter;
-    return c && c.proof === p?.id ? c : null;
+    return counterOf(props.ui, p?.id);
   };
   /** The Kripke model of a propositional sequent the countermodel view shows, or null. */
   const kripkeShown = () => {
@@ -1354,48 +1396,61 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
     return c?.kind === "kripke" ? c.seed : null;
   };
   /** The classical sequent whose tableau the visitor writes by hand in the drawing's place, or null. */
-  const writtenShown = () => {
-    const session = proof()?.session;
-    return ui.tab === "written" && decidable() && session && isOrdinary(session)
-      ? sequentText(session)
+  const writtenShown = () =>
+    ui.tab === "tableau" &&
+    wayOf<string>(props.ui, proof()?.id ?? "", "tableau", "search") === "hand" &&
+    decidable()
+      ? (madeFrom()?.text ?? null)
+      : null;
+  /** A view of the sequent or of the proof that this module draws, or null. */
+  const otherShown = () => {
+    const a = addedShown();
+    if (!a) return null;
+    return ["resolution", "normal", "interpolant", "embedding", "term"].includes(a.added.view) ||
+      isNegative(a.added.view)
+      ? a
       : null;
   };
-  // The model view gives way to the tree when another proof comes to the stage.
-  createEffect(
-    on(
-      () => proof()?.id,
-      () => {
-        if (ui.tab === "model" || ui.tab === "written") setUi("tab", "tree");
-        if (ui.tab === "countermodel" && !counterShown()) setUi("tab", "tree");
-      },
-      { defer: true },
-    ),
-  );
+  // A view that is not among the proof's cells gives way to the proof's own (another proof came to
+  // the stage, its view was taken away, a modal sequent decided valid in another system).
+  createEffect(() => {
+    const p = proof();
+    const tab = ui.tab;
+    if (!p || tab === "tree") return;
+    // A modal sequent decided again after a change of system keeps its countermodel view until
+    // the new outcome says whether it still has one.
+    if (tab === "countermodel" && p.calculus.suite === "modal" && !p.modal?.outcome) return;
+    const cells = cellsOf(props.prover, props.ui, p);
+    if (!cells.some((c) => c.view === tab && (tab === "graph" || c.proof === p.id)))
+      setUi("tab", "tree");
+  });
   // A countermodel belongs to its proof's sequent: typed anew, the sequent drops it.
   createEffect(() => {
-    const c = ui.counter;
-    const root = c && c.kind !== "modal" ? c.root : undefined;
-    const p = proof();
-    if (!c || !root || c.proof !== p?.id || !p.session || !isOrdinary(p.session)) return;
-    if (!sameRoot(root, p.session)) setUi("counter", null);
+    for (const [id, c] of Object.entries(ui.counters)) {
+      const root = c.kind !== "modal" ? c.root : undefined;
+      const p = props.prover.store.proofs.find((q) => q.id === id);
+      if (!p) {
+        setCounter(props.ui, id, null);
+        continue;
+      }
+      if (!root || !p.session || !isOrdinary(p.session)) continue;
+      if (!sameRoot(root, p.session)) setCounter(props.ui, id, null);
+    }
   });
-  // The countermodel view gives way to the tree once there is none to show (a modal sequent
-  // decided valid in another system).
+  // The cut elimination view starts its elimination by itself, on the proof as it is now.
   createEffect(() => {
-    if (ui.tab === "countermodel" && !counterShown()) setUi("tab", "tree");
+    const p = proof();
+    if (ui.tab !== "elim" || !p?.view?.complete || props.prover.busy()) return;
+    const added = addedOf(props.ui, p.id, "elim");
+    if (!added || staleOf(p, added) || p.elim[onView()]) return;
+    void props.prover.eliminate(onView(), drawJson());
   });
-  // The table or the tableau gives way to the tree when the proof changes under it (a key or
-  // the band acted on it: the visitor sees what changed) or when the proof shown has none.
-  createEffect(
-    on(
-      () => [proof()?.id, proof()?.session, decidable()] as const,
-      ([id, session, ok], before) => {
-        if (ui.tab !== "table" && ui.tab !== "tableau") return;
-        if (!ok || (before?.[0] === id && before?.[1] !== session)) setUi("tab", "tree");
-      },
-      { defer: true },
-    ),
-  );
+  // Steps taken in the cut elimination view are its own: bringing it up to date starts it again.
+  createEffect(() => {
+    const p = proof();
+    const e = p?.elim[onView()];
+    if (p && ui.tab === "elim" && e) markSteps(props.ui, p.id, "elim", e.taken.length > 0);
+  });
   return (
     <section
       class="stage"
@@ -1404,20 +1459,25 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
       data-method={
         counterShown()
           ? "countermodel"
-          : proof()?.calculus.suite === "rules"
-            ? "custom"
-            : proof()?.calculus.suite === "modal"
-              ? "modal"
-              : proof()?.calculus.suite === "lambda"
-                ? "lambda"
-                : deduced()
-                  ? "natural"
-                  : modelShown()
-                    ? "model"
-                    : writtenShown()
-                      ? "written"
-                      : (method() ?? undefined)
+          : ui.tab === "graph"
+            ? "graph"
+            : proof()?.calculus.suite === "rules"
+              ? "custom"
+              : proof()?.calculus.suite === "modal"
+                ? "modal"
+                : proof()?.calculus.suite === "lambda"
+                  ? "lambda"
+                  : deduced()
+                    ? "natural"
+                    : modelShown()
+                      ? "model"
+                      : writtenShown()
+                        ? "written"
+                        : otherShown()
+                          ? "view"
+                          : (method() ?? undefined)
       }
+      data-stale={addedShown()?.stale ? "" : undefined}
     >
       <div class="world" ref={world} data-glide={glide() ? "" : undefined}>
         <div class="hits">
@@ -1562,7 +1622,24 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
       </div>
 
       <Show when={!deduced() && method()}>
-        {(m) => <MethodView prover={props.prover} method={m()} ui={props.ui} />}
+        {(m) => (
+          <MethodView
+            prover={props.prover}
+            method={m()}
+            ui={props.ui}
+            sequent={madeFrom()?.text ?? ""}
+            header={
+              <Show when={addedShown()?.stale}>
+                <StaleBar
+                  prover={props.prover}
+                  ui={props.ui}
+                  proof={proof()?.id ?? ""}
+                  view={m()}
+                />
+              </Show>
+            }
+          />
+        )}
       </Show>
       <Show when={modelShown()}>{(seed) => <ModelView prover={props.prover} seed={seed()} />}</Show>
       <Show when={counterShown()?.kind === "structure"}>
@@ -1575,15 +1652,52 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
         <ModalCountermodel prover={props.prover} />
       </Show>
       <Show when={writtenShown()}>
-        {(sequent) => <TableauCheckView prover={props.prover} ui={props.ui} sequent={sequent()} />}
+        {(sequent) => (
+          <TableauCheckView
+            prover={props.prover}
+            ui={props.ui}
+            sequent={sequent()}
+            header={
+              <Show when={addedShown()?.stale}>
+                <StaleBar
+                  prover={props.prover}
+                  ui={props.ui}
+                  proof={proof()?.id ?? ""}
+                  view="tableau"
+                />
+              </Show>
+            }
+          />
+        )}
+      </Show>
+      <Show when={otherShown()}>
+        {(a) => (
+          <OtherView
+            prover={props.prover}
+            ui={props.ui}
+            proof={a().proof}
+            added={a().added}
+            stale={a().stale}
+          />
+        )}
+      </Show>
+      <Show when={ui.tab === "graph" && proof()}>
+        {(p) => (
+          <GraphView
+            prover={props.prover}
+            ui={props.ui}
+            chip={props.prover.chipOf(p().id)}
+            cells={cellsOf(props.prover, props.ui, p())}
+          />
+        )}
       </Show>
       <Show when={deduced()}>
         <NaturalView prover={props.prover} />
       </Show>
-      <Show when={proof()?.calculus.suite === "rules"}>
+      <Show when={proof()?.calculus.suite === "rules" && ui.tab === "tree"}>
         <CustomPanel prover={props.prover} />
       </Show>
-      <Show when={proof()?.calculus.suite === "modal" && !counterShown()}>
+      <Show when={proof()?.calculus.suite === "modal" && !counterShown() && ui.tab === "tree"}>
         <ModalPanel
           prover={props.prover}
           openCounter={() => {
@@ -1595,7 +1709,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
           }}
         />
       </Show>
-      <Show when={proof()?.calculus.suite === "lambda"}>
+      <Show when={proof()?.calculus.suite === "lambda" && ui.tab === "tree"}>
         <LambdaPanel prover={props.prover} />
       </Show>
 
@@ -1603,164 +1717,106 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
         {(text) => <p class="banner kw warn">The drawing failed: {text()}</p>}
       </Show>
 
-      <Show when={view()?.complete && ((view()?.cuts.length ?? 0) > 0 || elim())}>
+      <Show when={ui.tab === "elim" && addedShown()?.stale}>
         <section class="cluster elim" aria-label="Cut elimination">
-          <Show
-            when={elim()}
-            fallback={
+          <StaleBar prover={props.prover} ui={props.ui} proof={proof()?.id ?? ""} view="elim" />
+        </section>
+      </Show>
+      <Show when={!addedShown()?.stale && elim()}>
+        {(e) => (
+          <section class="cluster elim" aria-label="Cut elimination">
+            <p class="line" role="status" aria-live="polite">
+              {(() => {
+                const shownStep = e().shown;
+                const step = shownStep === null ? undefined : e().taken[shownStep - 1];
+                if (step && shownStep !== null) return `Before ${stepLine(shownStep, step)}`;
+                const last = e().taken.at(-1);
+                const left = e().reached.cuts.length;
+                const count =
+                  left === 0 ? "Cut-free" : `${left} ${left === 1 ? "cut" : "cuts"} left`;
+                return last ? `${stepLine(e().taken.length, last)} · ${count}` : count;
+              })()}
+            </p>
+            <Show when={e().stopped}>
+              {(said) => (
+                <p class="line warn" role="alert">
+                  <span class="kw">{said().keyword}</span> {said().sentence}
+                </p>
+              )}
+            </Show>
+            <Show when={e().undrawn}>
+              {(k) => (
+                <p class="line sub">
+                  Steps from {k()} on are not drawn: their drawings would take more than the page
+                  keeps.
+                </p>
+              )}
+            </Show>
+            <Show when={e().problem}>
+              {(said) => (
+                <p class="line warn" role="alert">
+                  <span class="kw">{said().keyword}</span> {said().sentence}
+                </p>
+              )}
+            </Show>
+            <Show when={e().taken.length > 0}>
               <div class="row">
-                <span class="txt">
-                  {view()?.cuts.length === 1 ? "1 cut" : `${view()?.cuts.length} cuts`} in this
-                  proof
-                </span>
                 <button
                   type="button"
-                  class="btn btn-s btn-primary"
-                  data-tip={
-                    onView() === "net"
-                      ? "Reduce the cut links of the net step by step"
-                      : "Reduce the cuts of the derivation step by step"
+                  class="btn btn-s"
+                  aria-pressed={e().shown !== null}
+                  data-tip="The drawing before the last step, its cut marked"
+                  onClick={() =>
+                    props.prover.eliminationShow(
+                      onView(),
+                      e().shown === null ? e().taken.length : null,
+                    )
                   }
-                  disabled={props.prover.busy()}
-                  onClick={() => void props.prover.eliminate(onView(), drawJson())}
                 >
-                  Eliminate the cuts
+                  Before
                 </button>
               </div>
-            }
-          >
-            {(e) => (
-              <>
-                <p class="kw-label h">Cut elimination{onView() === "net" ? " on the net" : ""}</p>
-                <p class="line" role="status" aria-live="polite">
-                  {(() => {
-                    const shownStep = e().shown;
-                    const step = shownStep === null ? undefined : e().taken[shownStep - 1];
-                    if (step && shownStep !== null) return `Before ${stepLine(shownStep, step)}`;
-                    const last = e().taken.at(-1);
-                    const left = e().reached.cuts.length;
-                    const count =
-                      left === 0 ? "Cut-free" : `${left} ${left === 1 ? "cut" : "cuts"} left`;
-                    return last ? `${stepLine(e().taken.length, last)} · ${count}` : count;
-                  })()}
-                </p>
-                <Show when={e().stopped}>
-                  {(said) => (
-                    <p class="line warn" role="alert">
-                      <span class="kw">{said().keyword}</span> {said().sentence}
-                    </p>
-                  )}
-                </Show>
+            </Show>
+            <Show when={e().taken.length > 1}>
+              <details class="steps-taken">
+                <summary>{e().taken.length} steps</summary>
+                <ol>
+                  <For
+                    each={e().taken.flatMap((step, i) =>
+                      step.drawing === null ? [] : [{ step, k: i + 1 }],
+                    )}
+                  >
+                    {(drawn) => (
+                      <li>
+                        <button
+                          type="button"
+                          class="mi"
+                          aria-pressed={e().shown === drawn.k}
+                          onClick={() =>
+                            props.prover.eliminationShow(
+                              onView(),
+                              e().shown === drawn.k ? null : drawn.k,
+                            )
+                          }
+                        >
+                          {stepLine(drawn.k, drawn.step)}
+                        </button>
+                      </li>
+                    )}
+                  </For>
+                </ol>
                 <Show when={e().undrawn}>
                   {(k) => (
-                    <p class="line sub">
-                      Steps from {k()} on are not drawn: their drawings would take more than the
-                      page keeps.
+                    <p class="sub">
+                      Steps {k()} to {e().taken.length} are not drawn: their drawings would take
+                      more than the page keeps.
                     </p>
                   )}
                 </Show>
-                <Show when={e().problem}>
-                  {(said) => (
-                    <p class="line warn" role="alert">
-                      <span class="kw">{said().keyword}</span> {said().sentence}
-                    </p>
-                  )}
-                </Show>
-                <div class="row">
-                  <button
-                    type="button"
-                    class="btn btn-s btn-primary"
-                    data-tip="The next step of the strategy: the cut with no cut above it"
-                    disabled={props.prover.busy() || e().reached.next === null}
-                    onClick={() => void eliminationStep()}
-                  >
-                    Next step
-                  </button>
-                  <button
-                    type="button"
-                    class="btn btn-s"
-                    data-tip="Every step to the cut-free proof, within the bounds of Settings"
-                    disabled={props.prover.busy() || e().reached.next === null}
-                    onClick={() => void props.prover.eliminationRun(onView(), drawJson())}
-                  >
-                    To the end
-                  </button>
-                  <button
-                    type="button"
-                    class="btn btn-s"
-                    data-tip="Take the last step back"
-                    disabled={props.prover.busy() || e().back.length === 0}
-                    onClick={() => void props.prover.eliminationUndo(onView(), drawJson())}
-                  >
-                    Undo step
-                  </button>
-                  <Show when={e().taken.length > 0}>
-                    <button
-                      type="button"
-                      class="btn btn-s"
-                      aria-pressed={e().shown !== null}
-                      data-tip="The drawing before the last step, its cut marked"
-                      onClick={() =>
-                        props.prover.eliminationShow(
-                          onView(),
-                          e().shown === null ? e().taken.length : null,
-                        )
-                      }
-                    >
-                      Before
-                    </button>
-                  </Show>
-                  <button
-                    type="button"
-                    class="btn btn-s"
-                    data-tip="Back to the finished proof"
-                    onClick={() => props.prover.eliminationLeave(onView())}
-                  >
-                    Leave
-                  </button>
-                </div>
-                <Show when={e().taken.length > 1}>
-                  <details class="steps-taken">
-                    <summary>{e().taken.length} steps</summary>
-                    <ol>
-                      <For
-                        each={e().taken.flatMap((step, i) =>
-                          step.drawing === null ? [] : [{ step, k: i + 1 }],
-                        )}
-                      >
-                        {(drawn) => (
-                          <li>
-                            <button
-                              type="button"
-                              class="mi"
-                              aria-pressed={e().shown === drawn.k}
-                              onClick={() =>
-                                props.prover.eliminationShow(
-                                  onView(),
-                                  e().shown === drawn.k ? null : drawn.k,
-                                )
-                              }
-                            >
-                              {stepLine(drawn.k, drawn.step)}
-                            </button>
-                          </li>
-                        )}
-                      </For>
-                    </ol>
-                    <Show when={e().undrawn}>
-                      {(k) => (
-                        <p class="sub">
-                          Steps {k()} to {e().taken.length} are not drawn: their drawings would take
-                          more than the page keeps.
-                        </p>
-                      )}
-                    </Show>
-                  </details>
-                </Show>
-              </>
-            )}
-          </Show>
-        </section>
+              </details>
+            </Show>
+          </section>
+        )}
       </Show>
       {/* A goal is a number from 0: the menu's goal is wrapped, as <Show> takes 0 for false. */}
       <Show when={ui.goalMenu !== null && ui.tab === "tree" ? { at: ui.goalMenu } : undefined}>
@@ -2127,19 +2183,19 @@ export function GoalNotes(props: { prover: Prover; ui: Ui }) {
                             .join(", ");
                         const text = `${side("input")} ⊢ ${side("output")}`.trim();
                         const signature = signatureOf(found().sequent);
+                        setCounter(props.ui, p.id, {
+                          kind: "structure",
+                          proof: p.id,
+                          sequent: text,
+                          root: rootOf(session),
+                          logic: (n.outcome as unknown as OrdinaryOutcome).logic,
+                          signature,
+                          found: true,
+                          now: complete(found().structure, signature),
+                          past: [],
+                          future: [],
+                        });
                         setUi({
-                          counter: {
-                            kind: "structure",
-                            proof: p.id,
-                            sequent: text,
-                            root: rootOf(session),
-                            logic: (n.outcome as unknown as OrdinaryOutcome).logic,
-                            signature,
-                            found: true,
-                            now: complete(found().structure, signature),
-                            past: [],
-                            future: [],
-                          },
                           tab: "countermodel",
                           menu: null,
                         });
@@ -2179,12 +2235,56 @@ export function GoalNotes(props: { prover: Prover; ui: Ui }) {
  * hand, one action at a time; nothing where the hint already says it, or where the view is not a
  * derivation worked on.
  */
+/**
+ * The guide's sentence on a view other than a proof's: what the view is for and what to press,
+ * one action each; undefined on a proof's own view, which says its own.
+ */
+function viewWords(ui: Ui, p: Proof): string | null | undefined {
+  const tab = ui.ui.tab;
+  if (tab === "tree" || tab === "countermodel") return undefined;
+  const added = addedOf(ui, p.id, tab);
+  if (added && staleOf(p, added))
+    return added.steps
+      ? "Press Start again to make this view from the proof as it is now."
+      : "Press Update to make this view from the sequent as it is now.";
+  if (isNegative(tab))
+    return "The translated sequent holds in its logic exactly when this one holds classically. Press its button to prove it there.";
+  switch (tab) {
+    case "net":
+      return "The proof drawn as a net: links in place of rules.";
+    case "graph":
+      return "The sequent and its views, each under what it was made from. Press one to open it.";
+    case "table":
+      return "Each row gives the atoms values. A cross marks a row that refutes the sequent.";
+    case "tableau":
+      return wayOf<string>(ui, p.id, "tableau", "search") === "hand"
+        ? "Write the tableau a line at a time, then press Check the tableau."
+        : "Each branch closes on a formula marked both true and false. An open branch refutes the sequent.";
+    case "resolution":
+      return wayOf<string>(ui, p.id, "resolution", "search") === "hand"
+        ? "Press two clauses that clash on an atom, then press Resolve."
+        : "The sequent holds exactly when its clauses lead to the empty clause □.";
+    case "normal":
+      return "Each line is one step, with the law that gave it. Press Undo to step back.";
+    case "interpolant":
+      return "Press a formula to move it to the other part.";
+    case "model":
+      return "Press an atom at a world to make it true or false.";
+    case "embedding":
+      return "The sequent written in linear logic. Press its button to prove it there.";
+    case "elim":
+      return "The cut drawn in blue goes next. Press Next step to take it out.";
+    case "term":
+      return "The proof read as a program. Press Copy as text to take it.";
+  }
+}
+
 export function GuideLine(props: { prover: Prover; ui: Ui }) {
   const { ui } = props.ui;
   const words = () => {
     const p = props.prover.current();
     if (!props.prover.settings().guide || !p) return null;
-    if (ui.tab === "countermodel" && ui.counter?.kind === "structure") {
+    if (ui.tab === "countermodel" && counterOf(props.ui, p.id)?.kind === "structure") {
       const evaluated = lastEvaluated();
       return evaluated ? structureWords(evaluated) : null;
     }
@@ -2195,6 +2295,8 @@ export function GuideLine(props: { prover: Prover; ui: Ui }) {
         : p.calculus.suite === "lambda"
           ? "Type a term or a type below and press Enter."
           : "Type a sequent below and press Enter.";
+    const said = viewWords(props.ui, p);
+    if (said !== undefined) return said;
     if (!p.session || ui.tab !== "tree") return null;
     if (pointer(props.prover, props.ui)) return null;
     if (isNatural(p.calculus))

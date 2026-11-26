@@ -254,6 +254,13 @@
   --size-sign: 0.875rem;
   --size-key: 1.125rem;
   --size-badge: 1rem;
+  /* A chip's close: a target of 24 by 24 at its right end. */
+  --size-close: 1.5rem;
+  /* The graph's cell in the rail, lower than a view's: 44 by 30. */
+  --size-graph-cell: 1.875rem;
+  /* A node of the graph of views, and how far a node hangs right of the one it was made from. */
+  --size-graph-node: 15rem;
+  --size-graph-step: 3.5rem;
   --size-label-column: 6rem;
   --size-grid-dot: 1.1px;
   --size-popover: 12.5rem;
@@ -313,6 +320,8 @@
     --size-element-remove: 2.75rem;
     --size-element: 2.75rem;
     --size-check-row: 2.75rem;
+    --size-close: 2.75rem;
+    --size-graph-cell: 2.75rem;
     --size-switch: 2.5rem;
     --size-switch-height: 1.5rem;
     --size-knob: 1rem;

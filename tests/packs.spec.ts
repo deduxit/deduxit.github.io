@@ -9,7 +9,7 @@
 import { deflateRawSync } from "node:zlib";
 import type { BrowserContext, Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
-import { goalMenu, goto, rule, viewCell } from "./prover";
+import { goalMenu, goto, rule, tool, viewCell } from "./prover";
 
 /** A pack's link, packed as the page packs one. */
 function packLink(pack: object, embed = false): string {
@@ -226,7 +226,7 @@ test("a modal problem keeps its calculus, and a valid one is never done", async 
   );
   await expect(page.locator(".modal .kw.ok")).toHaveText("Valid");
   await expect(bar(page)).toContainText("0 of 1 done");
-  await page.getByRole("button", { name: "Prove it step by step" }).click();
+  await tool(page, "Prove step by step").click();
   await expect(page.locator(".notes .kw", { hasText: "Course pack" }).first()).toBeVisible();
   await expect(viewCell(page)).toHaveAttribute("data-tip", "Modal logic, K");
 });

@@ -154,8 +154,11 @@ test("a tableau closed by ⊥ says only that every branch closes", async ({ page
 test("a proof of another logic shows its tree, never a stale table", async ({ page }) => {
   await ordinary(page, "Classical", "a |- a");
   await addView(page, "Truth table");
+  // A table has no calculus: the toggles of the proof's own view change it.
+  await expect(page.getByRole("group", { name: "Calculus of this view" })).toBeHidden();
+  await page.getByRole("tab", { name: /^Sequent calculus, LK/ }).click();
   await calculus(page, ["Intuitionistic"]);
-  await expect(page.getByRole("tab", { name: "Truth table" })).toHaveCount(0);
+  await expect(page.getByRole("tab", { name: /^Truth table/ })).toHaveCount(0);
   await expect(
     page.getByRole("tab", {
       name: /^(Sequent calculus|Natural deduction|Classical linear|Intuitionistic linear)/,
@@ -164,12 +167,12 @@ test("a proof of another logic shows its tree, never a stale table", async ({ pa
   await expect(page.getByRole("region", { name: "Truth table" })).toHaveCount(0);
 });
 
-test("the table's sentence stands clear of the toggles over the stage", async ({ page }) => {
+test("the tableau's sentence stands clear of its toggle over the stage", async ({ page }) => {
   await ordinary(page, "Classical", "a -> b |- b -> a");
-  await addView(page, "Truth table");
-  const sentence = page.getByRole("region", { name: "Truth table" }).getByRole("status");
+  await addView(page, "Tableau");
+  const sentence = page.getByRole("region", { name: "Tableau" }).getByRole("status");
   await expect(sentence).toBeVisible();
-  const toggles = await page.getByRole("group", { name: "Calculus of this view" }).boundingBox();
+  const toggles = await page.getByRole("group", { name: "Tableau" }).boundingBox();
   const said = await sentence.boundingBox();
   expect(toggles && said && said.y >= toggles.y + toggles.height).toBe(true);
 });

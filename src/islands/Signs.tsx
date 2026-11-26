@@ -26,6 +26,24 @@ const PATHS = {
   plus: "M9 4v10M4 9h10",
   /** Take away: a minus. */
   minus: "M4.5 9h9",
+  /** The next step: a chevron. */
+  next: "M6.5 4l5 5-5 5",
+  /** To the end: a chevron against a bar. */
+  end: "M4.5 4l5 5-5 5M13.5 4v10",
+  /** Bring up to date: an arrow round a circle. */
+  update: "M14.5 9a5.5 5.5 0 1 1-1.6-3.9M14.5 3.5v3h-3",
+  /** The graph of views: a node with two hanging from it. */
+  graph: "M4.5 3v9.5a2 2 0 0 0 2 2H9M4.5 7.5a2 2 0 0 0 2 2H9M11 7.5h4M11 14.5h4",
+  /** Copy as text: two sheets. */
+  copy: "M6.5 6.5h8v8h-8zM11.5 6.5v-3h-8v8h3",
+  /** List: three lines. */
+  list: "M6 5h9M6 9h9M6 13h9M3 5h.5M3 9h.5M3 13h.5",
+  /** Step by step: a stair. */
+  stairs: "M3 14.5h3.5v-3.5h3.5v-3.5h3.5v-3.5h1.5",
+  /** Eliminate the cuts: a cut line with a cross over it. */
+  eliminate: "M2.5 9h4M11.5 9h4M7.5 6.5l3 5M10.5 6.5l-3 5",
+  /** Close: a small cross. */
+  shut: "M5.5 5.5l7 7M12.5 5.5l-7 7",
 } as const;
 
 /** A sign's name. */

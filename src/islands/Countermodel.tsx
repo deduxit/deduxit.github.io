@@ -5,7 +5,7 @@ import { createResource, Show } from "solid-js";
 import { isOrdinary, type OrdinaryOutcome } from "../lib/ordinary";
 import { rootOf } from "../lib/structure";
 import type { Prover } from "./state";
-import type { Ui } from "./ui";
+import { setCounter, type Ui } from "./ui";
 
 /**
  * A "not valid" goal's countermodel, drawn by deduxit (a picture, its `<desc>` read by a screen
@@ -19,18 +19,18 @@ export function ModelFigure(props: { outcome: OrdinaryOutcome; prover: Prover; u
     const proof = current?.id;
     if (!found || !proof) return;
     const session = current?.session;
-    props.ui.setUi({
-      counter: {
-        kind: "kripke",
-        proof,
-        ...(session && isOrdinary(session) ? { root: rootOf(session) } : {}),
-        seed: {
-          model: found.model,
-          sequent: JSON.stringify(found.sequent),
-          logic: props.outcome.logic,
-          found: true,
-        },
+    setCounter(props.ui, proof, {
+      kind: "kripke",
+      proof,
+      ...(session && isOrdinary(session) ? { root: rootOf(session) } : {}),
+      seed: {
+        model: found.model,
+        sequent: JSON.stringify(found.sequent),
+        logic: props.outcome.logic,
+        found: true,
       },
+    });
+    props.ui.setUi({
       tab: "countermodel",
       menu: null,
     });

@@ -2,8 +2,8 @@
 // Licensed under the EUPL
 
 // Sequents made from one another: "Prove it in" opens a translation as a sequent of its own, a
-// copy of a proof is one too, and a link of either opens the whole group, the linked one shown.
-// The workspace document links them as before; the page shows them as chips.
+// copy of a proof is a view beside it in its chip's rail, and a link of either opens the whole
+// group, the linked one shown. The workspace document links them.
 
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
@@ -18,12 +18,12 @@ async function classical(page: Page, sequent: string) {
   await expect(page.locator(".stage .fb").first()).toBeVisible();
 }
 
-/** Opens the translation's sheet from "+ view" and proves the translation as a new sequent. */
+/** Adds Glivenko's translation from "+ view" and proves the translation as a new sequent. */
 async function proveTranslation(page: Page) {
-  await addView(page, "Into intuitionistic logic");
-  const sheet = page.getByRole("dialog", { name: "Translate into intuitionistic logic" });
-  await expect(sheet.getByRole("status")).toContainText("Both valid");
-  await sheet.getByRole("button", { name: "Prove it in intuitionistic logic" }).click();
+  await addView(page, "Glivenko");
+  const view = page.getByRole("region", { name: "Glivenko's translation" });
+  await expect(view.getByRole("status")).toContainText("Both valid");
+  await view.getByRole("button", { name: "Prove it in LJ" }).click();
   await expect(page.locator(".chip")).toHaveCount(2);
 }
 
@@ -34,11 +34,15 @@ test("a translation proved opens as a sequent of its own, chosen at the top", as
   await expect(page.getByRole("tab", { name: /^Sequent calculus, LJ/ })).toBeVisible();
 });
 
-test("a copy of a proof opens as a sequent of its own, with the same sequent", async ({ page }) => {
+test("a copy of a proof is a view beside it, of the same sequent", async ({ page }) => {
   await classical(page, "|- a \\/ ~a");
   await addView(page, "A copy of this proof");
-  await expect(page.locator(".chip")).toHaveCount(2);
-  await expect(page.locator(".chip").nth(1)).toContainText("a ∨ ¬a");
+  await expect(page.locator(".chip")).toHaveCount(1);
+  await expect(page.getByRole("tab", { name: /^Sequent calculus, LK, a copy/ })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  await expect(page.getByRole("textbox", { name: "Sequent" })).toHaveValue("⊢ a ∨ ¬a");
 });
 
 test("a link of a translation's sequent opens its group, the linked one shown", async ({
@@ -62,11 +66,13 @@ test("a link holds the shown sequent's whole group", async ({ page }) => {
   await proveTranslation(page);
   await page.locator(".chip").first().click();
   await addView(page, "A copy of this proof");
-  await expect(page.locator(".chip")).toHaveCount(3);
+  await expect(page.locator(".chip")).toHaveCount(2);
   await expect.poll(() => page.evaluate(() => location.hash)).toMatch(/^#v=3&/);
   await page.waitForTimeout(600);
   const hash = await page.evaluate(() => location.hash);
   const fresh = await page.context().newPage();
   await fresh.goto(`/${hash}`);
-  await expect(fresh.locator(".chip")).toHaveCount(3);
+  // The copy joins the proof it was copied from, as a view beside it.
+  await expect(fresh.locator(".chip")).toHaveCount(2);
+  await expect(fresh.getByRole("tab", { name: /, a copy/ })).toBeVisible();
 });

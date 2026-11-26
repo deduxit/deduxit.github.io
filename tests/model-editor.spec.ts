@@ -8,14 +8,13 @@
 
 import type { Locator, Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
-import { addView, calculus, closeGoal, goto, switches } from "./prover";
+import { addView, calculus, closeGoal, goto, system as choose } from "./prover";
 
 /** Opens the page with its tab in modal logic, in `system`, and decides `sequent`. */
 async function modal(page: Page, system: string, sequent: string) {
   await goto(page);
   await calculus(page, ["Modal logic"]);
-  if (system !== "K")
-    await (await switches(page)).getByRole("combobox", { name: "System" }).selectOption(system);
+  if (system !== "K") await choose(page, system);
   await page.keyboard.press("Escape");
   await page.getByRole("textbox", { name: "Sequent" }).fill(sequent);
   await page.getByRole("textbox", { name: "Sequent" }).press("Enter");

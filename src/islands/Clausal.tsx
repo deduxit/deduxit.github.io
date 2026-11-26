@@ -3,9 +3,8 @@
 
 /**
  * A classical proof's sequent rewritten into a normal form, and the clauses of its negation
- * refuted: two sheets beside the tools, opened from "+ view" and nowhere else, so that a visitor
- * who does not ask sees nothing of them. Each says its verdict in one sentence
- * first. The normal form is stepped through one law at a time. A refutation is found by
+ * refuted: two views of the sequent, added from "+ view" and nowhere else, so that a visitor who
+ * does not ask sees nothing of them. The normal form is stepped through one law at a time. A refutation is found by
  * saturation, traced by DPLL, or built by hand, one resolvent at a time; its clauses are listed
  * and drawn as a graph, the two in step: a clause chosen in one is chosen in the other.
  */
@@ -25,7 +24,6 @@ import {
   checkWords,
   clashes,
   clauseText,
-  FORMS,
   type Form,
   type GraphNode,
   layout,
@@ -40,30 +38,48 @@ import {
 import { failure as failureOf } from "../lib/deduxit";
 import { formText } from "../lib/ordinary";
 import type { Prover } from "./state";
-import {
-  answered,
-  classicalSequent,
-  failureIn,
-  given,
-  Refused,
-  Sheet,
-  Verdict,
-} from "./Transforms";
-import type { Ui } from "./ui";
+import { produce } from "solid-js/store";
+import { answered, failureIn, given, Refused, Verdict } from "./Transforms";
+import { type Ui, viewKey, wayOf } from "./ui";
 
-export function NormalizeSheet(props: { prover: Prover; ui: Ui }) {
-  const { setUi } = props.ui;
-  const sequent = classicalSequent(props.prover);
-  createEffect(() => {
-    if (!sequent()) setUi("menu", null);
-  });
-  const [chosen, setChosen] = createSignal<Form>("cnf");
-  const words = () => FORMS.find((f) => f.key === chosen()) ?? FORMS[0];
+/** The number of steps each normal form view has, by proof and view, for the tools that step it. */
+const [stepCounts, setStepCounts] = createSignal<Readonly<Record<string, number>>>({});
+export { stepCounts };
+
+/** The step a normal form view shows: 0 the sequent as typed, its count the last. */
+export function stepShown(ui: Ui, proof: string): number {
+  const key = viewKey(proof, "normal");
+  return ui.ui.stepAt[key] ?? stepCounts()[key] ?? 0;
+}
+
+/** Moves a normal form view to a step: back, forward, or to the end (null). */
+export function stepTo(ui: Ui, proof: string, at: number | null) {
+  const key = viewKey(proof, "normal");
+  const last = stepCounts()[key] ?? 0;
+  ui.setUi(
+    "stepAt",
+    produce((all: Record<string, number>) => {
+      if (at === null || at >= last) delete all[key];
+      else all[key] = Math.max(0, at);
+    }),
+  );
+}
+
+/**
+ * The normal form view: the sequent rewritten in the form its toggle chose, the steps as numbered
+ * lines, each with the law that gave it, opening at the last; Undo steps back, "Next step" and "To
+ * the end" go forward (the tools).
+ */
+export function NormalView(props: {
+  prover: Prover;
+  ui: Ui;
+  proof: string;
+  sequent: { text: string };
+  stale: boolean;
+}) {
+  const chosen = () => wayOf<Form>(props.ui, props.proof, "normal", "cnf");
   const [answer] = createResource(
-    () => {
-      const s = sequent();
-      return s ? ([s.text, chosen()] as const) : undefined;
-    },
+    () => [props.sequent.text, chosen()] as const,
     ([text, form]) =>
       answered(() => props.prover.api.ordinary.normalize(text, JSON.stringify({ form }), "{}")),
   );
@@ -72,108 +88,65 @@ export function NormalizeSheet(props: { prover: Prover; ui: Ui }) {
     const m = made();
     return m ? stepTexts(m) : [];
   });
-  /** The step shown: 0 the sequent as typed, k the sequent after step k. */
-  const [at, setAt] = createSignal(0);
-  createEffect(on(made, () => setAt(0)));
-  const shown = () => steps()[at() - 1];
-
+  createEffect(() => {
+    const key = viewKey(props.proof, "normal");
+    const n = steps().length;
+    setStepCounts((all) => ({ ...all, [key]: n }));
+  });
+  const at = () => Math.min(stepShown(props.ui, props.proof), steps().length);
   return (
-    <Sheet
-      ui={props.ui}
-      title="Rewrite into a normal form"
-      intro="A normal form writes a sequent in a fixed shape, one step at a time: CNF, NNF and DNF by laws that keep each formula's meaning, the two encodings by new atoms that keep whether the sequent is valid."
-    >
-      <fieldset class="seg tf-seg" aria-label="Normal form">
-        <For each={FORMS}>
-          {(f) => (
-            <button
-              type="button"
-              class="seg-b"
-              aria-pressed={chosen() === f.key}
-              onClick={() => setChosen(f.key)}
-            >
-              {f.name}
-            </button>
-          )}
-        </For>
-      </fieldset>
-      <p class="sub">{words()?.is}</p>
-      <section class="tf-answer" aria-busy={answer.loading} aria-label="The normal form">
-        <Show when={answer.loading}>
-          <p class="sub">Rewriting, and checking the result…</p>
-        </Show>
-        <Show when={failureIn(answer())}>{(f) => <Refused failure={f()} />}</Show>
-        <Show when={!answer.loading && made()}>
-          {(m) => {
-            const said = () => checkWords(m());
-            return (
-              <>
+    <section class="tf-answer" aria-busy={answer.loading} aria-label="The normal form">
+      <Show when={answer.loading}>
+        <p class="sub">Rewriting, and checking the result…</p>
+      </Show>
+      <Show when={failureIn(answer())}>{(f) => <Refused failure={f()} />}</Show>
+      <Show when={!answer.loading && made()}>
+        {(m) => {
+          const said = () => checkWords(m());
+          return (
+            <>
+              <ol class="nf-steps" aria-label="The steps to the normal form">
+                <li class="nf-step">
+                  <span class="nf-n">0</span>
+                  <span class="m nf-text">{formText(m().sequent)}</span>
+                  <span class="nf-law">the sequent</span>
+                </li>
+                <For each={steps().slice(0, at())}>
+                  {(s, k) => (
+                    <li class="nf-step" data-last={k() === at() - 1 ? "" : undefined}>
+                      <span class="nf-n">{k() + 1}</span>
+                      <span class="m nf-text">{s.sequent}</span>
+                      <span class="nf-law">
+                        <span class="m">{s.law}</span>
+                        <span class="sr-only">, </span> <span class="m nf-what">{s.what}</span>
+                      </span>
+                    </li>
+                  )}
+                </For>
+              </ol>
+              <Show when={at() >= steps().length}>
                 <Verdict keyword={said().keyword} tone={said().tone}>
                   {said().sentence}
                 </Verdict>
-                <p class="tf-to">
-                  <span class="m">{formText(m().result)}</span>
-                </p>
-                <fieldset class="cl-stepper" aria-label="The steps">
-                  <p class="row">
-                    <button
-                      type="button"
-                      class="btn btn-s"
-                      disabled={at() === 0}
-                      onClick={() => setAt(at() - 1)}
-                    >
-                      Previous step
-                    </button>
-                    <span class="sub cl-count">
-                      {at() === 0
-                        ? `${steps().length} step${steps().length === 1 ? "" : "s"}`
-                        : `Step ${at()} of ${steps().length}`}
-                    </span>
-                    <button
-                      type="button"
-                      class="btn btn-s"
-                      disabled={at() >= steps().length}
-                      onClick={() => setAt(at() + 1)}
-                    >
-                      Next step
-                    </button>
-                  </p>
-                  <div class="cl-step" aria-live="polite">
-                    <Show
-                      when={shown()}
-                      fallback={
-                        <p class="sub">
-                          The sequent as typed: <span class="m">{formText(m().sequent)}</span>
-                        </p>
-                      }
-                    >
-                      {(s) => (
-                        <>
-                          <p class="cl-law">
-                            <span class="m">{s().law}</span>
-                          </p>
-                          <p class="sub m cl-what">{s().what}</p>
-                          <p class="sub">The sequent after this step:</p>
-                          <p class="m cl-after">{s().sequent}</p>
-                        </>
-                      )}
-                    </Show>
-                  </div>
-                </fieldset>
-              </>
-            );
-          }}
-        </Show>
-      </section>
-    </Sheet>
+              </Show>
+              <p class="sr-only" aria-live="polite">
+                {at() >= steps().length
+                  ? `The last step, ${at()}.`
+                  : `Step ${at()} of ${steps().length}.`}
+              </p>
+            </>
+          );
+        }}
+      </Show>
+    </section>
   );
 }
 
-/** How the resolution sheet refutes: a search, DPLL's trace, or by hand. */
-type Way = "search" | "dpll" | "hand";
+/** How the resolution view refutes: a search, DPLL's trace, or by hand. */
+export type Way = "search" | "dpll" | "hand";
 
 /** The ways, the worked example first, building by hand last. */
-const WAYS: readonly { key: Way; name: string; does: string }[] = [
+export const WAYS: readonly { key: Way; name: string; does: string }[] = [
   {
     key: "search",
     name: "Search",
@@ -191,47 +164,24 @@ const WAYS: readonly { key: Way; name: string; does: string }[] = [
   },
 ];
 
-export function ResolveSheet(props: { prover: Prover; ui: Ui }) {
-  const { setUi } = props.ui;
-  const sequent = classicalSequent(props.prover);
-  createEffect(() => {
-    if (!sequent()) setUi("menu", null);
-  });
-  const [way, setWay] = createSignal<Way>("search");
-  const words = () => WAYS.find((w) => w.key === way()) ?? WAYS[0];
-
+/**
+ * The resolution view: the clauses of the sequent's negation refuted as its toggle says, by the
+ * search, by DPLL's trace, or by hand.
+ */
+export function ResolutionView(props: {
+  prover: Prover;
+  ui: Ui;
+  proof: string;
+  sequent: { text: string };
+}) {
+  const way = () => wayOf<Way>(props.ui, props.proof, "resolution", "search");
   return (
-    <Sheet
-      ui={props.ui}
-      title="Refute by resolution"
-      intro="A sequent is valid exactly when the clauses of its negation cannot all be true. Resolution takes a clause with an atom p and one with ¬p, and derives the rest of both; deriving the empty clause □ refutes the clauses."
+    <Show
+      when={way() === "hand"}
+      fallback={<Found text={props.sequent.text} way={way()} prover={props.prover} ui={props.ui} />}
     >
-      <fieldset class="seg tf-seg" aria-label="How to refute">
-        <For each={WAYS}>
-          {(w) => (
-            <button
-              type="button"
-              class="seg-b"
-              aria-pressed={way() === w.key}
-              onClick={() => setWay(w.key)}
-            >
-              {w.name}
-            </button>
-          )}
-        </For>
-      </fieldset>
-      <p class="sub">{words()?.does}</p>
-      <Show when={sequent()}>
-        {(s) => (
-          <Show
-            when={way() === "hand"}
-            fallback={<Found text={s().text} way={way()} prover={props.prover} ui={props.ui} />}
-          >
-            <ByHand text={s().text} prover={props.prover} />
-          </Show>
-        )}
-      </Show>
-    </Sheet>
+      <ByHand text={props.sequent.text} prover={props.prover} />
+    </Show>
   );
 }
 

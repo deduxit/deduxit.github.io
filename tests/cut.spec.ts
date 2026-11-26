@@ -55,13 +55,18 @@ test("a cut is typed in the tab's syntax, its formulas chosen, and both premises
   await expect(page.locator(".drawing svg")).toContainText("cut");
 });
 
-test("a proof's cuts are eliminated step by step on the derivation, each step undoable", async ({
+test("a proof's cuts are eliminated step by step in a view made from it, each step undoable", async ({
   page,
 }) => {
   await provedWithCut(page);
+  await tool(page, "Eliminate cuts").click();
+  // The view is joined to the proof it was made from, in the rail.
+  const ce = page
+    .getByRole("tablist", { name: "Views of this sequent" })
+    .getByRole("tab", { name: /^Cut elimination/ });
+  await expect(ce).toHaveAttribute("aria-selected", "true");
+  await expect(ce).toHaveAttribute("data-tied", "");
   const panel = page.getByRole("region", { name: "Cut elimination" });
-  await expect(panel).toContainText("1 cut in this proof");
-  await panel.getByRole("button", { name: "Eliminate the cuts" }).click();
   await expect(panel.getByRole("status")).toHaveText("1 cut left");
   // Named with its negated atoms as the drawing writes them.
   const next = page.getByRole("button", {
@@ -71,7 +76,7 @@ test("a proof's cuts are eliminated step by step on the derivation, each step un
   await expect(page.locator(".drawing svg .next-cut").first()).toBeAttached();
 
   // The strategy's step, named by its case; before it, the reduced cut highlighted.
-  await panel.getByRole("button", { name: "Next step" }).click();
+  await tool(page, "Next step").click();
   await expect(panel.getByRole("status")).toContainText(/^1\. .+ on the cut of /);
   const first = await panel.getByRole("status").textContent();
   await panel.getByRole("button", { name: "Before" }).click();
@@ -80,29 +85,34 @@ test("a proof's cuts are eliminated step by step on the derivation, each step un
   await panel.getByRole("button", { name: "Before" }).click();
 
   // Undone, then the same cut picked on the drawing: the same step.
-  await panel.getByRole("button", { name: "Undo step" }).click();
+  await tool(page, "Undo").click();
   await expect(panel.getByRole("status")).toHaveText("1 cut left");
   await next.click();
   await expect(panel.getByRole("status")).toHaveText(first ?? "");
 
   // To the end, then each of its steps undone alone.
-  await panel.getByRole("button", { name: "To the end" }).click();
+  await tool(page, "To the end").click();
   await expect(panel.getByRole("status")).toContainText("Cut-free");
   const status = (await panel.getByRole("status").textContent()) ?? "";
   const steps = Number(/^(\d+)\./.exec(status)?.[1]);
   expect(steps).toBeGreaterThan(1);
-  await panel.getByRole("button", { name: "Undo step" }).click();
+  await tool(page, "Undo").click();
   await expect(panel.getByRole("status")).toContainText(`${steps - 1}. `);
-  await panel.getByRole("button", { name: "Leave" }).click();
-  await expect(panel.getByRole("button", { name: "Eliminate the cuts" })).toBeVisible();
+  // The proof's own cell shows the proof, its cut still there; the view keeps its steps.
+  await page.getByRole("tab", { name: /^Classical linear logic/ }).click();
+  await expect(page.locator(".drawing svg .next-cut")).toHaveCount(0);
+  await ce.click();
+  await expect(panel.getByRole("status")).toContainText(`${steps - 1}. `);
 });
 
 test("a proof's cut links are eliminated step by step on its net", async ({ page }) => {
   await provedWithCut(page);
-  await page.getByRole("tab", { name: "Proof net" }).click();
+  await tool(page, "Eliminate cuts").click();
+  await page
+    .getByRole("group", { name: "Eliminate the cuts of" })
+    .getByRole("button", { name: "Net" })
+    .click();
   const panel = page.getByRole("region", { name: "Cut elimination" });
-  await panel.getByRole("button", { name: "Eliminate the cuts" }).click();
-  await expect(panel).toContainText("on the net");
   await expect(page.locator(".drawing svg path[id^='c']").first()).toBeAttached();
   await page
     .getByRole("button", { name: /^Reduce the cut of / })
@@ -114,9 +124,9 @@ test("a proof's cut links are eliminated step by step on its net", async ({ page
     page.locator(".drawing svg path.reduced, .drawing svg [id^='c']").first(),
   ).toBeAttached();
   await panel.getByRole("button", { name: "Before" }).click();
-  await panel.getByRole("button", { name: "To the end" }).click();
+  await tool(page, "To the end").click();
   await expect(panel.getByRole("status")).toContainText("Cut-free");
-  await panel.getByRole("button", { name: "Undo step" }).click();
+  await tool(page, "Undo").click();
   await expect(panel.getByRole("status")).not.toContainText("Cut-free");
 });
 
@@ -128,9 +138,10 @@ test("an elimination to the end says which bound stopped it", async ({ page }) =
   await steps.press("Enter");
   // Settings is a page: its own button leaves it.
   await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await tool(page, "Eliminate cuts").click();
   const panel = page.getByRole("region", { name: "Cut elimination" });
-  await panel.getByRole("button", { name: "Eliminate the cuts" }).click();
-  await panel.getByRole("button", { name: "To the end" }).click();
+  await expect(panel.getByRole("status")).toHaveText("1 cut left");
+  await tool(page, "To the end").click();
   await expect(panel.getByRole("alert")).toContainText("Stopped after 1 step");
   await expect(panel.getByRole("alert")).toContainText("most steps allowed");
 });

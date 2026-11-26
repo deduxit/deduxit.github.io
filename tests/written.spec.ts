@@ -1,7 +1,7 @@
 // deduxit © Fabian Lukas Grubmüller 2026
 // Licensed under the EUPL
 
-// A tableau written by hand: asked for in the calculus popover of a started classical sequent,
+// A tableau written by hand: the tableau view's "By hand" for a started classical sequent,
 // begun with the sequent's own lines, reviewed by deduxit: closed, a wrong step named and
 // selected in the text, a text that is no tableau with its place, an open tableau's countermodel
 // opened in the model editor.
@@ -17,8 +17,12 @@ async function written(page: Page, sequent: string) {
   await page.getByRole("textbox", { name: "Sequent" }).fill(sequent);
   await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
   await expect(page.locator(".stage .fb").first()).toBeVisible();
-  await addView(page, "Tableau by hand");
-  await expect(page.getByRole("tab", { name: "Tableau by hand" })).toHaveAttribute(
+  await addView(page, "Tableau");
+  await page
+    .getByRole("group", { name: "Tableau" })
+    .getByRole("button", { name: "By hand" })
+    .click();
+  await expect(page.getByRole("tab", { name: "Tableau, T" })).toHaveAttribute(
     "aria-selected",
     "true",
   );

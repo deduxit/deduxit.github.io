@@ -106,20 +106,22 @@ test("+ view lists the views to add, faint ones with their reason, and an added 
   await start(page, "A * B |- B * A");
   await page.getByRole("button", { name: "Add a view" }).click();
   const list = page.getByRole("dialog", { name: "Add a view" });
-  for (const group of ["Prove", "Decide", "Translate", "Read off"])
+  for (const group of ["Prove", "Decide", "Translate", "Read off", "From this proof"])
     await expect(list.getByRole("heading", { name: group })).toBeVisible();
   await expect(list.getByRole("button", { name: "Truth table" })).toHaveAttribute(
     "aria-disabled",
     "true",
   );
-  await expect(list).toContainText("Needs a classical sequent, entered.");
+  await expect(list).toContainText(
+    "This needs a sequent of ordinary classical logic. Start one with + at the top.",
+  );
   await page.keyboard.press("Escape");
   await newTab(page);
   await page.getByRole("button", { name: "Ordinary logic" }).click();
   await page.getByRole("textbox", { name: "Sequent" }).fill("a -> b |- b -> a");
   await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
   await addView(page, "Truth table");
-  await expect(page.getByRole("tab", { name: "Truth table" })).toHaveAttribute(
+  await expect(page.getByRole("tab", { name: "Truth table, TT" })).toHaveAttribute(
     "aria-selected",
     "true",
   );

@@ -11,10 +11,12 @@
  * beside the proof, which keeps its own.
  */
 
-import { For, Show } from "solid-js";
+import { createSignal, For, Show } from "solid-js";
+import { produce } from "solid-js/store";
+import { FORMS } from "../lib/clausal";
 import type { Mode } from "../lib/deduxit";
-import { CALCULUS_WORDS, LAMBDA_CALCULI, type LambdaCalculus } from "../lib/lambda";
-import { SYSTEMS, systemWords } from "../lib/modal";
+import { CALCULUS_WORDS, LAMBDA_CALCULI } from "../lib/lambda";
+import { CONDITION_WORDS, CONDITIONS, closure, SYSTEMS, systemOf, systemWords } from "../lib/modal";
 import {
   type Calculus as Chosen,
   isNatural,
@@ -26,10 +28,15 @@ import {
   ordinary,
   sameCalculus,
 } from "../lib/suites";
-import { cellName } from "./Frame";
+import { WAYS } from "./Clausal";
+import { cellName, netReady } from "./Frame";
 import { layout, naturalSteps, setLayout } from "./Natural";
 import type { Prover } from "./state";
-import type { Ui } from "./ui";
+import { Sign } from "./Signs";
+import { type Ui, viewKey, wayOf } from "./ui";
+
+/** How often a term may use each variable, as the toggle names it. */
+const USE_WORDS = { simple: "Unrestricted", linear: "Linear", affine: "Affine" } as const;
 
 /** The mode the linear switches make. */
 export function modeOf(intuitionistic: boolean, mix: boolean, affine: boolean): Mode {
@@ -77,7 +84,10 @@ export function Toggles(props: { prover: Prover; ui: Ui }) {
         return;
       }
       const after = cellName(next);
-      await props.prover.open(p.input, next);
+      const opened = await props.prover.open(p.input, next);
+      const q = props.prover.current();
+      if (!("problem" in opened) && q && q.id !== p.id)
+        props.prover.setBeside(q.id, p.id, "calculus");
       setUi("notice", {
         text: `${before} keeps your proof, so ${after} opened beside.`,
       });
@@ -124,10 +134,92 @@ export function Toggles(props: { prover: Prover; ui: Ui }) {
     </fieldset>
   );
 
-  // A countermodel has no calculus; a modal one keeps the system, whose conditions it must meet.
-  const shown = () => props.ui.ui.tab !== "countermodel" || calculus().suite === "modal";
+  const tab = () => props.ui.ui.tab;
+  // A view other than the proof's has no calculus but its own toggle; a modal countermodel keeps
+  // the system, whose conditions it must meet.
+  const shown = () =>
+    tab() === "tree" ||
+    tab() === "net" ||
+    (tab() === "countermodel" && calculus().suite === "modal");
+  /** A view's own toggle: how it works, kept per proof and view. */
+  const Way = (w: {
+    label: string;
+    items: readonly { key: string; name: string; tip: string }[];
+  }) => {
+    const p = proof();
+    const view = tab();
+    const now = () => (p ? wayOf(props.ui, p.id, view, w.items[0]?.key ?? "") : "");
+    return (
+      <Seg
+        label={w.label}
+        items={w.items.map((item) => ({
+          name: item.name,
+          tip: item.tip,
+          on: now() === item.key,
+          pick: () => {
+            if (!p) return;
+            props.ui.setUi(
+              "ways",
+              produce((all: Record<string, string>) => {
+                all[viewKey(p.id, view)] = item.key;
+              }),
+            );
+            if (view === "normal")
+              props.ui.setUi(
+                "stepAt",
+                produce((all: Record<string, number>) => {
+                  delete all[viewKey(p.id, "normal")];
+                }),
+              );
+          },
+        }))}
+      />
+    );
+  };
+  /** The conditions the system is made of, and those that follow from them. */
+  const own = () => SYSTEMS.find((s) => s.name === system())?.conditions ?? [];
+  const holds = () => closure(own());
+  const [listing, setListing] = createSignal(false);
   return (
     <Show when={!fixed()} fallback={<p class="note calc-fixed">{fixed()}</p>}>
+      <Show when={tab() === "tableau"}>
+        <fieldset class="toggles" aria-label="This view">
+          <Way
+            label="Tableau"
+            items={[
+              { key: "search", name: "Search", tip: "deduxit's tableau, every branch expanded" },
+              { key: "hand", name: "By hand", tip: "A tableau you write, checked by deduxit" },
+            ]}
+          />
+        </fieldset>
+      </Show>
+      <Show when={tab() === "resolution"}>
+        <fieldset class="toggles" aria-label="This view">
+          <Way
+            label="Resolution"
+            items={WAYS.map((w) => ({ key: w.key, name: w.name, tip: w.does }))}
+          />
+        </fieldset>
+      </Show>
+      <Show when={tab() === "normal"}>
+        <fieldset class="toggles" aria-label="This view">
+          <Way
+            label="Normal form"
+            items={FORMS.map((f) => ({ key: f.key, name: f.name, tip: f.is }))}
+          />
+        </fieldset>
+      </Show>
+      <Show when={tab() === "elim" && netReady(proof())}>
+        <fieldset class="toggles" aria-label="This view">
+          <Way
+            label="Eliminate the cuts of"
+            items={[
+              { key: "tree", name: "Derivation", tip: "The cuts of the derivation, step by step" },
+              { key: "net", name: "Net", tip: "The cut links of the proof net, step by step" },
+            ]}
+          />
+        </fieldset>
+      </Show>
       <fieldset class="toggles" aria-label="Calculus of this view" hidden={!shown()}>
         <Show when={calculus().suite === "ordinary"}>
           <Seg
@@ -237,35 +329,113 @@ export function Toggles(props: { prover: Prover; ui: Ui }) {
           </Show>
         </Show>
         <Show when={calculus().suite === "modal"}>
-          <label class="toggle-select" data-tip={systemWords(system())}>
-            <span>System</span>
-            <select
-              class="select"
-              aria-label="System"
-              value={system()}
-              onChange={(event) => void ask(modal(event.currentTarget.value))}
+          <div class="toggle system-pick">
+            <button
+              type="button"
+              class="toggle-cell system-name"
+              aria-label={`System ${system()}`}
+              aria-expanded={listing()}
+              aria-haspopup="listbox"
+              data-tip={systemWords(system())}
+              onClick={() => setListing(!listing())}
             >
-              <For each={SYSTEMS}>{(s) => <option value={s.name}>{s.name}</option>}</For>
-            </select>
-          </label>
+              {system()}
+              <Sign name="caret" />
+            </button>
+            <Show when={listing()}>
+              <div class="system-list menu" role="listbox" aria-label="Systems">
+                <For each={SYSTEMS}>
+                  {(s) => (
+                    <button
+                      type="button"
+                      role="option"
+                      class="mi"
+                      aria-selected={s.name === system()}
+                      onClick={() => {
+                        setListing(false);
+                        void ask(modal(s.name));
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === "Escape") {
+                          event.stopPropagation();
+                          setListing(false);
+                        }
+                      }}
+                    >
+                      <span class="system-short">{s.name}</span>{" "}
+                      <span class="sub">
+                        {s.conditions.length === 0 ? "no condition" : s.conditions.join(", ")}
+                      </span>
+                    </button>
+                  )}
+                </For>
+              </div>
+            </Show>
+          </div>
+          <fieldset class="toggle" aria-label="Conditions on what a world sees">
+            <For each={CONDITIONS}>
+              {(c) => {
+                const mine = () => own().includes(c);
+                const follows = () => holds().includes(c) && !mine();
+                return (
+                  <button
+                    type="button"
+                    class="toggle-cell"
+                    aria-pressed={holds().includes(c)}
+                    data-own={mine() ? "" : undefined}
+                    data-tip={`Every world ${CONDITION_WORDS[c]}.${follows() ? " It follows from the others." : ""}`}
+                    onClick={() => {
+                      if (follows()) {
+                        setUi("notice", {
+                          text: `In ${system()} every world ${CONDITION_WORDS[c]}: it follows from the others.`,
+                        });
+                        return;
+                      }
+                      const next = mine() ? own().filter((x) => x !== c) : [...own(), c];
+                      void ask(modal(systemOf(next)));
+                    }}
+                  >
+                    {c[0]?.toUpperCase()}
+                    {c.slice(1)}
+                  </button>
+                );
+              }}
+            </For>
+          </fieldset>
         </Show>
         <Show when={calculus().suite === "lambda"}>
-          <label class="toggle-select" data-tip="How often a term may use each variable">
-            <span>Use</span>
-            <select
-              class="select"
-              aria-label="Lambda calculus"
-              value={(() => {
-                const c = calculus();
-                return c.suite === "lambda" ? c.calculus : "simple";
-              })()}
-              onChange={(event) => void ask(lambda(event.currentTarget.value as LambdaCalculus))}
+          <fieldset class="toggle" aria-label="Typing">
+            <button
+              type="button"
+              class="toggle-cell"
+              aria-pressed={true}
+              data-tip="Simply typed terms"
             >
-              <For each={LAMBDA_CALCULI}>
-                {(each) => <option value={each}>{CALCULUS_WORDS[each]}</option>}
-              </For>
-            </select>
-          </label>
+              Typed
+            </button>
+            <button
+              type="button"
+              class="toggle-cell"
+              aria-pressed={false}
+              aria-disabled="true"
+              data-tip="Coming soon"
+              onClick={() => setUi("notice", { text: "Untyped lambda-terms are coming soon." })}
+            >
+              Untyped
+            </button>
+          </fieldset>
+          <Seg
+            label="How often a term may use each variable"
+            items={LAMBDA_CALCULI.map((each) => ({
+              name: USE_WORDS[each],
+              tip: CALCULUS_WORDS[each],
+              on: (() => {
+                const c = calculus();
+                return c.suite === "lambda" && c.calculus === each;
+              })(),
+              pick: () => void ask(lambda(each)),
+            }))}
+          />
         </Show>
       </fieldset>
     </Show>

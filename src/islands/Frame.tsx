@@ -59,11 +59,24 @@ import { ONE_WORLD } from "../lib/kripke";
 import square from "../logo/square-light.svg?raw";
 import wordmark from "../logo/wordmark-band.svg?raw";
 import type { Proof, Prover } from "./state";
-import { blank, isFirstOrder, rootOf, signatureOf } from "../lib/structure";
+import { Sign } from "./Signs";
 import { redoStructure, undoStructure } from "./Structure";
 import { Toggles } from "./Toggles";
 import { useWorkspace } from "./Workspace";
-import { compact, type Ui, type View, Why } from "./ui";
+import { stepCounts, stepShown, stepTo } from "./Clausal";
+import { elimOn, elimSettings } from "./Stage";
+import {
+  addEntry,
+  addedOf,
+  addView,
+  entries,
+  GROUPS,
+  staleOf,
+  termShown,
+  updateView,
+  VIEWS,
+} from "./Views";
+import { compact, counterOf, type Ui, type View, viewKey, Why } from "./ui";
 
 const storage = () => {
   try {
@@ -170,22 +183,25 @@ function calculusName(c: Calculus): string {
   return markOf(c);
 }
 
-/** A view's cell in the rail: its view, its short name, and its name in full. */
+/** A view's cell in the rail: whose view it is, its letters or sign, and its name in full. */
 export interface Cell {
+  readonly proof: string;
   readonly view: View;
   readonly short: string;
   readonly name: string;
+  /** Letters under the sign, in the interface's font (a translation's author: Gl). */
+  readonly sub?: string;
+  /** A sign above the name (⧉ for a copy). */
+  readonly sign?: string;
+  /** Whether its short name is a sign of the math font. */
+  readonly math?: boolean;
+  /** Joined by a short line to the cell above it, which it was made from. */
+  readonly tied?: boolean;
+  /** Made from a source that has changed since. */
+  readonly stale?: boolean;
+  /** The cell it was made from, as `proof:view`, or null for one made from the sequent. */
+  readonly from?: string | null;
 }
-
-/** The views a classical sequent may add (its table, tableau, model, tableau by hand), with their cells. */
-const ADDED: Readonly<
-  Record<Exclude<View, "tree" | "net" | "countermodel">, { short: string; name: string }>
-> = {
-  table: { short: "TT", name: "Truth table, TT" },
-  tableau: { short: "T", name: "Tableau, T" },
-  written: { short: "TH", name: "Tableau by hand, TH" },
-  model: { short: "M", name: "A model of your own, M" },
-};
 
 /** Whether a proof's net can be drawn: its proof finished and a net. */
 export const netReady = (proof: Proof | undefined) => {
@@ -200,36 +216,93 @@ export const decidable = (prover: Prover, proof: Proof | undefined) =>
   proof.calculus.logic === "classical" &&
   prover.limits().search(proof.id) === null;
 
-/** The rail's cells of a proof: its proof, its net once drawn, and the views added to it. */
+/**
+ * The rail's cells of a proof's chip: the graph once there are two views; then each proof of the
+ * sequent (the chip's own, a copy, another calculus) with its net once drawn and the views added
+ * to it, a view made from the proof joined to it.
+ */
 export function cellsOf(prover: Prover, ui: Ui, proof: Proof | undefined): readonly Cell[] {
   if (!proof || !started(proof)) return [];
-  const own: Cell[] = [
-    { view: "tree", short: cellName(proof.calculus), name: calculusName(proof.calculus) },
-  ];
-  if (netReady(proof)) own.push({ view: "net", short: "◇", name: "Proof net" });
-  // A view shown by a button of its own (a countermodel's "Change this model", a tableau's
-  // countermodel) has its cell as an added one does.
-  const shownHere = ui.ui.tab;
-  const added = [...(ui.ui.added[proof.id] ?? [])];
-  if ((shownHere === "model" || shownHere === "written") && !added.includes(shownHere))
-    added.push(shownHere);
-  for (const view of added) {
-    const added = ADDED[view as keyof typeof ADDED];
-    if (added && (view === "model" || decidable(prover, proof))) own.push({ view, ...added });
+  const chip = prover.chipOf(proof.id);
+  const cells: Cell[] = [];
+  for (const m of prover.members(chip)) {
+    if (!started(m)) continue;
+    const tree = `${m.id}:tree`;
+    const copy = m.beside?.kind === "copy" ? m.beside : null;
+    cells.push({
+      proof: m.id,
+      view: "tree",
+      short: cellName(m.calculus),
+      name: `${calculusName(m.calculus)}${copy ? ", a copy" : ""}`,
+      ...(copy ? { sign: "⧉", tied: true, from: `${copy.of}:tree` } : { from: null }),
+    });
+    if (netReady(m))
+      cells.push({
+        proof: m.id,
+        view: "net",
+        short: "◇",
+        math: true,
+        name: "Proof net",
+        from: tree,
+      });
+    const added = [...(ui.ui.added[m.id] ?? [])];
+    // A model shown by a button of its own (a countermodel's "Change this model") has its cell.
+    if (m.id === proof.id && ui.ui.tab === "model" && !added.some((a) => a.view === "model"))
+      added.push({ view: "model", source: "", sequent: null });
+    for (const a of added) {
+      if (a.view === "tree" || a.view === "net" || a.view === "graph" || a.view === "countermodel")
+        continue;
+      // The table and the tableau decide: a course pack that bars the search bars them.
+      if ((a.view === "table" || a.view === "tableau") && !decidable(prover, m)) continue;
+      const w = VIEWS[a.view];
+      const made = w.from === "proof";
+      cells.push({
+        proof: m.id,
+        view: a.view,
+        short: w.short,
+        // The name holds what the cell shows, for speech input (WCAG 2.5.3).
+        name: `${w.name}, ${w.short}${w.sub ? ` ${w.sub}` : ""}`,
+        ...(w.sub ? { sub: w.sub } : {}),
+        ...(w.math ? { math: true } : {}),
+        tied: made,
+        stale: staleOf(m, a),
+        from: made ? tree : null,
+      });
+    }
+    // The countermodel view: a modal sequent's once it is not valid, another's once opened. A
+    // structure the visitor started from one element is a model of their own, M.
+    const counter = counterOf(ui, m.id);
+    if ((m.calculus.suite === "modal" && m.modal?.outcome?.verdict === "not_valid") || counter)
+      cells.push(
+        counter?.kind === "structure" && !counter.found
+          ? {
+              proof: m.id,
+              view: "countermodel",
+              short: "M",
+              name: "A model of your own, M",
+              from: null,
+            }
+          : {
+              proof: m.id,
+              view: "countermodel",
+              short: "⊭",
+              math: true,
+              name: "Countermodel, ⊭",
+              from: tree,
+            },
+      );
   }
-  // The countermodel view: a modal sequent's once it is not valid, another's once opened. A
-  // structure the visitor started from one element is a model of their own, M.
-  const counter = ui.ui.counter;
-  if (
-    (proof.calculus.suite === "modal" && proof.modal?.outcome?.verdict === "not_valid") ||
-    counter?.proof === proof.id
-  )
-    own.push(
-      counter?.proof === proof.id && counter.kind === "structure" && !counter.found
-        ? { view: "countermodel", short: "M", name: "A model of your own, M" }
-        : { view: "countermodel", short: "⊭", name: "Countermodel, ⊭" },
-    );
-  return own;
+  if (cells.length >= 2)
+    cells.unshift({ proof: chip, view: "graph", short: "", name: "How the views hang together" });
+  return cells;
+}
+
+/** A cell's state in words, for its name: a proof's goals or verdict, a view out of date. */
+function cellWords(prover: Prover, cell: Cell): string {
+  if (cell.stale) return ", out of date";
+  if (cell.view !== "tree") return "";
+  const p = prover.store.proofs.find((q) => q.id === cell.proof);
+  return p ? `, ${stateWords(p)}` : "";
 }
 
 /** Moves the focus among a group's buttons with the arrow keys, the group one stop of Tab (ARIA's roving tabindex). */
@@ -283,6 +356,7 @@ export function TopRow(props: {
   theme: () => Theme;
   setTheme: (t: Theme) => void;
   newTab: () => void;
+  closeChip: (chip: string) => void;
 }) {
   const { ui, setUi } = props.ui;
   const settings = () => props.prover.settings();
@@ -309,33 +383,56 @@ export function TopRow(props: {
           aria-label="Sequents"
           onKeyDown={(event) => rove(event, false)}
         >
-          <For each={props.prover.store.proofs}>
+          <For each={props.prover.store.proofs.filter((p) => props.prover.chipOf(p.id) === p.id)}>
             {(proof) => {
-              const chosen = () => props.prover.store.active === proof.id && ui.menu !== "settings";
+              const mine = () => props.prover.chipOf(props.prover.store.active ?? "") === proof.id;
+              const chosen = () => mine() && ui.menu !== "settings";
+              const text = () => (proof.input ? tabText(proof) : "New sequent");
               return (
-                <button
-                  type="button"
-                  role="tab"
-                  class="chip"
-                  data-rove=""
-                  data-proof={proof.id}
-                  aria-selected={chosen()}
-                  tabindex={props.prover.store.active === proof.id ? 0 : -1}
-                  aria-label={`${proof.input ? tabText(proof) : "New sequent"}, ${stateWords(proof)}`}
-                  data-tip={proof.input ? tabText(proof) : "New sequent"}
-                  onClick={() => {
-                    props.prover.activate(proof.id);
-                    setUi({ menu: null, tab: "tree" });
-                  }}
-                >
-                  <span class="chip-text m">{proof.input ? tabText(proof) : "New"}</span>
-                  <Show when={tone(proof) === "ok"}>
-                    <Check class="sign good" aria-hidden="true" />
-                  </Show>
-                  <Show when={tone(proof) === "bad"}>
-                    <X class="sign bad" aria-hidden="true" />
-                  </Show>
-                </button>
+                <div class="chip-wrap" role="presentation">
+                  <button
+                    type="button"
+                    role="tab"
+                    class="chip"
+                    data-rove=""
+                    data-proof={proof.id}
+                    aria-selected={chosen()}
+                    aria-keyshortcuts="W"
+                    tabindex={mine() ? 0 : -1}
+                    aria-label={`${text()}, ${stateWords(proof)}`}
+                    data-tip={text()}
+                    onClick={() => {
+                      // A press on the chosen chip switches between its main view and its graph.
+                      const main = props.prover.store.active === proof.id && ui.tab === "tree";
+                      const graph = ui.tab === "graph";
+                      const hasGraph = cellsOf(props.prover, props.ui, proof).some(
+                        (c) => c.view === "graph",
+                      );
+                      props.prover.activate(proof.id);
+                      setUi({
+                        menu: null,
+                        tab: chosen() && main && !graph && hasGraph ? "graph" : "tree",
+                      });
+                    }}
+                  >
+                    <span class="chip-text m">{proof.input ? tabText(proof) : "New"}</span>
+                    <Show when={tone(proof) === "ok"}>
+                      <Check class="sign good" aria-hidden="true" />
+                    </Show>
+                    <Show when={tone(proof) === "bad"}>
+                      <X class="sign bad" aria-hidden="true" />
+                    </Show>
+                  </button>
+                  {/* A pointer's way to close it; the key W does the same for the chip chosen. */}
+                  <span
+                    class="chip-close"
+                    aria-hidden="true"
+                    data-tip={`Close ${text()}`}
+                    onClick={() => props.closeChip(proof.id)}
+                  >
+                    <Sign name="shut" />
+                  </span>
+                </div>
               );
             }}
           </For>
@@ -396,181 +493,21 @@ export function TopRow(props: {
   );
 }
 
-/** An entry of the list of views to add: its badge, its name, why it cannot be added, its action. */
-interface Entry {
-  readonly group: "Prove" | "Decide" | "Translate" | "Read off";
-  readonly badge: string;
-  readonly name: string;
-  readonly there: boolean;
-  readonly why: string | null;
-  readonly add: () => void;
-}
-
 /** The rail: the chosen sequent's views, one cell each, and "+ view" with its list. */
 export function Rail(props: { prover: Prover; ui: Ui }) {
   const { ui, setUi } = props.ui;
   const proof = () => props.prover.current();
   const cells = () => cellsOf(props.prover, props.ui, proof());
   const workspace = useWorkspace();
-  const shown = (view: View) => ui.tab === view && ui.menu !== "settings";
-  const count = () => {
-    const n = proof()?.view?.goals.length ?? 0;
+  const shown = (cell: Cell) =>
+    ui.tab === cell.view &&
+    ui.menu !== "settings" &&
+    (cell.view === "graph" || props.prover.store.active === cell.proof);
+  const count = (p: Proof | undefined) => {
+    const n = p?.view?.goals.length ?? 0;
     return n > 9 ? "9+" : String(n);
   };
-
-  const add = (view: View) => {
-    const p = proof();
-    if (!p) return;
-    const before = ui.added[p.id] ?? [];
-    if (view === "model") {
-      const session = p.session;
-      const c = p.calculus;
-      // A first-order sequent's own model is a finite structure, from one element.
-      if (
-        session &&
-        isOrdinary(session) &&
-        c.suite === "ordinary" &&
-        isFirstOrder(session.sequent)
-      ) {
-        const signature = signatureOf(session.sequent);
-        setUi({
-          counter: {
-            kind: "structure",
-            proof: p.id,
-            // The sequent as typed: its JSON's arena may hold the proof's eigenvariables.
-            sequent: p.input,
-            root: rootOf(session),
-            logic: c.logic,
-            signature,
-            found: false,
-            now: blank(signature),
-            past: [],
-            future: [],
-          },
-          tab: "countermodel",
-          menu: null,
-        });
-        return;
-      }
-      if (session && isOrdinary(session) && c.suite === "ordinary")
-        setUi("modelSeed", {
-          model: ONE_WORLD,
-          sequent: sequentText(session),
-          logic: c.logic,
-          found: false,
-        });
-    }
-    setUi({
-      added: { ...ui.added, [p.id]: before.includes(view) ? before : [...before, view] },
-      tab: view,
-      menu: null,
-    });
-  };
-
-  const entries = (): readonly Entry[] => {
-    const p = proof();
-    const c = p?.calculus;
-    const classical = c?.suite === "ordinary" && c.logic === "classical" && !!p?.session;
-    const ordinaryStarted = !!p?.session && c?.suite === "ordinary";
-    const there = (view: View) => cells().some((cell) => cell.view === view);
-    const needs = classical ? null : "Needs a classical sequent, entered.";
-    const decides = decidable(props.prover, p) ? null : (needs ?? "The search is barred here.");
-    const sheet = (menu: "translate" | "interpolate" | "normalize" | "resolve") => () =>
-      setUi("menu", menu);
-    return [
-      {
-        group: "Prove",
-        badge: "⧉",
-        name: "A copy of this proof",
-        there: false,
-        why: (p?.session || p?.modal?.outcome) && workspace ? null : "Needs a sequent entered.",
-        add: () => {
-          const id = p?.id;
-          setUi("menu", null);
-          if (id && workspace) void workspace.duplicate(id);
-        },
-      },
-      {
-        group: "Prove",
-        badge: "◇",
-        name: "Proof net",
-        there: there("net"),
-        why:
-          c?.suite !== "linear"
-            ? "Needs a linear sequent."
-            : netReady(p)
-              ? null
-              : p?.view?.net
-                ? `No net: ${p.view.net.message.replace(/^not a proof net: /, "")}.`
-                : "The net is drawn once the proof is finished.",
-        add: () => setUi({ tab: "net", menu: null }),
-      },
-      {
-        group: "Decide",
-        badge: "TT",
-        name: "Truth table",
-        there: there("table"),
-        why: decides,
-        add: () => add("table"),
-      },
-      {
-        group: "Decide",
-        badge: "T",
-        name: "Tableau",
-        there: there("tableau"),
-        why: decides,
-        add: () => add("tableau"),
-      },
-      {
-        group: "Decide",
-        badge: "TH",
-        name: "Tableau by hand",
-        there: there("written"),
-        why: decides,
-        add: () => add("written"),
-      },
-      {
-        group: "Decide",
-        badge: "R",
-        name: "Resolution",
-        there: false,
-        why: needs,
-        add: sheet("resolve"),
-      },
-      {
-        group: "Decide",
-        badge: "NF",
-        name: "Normal form",
-        there: false,
-        why: needs,
-        add: sheet("normalize"),
-      },
-      {
-        group: "Decide",
-        badge: "M",
-        name: "A model of your own",
-        there: there("model"),
-        why: ordinaryStarted && !(c && isNatural(c)) ? null : "Needs an ordinary sequent, entered.",
-        add: () => add("model"),
-      },
-      {
-        group: "Translate",
-        badge: "¬¬",
-        name: "Into intuitionistic logic",
-        there: false,
-        why: needs,
-        add: sheet("translate"),
-      },
-      {
-        group: "Read off",
-        badge: "I",
-        name: "Interpolant",
-        there: false,
-        why: needs,
-        add: sheet("interpolate"),
-      },
-    ];
-  };
+  const proofOf = (cell: Cell) => props.prover.store.proofs.find((q) => q.id === cell.proof);
 
   return (
     <nav class="rail" aria-label="Views">
@@ -589,20 +526,25 @@ export function Rail(props: { prover: Prover; ui: Ui }) {
               class="cell"
               data-rove=""
               data-view={cell.view}
+              data-proof={cell.proof}
+              data-tied={cell.tied ? "" : undefined}
+              data-stale={cell.stale ? "" : undefined}
               data-capsule={
-                cell.view === "net" || (cell.view === "tree" && netReady(proof())) ? "" : undefined
+                cell.view === "net" ||
+                (cell.view === "tree" && netReady(proofOf(cell)) && !cell.tied)
+                  ? ""
+                  : undefined
               }
-              aria-selected={shown(cell.view)}
+              aria-selected={shown(cell)}
               tabindex={
-                shown(cell.view) || (!cells().some((c) => shown(c.view)) && cell === cells()[0])
-                  ? 0
-                  : -1
+                shown(cell) || (!cells().some((c) => shown(c)) && cell === cells()[0]) ? 0 : -1
               }
-              aria-label={`${cell.name}${cell.view === "tree" && proof() ? `, ${stateWords(proof() as Proof)}` : ""}`}
+              aria-keyshortcuts={cell.view === "graph" ? "G" : undefined}
+              aria-label={`${cell.name}${cellWords(props.prover, cell)}`}
               data-tip={cell.name}
               onClick={() => {
                 // A model is the sequent's own: one of another sequent shown before is set aside.
-                const p = proof();
+                const p = proofOf(cell);
                 const session = p?.session;
                 if (
                   cell.view === "model" &&
@@ -617,20 +559,48 @@ export function Rail(props: { prover: Prover; ui: Ui }) {
                     logic: p.calculus.logic,
                     found: false,
                   });
+                props.prover.activate(cell.proof);
                 setUi({ tab: cell.view, menu: null });
               }}
             >
-              <span
-                class="cell-name"
-                data-long={cell.short.length > 2 ? "" : undefined}
-                // The count of open goals is drawn by CSS from here: the name says it in words.
-                data-count={
-                  cell.view === "tree" && tone(proof() as Proof) === "open" ? count() : undefined
+              <Show when={cell.view === "graph"}>
+                <Sign name="graph" />
+              </Show>
+              <Show when={cell.sign}>
+                <span class="cell-sign m" aria-hidden="true">
+                  {cell.sign}
+                </span>
+              </Show>
+              <Show when={cell.view !== "graph"}>
+                <span
+                  class={`cell-name${cell.math ? " m" : ""}`}
+                  data-long={cell.short.length > 2 ? "" : undefined}
+                  // The count of open goals is drawn by CSS from here: the name says it in words.
+                  data-count={
+                    cell.view === "tree" && proofOf(cell) && tone(proofOf(cell) as Proof) === "open"
+                      ? count(proofOf(cell))
+                      : undefined
+                  }
+                >
+                  <span>{cell.short}</span>
+                  <Show when={cell.sub}>
+                    <span class="cell-sub">{cell.sub}</span>
+                  </Show>
+                </span>
+              </Show>
+              <Show when={cell.stale}>
+                <span class="count stale-mark" aria-hidden="true">
+                  !
+                </span>
+              </Show>
+              <Show
+                when={
+                  !cell.stale &&
+                  cell.view === "tree" &&
+                  proofOf(cell) &&
+                  tone(proofOf(cell) as Proof) === "bad"
                 }
               >
-                {cell.short}
-              </span>
-              <Show when={cell.view === "tree" && tone(proof() as Proof) === "bad"}>
                 <X class="count sign bad" aria-hidden="true" />
               </Show>
             </button>
@@ -667,49 +637,70 @@ export function Rail(props: { prover: Prover; ui: Ui }) {
           >
             <X aria-hidden="true" />
           </button>
-          <For each={["Prove", "Decide", "Translate", "Read off"] as const}>
+          <For each={GROUPS}>
             {(group) => (
-              <section aria-label={group}>
-                <h2 class="group-head">{group}</h2>
-                <ul>
-                  <For each={entries().filter((e) => e.group === group)}>
-                    {(entry) => (
-                      <li>
-                        <button
-                          type="button"
-                          class="entry"
-                          aria-disabled={entry.why ? "true" : undefined}
-                          aria-describedby={entry.why ? `why-${entry.badge}` : undefined}
-                          onClick={() => {
-                            if (!entry.why) entry.add();
-                          }}
-                        >
-                          <span class="badge m" aria-hidden="true">
-                            {entry.badge}
-                          </span>
-                          <span class="entry-name">{entry.name}</span>
-                          <Show when={entry.there}>
-                            <Check class="sign good" aria-label="added" />
+              <Show when={entries(props.prover, props.ui).some((e) => e.group === group)}>
+                <section aria-label={group}>
+                  <h2 class="group-head">{group}</h2>
+                  <ul>
+                    <For each={entries(props.prover, props.ui).filter((e) => e.group === group)}>
+                      {(entry) => (
+                        <li>
+                          <button
+                            type="button"
+                            class="entry"
+                            aria-disabled={entry.why ? "true" : undefined}
+                            aria-describedby={entry.why ? `why-${entry.view}` : undefined}
+                            onClick={() => {
+                              if (!entry.why) addEntry(props.prover, props.ui, workspace, entry);
+                            }}
+                          >
+                            <span class={`badge${entry.math ? " m" : ""}`} aria-hidden="true">
+                              <span>{entry.badge}</span>
+                              <Show when={entry.sub}>
+                                <span class="cell-sub">{entry.sub}</span>
+                              </Show>
+                            </span>
+                            <span class="entry-name">{entry.name}</span>
+                            <Show when={entry.there}>
+                              <Check class="sign good" aria-label="added" />
+                            </Show>
+                          </button>
+                          <Show when={entry.why}>
+                            {(why) => (
+                              <p class="entry-why" id={`why-${entry.view}`}>
+                                {why()}
+                              </p>
+                            )}
                           </Show>
-                        </button>
-                        <Show when={entry.why}>
-                          {(why) => (
-                            <p class="entry-why" id={`why-${entry.badge}`}>
-                              {why()}
-                            </p>
-                          )}
-                        </Show>
-                      </li>
-                    )}
-                  </For>
-                </ul>
-              </section>
+                        </li>
+                      )}
+                    </For>
+                  </ul>
+                </section>
+              </Show>
             )}
           </For>
         </div>
       </Show>
     </nav>
   );
+}
+
+/** Undo on a view that is not a proof's own: a structure's change, a normal form's step, an elimination's step. */
+export function viewUndo(prover: Prover, ui: Ui) {
+  const p = prover.current();
+  if (!p) return;
+  const tab = ui.ui.tab;
+  if (tab === "countermodel") undoStructure(ui, p.id);
+  else if (tab === "normal") stepTo(ui, p.id, stepShown(ui, p.id) - 1);
+  else if (tab === "elim") void prover.eliminationUndo(elimOn(prover, ui), elimSettings(prover));
+}
+
+/** Redo on a view that is not a proof's own: a structure's change taken back. */
+export function viewRedo(prover: Prover, ui: Ui) {
+  const p = prover.current();
+  if (p && ui.ui.tab === "countermodel") redoStructure(ui, p.id);
 }
 
 /** A tool: its sign, its name beside it with the guide on, its key in its hover and its name. */
@@ -777,6 +768,59 @@ export function Tools(props: { prover: Prover; ui: Ui; hint: () => void; tour: (
     return c?.suite === "linear" && !intuitionistic(c);
   };
   const say = (text: string) => setUi("notice", { text });
+  /** The structure of the countermodel view shown, where it is one. */
+  const structureShown = () => {
+    const c = counterOf(props.ui, proof()?.id);
+    return c?.kind === "structure" ? c : null;
+  };
+  /** Whether the view shown is out of date. */
+  const viewStale = () => {
+    const p = proof();
+    if (!p || ui.tab === "tree") return false;
+    const added = addedOf(props.ui, p.id, ui.tab);
+    return !!added && staleOf(p, added);
+  };
+  /** Whether the stepped view shown can go back a step. */
+  const canStepBack = () => {
+    const p = proof();
+    if (!p) return false;
+    if (ui.tab === "normal") return stepShown(props.ui, p.id) > 0;
+    return (p.elim[elimOn(props.prover, props.ui)]?.back.length ?? 0) > 0;
+  };
+  /** Whether the stepped view shown can go forward. */
+  const canStepOn = () => {
+    const p = proof();
+    if (!p) return false;
+    if (ui.tab === "normal")
+      return stepShown(props.ui, p.id) < (stepCounts()[viewKey(p.id, "normal")] ?? 0);
+    const e = p.elim[elimOn(props.prover, props.ui)];
+    return !!e && e.reached.next !== null;
+  };
+  /** One step forward, or every step to the end. */
+  const stepOn = (toEnd: boolean) => {
+    const p = proof();
+    if (!p) return;
+    if (ui.tab === "normal") {
+      stepTo(props.ui, p.id, toEnd ? null : stepShown(props.ui, p.id) + 1);
+      return;
+    }
+    const on = elimOn(props.prover, props.ui);
+    if (toEnd) void props.prover.eliminationRun(on, elimSettings(props.prover));
+    else void props.prover.eliminationStep(on, undefined, elimSettings(props.prover));
+  };
+  /** The views of the chosen sequent that are out of date. */
+  const staleCells = () => cellsOf(props.prover, props.ui, proof()).filter((c) => c.stale);
+  /** Copies the λ-term shown as text. */
+  const copyTerm = async () => {
+    const text = termShown.get(proof()?.id ?? "")?.();
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+      say("λ-term copied as text.");
+    } catch {
+      say("The browser keeps the clipboard closed: select the term to copy it.");
+    }
+  };
   let toolbar!: HTMLDivElement;
   onMount(() => oneStop(toolbar));
 
@@ -799,27 +843,129 @@ export function Tools(props: { prover: Prover; ui: Ui; hint: () => void; tour: (
           b.tabIndex = b === event.target ? 0 : -1;
       }}
     >
-      <Show when={ui.tab === "countermodel" && ui.counter?.kind === "structure" && ui.counter}>
+      <Show when={ui.tab === "countermodel" && structureShown()}>
         {(c) => (
           <fieldset class="tool-group" aria-label="Changes">
             <Tool
               name="Undo"
               action="undo"
               icon={<Undo2 aria-hidden="true" />}
-              disabled={c().kind !== "structure" || c().past.length === 0}
-              onClick={() => undoStructure(props.ui)}
+              disabled={c().past.length === 0}
+              onClick={() => viewUndo(props.prover, props.ui)}
             />
             <Tool
               name="Redo"
               action="redo"
               icon={<Redo2 aria-hidden="true" />}
-              disabled={c().kind !== "structure" || c().future.length === 0}
-              onClick={() => redoStructure(props.ui)}
+              disabled={c().future.length === 0}
+              onClick={() => viewRedo(props.prover, props.ui)}
             />
           </fieldset>
         )}
       </Show>
-      <Show when={proving() || ui.tab === "tree"}>
+      <Show when={(ui.tab === "normal" || ui.tab === "elim") && !viewStale()}>
+        <fieldset class="tool-group" aria-label="Steps">
+          <Tool
+            name="Undo"
+            action="undo"
+            icon={<Undo2 aria-hidden="true" />}
+            disabled={!canStepBack() || busy()}
+            onClick={() => viewUndo(props.prover, props.ui)}
+          />
+          <Show when={ui.tab === "elim"}>
+            <Tool
+              name="Steps"
+              rare
+              icon={<ListOrdered aria-hidden="true" />}
+              disabled={(proof()?.elim[elimOn(props.prover, props.ui)]?.taken.length ?? 0) < 2}
+              onClick={() =>
+                document.querySelector<HTMLDetailsElement>(".steps-taken")?.toggleAttribute("open")
+              }
+            />
+          </Show>
+        </fieldset>
+        <fieldset class="tool-group" aria-label="Forward">
+          <Tool
+            name="Next step"
+            icon={<Sign name="next" />}
+            disabled={!canStepOn() || busy()}
+            onClick={() => stepOn(false)}
+          />
+          <Tool
+            name="To the end"
+            icon={<Sign name="end" />}
+            disabled={!canStepOn() || busy()}
+            onClick={() => stepOn(true)}
+          />
+        </fieldset>
+      </Show>
+      <Show when={ui.tab === "term" && !viewStale()}>
+        <fieldset class="tool-group" aria-label="Term">
+          <Tool
+            name="Copy as text"
+            icon={<Sign name="copy" />}
+            disabled={!termShown.get(proof()?.id ?? "")?.()}
+            onClick={() => void copyTerm()}
+          />
+        </fieldset>
+      </Show>
+      <Show when={ui.tab === "graph"}>
+        <fieldset class="tool-group" aria-label="Views">
+          <Tool
+            name="Update all"
+            icon={<Sign name="update" />}
+            disabled={staleCells().length === 0}
+            onClick={() => {
+              const stale = staleCells();
+              for (const cell of stale) updateView(props.prover, props.ui, cell.proof, cell.view);
+              say(
+                stale.length === 1
+                  ? "1 view brought up to date."
+                  : `${stale.length} views brought up to date.`,
+              );
+            }}
+          />
+        </fieldset>
+      </Show>
+      <Show
+        when={
+          proof()?.calculus.suite === "modal" &&
+          ui.tab === "tree" &&
+          proof()?.modal?.outcome?.verdict === "valid"
+        }
+      >
+        <fieldset class="tool-group" aria-label="Modal logic">
+          <Tool
+            name="Prove step by step"
+            icon={<Sign name="stairs" />}
+            disabled={busy() || !proof()?.modal?.outcome?.derivation}
+            onClick={() => {
+              const p = proof();
+              if (p) void props.prover.modalSteps(p.id);
+            }}
+          />
+        </fieldset>
+      </Show>
+      <Show
+        when={
+          proof()?.calculus.suite === "lambda" &&
+          ui.tab === "tree" &&
+          proof()?.lambda?.found?.verdict === "inhabited"
+        }
+      >
+        <fieldset class="tool-group" aria-label="Lambda-terms">
+          <Tool
+            name="List its terms"
+            icon={<Sign name="list" />}
+            disabled={busy() || !!proof()?.lambda?.listed}
+            onClick={() => {
+              const p = proof();
+              if (p) void props.prover.lambdaList(p.id);
+            }}
+          />
+        </fieldset>
+      </Show>
+      <Show when={proving() || (ui.tab === "tree" && !!proof()?.custom?.session)}>
         <fieldset class="tool-group" aria-label="Steps">
           <Tool
             name="Undo"
@@ -909,6 +1055,15 @@ export function Tools(props: { prover: Prover; ui: Ui; hint: () => void; tour: (
                   props.prover.settings().structural === "explicit" ? "admissible" : "explicit",
                 )
               }
+            />
+          </fieldset>
+        </Show>
+        <Show when={!!proof()?.view?.complete && (proof()?.view?.cuts.length ?? 0) > 0}>
+          <fieldset class="tool-group" aria-label="Cuts">
+            <Tool
+              name="Eliminate cuts"
+              icon={<Sign name="eliminate" />}
+              onClick={() => addView(props.prover, props.ui, "elim")}
             />
           </fieldset>
         </Show>

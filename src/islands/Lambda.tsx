@@ -166,24 +166,7 @@ function Read(props: { prover: Prover }) {
         {(svg) => <div class="custom-drawing" innerHTML={svg()} />}
       </Show>
       <Show when={found()?.verdict === "inhabited"}>
-        <Show
-          when={listed()}
-          fallback={
-            <p class="row">
-              <button
-                type="button"
-                class="btn"
-                disabled={props.prover.busy()}
-                onClick={() => {
-                  const p = proof();
-                  if (p) void props.prover.lambdaList(p.id);
-                }}
-              >
-                List its terms
-              </button>
-            </p>
-          }
-        >
+        <Show when={listed()}>
           {(l) => (
             <div class="lambda-terms">
               <p class="method-verdict">{countWords(l().count, l().terms.length)}</p>

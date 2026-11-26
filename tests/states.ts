@@ -19,6 +19,7 @@ import {
   start,
   switches,
   tool,
+  system,
 } from "./prover";
 
 /** Called in each state, with the state's name. */
@@ -251,7 +252,10 @@ export async function methods(page: Page, visit: Visit) {
   await addView(page, "Tableau");
   await expect(page.locator(".tb-end").first()).toBeVisible();
   await visit("tableau");
-  await addView(page, "Tableau by hand");
+  await page
+    .getByRole("group", { name: "Tableau" })
+    .getByRole("button", { name: "By hand" })
+    .click();
   await expect(page.getByRole("textbox", { name: "Your tableau, a line each" })).toHaveValue(
     /^1 T a → b\n2 F b → a$/,
   );
@@ -278,27 +282,29 @@ export async function transforms(page: Page, visit: Visit) {
   await calculus(page, ["Ordinary", "Classical"]);
   await page.getByRole("textbox", { name: "Sequent" }).fill("p /\\ (p -> q), s |- q \\/ t");
   await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
-  await addView(page, "Into intuitionistic logic");
-  const translation = page.getByRole("dialog", { name: "Translate into intuitionistic logic" });
+  await addView(page, "Glivenko");
+  const translation = page.getByRole("region", { name: "Glivenko's translation" });
   await expect(translation.getByRole("status")).toContainText("Both valid");
   await visit("translation");
-  await page.keyboard.press("Escape");
   await addView(page, "Interpolant");
-  const interpolant = page.getByRole("dialog", { name: "Find an interpolant" });
+  const interpolant = page.getByRole("region", { name: "Interpolant" });
   await expect(interpolant.getByRole("status")).toContainText("Interpolant");
   await visit("interpolant");
   await interpolant.getByRole("button", { name: "Part 1 s" }).click();
   await expect(interpolant.getByRole("button", { name: "Part 2 s" })).toBeVisible();
   await expect(interpolant.getByRole("status")).toContainText("Interpolant");
   await visit("interpolant, a formula moved");
-  await page.keyboard.press("Escape");
+  await addView(page, "Linear logic");
+  await expect(
+    page.getByRole("region", { name: "Into linear logic" }).locator(".strip"),
+  ).toBeVisible();
+  await visit("embedding");
   await newTab(page);
   await page.getByRole("textbox", { name: "Sequent" }).fill("a \\/ b |- a");
   await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
-  await addView(page, "Into intuitionistic logic");
+  await addView(page, "Kuroda");
   await expect(page.getByRole("img", { name: /^A countermodel of/ })).toBeVisible();
   await visit("translation, not valid");
-  await page.keyboard.press("Escape");
 }
 
 /**
@@ -311,24 +317,25 @@ export async function clausal(page: Page, visit: Visit) {
   await page.getByRole("textbox", { name: "Sequent" }).fill("a -> b, b -> c |- a -> c");
   await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
   await addView(page, "Normal form");
-  const normal = page.getByRole("dialog", { name: "Rewrite into a normal form" });
+  const normal = page.getByRole("region", { name: "Normal form" });
   await expect(normal.getByRole("status")).toContainText("Equivalent");
   await visit("normal form");
-  await normal.getByRole("button", { name: "Next step" }).click();
-  await visit("normal form, a step");
-  await normal.getByRole("button", { name: "Tseitin" }).click();
+  await press(page, "Undo");
+  await visit("normal form, a step back");
+  const forms = page.getByRole("group", { name: "Normal form" });
+  await forms.getByRole("button", { name: "Tseitin" }).click();
   await expect(normal.getByRole("status")).toContainText("Same verdict");
   await visit("normal form, Tseitin's clauses");
-  await page.keyboard.press("Escape");
   await addView(page, "Resolution");
-  const resolution = page.getByRole("dialog", { name: "Refute by resolution" });
+  const resolution = page.getByRole("region", { name: "Resolution" });
   await expect(resolution.getByRole("status")).toContainText("Valid");
   await resolution.locator(".cl-graph").getByRole("button").first().click();
   await visit("resolution, a clause chosen");
-  await resolution.getByRole("button", { name: "DPLL", exact: true }).click();
+  const ways = page.getByRole("group", { name: "Resolution" });
+  await ways.getByRole("button", { name: "DPLL", exact: true }).click();
   await expect(resolution.getByText("DPLL's steps")).toBeVisible();
   await visit("resolution, DPLL");
-  await resolution.getByRole("button", { name: "By hand" }).click();
+  await ways.getByRole("button", { name: "By hand" }).click();
   const list = resolution.locator(".cl-list");
   const clause = (n: number) => list.getByRole("button", { name: new RegExp(`^Clause ${n}\\.`) });
   // The clauses are ¬a ∨ b, ¬b ∨ c, a and ¬c; each resolvent stays chosen after its step.
@@ -342,24 +349,39 @@ export async function clausal(page: Page, visit: Visit) {
   await resolution.getByRole("button", { name: "Resolve on c" }).click();
   await expect(resolution.getByRole("status")).toContainText("You derived □");
   await visit("by hand, □ derived");
-  await page.keyboard.press("Escape");
 }
 
-/** A translation proved as a sequent of its own, and a copy of a proof, each a chip at the top. */
+/**
+ * A translation proved as a sequent of its own, a chip at the top; a copy of a proof, a cell of its
+ * rail; the graph of views; a view out of date; a sequent's chip closed with its Undo.
+ */
 export async function linking(page: Page, visit: Visit) {
   await goto(page);
   await calculus(page, ["Ordinary", "Classical"]);
   await page.getByRole("textbox", { name: "Sequent" }).fill("|- a \\/ ~a");
   await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
-  await addView(page, "Into intuitionistic logic");
-  const translation = page.getByRole("dialog", { name: "Translate into intuitionistic logic" });
+  await addView(page, "Glivenko");
+  const translation = page.getByRole("region", { name: "Glivenko's translation" });
   await expect(translation.getByRole("status")).toContainText("Both valid");
-  await translation.getByRole("button", { name: "Prove it in intuitionistic logic" }).click();
+  await translation.getByRole("button", { name: "Prove it in LJ" }).click();
   await expect(page.locator(".chip")).toHaveCount(2);
   await visit("translation proved");
   await addView(page, "A copy of this proof");
-  await expect(page.locator(".chip")).toHaveCount(3);
+  await expect(page.locator(".chip")).toHaveCount(2);
+  await expect(page.getByRole("tab", { name: /, a copy/ })).toBeVisible();
   await visit("copy");
+  await page.locator(".chip").first().click();
+  await page.keyboard.press("g");
+  await expect(page.getByRole("region", { name: "How the views hang together" })).toBeVisible();
+  await visit("graph of views");
+  await page.getByRole("textbox", { name: "Sequent" }).fill("|- a \\/ ~a \\/ b");
+  await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
+  await page.getByRole("tab", { name: /^Glivenko's translation/ }).click();
+  await expect(page.getByRole("status").filter({ hasText: "Out of date." })).toBeVisible();
+  await visit("a view out of date");
+  await page.keyboard.press("w");
+  await expect(page.getByRole("status").getByRole("button", { name: "Undo" })).toBeVisible();
+  await visit("a sequent closed");
 }
 
 /** Opens the page on a new sequent of classical ordinary logic and starts `sequent` there. */
@@ -430,10 +452,11 @@ export async function cutting(page: Page, visit: Visit) {
   await visit("cut");
   await premises.getByRole("button", { name: "Apply the cut" }).click();
   await press(page, "Close all");
+  await press(page, "Eliminate cuts");
   const panel = page.getByRole("region", { name: "Cut elimination" });
-  await panel.getByRole("button", { name: "Eliminate the cuts" }).click();
+  await expect(panel.getByRole("status")).toHaveText("1 cut left");
   await visit("elimination");
-  await panel.getByRole("button", { name: "To the end" }).click();
+  await press(page, "To the end");
   await expect(panel.getByRole("status")).toContainText("Cut-free");
   await panel.locator("summary").click();
   await visit("cut-free");
@@ -474,8 +497,8 @@ export async function lambdaing(page: Page, visit: Visit) {
   await goto(page);
   await calculus(page, ["Lambda-terms"]);
   await expect(
-    (await switches(page)).getByRole("combobox", { name: "Lambda calculus" }),
-  ).toHaveValue("simple");
+    (await switches(page)).getByRole("button", { name: "Unrestricted" }),
+  ).toHaveAttribute("aria-pressed", "true");
   await visit("lambda entry");
   await page.getByRole("textbox", { name: "Sequent" }).fill(String.raw`\f:a -> b. \x:a. f x`);
   await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
@@ -486,7 +509,7 @@ export async function lambdaing(page: Page, visit: Visit) {
   await page.getByRole("textbox", { name: "Sequent" }).fill("a -> a -> a");
   await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
   await expect(page.locator(".lambda .kw.ok", { hasText: "Has a term" })).toBeVisible();
-  await page.getByRole("button", { name: "List its terms" }).click();
+  await press(page, "List its terms");
   await expect(page.locator(".lambda-terms li")).toHaveCount(2);
   await visit("lambda terms listed");
   await newTab(page);
@@ -504,7 +527,7 @@ export async function lambdaing(page: Page, visit: Visit) {
 export async function modalising(page: Page, visit: Visit) {
   await goto(page);
   await calculus(page, ["Modal logic"]);
-  await expect((await switches(page)).getByRole("combobox", { name: "System" })).toHaveValue("K");
+  await expect((await switches(page)).getByRole("button", { name: "System K" })).toBeVisible();
   await visit("modal entry");
   await page.getByRole("textbox", { name: "Sequent" }).fill("[]p -> [][]p");
   await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
@@ -519,7 +542,7 @@ export async function modalising(page: Page, visit: Visit) {
   await page.getByRole("button", { name: "Check the model" }).click();
   await expect(page.locator(".modal-check")).toContainText("Holds");
   await visit("modal holds");
-  await (await switches(page)).getByRole("combobox", { name: "System" }).selectOption("S4");
+  await system(page, "S4");
   await expect(page.locator(".modal .kw.ok", { hasText: "Valid" })).toBeVisible();
   await expect(page.locator(".modal .custom-drawing svg")).toBeVisible();
   await visit("modal valid");
@@ -533,7 +556,7 @@ export async function modalising(page: Page, visit: Visit) {
   await expect(page.locator(".kripke-form legend")).toHaveText("World 1");
   await visit("modal editor, a world added");
   await addView(page, "A copy of this proof");
-  await expect(page.locator(".chip")).toHaveCount(2);
+  await expect(page.getByRole("tab", { name: /, a copy/ })).toBeVisible();
   await visit("modal copy");
   await newTab(page);
   await page.getByRole("textbox", { name: "Sequent" }).fill("[]p ->");

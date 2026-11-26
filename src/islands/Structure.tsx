@@ -29,30 +29,30 @@ import {
 } from "../lib/structure";
 import { Sign } from "./Signs";
 import type { Prover } from "./state";
-import type { Counter, Ui } from "./ui";
+import { type Counter, counterOf, setCounter, type Ui } from "./ui";
 
 /** The structure's state in the view. */
 type Shown = Counter & { readonly kind: "structure" };
 
-/** The view's state, where the countermodel shown is a structure. */
-const shownIn = (ui: Ui): Shown | null => {
-  const c = ui.ui.counter;
+/** A proof's countermodel view, where it is a structure. */
+const shownIn = (ui: Ui, proof: string | undefined): Shown | null => {
+  const c = counterOf(ui, proof);
   return c?.kind === "structure" ? c : null;
 };
 
 /** Changes the structure, the change one step of the view's undo. */
-export function changeStructure(ui: Ui, next: Structure) {
-  const c = shownIn(ui);
+export function changeStructure(ui: Ui, proof: string | undefined, next: Structure) {
+  const c = shownIn(ui, proof);
   if (!c) return;
-  ui.setUi("counter", { ...c, now: next, past: [...c.past, c.now], future: [] });
+  setCounter(ui, c.proof, { ...c, now: next, past: [...c.past, c.now], future: [] });
 }
 
 /** Takes the structure's last change back; false where there is none. */
-export function undoStructure(ui: Ui): boolean {
-  const c = shownIn(ui);
+export function undoStructure(ui: Ui, proof: string | undefined): boolean {
+  const c = shownIn(ui, proof);
   const before = c?.past.at(-1);
   if (!c || !before) return false;
-  ui.setUi("counter", {
+  setCounter(ui, c.proof, {
     ...c,
     now: before,
     past: c.past.slice(0, -1),
@@ -62,11 +62,11 @@ export function undoStructure(ui: Ui): boolean {
 }
 
 /** Makes the structure's last change taken back again; false where there is none. */
-export function redoStructure(ui: Ui): boolean {
-  const c = shownIn(ui);
+export function redoStructure(ui: Ui, proof: string | undefined): boolean {
+  const c = shownIn(ui, proof);
   const next = c?.future.at(-1);
   if (!c || !next) return false;
-  ui.setUi("counter", {
+  setCounter(ui, c.proof, {
     ...c,
     now: next,
     future: c.future.slice(0, -1),
@@ -95,7 +95,7 @@ export function structureWords(evaluated: Evaluated): string {
 
 /** The countermodel view of a first-order sequent: the structure, and the sequent's values in it. */
 export function StructureView(props: { prover: Prover; ui: Ui }) {
-  const shown = () => shownIn(props.ui);
+  const shown = () => shownIn(props.ui, props.prover.store.active ?? undefined);
   const [answer, setAnswer] = createSignal<Answer | null>(null);
   // deduxit checks the structure at once after every change; an answer for a structure changed
   // since is dropped.
@@ -130,7 +130,8 @@ export function StructureView(props: { prover: Prover; ui: Ui }) {
     const a = answer();
     return a && "failure" in a ? a.failure : null;
   };
-  const change = (next: Structure) => changeStructure(props.ui, next);
+  const change = (next: Structure) =>
+    changeStructure(props.ui, props.prover.store.active ?? undefined, next);
 
   return (
     <Show when={shown()}>

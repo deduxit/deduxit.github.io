@@ -56,6 +56,8 @@ export interface StoredProof {
   readonly engines?: Readonly<Record<string, string>>;
   /** The tab and goal the proof was opened from, by the tab's id and the goal's path. */
   readonly origin?: { readonly from: string; readonly path: readonly number[] } | null;
+  /** The proof whose chip it joins, as a copy of that proof or its sequent in another calculus. */
+  readonly beside?: { readonly of: string; readonly kind: "copy" | "calculus" };
   /** When it was saved, in milliseconds since the epoch: the later copy of a proof wins. */
   readonly saved: number;
 }
