@@ -51,7 +51,15 @@ export interface OrdinaryView {
   readonly inferences: readonly number[];
   /** The goals the steps closed by a rule invertible in the session's logic, in order. */
   readonly invertible: readonly number[];
+  /**
+   * Each quantifier step's inference and the term it took, as text the session's `witness`
+   * reads (`null` for a witness left open); left out of a proof without one.
+   */
+  readonly opened?: readonly { readonly inference: number; readonly term: string | null }[];
 }
+
+/** The ordinary rules whose step takes a witness: the rest of the quantifier rules make one. */
+export const WITNESSED_ORDINARY: ReadonlySet<string> = new Set(["∀L", "∃R"]);
 
 /** A Kripke model as deduxit writes it: each world's atoms and arrows up, and the model's world. */
 export interface KripkeModel {
@@ -398,6 +406,7 @@ export function asView(v: OrdinaryView): View {
     })),
     inferences: v.inferences,
     invertible: v.invertible,
+    ...(v.opened ? { opened: v.opened } : {}),
     net: NO_NET,
     cuts: [],
   };

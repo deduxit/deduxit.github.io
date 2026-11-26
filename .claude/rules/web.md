@@ -658,9 +658,11 @@ board and the guide disagree, the guide holds.
 - **A proof replayed onto a goal letters its recorded witnesses** (`replayOnto` in the
   state, `lettered` of `steps.ts` with the goal's path as `base`), as `play` does: a linear
   action names an eigenvariable by its step's path (`{1.0}`), read as the letter that step took
-  in the session played on; an ordinary proof's steps (`replaySteps`) carry no witness, since
-  the session document holds a term's index and no text, so a witness replays open and the
-  axiom that used it fills it.
+  in the session played on; an ordinary proof's `∀L` and `∃R` take the term the source took,
+  from its view's `opened` (deduxit's `opened_term`: text the session's `witness` reads, `null`
+  for a witness left open, which replays open), each eigenvariable renamed to the one the
+  replay's own `∀R` or `∃L` made (`names`, filled from the replayed view's `opened` as each such
+  step is taken), so a witness no axiom fills replays as it was given.
 - **Zoom is the stage's on the stage and the browser's everywhere else.** The stage keeps
   `touch-action: none`, so the browser makes no gesture there and the stage's pointers do:
   one on the field pans, a second finger (wherever it lands, a formula's button too) makes

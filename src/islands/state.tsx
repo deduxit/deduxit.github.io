@@ -54,6 +54,7 @@ import {
   replaySteps,
   retract as retractOrdinary,
   sequentText as ordinaryText,
+  WITNESSED_ORDINARY,
 } from "../lib/ordinary";
 import {
   type Evaluation,
@@ -1485,6 +1486,13 @@ export function createProver(say: (text: string) => void = () => undefined) {
       const texts =
         mapped && !same ? await attempt(() => api.ordinaryPrincipals(doc, ordinaryJson())) : null;
       if (texts && !texts.ok) return { failed: 1 };
+      // Each quantifier step's term as the source took it, and each eigenvariable's name there by
+      // the name the replay's step made: a given witness is given again in the replay's names. A
+      // name is read as an identifier of Unicode's ID_Start and ID_Continue, as deduxit reads one.
+      const terms = new Map((source.view?.opened ?? []).map((o) => [o.inference, o.term]));
+      const names = new Map<string, string>();
+      const renamed = (term: string) =>
+        term.replace(/[\p{ID_Start}_]\p{ID_Continue}*/gu, (word) => names.get(word) ?? word);
       for (const { goal: goalOf, step, formula, premises } of replaySteps(doc)) {
         taken += 1;
         const target = into.get(goalOf);
@@ -1500,10 +1508,19 @@ export function createProver(say: (text: string) => void = () => undefined) {
                 .findIndex((f) => f.text === wanted)
             : step.position;
         if (position < 0) return { failed: taken };
+        const term = terms.get(goalOf);
+        const witness = term && WITNESSED_ORDINARY.has(step.rule) ? renamed(term) : undefined;
         const done = await attempt(() =>
-          api.ordinary.apply(session, target, { ...step, position }, ordinaryJson()),
+          api.ordinary.apply(
+            session,
+            target,
+            { ...step, position, ...(witness ? { witness } : {}) },
+            ordinaryJson(),
+          ),
         );
         if (!done.ok || done.value.opened.length !== premises.length) return { failed: taken };
+        const made = done.value.view.opened?.find((o) => o.inference === target)?.term;
+        if (term && made && !WITNESSED_ORDINARY.has(step.rule)) names.set(term, made);
         for (const [i, p] of premises.entries()) into.set(p, done.value.opened[i] as number);
         played = { session: done.value.session, view: asView(done.value.view) };
       }

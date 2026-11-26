@@ -387,3 +387,32 @@ test("an ordinary rule that is no legal step is greyed with its reason", async (
   await expect(page.locator(".rule-card")).toContainText("ax refused: no partner");
   await expect(page.locator(".rule-card")).toContainText("The axiom needs a on both sides of ⊢");
 });
+
+test("an ordinary proof made apart closes its goal with the witness it was given", async ({
+  page,
+}) => {
+  await ordinary(page, "classical", "forall x. p(x), q(c) |- q(c) /\\ q(c)");
+  await rule(page, /^q\(c\) ∧ q\(c\), formula/, "∧R");
+  await (await goalMenu(page)).getByRole("button", { name: "Prove apart" }).click();
+  await expect(page.getByRole("tab", { name: /^∀x\. p\(x\), q\(c\) ⊢ q\(c\),/ })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  // ∀L with the witness c, which no axiom fills: the replay must give it again.
+  await page.getByRole("button", { name: /^∀x\. p\(x\), formula/ }).click();
+  const rules = page.getByRole("dialog", { name: "Rules" });
+  await rules.getByRole("button", { name: /^∀L/ }).click();
+  const box = rules.locator("form.witness");
+  await box.getByRole("textbox").fill("c");
+  await box.getByRole("textbox").press("Enter");
+  await expect(box).toBeHidden();
+  await rule(page, /^q\(c\), formula/, "ax");
+  await expect(checked(page)).toBeVisible();
+  await page.getByRole("tab", { name: /^forall x\. p\(x\), q\(c\) ⊢ q\(c\) ∧ q\(c\)/ }).click();
+  await (await goalMenu(page)).getByRole("button", { name: "Use its proof" }).click();
+  await expect(page.locator(".stage .drawing svg")).toContainText("∀L");
+  // The drawing sets letters in mathematical italic, which NFKC reads as plain ones.
+  const texts = (await drawn(page)).normalize("NFKC");
+  expect(texts).toContain("p(c)");
+  expect(texts).not.toContain("$1");
+});
