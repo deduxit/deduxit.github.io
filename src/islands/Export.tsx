@@ -254,7 +254,10 @@ export function ExportPanel(props: {
     if (k === "modal") {
       const outcome = p?.modal?.outcome;
       if (!outcome) return "The sequent is not decided yet. Enter it first.";
-      if ((entry === "latex" || entry === "typst") && outcome.verdict !== "valid")
+      // modal_draw draws a derivation or a countermodel; an outcome with neither has no picture.
+      if (!outcome.derivation && !outcome.countermodel)
+        return "deduxit found neither a derivation nor a countermodel, so there is nothing to draw.";
+      if ((entry === "latex" || entry === "typst") && !outcome.derivation)
         return "Only a valid sequent has a derivation to write. Save its countermodel as a picture.";
     }
     if (k === "lambda" && !p?.lambda?.typing)
@@ -401,7 +404,7 @@ export function ExportPanel(props: {
       ? "net"
       : kind() === "lambda"
         ? "typing"
-        : kind() === "modal" && proof()?.modal?.outcome?.verdict !== "valid"
+        : kind() === "modal" && proof()?.modal?.outcome?.countermodel
           ? "countermodel"
           : kind() === "natural"
             ? "natural-deduction"

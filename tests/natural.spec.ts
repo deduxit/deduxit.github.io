@@ -90,6 +90,15 @@ test("the toggles' Natural and Fitch draw one proof, and Export writes it as it 
   await expect(panel.locator("pre")).toContainText("\\begin{nd}");
   const file = await saveExport(page, "LaTeX");
   expect(file.suggestedFilename()).toBe("deduxit-natural-deduction.tex");
+  // A picture is natural deduction's own drawing, its Fitch lines while they are shown.
+  const picture = await saveExport(page, "SVG");
+  expect(picture.suggestedFilename()).toBe("deduxit-natural-deduction.svg");
+  const svg = await picture.createReadStream().then(async (stream) => {
+    let all = "";
+    for await (const chunk of stream) all += chunk;
+    return all;
+  });
+  expect(svg).toContain("Line 2, b: by ∧E₂ from line 1.");
   await expect(panel.getByRole("button", { name: "Rocq", exact: true })).toHaveAttribute(
     "data-off",
     "",

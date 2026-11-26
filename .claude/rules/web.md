@@ -560,7 +560,9 @@ board and the guide disagree, the guide holds.
   or Fitch lines as shown, its pictures from that SVG; a modal outcome through `modal_export`
   (a valid one's derivation) and `modal_draw` (its derivation or countermodel as a picture); a
   checked term through `lambda_export` and `lambda_draw`. These have no Text, Session or Rocq
-  (deduxit writes none), each entry saying so; their links hold the sequent or term alone.
+  (deduxit writes none), each entry saying so. A modal or lambda tab's links hold the sequent
+  or term alone, as the address bar's do; natural deduction's link is the ordinary proof's, as
+  the address bar's is (no link holds natural deduction's steps).
   The tool is open wherever a proof has something to write (`exportable` in `Frame.tsx`). The entries are buttons with
   `aria-current`, under fieldsets per group; the chosen one is kept for the visit. Each setting
   is one of deduxit's `--style` options (`Settings.exports`, an `ExportLook`, stored): a
