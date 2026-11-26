@@ -375,3 +375,15 @@ test("an ordinary goal is closed by a proof made apart of its formulas in anothe
   await expect(page.getByRole("button", { name: /^b, formula/ })).toHaveCount(0);
   await expect(page.locator(".drawing g.search").first()).toBeAttached();
 });
+
+test("an ordinary rule that is no legal step is greyed with its reason", async ({ page }) => {
+  await ordinary(page, "classical", "a |- b");
+  await page.getByRole("button", { name: /^a, formula/ }).click();
+  const ax = page.getByRole("dialog", { name: "Rules" }).getByRole("button", {
+    name: "ax, does not apply",
+  });
+  await expect(ax).toHaveAttribute("aria-disabled", "true");
+  await ax.hover();
+  await expect(page.locator(".rule-card")).toContainText("ax refused: no partner");
+  await expect(page.locator(".rule-card")).toContainText("The axiom needs a on both sides of ⊢");
+});

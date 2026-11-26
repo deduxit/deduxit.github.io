@@ -1061,9 +1061,9 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
   }
 
   /**
-   * Opens the rules popover of a goal's formula: each rule of its connective, tried on the goal.
+   * Opens the rules popover of a goal's formula: each rule of its connective, judged on the goal.
    * The time from the press to the popover with its greyed rules is measured
-   * (`deduxit:rules`), as the trials are a call per rule.
+   * (`deduxit:rules`).
    */
   async function openRules(goal: number, position: number) {
     const begun = performance.now();

@@ -721,11 +721,14 @@ board and the guide disagree, the guide holds.
   its rest behind a "more" button (the saturation refutation's); the keyword is a `span.kw`,
   no longer a button. Tests read the line (`toContainText` on `.goal-note`), not `data-tip`.
 - **The rule popover holds one button per rule of the formula's connective** (`RulePopover`
-  in `Goal.tsx`): deduxit's `rules` lists them, and each is tried on the goal with `apply`
-  (`rules` in the state; no state change, the invertible rules off, a linear split never
-  tried since every split is legal, a witness tried open); a refused one is greyed
-  (`aria-disabled`, still focusable) and its reason is the refusal's wording (`refusal`,
-  `ordinaryRefusal`). The pointer or the focus on a rule shows its card (`role=tooltip`): the
+  in `Goal.tsx`): deduxit's `candidates` (`ordinary_candidates`) lists them in one call, each
+  with whether its step is legal on the goal as it stands (`rules` in the state); a refused
+  one is greyed (`aria-disabled`, still focusable) and its reason is the refusal's wording
+  (`refusal`, `ordinaryRefusal`, `witnessFault` for a witness's `details.fault`) of the error
+  deduxit gives with it, the one `apply` would throw. A split rule is greyed only where no
+  split is legal, a quantifier rule judged with its witness left open; an ordinary proof's
+  axiom is always listed, greyed where its formula has no partner. Nothing judges whether a
+  goal can still be closed (the author, 2026-11-25). The pointer or the focus on a rule shows its card (`role=tooltip`): the
   rule drawn, premises over conclusion (`ruleForm` of `RuleHint.tsx`, the hint tables), no name
   and no sentence; a greyed rule's card adds the reason, and a press on it keeps the card
   (`role=note`) until the next press, which is a touch screen's way to the reason. The digits

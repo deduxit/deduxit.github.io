@@ -83,7 +83,7 @@ test("the eigenvariable condition is refused in words", async ({ page }) => {
   await witness(page).getByRole("textbox").fill("a");
   await witness(page).getByRole("textbox").press("Enter");
   await pick(page, "∃y. r(a, y)", "∃L");
-  // The axiom is greyed by its trial; a press says why under its drawing.
+  // The axiom is greyed, its step not legal here; a press says why under its drawing.
   await pick(page, "r(a, b)", "ax");
   const card = page.locator('.rule-card[role="note"]');
   await expect(card).toContainText("ax refused: the eigenvariable condition");

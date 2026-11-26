@@ -14,7 +14,7 @@ import type { Failure, GoalFormula, StepForm, View } from "./deduxit";
 import { subtree } from "./steps";
 import type { Structure } from "./structure";
 import type { Logic } from "./suites";
-import type { Said, Tone } from "./words";
+import { type Said, type Tone, witnessFault } from "./words";
 
 /** An inference of an ordinary session: a goal while it has no rule. */
 export interface OrdinaryInference {
@@ -555,12 +555,16 @@ export function ordinaryRefusal(
     case "witness":
       return {
         keyword: `${rule} refused: no such term`,
-        sentence: `A witness is built from the sequent's constants and function symbols and the eigenvariables made below this goal, and ${String(d["reason"] ?? "")}.`,
+        sentence: `A witness is built from the sequent's constants and function symbols and the eigenvariables made below this goal, and ${witnessFault(failed)}.`,
       };
     case "binding":
       return {
         keyword: `${rule} refused: the eigenvariable condition`,
-        sentence: `The axiom would give an open witness a term it may not take: ${String(d["reason"] ?? "")}. Choose another rule, or undo the step that left the witness open.`,
+        sentence: `The axiom would give an open witness a term it may not take: ${
+          d["fault"] === "eigenvariable"
+            ? `the eigenvariable ${String(d["name"] ?? "")}, which a ∀R or ∃L made after the witness was left open or on another branch`
+            : failed.message.replace(/^.*?: /, "")
+        }. Choose another rule, or undo the step that left the witness open.`,
       };
     case "no_witness":
       return {

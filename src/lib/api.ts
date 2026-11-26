@@ -14,8 +14,8 @@ import type {
   ClosedAll,
   Hint,
   Inverted,
+  Judged,
   Mode,
-  Offered,
   Outcome,
   Played,
   Ran,
@@ -103,8 +103,9 @@ export function createApi(changed: (pending: number) => void) {
       json<Inverted>("start", JSON.stringify(sequent), mode, settings),
     view: (session: SessionDoc, settings: string) =>
       json<Played["view"]>("view", doc(session), settings),
-    rules: (session: SessionDoc, goal: number, position: number, settings: string) =>
-      json<Offered[]>("rules", doc(session), goal, position, settings),
+    /** Every rule of a formula with whether its step is legal on the goal as it stands. */
+    candidates: (session: SessionDoc, goal: number, position: number, settings: string) =>
+      json<Judged[]>("candidates", doc(session), goal, position, settings),
     apply: (session: SessionDoc, goal: number, step: StepForm, settings: string) =>
       json<Inverted & { opened: number[] }>(
         "apply",
@@ -178,15 +179,16 @@ export function createApi(changed: (pending: number) => void) {
         json<OrdinaryPlayed>("ordinary_start", sequent, logic, settings),
       view: (session: OrdinarySession, settings: string) =>
         json<OrdinaryView>("ordinary_view", JSON.stringify(session), settings),
-      rules: (
+      /** Every rule of the logic on a formula, with whether its step is legal on the goal. */
+      candidates: (
         session: OrdinarySession,
         goal: number,
         side: string,
         position: number,
         settings: string,
       ) =>
-        json<{ rule: string; split: boolean; witness?: boolean }[]>(
-          "ordinary_rules",
+        json<Judged[]>(
+          "ordinary_candidates",
           JSON.stringify(session),
           goal,
           side,

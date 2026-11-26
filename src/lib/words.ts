@@ -37,6 +37,33 @@ export function modeWords(mode: Mode): string {
 /** What a tone of colour a fact takes: refused or unprovable, unknown, checked, or plain. */
 export type Tone = "bad" | "warn" | "ok" | "plain";
 
+/**
+ * What is wrong with a witness, from deduxit's fault (`details.fault` and its fields), as a phrase
+ * that follows "and"; the library's words where the page has none of its own.
+ */
+export function witnessFault(failed: Failure): string {
+  const d = failed.details ?? {};
+  const name = String(d["name"] ?? "");
+  switch (d["fault"]) {
+    case "unknown_symbol":
+      return `${name} is not a constant or function symbol of the sequent`;
+    case "predicate":
+      return `${name} is a predicate, which makes a formula, not a term`;
+    case "arity":
+      return `${name} takes ${String(d["arity"])} argument${d["arity"] === 1 ? "" : "s"}`;
+    case "applied":
+      return `the eigenvariable ${name} takes no arguments`;
+    case "out_of_scope":
+      return `no ∀R or ∃L below this goal made the eigenvariable ${name}`;
+    case "empty":
+      return "the box holds no term";
+    case "unclosed":
+      return "a bracket is not closed";
+    default:
+      return failed.message.replace(/^.*?: /, "");
+  }
+}
+
 const formula = (formulas: readonly GoalFormula[], position: unknown) =>
   typeof position === "number"
     ? formulaText(formulas[position]?.text ?? `formula ${position + 1}`)
@@ -98,7 +125,7 @@ export function refusal(failed: Failure, formulas: readonly GoalFormula[], rule:
     case "witness":
       return {
         keyword: `${rule} refused: no such term`,
-        sentence: `A witness is a term built from the sequent's constants and function symbols and the eigenvariables made below this goal: ${String(details["reason"] ?? "")}.`,
+        sentence: `A witness is a term built from the sequent's constants and function symbols and the eigenvariables made below this goal, and ${witnessFault(failed)}.`,
       };
     case "no_witness":
       return {

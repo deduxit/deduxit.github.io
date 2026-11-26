@@ -127,8 +127,8 @@ export interface Note {
 }
 
 /**
- * A rule the popover offers for a formula: deduxit's rule of its connective, with the refusal a
- * trial of it on this goal met, or null where it applies.
+ * A rule the popover offers for a formula: deduxit's rule of its connective, with the reason it is
+ * not a legal step on this goal, or null where it is one.
  */
 export interface Candidate extends Offered {
   readonly refused: Said | null;
@@ -2521,11 +2521,10 @@ export function createProver(say: (text: string) => void = () => undefined) {
     },
 
     /**
-     * The rules of a goal's formula, each tried on the goal: deduxit lists them by the formula's
-     * connective, and `apply` refuses one that the goal's other formulas rule out, with the
-     * reason. A trial changes nothing, and runs without the invertible rules, which would only
-     * add steps to a session that is thrown away. A split of linear logic is never tried: every
-     * split is a legal step.
+     * The rules of a goal's formula, each with whether its step is legal on the goal as it stands:
+     * deduxit's `candidates`, one call that judges each rule by the goal's other formulas, and the
+     * refusal of one that is not legal said in the page's words. Whether a goal can still be closed
+     * is never judged.
      */
     async rules(goal: number, position: number): Promise<Candidate[]> {
       const p = current();
@@ -2535,46 +2534,27 @@ export function createProver(say: (text: string) => void = () => undefined) {
       if (o) {
         const { side, position: at } = ordinaryStep(formulas, { position, rule: "" });
         const result = await attempt(() =>
-          api.ordinary.rules(o.session, goal, side, at, ordinaryJson()),
+          api.ordinary.candidates(o.session, goal, side, at, ordinaryJson()),
         );
         if (!result.ok) return [];
-        const tried: Candidate[] = [];
         // A rule of two premises shares the goal's context, G3's form a first course reads: the
-        // page applies it at once. A witness is tried left open, which ∃R and ∀L may be.
-        for (const r of result.value) {
-          const step = { position, rule: r.rule };
-          const trial = await attempt(() =>
-            api.ordinary.apply(o.session, goal, ordinaryStep(formulas, step), ordinaryJson()),
-          );
-          tried.push({
-            rule: r.rule,
-            split: false,
-            ...(r.witness ? { witness: true } : {}),
-            refused:
-              !trial.ok && trial.failed ? ordinaryRefusal(trial.failed, formulas, r.rule) : null,
-          });
-        }
-        return tried;
+        // page applies it at once.
+        return result.value.map((c) => ({
+          rule: c.rule,
+          split: false,
+          ...(c.needs === "witness" ? { witness: true } : {}),
+          refused: c.refusal ? ordinaryRefusal(c.refusal, formulas, c.rule) : null,
+        }));
       }
       const session = p.session as SessionDoc;
-      const result = await attempt(() => api.rules(session, goal, position, json()));
+      const result = await attempt(() => api.candidates(session, goal, position, json()));
       if (!result.ok) return [];
-      const tried: Candidate[] = [];
-      for (const r of result.value) {
-        if (r.split) {
-          tried.push({ ...r, refused: null });
-          continue;
-        }
-        // A witness is tried left open, which every quantifier step may be.
-        const trial = await attempt(() =>
-          api.apply(session, goal, { position, rule: r.rule }, json(undefined, false)),
-        );
-        tried.push({
-          ...r,
-          refused: !trial.ok && trial.failed ? refusal(trial.failed, formulas, r.rule) : null,
-        });
-      }
-      return tried;
+      return result.value.map((c) => ({
+        rule: c.rule,
+        split: c.needs === "split",
+        ...(c.needs === "witness" ? { witness: true } : {}),
+        refused: c.refusal ? refusal(c.refusal, formulas, c.rule) : null,
+      }));
     },
 
     /**

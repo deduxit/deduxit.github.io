@@ -174,6 +174,18 @@ export interface View {
   readonly forest?: number;
 }
 
+/**
+ * A rule with whether its step is legal on the goal as it stands, as `candidates` and
+ * `ordinary_candidates` answer it: `needs` what a legal step takes (`split`, `witness`, or in an
+ * ordinary proof `context`), `refusal` the error `apply` would throw for the step.
+ */
+export interface Judged {
+  readonly rule: string;
+  readonly status: "applies" | "needs_input" | "refused";
+  readonly needs?: string;
+  readonly refusal?: Failure;
+}
+
 /** A rule a formula takes, whether it splits the goal's context, and whether it takes a witness. */
 export interface Offered {
   readonly rule: string;

@@ -294,6 +294,13 @@ export async function ordinary(page: Page, visit: Visit) {
   await page.getByRole("button", { name: /^a → b, formula/ }).click();
   await expect(page.getByRole("dialog", { name: "Rules" })).toBeVisible();
   await visit("ordinary rules");
+  // The axiom, listed for every formula, is greyed here: a → b is not right of ⊢.
+  await page
+    .getByRole("dialog", { name: "Rules" })
+    .getByRole("button", { name: "ax, does not apply" })
+    .click({ force: true });
+  await expect(page.locator(".rule-card")).toContainText("ax refused: no partner");
+  await visit("an ordinary greyed rule's reason");
   await page.keyboard.press("Escape");
   await newTab(page);
   await calculus(page, ["Intuitionistic"]);
