@@ -2708,7 +2708,8 @@ fieldset {
   margin: auto 0 0;
 }
 .pk-acts .btn {
-  flex: 1;
+  /* Each as wide as its words, wrapping to a row of its own where the panel is narrow. */
+  flex: 1 1 auto;
   display: inline-flex;
   align-items: center;
   justify-content: center;
