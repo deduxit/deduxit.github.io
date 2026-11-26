@@ -8,7 +8,7 @@
 
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
-import { calculus, goto, start } from "./prover";
+import { calculus, exportEntry, goto, saveExport, start } from "./prover";
 import { customStep, deduce, deriveLine } from "./states";
 
 /** Opens the page with its tab in ordinary intuitionistic logic, by natural deduction. */
@@ -70,7 +70,7 @@ test("a proof is built backwards and forwards, and a line out of reach is refuse
   await expect(view.getByRole("status")).toContainText("Valid in NJ");
 });
 
-test("the toggles' Natural and Fitch draw one proof, and each is saved as it is drawn", async ({
+test("the toggles' Natural and Fitch draw one proof, and Export writes it as it is drawn", async ({
   page,
 }) => {
   await natural(page);
@@ -85,18 +85,25 @@ test("the toggles' Natural and Fitch draw one proof, and each is saved as it is 
   // Line 3 is the open goal a, drawn with its question mark; line 2 is cited by ∧I.
   await expect(drawing.locator("#l3")).toBeAttached();
   await expect(drawing.locator("desc")).toContainText("Line 2, b: by ∧E₂ from line 1.");
-  const saved = page.waitForEvent("download");
-  await page.getByRole("button", { name: "LaTeX" }).click();
-  const file = await saved;
-  expect(file.suggestedFilename()).toBe("natural-deduction.tex");
-  const text = await file.createReadStream().then(async (stream) => {
-    let all = "";
-    for await (const chunk of stream) all += chunk;
-    return all;
-  });
-  expect(text).toContain("\\begin{nd}");
+  // Export writes the natural deduction proof, its Fitch lines while they are shown.
+  const panel = await exportEntry(page, "LaTeX");
+  await expect(panel.locator("pre")).toContainText("\\begin{nd}");
+  const file = await saveExport(page, "LaTeX");
+  expect(file.suggestedFilename()).toBe("deduxit-natural-deduction.tex");
+  await expect(panel.getByRole("button", { name: "Rocq", exact: true })).toHaveAttribute(
+    "data-off",
+    "",
+  );
+  await page.keyboard.press("Escape");
   await page.getByRole("button", { name: "Natural", exact: true }).click();
   await expect(drawing.locator("#i0")).toBeAttached();
+  await exportEntry(page, "LaTeX");
+  await expect(panel.locator("pre")).not.toContainText("\\begin{nd}");
+  await expect(panel.locator("pre")).toContainText("\\begin{prooftree}");
+  // The panel holds natural deduction's exports: its own buttons are gone.
+  await expect(
+    page.getByRole("region", { name: "Natural deduction" }).getByRole("button", { name: "Typst" }),
+  ).toHaveCount(0);
 });
 
 test("a goal closed by its assumption is drawn in both views", async ({ page }) => {

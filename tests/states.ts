@@ -567,6 +567,10 @@ export async function lambdaing(page: Page, visit: Visit) {
   await expect(page.locator(".lambda .kw.ok", { hasText: "Well typed" })).toBeVisible();
   await expect(page.locator(".lambda .custom-drawing svg")).toBeVisible();
   await visit("lambda term checked");
+  await press(page, "Export", visit);
+  await expect(page.getByRole("dialog", { name: "Export" }).locator("pre")).toContainText("\\");
+  await visit("Export, a term's typing");
+  await page.keyboard.press("Escape");
   await newTab(page);
   await page.getByRole("textbox", { name: "Sequent" }).fill("a -> a -> a");
   await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
@@ -608,6 +612,10 @@ export async function modalising(page: Page, visit: Visit) {
   await expect(page.locator(".modal .kw.ok", { hasText: "Valid" })).toBeVisible();
   await expect(page.locator(".modal .custom-drawing svg")).toBeVisible();
   await visit("modal valid");
+  await press(page, "Export", visit);
+  await expect(page.getByRole("dialog", { name: "Export" }).locator("pre")).toContainText("\\");
+  await visit("Export, a modal derivation");
+  await page.keyboard.press("Escape");
   await page.getByText("Check a model").click();
   await page.getByRole("button", { name: "Start from one world" }).click();
   await page.getByRole("button", { name: "Check the model" }).click();
@@ -666,6 +674,10 @@ export async function deducing(page: Page, visit: Visit) {
   await page.getByRole("button", { name: "Check the proof" }).click();
   await expect(page.getByRole("status").filter({ hasText: "Valid in NJ" })).toBeVisible();
   await visit("natural valid");
+  await press(page, "Export", visit);
+  await expect(page.getByRole("dialog", { name: "Export" }).locator("pre")).toContainText("nd");
+  await visit("Export, natural deduction's Fitch lines");
+  await page.keyboard.press("Escape");
 }
 
 /**

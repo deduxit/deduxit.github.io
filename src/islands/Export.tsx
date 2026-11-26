@@ -7,15 +7,23 @@
  * writes, and "Copy" and "Save". Every setting is one of deduxit's `--style` options, kept with
  * the page's settings. The entry "Course pack" has the pack's form in that place (`PackForm`).
  * In a compact window the entries wrap in rows above the rest.
+ *
+ * Each view writes through its own suite's calls: a derivation of linear or ordinary logic
+ * through `export_as` and `ordinary_export`, natural deduction through `rules_export` (its tree
+ * or its Fitch lines, as shown), a modal decision through `modal_export` and `modal_draw`, a
+ * lambda-term's typing through `lambda_export` and `lambda_draw`.
  */
 
 import { createResource, createSignal, For, type JSX, Show } from "solid-js";
+import type { CustomSession } from "../lib/custom";
 import { failure, MATH_FONTS, type Outcome, type SessionDoc } from "../lib/deduxit";
 import { writeLink } from "../lib/link";
+import { type ModalOutcome, prettyModal } from "../lib/modal";
 import { countermodelOf, isOrdinary, type OrdinaryOutcome, prettyOrdinary } from "../lib/ordinary";
-import { intuitionistic, markOf, parameterOf } from "../lib/suites";
+import { intuitionistic, isNatural, markOf, parameterOf } from "../lib/suites";
 import { pretty } from "../lib/words";
 import { PackForm } from "./Packs";
+import { layout, naturalSession } from "./Natural";
 import { download } from "./Panels";
 import { RocqLogo, Sign, type SignName } from "./Signs";
 import { type ExportLook, exportFont, lookJson, type Prover, SCALES, viewJson } from "./state";
@@ -166,6 +174,29 @@ export function ExportPanel(props: {
   };
   /** Whether the view shown is a linear proof's net, which the pictures draw. */
   const net = () => props.ui.ui.tab === "net" && !ordinarySession();
+  /** What the view shown is a proof in: a sequent calculus, natural deduction, modal logic, lambda-terms. */
+  const kind = (): "sequent" | "natural" | "modal" | "lambda" => {
+    const p = proof();
+    if (p?.calculus.suite === "modal") return "modal";
+    if (p?.calculus.suite === "lambda") return "lambda";
+    if (p && isNatural(p.calculus) && props.ui.ui.tab === "tree") return "natural";
+    return "sequent";
+  };
+  /** What the entries write from: the session, natural deduction's, the modal outcome, the typing. */
+  const subject = (): unknown => {
+    const p = proof();
+    if (!p) return undefined;
+    switch (kind()) {
+      case "natural":
+        return naturalSession(p);
+      case "modal":
+        return p.modal?.outcome ?? undefined;
+      case "lambda":
+        return p.lambda?.typing ?? undefined;
+      default:
+        return p.session ?? undefined;
+    }
+  };
   const complete = () => proof()?.view?.complete === true;
   /** A linear goal's refutation the search found, for its certificate. */
   const refutation = (): Outcome | undefined => {
@@ -189,6 +220,8 @@ export function ExportPanel(props: {
 
   /** Why an entry has nothing to give for the view shown, or null. */
   const off = (entry: Entry): string | null => {
+    const own = kind() === "sequent" ? undefined : offOther(entry);
+    if (own !== undefined) return own;
     if (net() && (entry === "latex" || entry === "typst" || entry === "text"))
       return "A net is a picture. Choose SVG, PNG or PDF, or show the proof to export its derivation as text.";
     if (entry === "rocq" && !rocqKind()) {
@@ -201,6 +234,31 @@ export function ExportPanel(props: {
         ? "Rocq needs a finished proof, or a goal the search showed not valid. Finish the proof, or close such a goal."
         : "Rocq needs a finished proof, or a goal the search refuted. Finish the proof first.";
     }
+    return null;
+  };
+
+  /**
+   * Why an entry has nothing to give for natural deduction, a modal decision or a lambda-term, or
+   * null; undefined for an entry these views share with every proof (the links, the pack).
+   */
+  const offOther = (entry: Entry): string | null | undefined => {
+    if (entry.endsWith("-link") || entry === "pack") return undefined;
+    const k = kind();
+    if (entry === "text" || entry === "session" || entry === "rocq")
+      return k === "natural"
+        ? "deduxit writes natural deduction as LaTeX, Typst or a picture."
+        : k === "modal"
+          ? "deduxit writes a modal decision as LaTeX, Typst or a picture."
+          : "deduxit writes a term's typing as LaTeX, Typst or a picture.";
+    const p = proof();
+    if (k === "modal") {
+      const outcome = p?.modal?.outcome;
+      if (!outcome) return "The sequent is not decided yet. Enter it first.";
+      if ((entry === "latex" || entry === "typst") && outcome.verdict !== "valid")
+        return "Only a valid sequent has a derivation to write. Save its countermodel as a picture.";
+    }
+    if (k === "lambda" && !p?.lambda?.typing)
+      return "Export writes a well-typed term's typing derivation. Enter such a term first.";
     return null;
   };
 
@@ -243,8 +301,13 @@ export function ExportPanel(props: {
           },
         },
       },
-      ...viewJson(s, proof()?.calculus),
+      ...view(),
     });
+  };
+  /** The view's settings: the stage's, and natural deduction's tree or Fitch lines as shown. */
+  const view = () => {
+    const shown = viewJson(props.prover.settings(), proof()?.calculus);
+    return kind() === "natural" ? { view: { ...shown.view, layout: layout() } } : shown;
   };
 
   const session = () => proof()?.session as SessionDoc;
@@ -257,22 +320,33 @@ export function ExportPanel(props: {
       if (kind === "countermodel")
         return props.prover.api.ordinary.modelCertificate(countermodel() as OrdinaryOutcome, json);
     }
+    const api = props.prover.api;
+    switch (kind()) {
+      case "natural":
+        return api.custom.exportAs(subject() as CustomSession, entry, json);
+      case "modal":
+        return api.modal.exportAs(subject() as ModalOutcome, entry, json);
+      case "lambda":
+        return api.lambda.exportAs(subject() as string, entry, json);
+    }
     const o = ordinarySession();
-    return o
-      ? props.prover.api.ordinary.exportAs(o, entry, json)
-      : props.prover.api.exportAs(session(), entry, json);
+    return o ? api.ordinary.exportAs(o, entry, json) : api.exportAs(session(), entry, json);
   }
-  /** The drawing the pictures are made from: the net shown, or the derivation. */
-  const drawing = (json: string) =>
-    net() ? props.prover.api.drawNet(session(), json) : written("svg", json);
+  /** The drawing the pictures are made from: the net shown, or the derivation (or countermodel). */
+  const drawing = (json: string) => {
+    const api = props.prover.api;
+    if (kind() === "modal") return api.modal.draw(subject() as ModalOutcome, json);
+    if (kind() === "lambda") return api.lambda.draw(subject() as string, json);
+    return net() ? api.drawNet(session(), json) : written("svg", json);
+  };
 
   // What a text entry writes, read again whenever the proof, the entry or a setting changes.
   const [text] = createResource(
     () => {
       const entry = chosen();
-      if (!TEXTS.has(entry) || off(entry) || !proof()?.session) return undefined;
+      if (!TEXTS.has(entry) || off(entry) || !subject()) return undefined;
       if (entry === "rocq" && !rocqName(look().lemma)) return undefined;
-      return { entry, json: settings(), session: proof()?.session };
+      return { entry, json: settings(), subject: subject() };
     },
     ({ entry, json }) =>
       written(entry, json)
@@ -287,13 +361,24 @@ export function ExportPanel(props: {
     () => {
       const entry = chosen();
       const p = proof();
-      if ((entry !== "proof-link" && entry !== "sequent-link") || !p?.session) return undefined;
-      return { bare: entry === "sequent-link", p, session: p.session };
+      if (entry !== "proof-link" && entry !== "sequent-link") return undefined;
+      // A modal or lambda tab's link holds its sequent or term alone, decided again on arrival.
+      const decided = p?.calculus.suite === "modal" || p?.calculus.suite === "lambda";
+      if (!p || !(decided ? (p.modal?.outcome ?? p.lambda?.statement) : p.session))
+        return undefined;
+      return { bare: entry === "sequent-link" || decided, p, session: p.session };
     },
     async ({ bare, p }) => {
+      const suite = p.calculus.suite;
       const made = await writeLink(
-        p.calculus.suite === "ordinary" ? prettyOrdinary(p.input) : pretty(p.input),
-        p.calculus.suite,
+        suite === "ordinary"
+          ? prettyOrdinary(p.input)
+          : suite === "modal"
+            ? prettyModal(p.input)
+            : suite === "lambda"
+              ? p.input
+              : pretty(p.input),
+        suite,
         parameterOf(p.calculus),
         bare ? undefined : JSON.stringify(p.session),
       );
@@ -309,7 +394,18 @@ export function ExportPanel(props: {
       ? "deduxit-refutation.v"
       : chosen() === "rocq" && rocqKind() === "countermodel"
         ? "deduxit-countermodel.v"
-        : `deduxit-${net() ? "net" : "proof"}.${name()}`;
+        : `deduxit-${stem()}.${name()}`;
+  /** What a file holds, for its name. */
+  const stem = () =>
+    net()
+      ? "net"
+      : kind() === "lambda"
+        ? "typing"
+        : kind() === "modal" && proof()?.modal?.outcome?.verdict !== "valid"
+          ? "countermodel"
+          : kind() === "natural"
+            ? "natural-deduction"
+            : "proof";
   const label = (entry: Entry) =>
     GROUPS.flatMap(([, entries]) => entries).find(([e]) => e === entry)?.[1] ?? entry;
 

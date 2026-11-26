@@ -7,7 +7,16 @@
 
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
-import { calculus as choose, goto, newTab, switches, tool, viewCell } from "./prover";
+import {
+  calculus as choose,
+  exportEntry,
+  goto,
+  newTab,
+  saveExport,
+  switches,
+  tool,
+  viewCell,
+} from "./prover";
 
 /** Each lambda calculus's toggle, by the calculus. */
 const USE = { simple: "Unrestricted", linear: "Linear", affine: "Affine" } as const;
@@ -92,4 +101,19 @@ test("a term that uses a variable twice is not well typed in the linear calculus
     "aria-invalid",
     "true",
   );
+});
+
+test("Export writes a checked term's typing derivation as LaTeX, Typst or a picture", async ({
+  page,
+}) => {
+  await lambdaTab(page);
+  await read(page, String.raw`\f:a -> b. \x:a. f x`);
+  await expect(page.locator(".lambda .kw.ok")).toHaveText("Well typed");
+  const panel = await exportEntry(page, "LaTeX");
+  await expect(panel.locator("pre")).toContainText("\\");
+  expect((await saveExport(page, "SVG")).suggestedFilename()).toBe("deduxit-typing.svg");
+  await exportEntry(page, "Rocq");
+  await expect(
+    panel.getByText("deduxit writes a term's typing as LaTeX, Typst or a picture."),
+  ).toBeVisible();
 });

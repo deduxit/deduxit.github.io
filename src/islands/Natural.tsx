@@ -35,7 +35,6 @@ import {
   shownNumbers,
 } from "../lib/natural";
 import { isOrdinary, type SequentForm } from "../lib/ordinary";
-import { download } from "./Panels";
 import { Sign } from "./Signs";
 import type { Proof, Prover } from "./state";
 
@@ -87,6 +86,12 @@ export function putNatural(p: Proof, played: CustomPlayed) {
   const q = problemOfProof(p);
   if (!q) return;
   setWorks(keyOf(p, q), { problem: q, played, goal: null, said: null, checked: false });
+}
+
+/** A proof's natural deduction session as it stands, for Export; undefined before deduxit started it. */
+export function naturalSession(p: Proof): CustomSession | undefined {
+  const q = problemOfProof(p);
+  return q ? works[keyOf(p, q)]?.played?.session : undefined;
 }
 
 /** What a step leaves open, asked for by name, and the values typed so far. */
@@ -177,24 +182,6 @@ export function NaturalView(props: { prover: Prover }) {
         .then((svg) => ({ svg }))
         .catch((thrown) => ({ refused: failureOf(thrown).message })),
   );
-
-  async function save(format: "latex" | "typst" | "svg") {
-    const session = work()?.played?.session;
-    if (!session) return;
-    const kinds = {
-      latex: ["tex", "application/x-tex"],
-      typst: ["typ", "text/plain"],
-      svg: ["svg", "image/svg+xml"],
-    } as const;
-    const [ext, type] = kinds[format];
-    try {
-      const text = await api().exportAs(session, format, settings({ view: { layout: layout() } }));
-      download(`natural-deduction.${ext}`, text, type);
-    } catch (thrown) {
-      const k = key();
-      if (k) setWorks(k, "said", failureOf(thrown).message);
-    }
-  }
 
   async function check() {
     const k = key();
@@ -325,18 +312,6 @@ export function NaturalView(props: { prover: Prover }) {
                 )}
               </Show>
             </Show>
-            <p class="row nd-save">
-              <span class="kw-label">Save as</span>
-              <button type="button" class="btn" onClick={() => void save("latex")}>
-                LaTeX
-              </button>
-              <button type="button" class="btn" onClick={() => void save("typst")}>
-                Typst
-              </button>
-              <button type="button" class="btn" onClick={() => void save("svg")}>
-                SVG
-              </button>
-            </p>
           </>
         )}
       </Show>

@@ -8,7 +8,17 @@
 
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
-import { addView, calculus, goto, switches, system as choose, tool, viewCell } from "./prover";
+import {
+  addView,
+  calculus,
+  exportEntry,
+  goto,
+  saveExport,
+  switches,
+  system as choose,
+  tool,
+  viewCell,
+} from "./prover";
 import { customStep } from "./states";
 
 /** Opens the page with its tab in modal logic, in the system given. */
@@ -154,4 +164,24 @@ test("a copy is a view beside the decision, with the same decision", async ({ pa
     "true",
   );
   await expect(page.locator(".modal .kw.bad")).toHaveText("Not valid");
+});
+
+test("Export writes a valid sequent's derivation, and draws a countermodel where there is none", async ({
+  page,
+}) => {
+  await modalTab(page, "S4");
+  await decide(page, "[]p -> [][]p");
+  await expect(page.locator(".modal .kw.ok")).toHaveText("Valid");
+  const panel = await exportEntry(page, "LaTeX");
+  await expect(panel.locator("pre")).toContainText("\\");
+  expect((await saveExport(page, "Typst")).suggestedFilename()).toBe("deduxit-proof.typ");
+  await page.keyboard.press("Escape");
+  await choose(page, "K");
+  await expect(page.locator(".modal .kw.bad")).toHaveText("Not valid");
+  await exportEntry(page, "LaTeX");
+  await expect(panel.getByText("Only a valid sequent has a derivation to write.")).toBeVisible();
+  expect((await saveExport(page, "SVG")).suggestedFilename()).toBe("deduxit-countermodel.svg");
+  // The link holds the sequent and the system, decided again on arrival.
+  await exportEntry(page, "This proof");
+  await expect(panel.locator(".ex-link")).toContainText("u=modal&m=K");
 });

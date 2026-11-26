@@ -99,6 +99,14 @@ export function tone(proof: Proof): "ok" | "bad" | "warn" | "open" | "none" {
 }
 
 /** Whether a proof has been entered: a session, or a modal sequent or a lambda-term decided. */
+/**
+ * Whether Export has something of a proof to write: a session (natural deduction's view writes
+ * its own), a modal decision, a lambda tab's term or type.
+ */
+export function exportable(proof: Proof | undefined): boolean {
+  return !!(proof?.session || proof?.modal?.outcome || proof?.lambda?.statement);
+}
+
 export function started(proof: Proof | undefined): boolean {
   if (!proof) return false;
   return !!(
@@ -1118,7 +1126,7 @@ export function Tools(props: {
           action="export"
           rare
           icon={<Sign name="export" />}
-          disabled={!proof()?.session || natural()}
+          disabled={!exportable(proof())}
           expanded={ui.menu === "export"}
           onClick={() => toggle("export")}
         />
