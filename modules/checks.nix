@@ -280,7 +280,7 @@
             };
           };
 
-          lint = pkgs.runCommand "check-lint" { nativeBuildInputs = [ config.biome ]; } ''
+          lint = pkgs.runCommand "check-lint" { nativeBuildInputs = [ pkgs.biome ]; } ''
             cd ${biomeSources}
             biome lint --error-on-warnings
             touch $out

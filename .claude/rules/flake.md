@@ -34,13 +34,16 @@ never through `specialArgs`. The scheme is the author's learning sites'
 - **Every derivation reads only its files** (`lib.fileset`): `fileSets.site` is what
   `astro build` reads; a check adds its own. A new file that the build or a check reads
   must be in one, or the sandbox does not see it while the dev shell still works.
-- **Biome is `config.biome` (`biome.nix`), nixpkgs' own built without its test suite**,
-  and the formatter, `lint` and the dev shell all take it from there, never `pkgs.biome`.
-  The locked nixpkgs (`4fe25e12`, 2026-11-09) is a channel release with no cache.nixos.org
-  build of Biome, and the tests' fat-LTO links (8 to 10 GB each) got CI's check job killed
-  (exit 143, runs 34 to 36 and 38). Drop the override at the first `flake.lock` update
-  whose nixpkgs has Biome on cache.nixos.org (`nix path-info --store
-  https://cache.nixos.org --inputs-from . nixpkgs#biome` prints a path).
+- **Biome is `pkgs.biome`, fetched from cache.nixos.org**, for the formatter, `lint` and
+  the dev shell. Built here, its tests' fat-LTO links (8 to 10 GB each) got CI's check job
+  killed (exit 143, runs 34 to 36 and 38, with nixpkgs `4fe25e12`, which had no cached
+  Biome), so until nixpkgs `619c39f6` (Biome 2.6.8, cached) it was overridden without its
+  tests. Before a `flake.lock` update is committed, check that the new nixpkgs has Biome
+  cached: `nix path-info --store https://cache.nixos.org $(nix eval --raw --inputs-from .
+  nixpkgs#biome.outPath)` prints the store path, or fails where it is not cached (asked
+  with `nixpkgs#biome` itself, it tries to copy the derivation and fails with 404 either
+  way). Where it is not, override it again without its tests (`overrideAttrs { doCheck =
+  false; }`) until one is.
 - **The age gate** (`min-release-age=14` in `.npmrc`) holds for security fixes too, and is
   bypassed only with the author's agreement. `solid-js` 1.9.17 was taken past the gate for
   its seroval fix; 1.9.18, taken on 2026-11-14, passed it normally. `@playwright/test` 1.64.1 was taken
