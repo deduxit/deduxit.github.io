@@ -133,7 +133,7 @@ test("a proof's cut links are eliminated step by step on its net", async ({ page
 test("an elimination to the end says which bound stopped it", async ({ page }) => {
   await provedWithCut(page);
   await page.getByRole("button", { name: "Settings", exact: true }).click();
-  const steps = page.getByRole("spinbutton", { name: "Elimination steps" });
+  const steps = page.getByRole("textbox", { name: "Steps of cut elimination" });
   await steps.fill("1");
   await steps.press("Enter");
   // Settings is a page: its own button leaves it.

@@ -3751,10 +3751,73 @@ table.keys th {
   padding-top: var(--spacing-3);
   border-top: var(--line) solid var(--color-hair);
 }
-.settings-page .form {
+/* Its title with "Kept in this browser" on its line; then sections of rows, each row its label
+   at the left and its control at the right, or under it where they do not fit side by side. */
+.st-head {
   display: flex;
-  flex-direction: column;
-  gap: var(--spacing-2);
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--spacing-4);
+  margin-bottom: var(--spacing-6);
+}
+.st-head h1 {
+  margin: 0;
+}
+.settings-page section + section {
+  margin-top: var(--spacing-6);
+}
+.settings-page section > h2 {
+  margin: 0 0 var(--spacing-2);
+  padding: 0;
+  border: 0;
+}
+.st-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-2) var(--spacing-5);
+  min-height: var(--size-settings-row);
+  padding: var(--spacing-2) 0;
+  border-top: var(--line) solid var(--color-hair);
+  font-size: var(--text-body);
+}
+.st-row.sw {
+  display: flex;
+  width: 100%;
+}
+.st-help {
+  margin: calc(-1 * var(--spacing-1)) 0 var(--spacing-2);
+  max-width: var(--size-text);
+}
+.st-num {
+  width: var(--size-count);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.st-engine {
+  width: min(var(--size-engine), 100%);
+}
+.st-value {
+  color: var(--color-ink2);
+}
+.st-fonts {
+  flex-wrap: wrap;
+}
+.st-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: var(--size-settings-row);
+  padding: var(--spacing-2) 0;
+  border-top: var(--line) solid var(--color-hair);
+  border-radius: 0;
+  color: var(--color-ink);
+  font-size: var(--text-body);
+  text-align: left;
+  text-decoration: none;
 }
 
 /* A compact window, under 600 wide: the views a row under the top row, the tools a bar along the

@@ -142,8 +142,8 @@ test("an unprovable goal's close says why, checked; a search that gives up offer
   await expect((await goalMenu(page)).getByRole("button", { name: "Go back" })).toHaveCount(0);
   await page.keyboard.press("Escape");
   await page.getByRole("button", { name: "Settings", exact: true }).click();
-  await page.getByRole("spinbutton", { name: "Budget" }).fill("1");
-  await page.getByRole("spinbutton", { name: "Budget" }).press("Enter");
+  await page.getByRole("textbox", { name: "Budget, in units of work" }).fill("1");
+  await page.getByRole("textbox", { name: "Budget, in units of work" }).press("Enter");
   // Settings is a page: its own button leaves it.
   await page.getByRole("button", { name: "Settings", exact: true }).click();
   await start(page, "!A |- A * A", false);
@@ -363,7 +363,7 @@ test("Settings sets the formulas' font: the drawing laid out in it, every formul
   const euler = await drawn();
   expect(fetched.some((path) => path.startsWith("/fonts/STIXTwoMath-"))).toBe(false);
   await page.getByRole("button", { name: "Settings", exact: true }).click();
-  await page.getByRole("radio", { name: "STIX Two Math" }).check();
+  await page.getByRole("button", { name: "STIX Two", exact: true }).click();
   // Settings is a page: its own button leaves it.
   await page.getByRole("button", { name: "Settings", exact: true }).click();
   await expect(page.locator(".drawing svg")).toHaveAttribute("font-family", /'STIX Two Math'/);
@@ -565,8 +565,8 @@ test("a sequent's state is told on its chip by a sign and in its name, not by it
   await expect(chip(1).locator("svg.lucide-x")).toBeVisible();
   await expect(chip(1)).toHaveAccessibleName("A ⊢ B, refuted");
   await page.getByRole("button", { name: "Settings", exact: true }).click();
-  await page.getByRole("spinbutton", { name: "Budget" }).fill("1");
-  await page.getByRole("spinbutton", { name: "Budget" }).press("Enter");
+  await page.getByRole("textbox", { name: "Budget, in units of work" }).fill("1");
+  await page.getByRole("textbox", { name: "Budget, in units of work" }).press("Enter");
   await page.getByRole("button", { name: "Settings", exact: true }).click();
   await start(page, "!(a -o a * a), a |- a * a * a * a", false);
   await calculus(page, ["Intuitionistic"]);
@@ -848,7 +848,7 @@ test("an earlier release's settings and theme, under the old linlog-* keys, hold
   await goto(page);
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
   await page.getByRole("button", { name: "Settings", exact: true }).click();
-  await expect(page.getByRole("spinbutton", { name: "Budget" })).toHaveValue("7");
+  await expect(page.getByRole("textbox", { name: "Budget, in units of work" })).toHaveValue("7");
   const keys = await page.evaluate(() => Object.keys(localStorage).sort());
   expect(keys.filter((k) => k.startsWith("linlog-"))).toEqual([]);
   expect(keys).toEqual(expect.arrayContaining(["deduxit-settings", "deduxit-theme"]));

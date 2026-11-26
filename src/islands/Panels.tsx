@@ -7,8 +7,8 @@
  * paste, or a drop anywhere under the top row); the Settings page; About.
  */
 
-import { createResource, createSignal, For, Show } from "solid-js";
-import { APART, engineLabel, engineName, engineTip } from "../lib/engines";
+import { createResource, createSignal, For, type JSX, Show } from "solid-js";
+import { APART, ENGINE_ORDER, engineLabel, engineName, engineTip } from "../lib/engines";
 import { type Failure, MATH_FONTS } from "../lib/deduxit";
 import { isHandin, readHandin } from "../lib/pack";
 import { isOrdinary, stepsOf } from "../lib/ordinary";
@@ -25,9 +25,13 @@ import {
   type NetLook,
   type Prover,
   pathKey,
+  type SearchDefaults,
+  type SearchLogic,
   sameLook,
+  searchLogic,
   TEXTBOOK_LOOK,
 } from "./state";
+import { Sign } from "./Signs";
 import { Written } from "./Written";
 import { Dictionary, Logo } from "./Logo";
 import { usePacks } from "./Packs";
@@ -101,10 +105,6 @@ export function ImportPanel(props: { prover: Prover; ui: Ui }) {
   );
 }
 
-/** What an invertible rule is and why applying one never loses a proof: the switch's tip. */
-export const INVERTIBLE_TIP =
-  "An invertible rule never loses a proof: when its goal has a proof, so do its premises. ⅋, ⊥, & and ⊤ are always invertible; ! is when every other formula is under ?; 1, ⊗ and the axiom are when their formulas are the whole goal. In LK every rule of a connective is; in LJ all but →L, ¬L and the two ∨R.";
-
 /**
  * A row of Settings' net drawing: a field of the net's look (`styles.svg.net_look`) and its
  * values, or with no field a choice of whole looks, each pressed when the look is it.
@@ -126,7 +126,7 @@ function LookRow<K extends keyof NetLook>(props: {
   const isPressed = (value: NetLook[K] | NetLook) =>
     props.field === undefined ? sameLook(look(), value as NetLook) : look()[props.field] === value;
   return (
-    <div class="lbl">
+    <div class="st-row">
       <span>{props.label}</span>
       <fieldset class="seg" aria-label={props.label}>
         <For each={props.options}>
@@ -147,9 +147,100 @@ function LookRow<K extends keyof NetLook>(props: {
   );
 }
 
+/** What an invertible rule is and why applying one never loses a proof: the switch's tip. */
+const INVERTIBLE_TIP =
+  "An invertible rule never loses a proof: when its goal has a proof, so do its premises. ⅋, ⊥, & and ⊤ are always invertible; ! is when every other formula is under ?; 1, ⊗ and the axiom are when their formulas are the whole goal. In LK every rule of a connective is; in LJ all but →L, ¬L and the two ∨R.";
+
+/** A row of the Settings page: its label at the left, its control at the right or under it. */
+function Row(props: { label: string; for?: string | undefined; children: JSX.Element }) {
+  return (
+    <div class="st-row">
+      <Show when={props.for} fallback={<span>{props.label}</span>}>
+        {(id) => <label for={id()}>{props.label}</label>}
+      </Show>
+      {props.children}
+    </div>
+  );
+}
+
+/** A switch of the Settings page, its label at the left; its line of help under it. */
+function Switch(props: {
+  label: string;
+  checked: boolean;
+  help?: string;
+  tip?: string;
+  id: string;
+  onChange: (on: boolean) => void;
+}) {
+  return (
+    <>
+      <label class="sw st-row" data-tip={props.tip}>
+        <span>{props.label}</span>
+        <input
+          type="checkbox"
+          checked={props.checked}
+          aria-describedby={props.help ? props.id : undefined}
+          onChange={(event) => props.onChange(event.currentTarget.checked)}
+        />
+        <span class="sw-t" aria-hidden="true" />
+      </label>
+      <Show when={props.help}>
+        <p class="sub st-help" id={props.id}>
+          {props.help}
+        </p>
+      </Show>
+    </>
+  );
+}
+
+/** A count of the Settings page, right-aligned: a whole number above 0, else the default. */
+function Count(props: {
+  label: string;
+  id: string;
+  value: number;
+  fallback: number;
+  set: (value: number) => void;
+}) {
+  return (
+    <Row label={props.label} for={props.id}>
+      <input
+        id={props.id}
+        class="field num st-num"
+        type="text"
+        inputmode="numeric"
+        autocomplete="off"
+        value={props.value}
+        onChange={(event) => {
+          const value = Math.floor(Number(event.currentTarget.value.replace(/[^0-9]/g, "")));
+          const next = value > 0 ? value : props.fallback;
+          event.currentTarget.value = String(next);
+          props.set(next);
+        }}
+      />
+    </Row>
+  );
+}
+
+/** Each math font by the short name the Settings page shows. */
+const FONT_SHORT: Readonly<Record<string, string>> = {
+  euler: "Euler",
+  "stix-two": "STIX Two",
+  garamond: "Garamond",
+  asana: "Asana",
+  "new-computer-modern": "New Computer Modern",
+};
+
+/** The logics whose search has defaults, by their names on the page. */
+const LOGICS: readonly (readonly [SearchLogic, string])[] = [
+  ["ordinary", "Ordinary"],
+  ["linear", "Linear"],
+  ["modal", "Modal"],
+];
+
 /**
- * The Settings page, in the stage's place: one column of rows. Look (the scheme, the net's
- * drawing, the formulas' font), Search, Proving, Keys, This browser and About.
+ * The Settings page (board D10), in the stage's place: one column of rows. Look (the scheme, the
+ * formulas' font, the nets), Search (each logic's defaults), Proving, Keys, This browser, and
+ * About (the keys, what deduxit is with its licences, privacy).
  */
 export function SettingsPage(props: {
   prover: Prover;
@@ -160,128 +251,24 @@ export function SettingsPage(props: {
   closeEvery: () => void;
 }) {
   const { setUi } = props.ui;
+  const s = () => props.prover.settings();
+  const [logic, setLogic] = createSignal<SearchLogic>(
+    searchLogic(props.prover.current()?.calculus),
+  );
+  const defaults = () => s().search[logic()];
+  const setSearch = (change: Partial<SearchDefaults>) => props.prover.setSearch(logic(), change);
+  const seconds = () => Math.round(defaults().budget / 68e6);
   return (
     <section class="settings-page" aria-labelledby="settings-title">
-      <h1 id="settings-title">Settings</h1>
-      <div class="form">
-        <h2>Search</h2>
-        <label class="lbl col">
-          <span>Budget</span>
-          <input
-            class="num-in"
-            type="number"
-            min="1"
-            step="1"
-            value={props.prover.settings().budget}
-            onChange={(event) => {
-              const value = Math.floor(Number(event.currentTarget.value));
-              props.prover.setSettings({ budget: value > 0 ? value : DEFAULT_BUDGET });
-            }}
-          />
-        </label>
-        <p class="sub">
-          Units of work a search may do.{" "}
-          {Math.round(props.prover.settings().budget / 68e6) >= 1
-            ? `About ${Math.round(props.prover.settings().budget / 68e6)} second${props.prover.settings().budget >= 1.36e8 ? "s" : ""} here.`
-            : "Less than a second here."}
-        </p>
-        <label class="lbl col">
-          <span>Elimination steps</span>
-          <input
-            class="num-in"
-            type="number"
-            min="1"
-            step="1"
-            value={props.prover.settings().cutSteps}
-            onChange={(event) => {
-              const value = Math.floor(Number(event.currentTarget.value));
-              props.prover.setSettings({ cutSteps: value > 0 ? value : DEFAULT_CUT_STEPS });
-            }}
-          />
-        </label>
-        <p class="sub">"To the end" stops after this many steps of cut elimination.</p>
-        <p class="kw-label">First-order search</p>
-        <label class="lbl col">
-          <span>Witness depth</span>
-          <input
-            class="num-in"
-            type="number"
-            min="1"
-            step="1"
-            value={props.prover.settings().witnessDepth}
-            onChange={(event) => {
-              const value = Math.floor(Number(event.currentTarget.value));
-              props.prover.setSettings({
-                witnessDepth: value > 0 ? value : DEFAULT_WITNESS_DEPTH,
-              });
-            }}
-          />
-        </label>
-        <p class="sub">How deeply a search nests the terms it tries for ∃R and ∀L.</p>
-        <label class="lbl col">
-          <span>Instances</span>
-          <input
-            class="num-in"
-            type="number"
-            min="1"
-            step="1"
-            value={props.prover.settings().instances}
-            onChange={(event) => {
-              const value = Math.floor(Number(event.currentTarget.value));
-              props.prover.setSettings({ instances: value > 0 ? value : DEFAULT_INSTANCES });
-            }}
-          />
-        </label>
-        <p class="sub">The most instances of quantified formulas a search holds at once.</p>
-        <label class="lbl col">
-          <span>Terms</span>
-          <input
-            class="num-in"
-            type="number"
-            min="1"
-            step="1"
-            value={props.prover.settings().terms}
-            onChange={(event) => {
-              const value = Math.floor(Number(event.currentTarget.value));
-              props.prover.setSettings({ terms: value > 0 ? value : DEFAULT_TERMS });
-            }}
-          />
-        </label>
-        <p class="sub">The most terms a proof's witnesses and eigenvariables may hold.</p>
-        <EngineChoice prover={props.prover} />
-        <h2>Proving</h2>
-        <label class="sw" data-tip={INVERTIBLE_TIP}>
-          <input
-            type="checkbox"
-            checked={props.prover.settings().invertible}
-            aria-describedby="invertible-sub"
-            onChange={(event) => void props.prover.setInvertible(event.currentTarget.checked)}
-          />
-          <span class="sw-t" aria-hidden="true" />
-          Apply invertible rules by themselves
-        </label>
-        <p class="sub" id="invertible-sub">
-          The page takes them after each of your steps, and undo takes them back with it.
-        </p>
-        <label class="sw">
-          <input
-            type="checkbox"
-            checked={props.prover.settings().marking}
-            aria-describedby="marking-sub"
-            onChange={(event) => props.prover.setSettings({ marking: event.currentTarget.checked })}
-          />
-          <span class="sw-t" aria-hidden="true" />
-          Mark goals that have no proof
-        </label>
-        <p class="sub" id="marking-sub">
-          After each step a short search asks whether each new goal has a proof. A goal with none
-          gets a red line and a cross, and its ⊢ offers Go back.
-        </p>
-        <h2>Look</h2>
-        <fieldset class="lbl col">
-          <legend>Theme</legend>
-          <fieldset class="seg" aria-label="Theme">
-            <For each={["system", "light", "dark"] as const}>
+      <div class="st-head">
+        <h1 id="settings-title">Settings</h1>
+        <span class="sub">Kept in this browser</span>
+      </div>
+      <section aria-labelledby="st-look">
+        <h2 id="st-look">Look</h2>
+        <Row label="Scheme">
+          <fieldset class="seg" aria-label="Scheme">
+            <For each={["light", "dark", "system"] as const}>
               {(t) => (
                 <button
                   type="button"
@@ -297,16 +284,35 @@ export function SettingsPage(props: {
               )}
             </For>
           </fieldset>
-        </fieldset>
-        <fieldset class="lbl col">
-          <legend>Net drawing</legend>
-          <fieldset class="seg" aria-label="Net drawing">
+        </Row>
+        <Row label="Font of the formulas">
+          <fieldset class="seg st-fonts" aria-label="Font of the formulas">
+            <For each={MATH_FONTS}>
+              {(font) => (
+                <button
+                  type="button"
+                  class="seg-b"
+                  aria-pressed={s().stageFont === font.key}
+                  data-tip={font.look}
+                  onClick={() => props.prover.setSettings({ stageFont: font.key })}
+                >
+                  {FONT_SHORT[font.key] ?? font.name}
+                </button>
+              )}
+            </For>
+          </fieldset>
+        </Row>
+        <p class="sub st-help">
+          The drawing, its formulas and the exports, unless Export chooses another.
+        </p>
+        <Row label="Proof nets">
+          <fieldset class="seg" aria-label="Proof nets">
             <For each={["formulas", "compact"] as const}>
               {(net) => (
                 <button
                   type="button"
                   class="seg-b"
-                  aria-pressed={props.prover.settings().net === net}
+                  aria-pressed={s().net === net}
                   data-tip={
                     net === "formulas"
                       ? "Every formula of the net written"
@@ -319,121 +325,199 @@ export function SettingsPage(props: {
               )}
             </For>
           </fieldset>
-          <LookRow
-            prover={props.prover}
-            label="Look"
-            options={[
-              [
-                DEDUXIT_LOOK,
-                "Default",
-                "The page's own: edges into ⅋ and ? dashed, a ! with doors a row up, one ? node",
-              ],
-              [
-                TEXTBOOK_LOOK,
-                "Textbook",
-                "As the textbooks draw nets: every edge plain, every conclusion at the bottom, a ? as its rules' nodes",
-              ],
-            ]}
-          />
-          <LookRow
-            prover={props.prover}
-            label="Edges into ⅋, ?"
-            field="premises"
-            options={[
-              ["dashed", "Dashed", "Dashed and blue, since a switching keeps one of them"],
-              ["plain", "Plain", "Drawn as every other edge"],
-            ]}
-          />
-          <LookRow
-            prover={props.prover}
-            label="A ! with doors"
-            field="conclusions"
-            options={[
-              ["raised", "A row up", "Written under its door, above the ? nodes its wires reach"],
-              ["bottom", "At the bottom", "On the bottom row with every other conclusion"],
-            ]}
-          />
-          <LookRow
-            prover={props.prover}
-            label="A ? node"
-            field="whyNot"
-            options={[
-              ["node", "One node", "One ? with every copy and wire as a premise"],
-              [
-                "rules",
-                "Its rules",
-                "A dereliction ?d under each copy, contractions ?c, a weakening ?w",
-              ],
-            ]}
-          />
-          <p class="sub">
-            Textbook draws every edge plain, every conclusion at the bottom and a ? as the nodes of
-            its rules: ?d, ?c and ?w.
-          </p>
-        </fieldset>
-        <fieldset class="lbl col">
-          <legend>Font of the formulas</legend>
-          <div class="choices" role="radiogroup" aria-label="Font of the formulas">
-            <For each={MATH_FONTS}>
-              {(font) => (
-                <label class="seg-b" data-tip={font.look}>
-                  <input
-                    type="radio"
-                    name="stage-font"
-                    checked={props.prover.settings().stageFont === font.key}
-                    onChange={() => props.prover.setSettings({ stageFont: font.key })}
-                  />
-                  <span>{font.name}</span>
-                  <span class="why" />
-                </label>
+        </Row>
+        <LookRow
+          prover={props.prover}
+          label="Look of a net"
+          options={[
+            [
+              DEDUXIT_LOOK,
+              "Default",
+              "The page's own: edges into ⅋ and ? dashed, a ! with doors a row up, one ? node",
+            ],
+            [
+              TEXTBOOK_LOOK,
+              "Textbook",
+              "As the textbooks draw nets: every edge plain, every conclusion at the bottom, a ? as its rules' nodes",
+            ],
+          ]}
+        />
+        <LookRow
+          prover={props.prover}
+          label="Edges into ⅋, ?"
+          field="premises"
+          options={[
+            ["dashed", "Dashed", "Dashed and blue, since a switching keeps one of them"],
+            ["plain", "Plain", "Drawn as every other edge"],
+          ]}
+        />
+        <LookRow
+          prover={props.prover}
+          label="A ! with doors"
+          field="conclusions"
+          options={[
+            ["raised", "A row up", "Written under its door, above the ? nodes its wires reach"],
+            ["bottom", "At the bottom", "On the bottom row with every other conclusion"],
+          ]}
+        />
+        <LookRow
+          prover={props.prover}
+          label="A ? node"
+          field="whyNot"
+          options={[
+            ["node", "One node", "One ? with every copy and wire as a premise"],
+            [
+              "rules",
+              "Its rules",
+              "A dereliction ?d under each copy, contractions ?c, a weakening ?w",
+            ],
+          ]}
+        />
+      </section>
+      <section aria-labelledby="st-search">
+        <h2 id="st-search">Search</h2>
+        <Row label="Defaults for">
+          <fieldset class="seg" aria-label="Defaults for">
+            <For each={LOGICS}>
+              {([key, name]) => (
+                <button
+                  type="button"
+                  class="seg-b"
+                  aria-pressed={logic() === key}
+                  onClick={() => setLogic(key)}
+                >
+                  {name}
+                </button>
               )}
             </For>
-          </div>
-          <p class="sub">
-            The drawing, its formulas and the exports, unless Export chooses another.
-          </p>
-        </fieldset>
-        <h2>Keys</h2>
-        <label class="sw">
-          <input
-            type="checkbox"
-            checked={props.prover.settings().singleKeys}
-            aria-describedby="single-keys-sub"
-            onChange={(event) =>
-              props.prover.setSettings({ singleKeys: event.currentTarget.checked })
-            }
+          </fieldset>
+        </Row>
+        <Row label="Engine" for={logic() === "linear" ? "st-engine" : undefined}>
+          <Show
+            when={logic() === "linear"}
+            fallback={<span class="st-value">deduxit's choice</span>}
+          >
+            <select
+              id="st-engine"
+              class="field st-engine"
+              value={s().engine ?? ""}
+              onChange={(event) =>
+                props.prover.setSettings({ engine: event.currentTarget.value || null })
+              }
+            >
+              <option value="">Automatic</option>
+              <For each={ENGINE_ORDER}>
+                {(engine) => <option value={engine}>{engineLabel(engine)}</option>}
+              </For>
+            </select>
+          </Show>
+        </Row>
+        <p class="sub st-help">
+          {logic() === "linear"
+            ? "An engine chosen holds for this visit. One that does not take a sequent says so at its goal."
+            : "deduxit picks the way to search in this logic."}
+        </p>
+        <Count
+          label="Budget, in units of work"
+          id="st-budget"
+          value={defaults().budget}
+          fallback={DEFAULT_BUDGET}
+          set={(budget) => setSearch({ budget })}
+        />
+        <p class="sub st-help">
+          {seconds() >= 1
+            ? `About ${seconds()} second${seconds() > 1 ? "s" : ""} of search here.`
+            : "Less than a second of search here."}
+        </p>
+        <Show when={logic() !== "modal"}>
+          <Count
+            label="Witness depth"
+            id="st-witness"
+            value={defaults().witnessDepth}
+            fallback={DEFAULT_WITNESS_DEPTH}
+            set={(witnessDepth) => setSearch({ witnessDepth })}
           />
-          <span class="sw-t" aria-hidden="true" />
-          Single keys
-        </label>
-        <p class="sub" id="single-keys-sub">
-          Off, only the keys with Ctrl or Cmd, Tab, Enter, Space, the arrows and Escape act: speech
-          input types letters.
-        </p>
-        <p class="row">
-          <button type="button" class="btn" onClick={() => setUi("menu", "keys")}>
-            The list of keys
-          </button>
-        </p>
-        <h2>This browser</h2>
-        <p class="sub">
-          The open sequents are kept in this browser and come back on the next visit.
-        </p>
-        <p class="row">
+          <p class="sub st-help">How deeply a search nests the terms it tries for ∃R and ∀L.</p>
+          <Count
+            label="Instances"
+            id="st-instances"
+            value={defaults().instances}
+            fallback={DEFAULT_INSTANCES}
+            set={(instances) => setSearch({ instances })}
+          />
+          <p class="sub st-help">
+            The most instances of quantified formulas a search holds at once.
+          </p>
+          <Count
+            label="Terms"
+            id="st-terms"
+            value={defaults().terms}
+            fallback={DEFAULT_TERMS}
+            set={(terms) => setSearch({ terms })}
+          />
+          <p class="sub st-help">The most terms a proof's witnesses and eigenvariables may hold.</p>
+        </Show>
+      </section>
+      <section aria-labelledby="st-proving">
+        <h2 id="st-proving">Proving</h2>
+        <Switch
+          label="Mark goals that have no proof"
+          id="st-marking"
+          checked={s().marking}
+          help="After each step a short search looks at each new goal. A goal with no proof gets a red line and a cross, and its ⊢ offers Go back."
+          onChange={(marking) => props.prover.setSettings({ marking })}
+        />
+        <Switch
+          label="Apply invertible rules by themselves"
+          id="st-invertible"
+          checked={s().invertible}
+          help="An invertible rule never loses a proof. The page takes them after each of your steps, and Undo takes them back with it."
+          tip={INVERTIBLE_TIP}
+          onChange={(on) => void props.prover.setInvertible(on)}
+        />
+        <Count
+          label="Steps of cut elimination"
+          id="st-cut-steps"
+          value={s().cutSteps}
+          fallback={DEFAULT_CUT_STEPS}
+          set={(cutSteps) => props.prover.setSettings({ cutSteps })}
+        />
+        <p class="sub st-help">"To the end" stops after this many steps.</p>
+      </section>
+      <section aria-labelledby="st-keys">
+        <h2 id="st-keys">Keys</h2>
+        <Switch
+          label="Single keys"
+          id="st-single-keys"
+          checked={s().singleKeys}
+          help="Off, only the keys with Ctrl or Cmd, Tab, Enter, Space, the arrows and Escape act. Speech input types letters."
+          onChange={(singleKeys) => props.prover.setSettings({ singleKeys })}
+        />
+      </section>
+      <section aria-labelledby="st-browser">
+        <h2 id="st-browser">This browser</h2>
+        <Row label="Every sequent and its proofs">
           <button type="button" class="btn" onClick={() => props.closeEvery()}>
             Close every sequent
           </button>
-        </p>
-        <h2>About</h2>
-        <p class="row">
-          <button type="button" class="btn" onClick={() => setUi("menu", "about")}>
-            About deduxit and its licences
-          </button>
-          <a class="btn" href="/privacy/">
-            Privacy
-          </a>
-        </p>
-      </div>
+        </Row>
+        <p class="sub st-help">The open sequents are kept here and come back on your next visit.</p>
+      </section>
+      <section aria-labelledby="st-about">
+        <h2 id="st-about">About</h2>
+        <button type="button" class="st-link" onClick={() => setUi("menu", "keys")}>
+          <span>Keys</span>
+          <Sign name="next" />
+        </button>
+        <button type="button" class="st-link" onClick={() => setUi("menu", "about")}>
+          <span>What deduxit is, its licences</span>
+          <Sign name="next" />
+        </button>
+        <a class="st-link" href="/privacy/">
+          <span>Privacy</span>
+          <Sign name="next" />
+        </a>
+      </section>
     </section>
   );
 }

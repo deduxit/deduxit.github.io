@@ -153,7 +153,10 @@ export async function framePages(page: Page, visit: Visit) {
   await page.getByRole("button", { name: "Settings", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Settings", exact: true })).toBeVisible();
   await visit("Settings");
-  await page.getByRole("button", { name: "The list of keys" }).click();
+  await page
+    .getByRole("region", { name: "Settings" })
+    .getByRole("button", { name: "Keys", exact: true })
+    .click();
   await expect(page.getByRole("dialog", { name: "Keys" })).toBeVisible();
   await visit("Keys");
   // The list of keys took the Settings page's place; Escape closes it and leaves the proof shown.

@@ -274,6 +274,10 @@
   --size-panel-wide: 35rem;
   --size-page: 40rem;
   --size-text: 40rem;
+  /* A row of the Settings page, a count's field, the engine's list. */
+  --size-settings-row: 3rem;
+  --size-count: 7.75rem;
+  --size-engine: 14.375rem;
   /* A course pack's page: its column, and a problem's row. */
   --size-pack: 32.5rem;
   --size-row: 2.875rem;

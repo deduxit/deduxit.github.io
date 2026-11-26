@@ -8,7 +8,7 @@
 // practice set, and the field's Enter while a search runs.
 
 import { expect, test } from "./fixtures";
-import { calculus, closeGoal, exportEntry, start, viewCell } from "./prover";
+import { calculus, closeGoal, exportEntry, start, tool, viewCell } from "./prover";
 
 /** Sends the visible proof to intuitionistic mode before any step. */
 async function intuitionistic(page: import("@playwright/test").Page) {
@@ -44,19 +44,28 @@ test("a saturation refutation is shown checked, by the inverse method", async ({
   await expect(panel.getByRole("button", { name: "Save" })).toHaveCount(0);
 });
 
-test("Settings forces an engine: those that take the sequent, the others greyed with why, a refusal at the goal", async ({
+test("Settings forces an engine, the search's settings say which take the sequent, a refusal at the goal", async ({
   page,
 }) => {
   await start(page, "A * B |- B * A");
-  await page.getByRole("button", { name: "Settings", exact: true }).click();
-  const engines = page.getByRole("radiogroup", { name: "Engine" });
+  // The search's settings list the engines that take the sequent, the others greyed with why.
+  await tool(page, "The search's settings").click();
+  const engines = page
+    .getByRole("dialog", { name: "The search's settings" })
+    .getByRole("radiogroup", { name: "Engine" });
   await expect(engines.getByRole("radio", { name: /^Automatic/ })).toBeChecked();
   await expect(engines.getByText("here the focused search")).toBeVisible();
   const twoSided = engines.getByRole("radio", { name: /^Two-sided focused search/ });
   await expect(twoSided).toBeDisabled();
   await expect(twoSided).toHaveAccessibleName(/not in classical mode/);
-  await engines.getByRole("radio", { name: /^Proof-net search/ }).check();
-  await expect(engines.getByRole("radio", { name: /^Proof-net search/ })).toBeChecked();
+  await page.keyboard.press("Escape");
+  // Settings holds linear logic's defaults, the sequent shown's logic first.
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  const settings = page.getByRole("region", { name: "Settings" });
+  await expect(
+    settings.getByRole("group", { name: "Defaults for" }).getByRole("button", { name: "Linear" }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await settings.getByRole("combobox", { name: "Engine" }).selectOption("net");
   // Settings is a page: its own button leaves it.
   await page.getByRole("button", { name: "Settings", exact: true }).click();
   await closeGoal(page);
@@ -76,10 +85,7 @@ test("a forced engine holds for the visit: the next visit starts on Automatic, e
   await start(page, "A * B |- B * A");
   await page.getByRole("button", { name: "Settings", exact: true }).click();
   const settings = page.getByRole("region", { name: "Settings" });
-  await settings
-    .getByRole("radiogroup", { name: "Engine" })
-    .getByRole("radio", { name: /^Proof-net search/ })
-    .check();
+  await settings.getByRole("combobox", { name: "Engine" }).selectOption("net");
   await settings.getByRole("button", { name: "Compact" }).click();
   // Settings is a page: its own button leaves it.
   await page.getByRole("button", { name: "Settings", exact: true }).click();
@@ -90,13 +96,35 @@ test("a forced engine holds for the visit: the next visit starts on Automatic, e
   await page.reload();
   await expect(page.locator(".chip")).not.toHaveCount(0);
   await page.getByRole("button", { name: "Settings", exact: true }).click();
-  await expect(
-    settings.getByRole("radiogroup", { name: "Engine" }).getByRole("radio", { name: /^Automatic/ }),
-  ).toBeChecked();
+  await expect(settings.getByRole("combobox", { name: "Engine" })).toHaveValue("");
   await expect(settings.getByRole("button", { name: "Compact" })).toHaveAttribute(
     "aria-pressed",
     "true",
   );
+});
+
+test("each logic keeps its own search defaults", async ({ page }) => {
+  await start(page, "A * B |- B * A");
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  const settings = page.getByRole("region", { name: "Settings" });
+  const budget = settings.getByRole("textbox", { name: "Budget, in units of work" });
+  const logic = (name: string) =>
+    settings.getByRole("group", { name: "Defaults for" }).getByRole("button", { name });
+  await budget.fill("12345");
+  await budget.press("Enter");
+  await logic("Ordinary").click();
+  await expect(budget).toHaveValue("67108864");
+  // Modal logic has no first-order bounds, and deduxit picks its way to search.
+  await logic("Modal").click();
+  await expect(settings.getByRole("textbox", { name: "Witness depth" })).toHaveCount(0);
+  await expect(settings.getByRole("combobox", { name: "Engine" })).toHaveCount(0);
+  await logic("Linear").click();
+  await expect(budget).toHaveValue("12345");
+  const stored = await page.evaluate(() =>
+    JSON.parse(localStorage.getItem("deduxit-settings") ?? "{}"),
+  );
+  expect(stored.search.linear.budget).toBe(12345);
+  expect(stored.search.ordinary.budget).toBe(67108864);
 });
 
 test("Enter in the sequent field while a search runs waits for it, and is not lost", async ({

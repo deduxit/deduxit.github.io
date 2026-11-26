@@ -8,7 +8,7 @@
  * and call these actions; nothing else changes it.
  */
 
-import { batch, createSignal } from "solid-js";
+import { batch, createMemo, createSignal } from "solid-js";
 import { createStore, produce, unwrap } from "solid-js/store";
 import { type Api, createApi } from "../lib/api";
 import {
@@ -311,7 +311,7 @@ export interface Beside {
 
 /** The visitor's settings, kept in the browser but for the engine, which holds for the visit. */
 export interface Settings {
-  /** The search's work budget per call, `limits.work`. */
+  /** The search's work budget per call, `limits.work`: the shown proof's logic's. */
   budget: number;
   /** Whether the single keys act (Settings, "Keys"); off, only the keys with Ctrl or Cmd do (WCAG 2.2, 2.1.4). */
   singleKeys: boolean;
@@ -348,7 +348,27 @@ export interface Settings {
   marking: boolean;
   /** How the exports look: the Export panel's settings of each format. */
   exports: ExportLook;
+  /**
+   * The search's defaults of each logic (Settings, "Search"): the budget and the first-order
+   * bounds. The fields above of the same names are the shown proof's logic's.
+   */
+  search: Readonly<Record<SearchLogic, SearchDefaults>>;
 }
+
+/** The logics whose search has defaults of its own: ordinary, linear and modal logic. */
+export type SearchLogic = "ordinary" | "linear" | "modal";
+
+/** The search's defaults of one logic. */
+export interface SearchDefaults {
+  readonly budget: number;
+  readonly witnessDepth: number;
+  readonly instances: number;
+  readonly terms: number;
+}
+
+/** The logic whose search defaults hold for a calculus: natural deduction and lambda-terms are ordinary logic's. */
+export const searchLogic = (calculus: Calculus | undefined): SearchLogic =>
+  calculus?.suite === "linear" ? "linear" : calculus?.suite === "modal" ? "modal" : "ordinary";
 
 /**
  * How the exports look, each one of deduxit's `--style` options: a picture's background
@@ -479,6 +499,37 @@ const storage = (): Store | undefined => {
   }
 };
 
+/**
+ * The search's defaults as stored, each logic's: a value the logic does not hold is the one
+ * stored before the defaults were each logic's own, else deduxit's.
+ */
+function storedSearch(stored: Partial<Settings>): Record<SearchLogic, SearchDefaults> {
+  const before: SearchDefaults = {
+    budget: count(stored.budget, DEFAULT_BUDGET),
+    witnessDepth: count(stored.witnessDepth, DEFAULT_WITNESS_DEPTH),
+    instances: count(stored.instances, DEFAULT_INSTANCES),
+    terms: count(stored.terms, DEFAULT_TERMS),
+  };
+  const of = (logic: SearchLogic): SearchDefaults => {
+    const own = (stored.search?.[logic] ?? {}) as Partial<Record<keyof SearchDefaults, unknown>>;
+    return {
+      budget: count(own.budget, before.budget),
+      witnessDepth: count(own.witnessDepth, before.witnessDepth),
+      instances: count(own.instances, before.instances),
+      terms: count(own.terms, before.terms),
+    };
+  };
+  return { ordinary: of("ordinary"), linear: of("linear"), modal: of("modal") };
+}
+
+/** The search's defaults where nothing is stored: deduxit's, in every logic. */
+const DEFAULT_SEARCH: SearchDefaults = {
+  budget: DEFAULT_BUDGET,
+  witnessDepth: DEFAULT_WITNESS_DEPTH,
+  instances: DEFAULT_INSTANCES,
+  terms: DEFAULT_TERMS,
+};
+
 function loadSettings(): Settings {
   try {
     const stored = JSON.parse(storage()?.getItem(SETTINGS_KEY) ?? "{}") as Partial<Settings>;
@@ -504,6 +555,7 @@ function loadSettings(): Settings {
       terms: count(stored.terms, DEFAULT_TERMS),
       marking: stored.marking !== false,
       exports: storedExport(stored.exports),
+      search: storedSearch(stored),
     };
   } catch {
     return {
@@ -524,6 +576,7 @@ function loadSettings(): Settings {
       terms: DEFAULT_TERMS,
       marking: true,
       exports: DEFAULT_EXPORT,
+      search: { ordinary: DEFAULT_SEARCH, linear: DEFAULT_SEARCH, modal: DEFAULT_SEARCH },
     };
   }
 }
@@ -662,7 +715,8 @@ export function createProver(say: (text: string) => void = () => undefined) {
     proofs: [],
     active: null,
   });
-  const [settings, setSettingsSignal] = createSignal<Settings>(loadSettings());
+  /** The settings as stored, with every logic's search defaults; `settings` holds the shown proof's. */
+  const [storedSettings, setSettingsSignal] = createSignal<Settings>(loadSettings());
   /** The settings changed for this visit alone, by their values before: those are what is stored. */
   const lent: Partial<Settings> = {};
   const [aside, setAsideShelf] = createSignal<Shelf | undefined>(undefined);
@@ -822,6 +876,11 @@ export function createProver(say: (text: string) => void = () => undefined) {
   const invertibleOn = (_id: string | undefined): boolean => settings().invertible;
 
   const current = () => store.proofs.find((p) => p.id === store.active);
+  /** The settings in force: the stored ones, the search's defaults those of the shown proof's logic. */
+  const settings = createMemo((): Settings => {
+    const s = storedSettings();
+    return { ...s, ...s.search[searchLogic(current()?.calculus)] };
+  });
   const index = (id: string) => store.proofs.findIndex((p) => p.id === id);
 
   /** A proof's actions, a proof filled in from another tab replayed from its own inferences. */
@@ -1762,7 +1821,7 @@ export function createProver(say: (text: string) => void = () => undefined) {
      * this visit alone, the values before it are what is stored, until the visitor sets them.
      */
     setSettings(change: Partial<Settings>, visitOnly = false) {
-      const now = settings();
+      const now = storedSettings();
       for (const key of Object.keys(change) as (keyof Settings)[]) {
         if (!visitOnly) delete lent[key];
         else if (!(key in lent)) Object.assign(lent, { [key]: now[key] });
@@ -1770,11 +1829,25 @@ export function createProver(say: (text: string) => void = () => undefined) {
       const next = { ...now, ...change };
       setSettingsSignal(next);
       try {
-        const { engine: _, ...kept } = { ...next, ...lent };
+        // The search's flat fields are the shown proof's logic's: `search` holds them each.
+        const {
+          engine: _,
+          budget: _b,
+          witnessDepth: _w,
+          instances: _i,
+          terms: _t,
+          ...kept
+        } = { ...next, ...lent };
         storage()?.setItem(SETTINGS_KEY, JSON.stringify(kept));
       } catch {
         // The settings hold for this visit alone.
       }
+    },
+
+    /** Changes the search's defaults of one logic (Settings, "Search"), stored for the next visit. */
+    setSearch(logic: SearchLogic, change: Partial<SearchDefaults>) {
+      const search = storedSettings().search;
+      actions.setSettings({ search: { ...search, [logic]: { ...search[logic], ...change } } });
     },
 
     /** At the page's start: sets the last visit's proofs aside, to be restored. */
