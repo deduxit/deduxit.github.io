@@ -2,13 +2,11 @@
 // Licensed under the EUPL
 
 /**
- * A tableau written by hand, as deduxit reviews it (`ordinary_tableau_review`): the words the
- * page says of the review, and the lines a tableau of a sequent starts with. Plain data and
- * words, no Solid.
+ * A tableau built by hand, as deduxit reviews it (`ordinary_tableau_review`): the review and the
+ * words the page says of it. Plain data and words, no Solid.
  */
 
-import type { KripkeModel, OrdinaryOutcome } from "./ordinary";
-import { tableauModel, tableauOf } from "./methods";
+import type { KripkeModel } from "./ordinary";
 
 /** deduxit's review of a written tableau (wire level 14). */
 export interface TableauReview {
@@ -43,17 +41,4 @@ export function reviewWords(review: TableauReview): {
     default:
       return { tone: "bad", keyword: "Wrong step", sentence: `${at}${review.message}` };
   }
-}
-
-/**
- * The lines a tableau of the outcome's sequent starts with: the sequent's own signed formulas,
- * numbered from 1, and nothing deduxit expanded.
- */
-export function startLines(outcome: OrdinaryOutcome): string {
-  const tableau = tableauOf(outcome);
-  if (!tableau) return "";
-  return tableauModel(tableau)
-    .lines.filter((line) => !line.from)
-    .map((line) => `${String(line.number)} ${line.sign} ${line.text}`)
-    .join("\n");
 }

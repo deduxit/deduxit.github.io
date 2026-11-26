@@ -1,17 +1,17 @@
 // deduxit © Fabian Lukas Grubmüller 2026
 // Licensed under the EUPL
 
-// A tableau written by hand: the tableau view's "By hand" for a started classical sequent,
-// begun with the sequent's own lines, reviewed by deduxit: closed, a wrong step named and
-// selected in the text, a text that is no tableau with its place, an open tableau's countermodel
-// opened in the model editor.
+// A tableau built by hand: the tableau view's "By hand" for a started classical sequent, begun
+// with the sequent's own lines, a press on a line expanding it on every open branch below, a
+// branch closed by itself, deduxit's review after every press, Undo, and an open tableau's
+// countermodel opened in the countermodel view.
 
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
-import { addView, calculus, goto } from "./prover";
+import { addView, calculus, goto, tool } from "./prover";
 
-/** Starts `sequent` in classical logic and opens the tableau to write. */
-async function written(page: Page, sequent: string) {
+/** Starts `sequent` in classical logic and opens the tableau by hand. */
+async function byHand(page: Page, sequent: string) {
   await goto(page);
   await calculus(page, ["Ordinary", "Classical"]);
   await page.getByRole("textbox", { name: "Sequent" }).fill(sequent);
@@ -22,47 +22,43 @@ async function written(page: Page, sequent: string) {
     .getByRole("group", { name: "Tableau" })
     .getByRole("button", { name: "By hand" })
     .click();
-  await expect(page.getByRole("tab", { name: "Tableau, T" })).toHaveAttribute(
+  return page.getByRole("region", { name: "Your tableau" });
+}
+
+/** A line's button, by its number. */
+const line = (view: ReturnType<Page["getByRole"]>, n: number) =>
+  view.getByRole("button", { name: new RegExp(`^${n} [TF] `) });
+
+test("a press expands a line on every branch below it, and the tableau closes by itself", async ({
+  page,
+}) => {
+  const view = await byHand(page, "p \\/ q |- q \\/ p");
+  await expect(view.locator(".tb-line")).toHaveCount(2);
+  await expect(view.getByRole("status")).toContainText("Unfinished");
+  await line(view, 2).click();
+  await expect(line(view, 3)).toContainText("F");
+  await expect(line(view, 4)).toBeVisible();
+  // An atom has nothing to expand: a press says so.
+  await line(view, 3).click();
+  await expect(view.getByRole("alert")).toContainText("nothing to expand");
+  await line(view, 1).click();
+  await expect(view.locator(".tb-branch")).toHaveCount(2);
+  await expect(view.locator(".tb-end[data-closed]")).toHaveCount(2);
+  await expect(view.getByRole("status")).toContainText("Closed");
+  // Undo takes the last press back.
+  await tool(page, "Undo").click();
+  await expect(view.locator(".tb-branch")).toHaveCount(0);
+  await expect(view.getByRole("status")).toContainText("Unfinished");
+});
+
+test("an open tableau says so, and opens its countermodel", async ({ page }) => {
+  const view = await byHand(page, "p -> q |- q -> p");
+  await line(view, 2).click();
+  await line(view, 1).click();
+  await expect(view.getByRole("status")).toContainText("Open");
+  await page.getByRole("button", { name: "Check its countermodel" }).click();
+  await expect(page.getByRole("tab", { name: "Countermodel, ⊭" })).toHaveAttribute(
     "aria-selected",
     "true",
   );
-  return page.getByRole("textbox", { name: "Your tableau, a line each" });
-}
-
-test("a tableau typed in full closes, and a wrong mark is named and selected", async ({ page }) => {
-  const field = await written(page, "p \\/ q |- q \\/ p");
-  await expect(field).toHaveValue("1 T p ∨ q\n2 F q ∨ p");
-  await expect(page.locator(".tb")).toHaveCount(0);
-  await field.fill(
-    "1 T p ∨ q\n2 F q ∨ p\n3 F q 2\n4 F p 2\n- 5 T p 1\n  × 4, 5\n- 6 T q 1\n  × 3, 6",
-  );
-  await page.getByRole("button", { name: "Check the tableau" }).click();
-  await expect(page.locator(".written .kw")).toHaveText("Closed");
-  await field.fill(
-    "1 T p ∨ q\n2 F q ∨ p\n3 F q 2\n4 F p 2\n- 5 T q 1\n  × 4, 5\n- 6 T q 1\n  × 3, 6",
-  );
-  await page.getByRole("button", { name: "Check the tableau" }).click();
-  await expect(page.locator(".written .kw")).toHaveText("Wrong step");
-  await expect(page.locator(".written [role=status]")).toContainText("Line 6:");
-  await expect(field).toBeFocused();
-  expect(
-    await field.evaluate((el) => {
-      const t = el as HTMLTextAreaElement;
-      return t.value.slice(t.selectionStart, t.selectionEnd);
-    }),
-  ).toBe("  × 4, 5");
-});
-
-test("a text that is no tableau says where; an open one opens its countermodel", async ({
-  page,
-}) => {
-  const field = await written(page, "p |- q");
-  await field.fill("1 T p ∨\n");
-  await page.getByRole("button", { name: "Check the tableau" }).click();
-  await expect(page.locator(".written .kw")).toHaveText("Not read");
-  await field.fill("1 T p\n2 F q\nopen");
-  await page.getByRole("button", { name: "Check the tableau" }).click();
-  await expect(page.locator(".written .kw")).toHaveText("Open");
-  await page.getByRole("button", { name: "Check its countermodel" }).click();
-  await expect(page.getByRole("region", { name: "Model" })).toContainText("p ⊢ q");
 });

@@ -64,6 +64,7 @@ import { redoStructure, undoStructure } from "./Structure";
 import { Toggles } from "./Toggles";
 import { useWorkspace } from "./Workspace";
 import { stepCounts, stepShown, stepTo } from "./Clausal";
+import { pressesOf, undoPress } from "./HandTableau";
 import { elimOn, elimSettings } from "./Stage";
 import {
   addEntry,
@@ -76,7 +77,7 @@ import {
   updateView,
   VIEWS,
 } from "./Views";
-import { compact, counterOf, type Ui, type View, viewKey, Why } from "./ui";
+import { compact, counterOf, type Ui, type View, viewKey, wayOf, Why } from "./ui";
 
 const storage = () => {
   try {
@@ -694,6 +695,7 @@ export function viewUndo(prover: Prover, ui: Ui) {
   const tab = ui.ui.tab;
   if (tab === "countermodel") undoStructure(ui, p.id);
   else if (tab === "normal") stepTo(ui, p.id, stepShown(ui, p.id) - 1);
+  else if (tab === "tableau") undoPress(p.id);
   else if (tab === "elim") void prover.eliminationUndo(elimOn(prover, ui), elimSettings(prover));
 }
 
@@ -773,6 +775,10 @@ export function Tools(props: { prover: Prover; ui: Ui; hint: () => void; tour: (
     const c = counterOf(props.ui, proof()?.id);
     return c?.kind === "structure" ? c : null;
   };
+  /** Whether the tableau by hand is shown. */
+  const handShown = () =>
+    ui.tab === "tableau" &&
+    wayOf<string>(props.ui, proof()?.id ?? "", "tableau", "search") === "hand";
   /** Whether the view shown is out of date. */
   const viewStale = () => {
     const p = proof();
@@ -785,6 +791,7 @@ export function Tools(props: { prover: Prover; ui: Ui; hint: () => void; tour: (
     const p = proof();
     if (!p) return false;
     if (ui.tab === "normal") return stepShown(props.ui, p.id) > 0;
+    if (handShown()) return pressesOf(p.id).length > 0;
     return (p.elim[elimOn(props.prover, props.ui)]?.back.length ?? 0) > 0;
   };
   /** Whether the stepped view shown can go forward. */
@@ -863,7 +870,7 @@ export function Tools(props: { prover: Prover; ui: Ui; hint: () => void; tour: (
           </fieldset>
         )}
       </Show>
-      <Show when={(ui.tab === "normal" || ui.tab === "elim") && !viewStale()}>
+      <Show when={(ui.tab === "normal" || ui.tab === "elim" || handShown()) && !viewStale()}>
         <fieldset class="tool-group" aria-label="Steps">
           <Tool
             name="Undo"
@@ -884,7 +891,7 @@ export function Tools(props: { prover: Prover; ui: Ui; hint: () => void; tour: (
             />
           </Show>
         </fieldset>
-        <fieldset class="tool-group" aria-label="Forward">
+        <fieldset class="tool-group" aria-label="Forward" hidden={handShown()}>
           <Tool
             name="Next step"
             icon={<Sign name="next" />}

@@ -25,6 +25,7 @@ import {
 } from "../lib/transforms";
 import { displayed, noTerm } from "../lib/words";
 import { ModelFigure } from "./Countermodel";
+import { startPresses } from "./HandTableau";
 import { cellName, decidable, netReady, started, tabText, tone } from "./Frame";
 import { Sign } from "./Signs";
 import type { Proof, Prover } from "./state";
@@ -194,7 +195,8 @@ export function updateView(prover: Prover, ui: Ui, proof: string, view: View) {
       all[proof] = (all[proof] ?? []).map((a) => (a.view === view ? fresh : a));
     }),
   );
-  // A stepped view starts again at its last step.
+  // A tableau by hand starts again from the sequent's lines; a stepped view at its last step.
+  if (view === "tableau") startPresses(proof);
   ui.setUi(
     "stepAt",
     produce((all: Record<string, number>) => {

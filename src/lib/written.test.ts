@@ -3,9 +3,8 @@
 
 import { describe, expect, it } from "vitest";
 import { failure } from "./deduxit";
-import type { OrdinaryOutcome } from "./ordinary";
 import { deduxit } from "./testing";
-import { reviewWords, startLines, type TableauReview } from "./written";
+import { reviewWords, type TableauReview } from "./written";
 
 const SEQUENT = "p \\/ q |- q \\/ p";
 
@@ -18,12 +17,7 @@ const review = (text: string) => {
   }
 };
 
-describe("a tableau written by hand", () => {
-  it("starts with the sequent's own lines and nothing deduxit expanded", () => {
-    const outcome = JSON.parse(deduxit.ordinary_tableau(SEQUENT, "{}")) as OrdinaryOutcome;
-    expect(startLines(outcome)).toBe("1 T p ∨ q\n2 F q ∨ p");
-  });
-
+describe("a tableau built by hand, as deduxit reviews it", () => {
   it("is closed as the page's example writes it", () => {
     const closed = review(
       "1 T p ∨ q\n2 F q ∨ p\n3 F q 2\n4 F p 2\n- 5 T p 1\n  × 4, 5\n- 6 T q 1\n  × 3, 6",

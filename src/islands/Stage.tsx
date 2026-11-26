@@ -50,7 +50,7 @@ import { ModelFigure } from "./Countermodel";
 import { CustomPanel } from "./Custom";
 import { ModelView } from "./ModelCheck";
 import { lastEvaluated, StructureView, structureWords } from "./Structure";
-import { TableauCheckView } from "./TableauCheck";
+import { HandTableauView } from "./HandTableau";
 import { LambdaPanel } from "./Lambda";
 import { ModalCountermodel, ModalPanel } from "./Modal";
 import { type Method, MethodView } from "./Methods";
@@ -1651,23 +1651,28 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
       <Show when={counterShown()?.kind === "modal"}>
         <ModalCountermodel prover={props.prover} />
       </Show>
-      <Show when={writtenShown()}>
-        {(sequent) => (
-          <TableauCheckView
-            prover={props.prover}
-            ui={props.ui}
-            sequent={sequent()}
-            header={
-              <Show when={addedShown()?.stale}>
-                <StaleBar
-                  prover={props.prover}
-                  ui={props.ui}
-                  proof={proof()?.id ?? ""}
-                  view="tableau"
-                />
-              </Show>
-            }
-          />
+      <Show when={writtenShown() ? addedShown() : null}>
+        {(a) => (
+          <Show when={a().added.sequent}>
+            {(sequent) => (
+              <HandTableauView
+                prover={props.prover}
+                ui={props.ui}
+                proof={a().proof.id}
+                sequent={sequent()}
+                header={
+                  <Show when={a().stale}>
+                    <StaleBar
+                      prover={props.prover}
+                      ui={props.ui}
+                      proof={a().proof.id}
+                      view="tableau"
+                    />
+                  </Show>
+                }
+              />
+            )}
+          </Show>
         )}
       </Show>
       <Show when={otherShown()}>

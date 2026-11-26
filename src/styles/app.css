@@ -919,6 +919,24 @@ svg.sign {
 .tb-line .m {
   font-size: var(--text-math);
 }
+/* A line of the tableau by hand: a press expands it; one expanded, or an atom, is done. */
+.tb-line:has(> .tb-press) {
+  display: block;
+}
+.tb-press {
+  display: inline-grid;
+  grid-template-columns: var(--size-tableau-number) var(--size-tableau-sign) auto auto;
+  justify-content: start;
+  align-items: baseline;
+  column-gap: var(--spacing-2);
+  min-height: var(--size-button);
+  padding: 0 var(--spacing-2) 0 0;
+  border-radius: var(--radius-control);
+  text-align: left;
+}
+.tb-press[data-done] .m {
+  color: var(--color-ink2);
+}
 .tb-n,
 .tb-from {
   color: var(--color-ink2);

@@ -256,13 +256,13 @@ export async function methods(page: Page, visit: Visit) {
     .getByRole("group", { name: "Tableau" })
     .getByRole("button", { name: "By hand" })
     .click();
-  await expect(page.getByRole("textbox", { name: "Your tableau, a line each" })).toHaveValue(
-    /^1 T a → b\n2 F b → a$/,
-  );
-  await visit("tableau written by hand");
-  await page.getByRole("button", { name: "Check the tableau" }).click();
-  await expect(page.locator(".written .kw")).toHaveText("Unfinished");
-  await visit("tableau reviewed");
+  const hand = page.getByRole("region", { name: "Your tableau" });
+  await expect(hand.getByRole("status")).toContainText("Unfinished");
+  await visit("tableau by hand");
+  await hand.getByRole("button", { name: /^2 [TF] / }).click();
+  await hand.getByRole("button", { name: /^1 [TF] / }).click();
+  await expect(hand.locator(".tb-branch").first()).toBeVisible();
+  await visit("tableau by hand, a split");
   await newTab(page);
   await page.getByRole("textbox", { name: "Sequent" }).fill("a, b, c, d, e, f, g, h, i, j, k |- a");
   await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
