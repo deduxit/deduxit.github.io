@@ -20,7 +20,10 @@ export interface Engine {
   readonly source: string;
 }
 
-/** Every engine the page may name, in deduxit's order, the classical refuter last. */
+/**
+ * Every engine the page may name, in deduxit's order, then the finite model search (an ordinary
+ * method, which a first-order goal's close takes) and the classical refuter.
+ */
 export const ENGINES: Readonly<Record<string, Engine>> = {
   focus: {
     name: "focused search",
@@ -57,6 +60,12 @@ export const ENGINES: Readonly<Record<string, Engine>> = {
     does: "derives sequents forward from the axioms until the goal or nothing new comes",
     source: "Chaudhuri and Pfenning 2005, the focused inverse method",
   },
+  models: {
+    name: "finite model search",
+    does: "looks for a structure of 1, 2, … elements that refutes a first-order goal, by a SAT solver",
+    source:
+      "McCune's MACE and Claessen and Sörensson's Paradox, as Reger, Suda and Voronkov 2016 state it",
+  },
   classical: {
     name: "classical refuter",
     does: "finds an assignment under which the sequent read classically is false",
@@ -78,14 +87,14 @@ export const ENGINE_ORDER = [
 /**
  * The engine whose work an outcome is: the classical refuter for its refutation, else the one it
  * names. An ordinary outcome decided through the embedding holds its image's outcome under
- * `search.image`, whose engine it is.
+ * `search.image`, whose engine it is; one decided by another method names it as `search.method`.
  */
 export function engineOf(outcome: Outcome | undefined | null): string | undefined {
   if (!outcome) return undefined;
-  const image = (outcome as { search?: { image?: Outcome } }).search?.image;
-  if (image) return engineOf(image);
+  const search = (outcome as { search?: { image?: Outcome; method?: string } }).search;
+  if (search?.image) return engineOf(search.image);
   if (outcome.refutation?.kind === "classical") return "classical";
-  return outcome.engine;
+  return outcome.engine ?? (search?.method === "embedding" ? undefined : search?.method);
 }
 
 /** The key under which the steps of a proof made apart are named, at the goal they close. */
@@ -104,6 +113,25 @@ export function engineTip(key: string): string {
   const engine = ENGINES[key];
   if (!engine) return `The engine ${key}`;
   return `The ${engine.name} ${engine.does}. Source: ${engine.source}.`;
+}
+
+/**
+ * What a search closed, as the line over the bottom box says it, from the engine of each goal it
+ * closed, in order: one goal by its number ("Goal 2 closed by the focused search."), or Close
+ * all's goals ("Every goal closed by the focused search.", "3 goals closed: 2 by the focused
+ * search, 1 by the Horn engine."). `every` says no goal is left open.
+ */
+export function closedBy(engines: readonly string[], goal: number | null, every: boolean): string {
+  const [first] = engines;
+  if (goal !== null && first !== undefined)
+    return `Goal ${goal + 1} closed by the ${engineName(first)}.`;
+  const counts = new Map<string, number>();
+  for (const engine of engines) counts.set(engine, (counts.get(engine) ?? 0) + 1);
+  const what = every ? "Every goal" : engines.length === 1 ? "1 goal" : `${engines.length} goals`;
+  if (counts.size === 1 && first !== undefined)
+    return `${what} closed by the ${engineName(first)}.`;
+  const parts = [...counts].map(([engine, n]) => `${n} by the ${engineName(engine)}`);
+  return `${what} closed: ${parts.join(", ")}.`;
 }
 
 /** An engine's name standing alone, as a label: in sentence case. */

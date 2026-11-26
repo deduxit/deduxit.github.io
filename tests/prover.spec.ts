@@ -207,19 +207,21 @@ test("the hint points at the next press from where the visitor is, and takes no 
   const hint = tool(page, "Hint");
   const line = page.locator(".hint-line");
   await hint.click();
-  await expect(line).toHaveText("Hint. Press A⊥ ⅋ B⊥ and take ⅋.");
+  await expect(line).toHaveText("Hint. Focused search Press A⊥ ⅋ B⊥ and take ⅋.");
   await expect(page.locator(".fb[data-hinted]")).toHaveAccessibleName(/^A⊥ ⅋ B⊥/);
   await page.getByRole("button", { name: /^A⊥ ⅋ B⊥/ }).click();
-  await expect(line).toHaveText("Hint. Take ⅋.");
+  await expect(line).toHaveText("Hint. Focused search Take ⅋.");
   await expect(page.locator("button.rule[data-hinted]")).toHaveText("⅋");
   await page.locator("button.rule[data-hinted]").click();
   await hint.click();
-  await expect(line).toHaveText("Hint. Press B ⊗ A and take ⊗.");
+  await expect(line).toHaveText("Hint. Focused search Press B ⊗ A and take ⊗.");
   await rule(page, /^B ⊗ A/, "⊗");
   await expect(line).toContainText("to the other premise");
   const split = page.getByRole("group", { name: /^Split for ⊗/ });
   await split.locator(".chip-f[data-hinted]").click();
-  await expect(line).toHaveText("Hint. This split works. Press the arrow to apply it.");
+  await expect(line).toHaveText(
+    "Hint. Focused search This split works. Press the arrow to apply it.",
+  );
   await expect(split.locator(".apply-step[data-hinted]")).toBeVisible();
   // The hint applied nothing: the split is still the visitor's to make.
   await expect(page.getByRole("button", { name: /^B ⊗ A, formula 3/ })).toBeVisible();
@@ -1006,6 +1008,23 @@ test("a goal is closed by a proof made apart of its formulas in another order, a
   await expect(
     page.getByRole("dialog", { name: "Steps" }).getByRole("button").nth(2),
   ).toContainText("⊗ on B ⊗ A apart");
+});
+
+test("the search says which engine closed a goal, closed every goal, or found the hint's proof", async ({
+  page,
+}) => {
+  await start(page, "A * B |- B * A");
+  await rule(page, /^A⊥ ⅋ B⊥/, "⅋");
+  await page.getByRole("button", { name: "Guide", exact: true }).click();
+  await tool(page, "Hint").click();
+  await expect(page.locator(".hint-line .engine")).toHaveText("Focused search");
+  await closeGoal(page);
+  const line = page.locator(".note.searched");
+  await expect(line).toHaveText("Goal 2 closed by the focused search.");
+  await tool(page, "Undo").click();
+  await expect(line).toHaveCount(0);
+  await tool(page, "Close all").click();
+  await expect(line).toHaveText("Every goal closed by the focused search.");
 });
 
 test("a net's view has the toggle Formulas or Compact where the calculus's toggles stand", async ({

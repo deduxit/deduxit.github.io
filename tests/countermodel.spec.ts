@@ -28,6 +28,8 @@ test("a first-order sequent's countermodel is changed press by press, and undone
   await classical(page, "exists x. p(x) |- forall x. p(x)");
   await closeGoal(page);
   await expect(page.locator(".goal-note")).toContainText("deduxit found a finite structure");
+  // The note names the engine that found the countermodel.
+  await expect(page.locator(".goal-note .engine")).toHaveText("Finite model search");
   await page.getByRole("button", { name: "See the countermodel" }).click();
   await expect(page.getByRole("tab", { name: "Countermodel, ⊭" })).toHaveAttribute(
     "aria-selected",

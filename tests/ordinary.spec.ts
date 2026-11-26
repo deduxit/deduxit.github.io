@@ -251,6 +251,8 @@ test("a search's graft taken back by undo leaves no mark on the steps taken afte
   await rule(page, /^b, formula 3/, "ax");
   await closeGoal(page);
   await expect(checked(page)).toBeVisible();
+  // The line over the bottom box names the engine that searched the goal's image.
+  await expect(page.locator(".note.searched")).toHaveText(/^Goal 2 closed by the [A-Za-z -]+\.$/);
   const marked = page.locator(".drawing g.search");
   await expect(marked.first()).toBeAttached();
   // Undo takes the search's graft back with its mark; redo brings both back.

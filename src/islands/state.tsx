@@ -39,7 +39,7 @@ import {
   type View,
 } from "../lib/deduxit";
 import type { Example } from "../lib/content";
-import { APART, ENGINE_ORDER, engineName, engineOf } from "../lib/engines";
+import { APART, closedBy, ENGINE_ORDER, engineName, engineOf } from "../lib/engines";
 import {
   asView,
   hintSteps,
@@ -285,6 +285,8 @@ export interface Proof {
   typed: { classical: string; intuitionistic: string } | null;
   /** A line on the stage that is no goal's: a proof the link could not restore. */
   banner: Said | null;
+  /** What the last search closed and the engines that closed it, until the next change. */
+  searched: string | null;
   /** The engine of each search that closed a goal, by the goal's path joined with dots. */
   engines: Record<string, string>;
   /** The tab and goal the proof was opened from ("Open in a new tab"), or null. */
@@ -646,6 +648,7 @@ const blank = (calculus: Calculus): Proof => ({
   verdict: null,
   typed: null,
   banner: null,
+  searched: null,
   engines: {},
   origin: null,
   beside: null,
@@ -918,6 +921,7 @@ export function createProver(say: (text: string) => void = () => undefined) {
       p.inputProblem = null;
       p.note = null;
       p.banner = null;
+      p.searched = null;
       if (goal !== undefined) p.active = paths(played.session).get(goal) ?? null;
       if (played.view.complete) p.verdict = null;
     });
@@ -1341,7 +1345,9 @@ export function createProver(say: (text: string) => void = () => undefined) {
 
   /**
    * Closes an ordinary goal by the search within `budget`: the derivation found grafted, or the
-   * verdict noted at the goal (and on the tab for the root). Returns whether it closed.
+   * verdict noted at the goal (and on the tab for the root). Returns the engine that closed it,
+   * true where none is named, false where it did not close. Alone (not `all`), the line over the
+   * bottom box names the engine.
    */
   async function closeOrdinary(
     p: Proof,
@@ -1349,7 +1355,7 @@ export function createProver(say: (text: string) => void = () => undefined) {
     goal: number,
     budget: number,
     all = false,
-  ): Promise<boolean> {
+  ): Promise<string | boolean> {
     const path = pathOf(p, goal);
     const result = await attempt(() => api.ordinary.close(session, goal, ordinaryJson(budget)));
     if (!result.ok) {
@@ -1379,11 +1385,12 @@ export function createProver(say: (text: string) => void = () => undefined) {
         { session: closed.session, view: asView(closed.view) },
         closed.view.goals[0]?.goal,
       );
+      if (engine && !all) update(p.id, (q) => (q.searched = closedBy([engine], goal, false)));
       say(
         `Goal ${goal + 1} closed${engine ? ` by the ${engineName(engine)}` : ""}${closed.view.complete ? ": the proof is finished" : ""}.`,
       );
       save();
-      return true;
+      return engine ?? true;
     }
     const said = closed.refused
       ? {
@@ -3299,6 +3306,7 @@ export function createProver(say: (text: string) => void = () => undefined) {
           if (engine) q.engines = { ...q.engines, [pathKey(path)]: engine };
         });
         show(p.id, closed, closed.view.goals[0]?.goal);
+        if (engine) update(p.id, (q) => (q.searched = closedBy([engine], goal, false)));
         say(
           `Goal ${goal + 1} closed${engine ? ` by the ${engineName(engine)}` : ""}${closed.view.complete ? ": the proof is finished" : ""}.`,
         );
@@ -3326,13 +3334,20 @@ export function createProver(say: (text: string) => void = () => undefined) {
       const o = ordinaryOf(p);
       if (o) {
         // Each open goal in turn, each within the budget, until one is not closed.
+        const engines: string[] = [];
+        const tell = () => {
+          const left = current()?.view?.goals.length ?? 0;
+          if (engines.length) update(p.id, (q) => (q.searched = closedBy(engines, null, !left)));
+        };
         for (const goal of p.view?.goals.map((g) => g.goal) ?? []) {
           const now = current();
           const doc = ordinaryOf(now)?.session;
-          if (!now || now.id !== p.id || !doc) return;
-          if (!(await closeOrdinary(now, doc, goal, budget, true))) return;
+          if (!now || now.id !== p.id || !doc) return tell();
+          const closed = await closeOrdinary(now, doc, goal, budget, true);
+          if (typeof closed === "string") engines.push(closed);
+          if (!closed) return tell();
         }
-        return;
+        return tell();
       }
       const result = await attempt(() => api.closeAll(p.session as SessionDoc, json(budget)));
       if (!result.ok) {
@@ -3364,6 +3379,9 @@ export function createProver(say: (text: string) => void = () => undefined) {
         q.engines = { ...q.engines, ...grafted };
       });
       show(p.id, closed, closed.view.goals[0]?.goal);
+      const engines = Object.values(grafted);
+      if (engines.length)
+        update(p.id, (q) => (q.searched = closedBy(engines, null, !closed.view.goals.length)));
       if (unproved?.outcome) {
         const said = verdict(unproved.outcome, null);
         const path = where.get(unproved.goal) ?? [];

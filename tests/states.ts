@@ -88,6 +88,7 @@ export async function proving(page: Page, visit: Visit) {
   await visit("hint");
   await press(page, "Close all");
   await expect(page.getByText("Proved. Every goal is closed.")).toBeVisible();
+  await expect(page.locator(".note.searched")).toContainText("closed by the focused search");
   await visit("proved");
   await press(page, "Steps", visit);
   await expect(page.getByRole("dialog", { name: "Steps" })).toContainText("⊗ on B ⊗ A");

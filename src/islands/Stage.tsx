@@ -2238,7 +2238,8 @@ export function GoalNotes(props: { prover: Prover; ui: Ui }) {
         {(pointing) => (
           <Show when={props.prover.settings().guide || pointing().none}>
             <p class="note hint-line" role="status">
-              <span class="kw">Hint.</span> {pointing().words}
+              <span class="kw">Hint.</span>{" "}
+              <EngineChip outcome={ui.ladder?.hint?.outcome} ui={props.ui} /> {pointing().words}
             </p>
           </Show>
         )}

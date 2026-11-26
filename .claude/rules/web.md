@@ -1169,9 +1169,17 @@ board and the guide disagree, the guide holds.
 ## The engines (`src/lib/engines.ts`)
 
 - An outcome names its engine (`engine`), but a classical refutation is the classical
-  refuter's work (`engineOf`). The chip beside a note or a hint, the label beside a graft's
+  refuter's work (`engineOf`), and an ordinary outcome's is its image's (`search.image`) or, by
+  another method, the method (`search.method`: a first-order goal's close and hint are the
+  finite model search's, `models`). The chip beside a goal's note and beside the hint's line
+  ("Hint. Focused search Press …"), the label beside a graft's
   rule (`text.engine` after the rule label, from `Proof.engines`, a goal's path to the
-  engine, kept in the shelf), and the step list name it; the hover gives the source. Every
+  engine, kept in the shelf), and the step list name it; the hover gives the source.
+- **A search that closes goals says which engine did** (`Proof.searched`, written by `close`,
+  `closeOrdinary` alone and Close all of either suite, cleared by `show` at the next change;
+  the line `.note.searched` over the bottom box, a notice of something done, so no edge):
+  "Goal 2 closed by the focused search.", "Every goal closed by the focused search.", "3 goals
+  closed: 2 by the focused search, 1 by the Horn engine." (`closedBy` of `engines.ts`). Every
   reference in
   `texts/reference.md` was read in the work itself (2026-10-22), an open copy where the
   original is paywalled being replaced by an open work that states it; change one only from

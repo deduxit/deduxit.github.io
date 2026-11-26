@@ -916,6 +916,13 @@ export default function App(props: {
                         </Show>
                         <GoalNotes prover={prover} ui={view} />
                         <GuideLine prover={prover} ui={view} />
+                        <Show when={ui.tab === "tree" && current()?.searched}>
+                          {(line) => (
+                            <p class="note notice searched" role="status">
+                              {line()}
+                            </p>
+                          )}
+                        </Show>
                         <Show when={current()?.view?.complete && ui.tab === "tree"}>
                           <p class="note verdict" role="status">
                             <span class="kw ok">Proved.</span> Every goal is closed.
