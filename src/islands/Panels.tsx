@@ -720,13 +720,13 @@ export async function importText(
   content: string,
   from: string,
 ): Promise<{ text: string; tone: "ok" | "bad" }> {
-  // A hand-in file opens in the check view, the open tabs left as they are.
+  // A hand-in file of the page before opens as its pack with its answers, beside the open tabs.
   if (isHandin(content) && packs) {
     const handin = readHandin(content);
     if ("problem" in handin)
       return { text: `Not imported: no hand-in this page reads (${handin.problem}).`, tone: "bad" };
-    await packs.check(handin);
-    return { text: `Imported the hand-in${from}.`, tone: "ok" };
+    await packs.arrive(handin.pack, handin.answers);
+    return { text: `Opened the hand-in's course pack with its answers${from}.`, tone: "ok" };
   }
   const outcome = await prover.open(content);
   return "kind" in outcome

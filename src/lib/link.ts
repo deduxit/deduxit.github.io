@@ -43,12 +43,6 @@ const LINEAR_ONLY = "1";
 /** The version mark of a link that holds a course pack (`k`) or a hand-in (`h`). */
 export const PACK_LINK_VERSION = "4";
 
-/**
- * The longest hand-in link the page writes: a mail or a learning platform keeps a link of this
- * length whole; a longer hand-in is a file.
- */
-export const HANDIN_LIMIT = 16_000;
-
 /** The longest link that carries the session; a longer one carries the sequent alone. */
 export const LINK_LIMIT = 2000;
 
@@ -245,15 +239,6 @@ export async function writePackLink(pack: string, embed = false): Promise<string
   const params = new URLSearchParams({ v: PACK_LINK_VERSION, k: await packed(pack) });
   if (embed) params.set("e", "1");
   return `#${params}`;
-}
-
-/** A hand-in's fragment, or null when it is longer than `limit`: then it is handed in as a file. */
-export async function writeHandinLink(
-  handin: string,
-  limit = HANDIN_LIMIT,
-): Promise<string | null> {
-  const hash = `#${new URLSearchParams({ v: PACK_LINK_VERSION, h: await packed(handin) })}`;
-  return hash.length <= limit ? hash : null;
 }
 
 /** The pack or hand-in a fragment holds, or undefined when it holds neither. */

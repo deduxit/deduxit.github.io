@@ -2,10 +2,9 @@
 // Licensed under the EUPL
 
 import { describe, expect, it } from "vitest";
-import { isEmbedded, readPackLink, writeHandinLink, writePackLink } from "./link";
+import { isEmbedded, packed, readPackLink, writePackLink } from "./link";
 import {
   type Handin,
-  handinText,
   isHandin,
   MOST_PROBLEMS,
   type Pack,
@@ -82,8 +81,14 @@ describe("a hand-in", () => {
     answers: [{ session: { version: 8 } }, null, { model: { worlds: [] }, world: null }],
   };
 
-  it("reads back what it writes, and is told from a session by its first key", () => {
-    const text = handinText(handin);
+  // As the page before wrote one.
+  const text = JSON.stringify({
+    handin: 1,
+    pack: JSON.parse(packText(PACK)),
+    answers: handin.answers,
+  });
+
+  it("is read back, and told from a session by its first key", () => {
     expect(isHandin(text)).toBe(true);
     expect(isHandin(JSON.stringify({ version: 8 }))).toBe(false);
     expect(readHandin(text)).toEqual(handin);
@@ -94,11 +99,8 @@ describe("a hand-in", () => {
     expect(readHandin(short)).toHaveProperty("problem");
   });
 
-  it("is a link up to its limit, a file past it", async () => {
-    const text = handinText(handin);
-    const hash = await writeHandinLink(text);
-    expect(hash).not.toBeNull();
-    expect(await readPackLink(hash as string)).toEqual({ kind: "handin", text });
-    expect(await writeHandinLink(text, 20)).toBeNull();
+  it("is read from a link of the page before", async () => {
+    const hash = `#${new URLSearchParams({ v: "4", h: await packed(text) })}`;
+    expect(await readPackLink(hash)).toEqual({ kind: "handin", text });
   });
 });

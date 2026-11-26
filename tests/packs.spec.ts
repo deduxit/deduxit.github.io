@@ -1,22 +1,26 @@
 // deduxit © Fabian Lukas Grubmüller 2026
 // Licensed under the EUPL
 
-// Course packs: a teacher packs the open tabs into a link; a student who opens it works under
-// the pack's limits (the calculus fixed, the search barred where the pack says so) and hands the
-// answers in as a link or a file; the teacher's check view reads every answer again and trusts
-// none of it. The page embedded in a course's page, and a pack printed as a handout.
+// Course packs: a teacher makes one in the Export panel (its title, the sequents at the top as
+// problems, the link, the embed code and the printed sheet); a student who opens the link meets
+// it as one chip with its count done and a page of its problems, each in the calculus the pack
+// fixes, the search working as anywhere. A hand-in of the page before opens as its pack with its
+// answers. The page embedded in a course's page, and a pack printed.
 
+import { readFile } from "node:fs/promises";
 import { deflateRawSync } from "node:zlib";
-import type { BrowserContext, Page } from "@playwright/test";
+import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
-import { goalMenu, goto, rule, tool, viewCell } from "./prover";
+import { exportEntry, goto, proved, rule, saveExport, start, tool, viewCell } from "./prover";
 
-/** A pack's link, packed as the page packs one. */
-function packLink(pack: object, embed = false): string {
-  const k = deflateRawSync(Buffer.from(JSON.stringify(pack))).toString("base64url");
-  return `/#v=4&k=${k}${embed ? "&e=1" : ""}`;
-}
+/** A fragment's document, packed as the page packs one. */
+const packed = (document: object) =>
+  deflateRawSync(Buffer.from(JSON.stringify(document))).toString("base64url");
 
+/** A pack's link. */
+const packLink = (pack: object, embed = false) => `/#v=4&k=${packed(pack)}${embed ? "&e=1" : ""}`;
+
+/** A pack of the page before, whose switch barred the search: the page no longer bars it. */
 const BY_HAND = {
   pack: 1,
   title: "Week 3",
@@ -28,204 +32,155 @@ const BY_HAND = {
   ],
 };
 
-const bar = (page: Page) => page.getByRole("region", { name: "Course pack" });
+/** The pack's chip at the top. */
+const chip = (page: Page) => page.getByRole("tab", { name: /course pack/ });
+/** The pack's page. */
+const packPage = (page: Page) => page.getByRole("region", { name: "Week 3" });
+/** A problem's row on the pack's page. */
+const row = (page: Page, n: number) =>
+  packPage(page).getByRole("button", { name: new RegExp(`^Problem ${n}:`) });
 
-/** The hand-in's link, as the student copies it. */
-async function handIn(page: Page, context: BrowserContext): Promise<string> {
+test("a teacher makes a pack in Export: its title, its problems, the link, the embed code, the sheet", async ({
+  page,
+  context,
+}) => {
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
-  await bar(page).getByRole("button", { name: "Hand in" }).click();
-  const sheet = page.getByRole("dialog", { name: "Hand in" });
-  await sheet.getByRole("button", { name: "Copy the link" }).click();
-  await expect(sheet.getByRole("status")).toHaveText("Link copied.");
-  return page.evaluate(() => navigator.clipboard.readText());
-}
-
-test("a teacher packs the open tabs into a link, its code and its handout", async ({ page }) => {
-  await goto(page);
-  await page.getByRole("textbox", { name: "Sequent" }).fill("A * B |- B * A");
-  await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
-  await expect(page.locator(".stage .fb").first()).toBeVisible();
-  await page.getByRole("button", { name: "Export" }).click();
-  await page.getByRole("menuitem", { name: /^Course pack/ }).click();
-  const sheet = page.getByRole("dialog", { name: "Course pack" });
-  await sheet.getByRole("textbox", { name: "Title" }).fill("Week 3");
-  await expect(sheet.getByRole("checkbox", { name: /A ⊗ B ⊢ B ⊗ A/ })).toBeChecked();
-  await expect(sheet.locator(".pk-code")).toHaveText(/^[0-9a-f]{4} [0-9a-f]{4} [0-9a-f]{4}$/);
-  const code = await sheet.locator(".pk-code").textContent();
-  // Printed, the sheet is its handout alone: the title, the problems, the link.
+  await start(page, "A * B |- B * A");
+  await start(page, "A |- A", false);
+  const panel = await exportEntry(page, "Course pack");
+  await panel.getByRole("textbox", { name: "Title" }).fill("Week 3");
+  // The sequents at the top are its problems, each ticked; one is left out.
+  await expect(panel.getByRole("checkbox", { name: /A ⊗ B ⊢ B ⊗ A/ })).toBeChecked();
+  await panel.getByRole("checkbox", { name: /^A ⊢ A/ }).uncheck();
+  await expect(panel).toContainText("1 problem");
+  // No switch bars the search, and no code is shown.
+  await expect(panel.getByRole("checkbox", { name: /search/ })).toHaveCount(0);
+  await panel.getByRole("button", { name: "Copy the embed code" }).click();
+  await expect(page.getByRole("status").filter({ hasText: "Embed code copied." })).toBeVisible();
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toMatch(
+    /^<iframe src="https?:\S+#v=4&k=\S+&e=1" title="deduxit: Week 3"/,
+  );
+  await panel.getByRole("button", { name: "Copy the link" }).click();
+  await expect(
+    page.getByRole("status").filter({ hasText: "Link to the pack copied." }),
+  ).toBeVisible();
+  const link = await page.evaluate(() => navigator.clipboard.readText());
+  expect(link).toMatch(/#v=4&k=/);
+  // Printed, the page is the sheet alone: the title, the problems, the link.
   await page.emulateMedia({ media: "print" });
   await expect(page.locator(".pk-handout")).toBeVisible();
   await expect(page.locator(".pk-handout")).toContainText("Week 3");
   await expect(page.locator(".pk-handout")).toContainText("A ⊗ B ⊢ B ⊗ A (Linear (LL))");
-  await expect(page.locator(".band.bottom")).toBeHidden();
+  await expect(page.locator(".pk-handout li")).toHaveCount(1);
+  await expect(page.locator(".pk-handout")).toContainText(link);
   await page.emulateMedia({ media: "screen" });
-  const link = (await page.locator(".pk-handout p").textContent())?.match(
-    /https?:\S+#v=4&k=\S+/,
-  )?.[0];
-  expect(link).toBeTruthy();
-  await page.goto(link as string);
-  await expect(bar(page)).toContainText("Week 3");
+  await page.goto(link);
+  await expect(chip(page)).toContainText("Week 3, 0/1");
   await expect(page.locator(".chip")).toHaveCount(1);
-  await page.getByRole("button", { name: "Hand in" }).click();
-  await expect(page.getByRole("dialog", { name: "Hand in" }).locator(".pk-code")).toHaveText(
-    code ?? "",
-  );
+  await expect(packPage(page)).toBeVisible();
 });
 
-test("a pack's limits hold: the calculus fixed and the search barred, by keys too", async ({
+test("a student meets one chip and a page of problems; the calculus fixed, the search allowed", async ({
   page,
 }) => {
   await page.goto(packLink(BY_HAND));
-  await expect(bar(page)).toContainText("0 of 3 done");
-  await expect(page.locator(".chip")).toHaveCount(3);
-  const menu = await goalMenu(page);
-  await expect(menu.getByRole("button", { name: "Close goal" })).toHaveCount(0);
-  await expect(menu).toContainText("search");
-  await page.keyboard.press("Escape");
-  await expect(page.getByRole("button", { name: "Close all" })).toBeDisabled();
-  await expect(page.getByRole("button", { name: "Hint" })).toBeDisabled();
-  await page.locator(".stage").click({ position: { x: 5, y: 5 } });
-  await page.keyboard.press("c");
-  await page.keyboard.press("h");
-  await expect(page.locator(".notes .kw", { hasText: "Course pack" }).first()).toBeVisible();
+  // One chip with its count; its page lists the problems with their calculus and state. The
+  // modal problem is decided as anywhere, its countermodel found: it is done.
+  await expect(chip(page)).toContainText("Week 3, 1/3");
+  await expect(chip(page)).toHaveAttribute("aria-selected", "true");
+  await expect(page.locator(".chip")).toHaveCount(1);
+  await expect(packPage(page)).toContainText("1 of 3 done");
+  await expect(row(page, 1)).toHaveAccessibleName("Problem 1: a ⊢ a, LJ, open");
+  await expect(row(page, 3)).toHaveAccessibleName("Problem 3: □p ⊢ p, K, done");
+  // The page has no bottom box and no view's tools.
+  await expect(page.getByRole("textbox", { name: "Sequent" })).toHaveCount(0);
+  await expect(page.getByRole("toolbar", { name: "Tools" })).toHaveCount(0);
+  await row(page, 1).click();
   await expect(page.locator(".calc-fixed")).toContainText("This is problem 1 of the pack");
-  await expect(page.getByRole("group", { name: "Calculus of this view" })).toHaveCount(0);
-  // By hand it is done.
+  await expect(chip(page)).toHaveAttribute("aria-selected", "true");
+  // An old pack's switch that barred the search is gone: Hint and Close all work as anywhere.
+  await expect(tool(page, "Hint")).toBeEnabled();
+  await expect(tool(page, "Close all")).toBeEnabled();
   await rule(page, /^a, formula/, "ax");
-  await expect(bar(page)).toContainText("1 of 3 done");
-  await expect(bar(page).getByRole("button", { name: /^Problem 1: a ⊢ a, done/ })).toBeVisible();
-  // The modal problem is the student's to decide: no verdict, a model to find.
-  await bar(page)
-    .getByRole("button", { name: /^Problem 3/ })
-    .click();
-  await expect(page.getByText("This problem is yours to decide")).toBeVisible();
-  await expect(page.locator(".modal .kw", { hasText: "Not valid" })).toHaveCount(0);
-  await page.getByRole("button", { name: "Start from one world" }).click();
-  await page.getByRole("button", { name: "Check the model" }).click();
-  await expect(page.locator(".modal-check")).toContainText("Fails");
-  await expect(bar(page)).toContainText("2 of 3 done");
+  await expect(proved(page)).toBeVisible();
+  await expect(chip(page)).toContainText("Week 3, 2/3");
+  // A press on the chip goes back to the page.
+  await chip(page).click();
+  await expect(row(page, 1)).toHaveAccessibleName(/, done$/);
+  await expect(packPage(page)).toContainText("2 of 3 done");
+  await row(page, 3).click();
+  await expect(page.locator(".modal .kw", { hasText: "Not valid" })).toBeVisible();
   // The answers are kept in the browser: the pack's link opens them again.
   await page.reload();
-  await expect(bar(page)).toContainText("2 of 3 done");
-  // A proof kept reads on its tab as the problem was written.
-  await expect(page.locator(".chip").first()).toContainText("a ⊢ a");
+  await expect(packPage(page)).toContainText("2 of 3 done");
+  await row(page, 1).click();
+  await expect(page.getByRole("textbox", { name: "Sequent" })).toHaveValue("a ⊢ a");
 });
 
-test("a hand-in is checked again: what holds, what is open, what is missing", async ({
-  page,
-  context,
-}) => {
-  await page.goto(packLink(BY_HAND));
-  await rule(page, /^a, formula/, "ax");
-  await expect(bar(page)).toContainText("1 of 3 done");
-  await bar(page)
-    .getByRole("button", { name: /^Problem 3/ })
-    .click();
-  await page.getByRole("button", { name: "Start from one world" }).click();
-  await page.getByRole("button", { name: "Check the model" }).click();
-  await expect(bar(page)).toContainText("2 of 3 done");
-  const link = await handIn(page, context);
-  expect(link).toMatch(/#v=4&h=/);
-
-  await page.goto("/");
-  await page.goto(link);
-  const check = page.getByRole("dialog", { name: "Check a hand-in" });
-  const rows = check.locator(".pk-check");
-  await expect(rows).toHaveCount(3);
-  await expect(rows.nth(0)).toContainText("Proved");
-  await expect(rows.nth(1)).toContainText("Not finished");
-  await expect(rows.nth(2)).toContainText("Countermodel");
-  await expect(rows.nth(2)).toContainText("fails at world 0");
-  // An answer opens on a tab of its own, the teacher's tabs left as they were.
-  await rows.nth(0).getByRole("button", { name: "Open the answer to problem 1" }).click();
-  await expect(viewCell(page)).toHaveAttribute("data-tip", /LJ/);
-});
-
-test("a hand-in's claims count for nothing: a changed pack and a forged proof are found", async ({
+test("a hand-in of the page before opens as its pack with its answers, by link or by file", async ({
   page,
 }) => {
-  await page.goto(packLink(BY_HAND));
-  await rule(page, /^a, formula/, "ax");
-  await expect(bar(page)).toContainText("1 of 3 done");
-  await bar(page).getByRole("button", { name: "Hand in" }).click();
-  const code = await page
-    .getByRole("dialog", { name: "Hand in" })
-    .locator(".pk-code")
-    .textContent();
-  const download = page.waitForEvent("download");
-  await page.getByRole("button", { name: "Download the file" }).click();
-  const { readFile } = await import("node:fs/promises");
-  const handin = JSON.parse(await readFile(await (await download).path(), "utf8"));
-  // The student makes the first problem another one, and claims a proof deduxit cannot read.
-  handin.pack.problems[0].sequent = "b ⊢ b";
-  handin.answers[1] = { session: { version: 1, mode: "classical", sequent: {}, history: [9] } };
-
-  await page.goto("/");
-  await page.getByRole("button", { name: "Import" }).click();
-  await page
-    .getByRole("dialog", { name: "Import" })
-    .locator("textarea")
-    .fill(JSON.stringify(handin));
-  await page
-    .getByRole("dialog", { name: "Import" })
-    .getByRole("button", { name: "Import" })
-    .click();
-  const check = page.getByRole("dialog", { name: "Check a hand-in" });
-  await expect(check.locator(".pk-code")).not.toHaveText(code ?? "");
-  const rows = check.locator(".pk-check");
-  await expect(rows.nth(0)).toContainText("Another sequent");
-  await expect(rows.nth(0)).toContainText("a ⊢ a");
-  await expect(rows.nth(1)).toContainText("Refused");
-  await expect(rows.nth(2)).toContainText("No answer");
+  await start(page, "A * B |- B * A");
+  await tool(page, "Close all").click();
+  await expect(proved(page)).toBeVisible();
+  const session = JSON.parse(
+    await readFile(await (await saveExport(page, "Session")).path(), "utf8"),
+  ) as unknown;
+  const handin = { handin: 1, pack: BY_HAND, answers: [null, { session }, null] };
+  await page.goto(`/#v=4&h=${packed(handin)}`);
+  await page.reload();
+  await expect(chip(page)).toContainText("Week 3, 2/3");
+  await expect(row(page, 2)).toHaveAccessibleName(/, done$/);
+  // No check view is left.
+  await expect(page.getByRole("dialog", { name: "Check a hand-in" })).toHaveCount(0);
+  await row(page, 2).click();
+  await expect(proved(page)).toBeVisible();
+  // A hand-in file opens the same way, from Import.
+  await goto(page);
+  await tool(page, "Import").click();
+  const panel = page.getByRole("dialog", { name: "Import" });
+  await panel.locator("textarea").fill(JSON.stringify(handin));
+  await panel.getByRole("button", { name: "Import" }).click();
+  await expect(chip(page)).toContainText("Week 3, 2/3");
 });
 
-test("embedded, the page keeps the proof and leaves the site's places out", async ({ page }) => {
+test("closing the pack's chip closes its problems, and Undo opens it again", async ({ page }) => {
+  await page.goto(packLink(BY_HAND));
+  await expect(packPage(page)).toBeVisible();
+  await chip(page).focus();
+  await page.keyboard.press("Delete");
+  await expect(chip(page)).toHaveCount(0);
+  const notice = page.getByRole("status").filter({ hasText: "Week 3 closed." });
+  await notice.getByRole("button", { name: "Undo" }).click();
+  await expect(chip(page)).toContainText("Week 3, 1/3");
+  await expect(packPage(page)).toBeVisible();
+});
+
+test("embedded, the page keeps the pack and leaves the site's places out", async ({ page }) => {
   await page.goto(packLink({ ...BY_HAND, problems: BY_HAND.problems.slice(0, 1) }, true));
-  await expect(bar(page)).toContainText("Week 3");
+  await expect(packPage(page)).toBeVisible();
   await expect(page.getByRole("link", { name: "Open in deduxit" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Practice" })).toBeHidden();
-  await expect(page.getByRole("button", { name: "Undo" })).toBeVisible();
+  await row(page, 1).click();
+  await expect(tool(page, "Undo")).toBeVisible();
   await expect(page.getByRole("button", { name: "New sequent", exact: true })).toBeHidden();
 });
 
 test("a visitor without a pack sees nothing of it", async ({ page }) => {
   await goto(page);
-  await expect(bar(page)).toHaveCount(0);
+  await expect(chip(page)).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Open in deduxit" })).toHaveCount(0);
-});
-
-test("with the search barred, deduxit's table and tableau are barred too", async ({ page }) => {
-  await page.goto(
-    packLink({
-      ...BY_HAND,
-      problems: [{ suite: "ordinary", parameter: "classical", sequent: "⊢ a ∨ ¬a" }],
-    }),
-  );
-  await expect(bar(page)).toContainText("0 of 1 done");
-  await expect(
-    page.getByRole("tab", {
-      name: /^(Sequent calculus|Natural deduction|Classical linear|Intuitionistic linear)/,
-    }),
-  ).toBeVisible();
-  await page.getByRole("button", { name: "Add a view" }).click();
-  const list = page.getByRole("dialog", { name: "Add a view" });
-  for (const name of ["Truth table", "Tableau"])
-    await expect(list.getByRole("button", { name, exact: true })).toHaveAttribute(
-      "aria-disabled",
-      "true",
-    );
 });
 
 test("a modal problem keeps its calculus, and a valid one is never done", async ({ page }) => {
   await page.goto(
     packLink({
       ...BY_HAND,
-      search: true,
       problems: [{ suite: "modal", parameter: "K", sequent: "□(p → q) ⊢ □p → □q" }],
     }),
   );
+  await row(page, 1).click();
   await expect(page.locator(".modal .kw.ok")).toHaveText("Valid");
-  await expect(bar(page)).toContainText("0 of 1 done");
+  await expect(chip(page)).toContainText("Week 3, 0/1");
   await tool(page, "Prove step by step").click();
   await expect(page.locator(".notes .kw", { hasText: "Course pack" }).first()).toBeVisible();
   await expect(viewCell(page)).toHaveAttribute("data-tip", "Modal logic, K");
@@ -237,41 +192,9 @@ test("print leaves the bands out, and prints light in the dark theme", async ({ 
     document.documentElement.dataset["theme"] = "dark";
   });
   await page.emulateMedia({ media: "print" });
-  await expect(page.locator(".band.bottom")).toBeHidden();
-  await expect(page.locator(".band.top")).toBeHidden();
+  await expect(page.locator(".top-row")).toBeHidden();
+  await expect(page.locator(".rail")).toBeHidden();
   expect(await page.evaluate(() => getComputedStyle(document.documentElement).colorScheme)).toBe(
     "light",
   );
-});
-
-test("with the search barred, the invertible rules wait for the student too", async ({ page }) => {
-  await page.goto(
-    packLink({
-      ...BY_HAND,
-      problems: [
-        { suite: "linear", parameter: "classical", sequent: "⊢ (A ⊗ B) ⊸ (A ⊗ B)" },
-        { suite: "linear", parameter: "classical", sequent: "⊢ A ⊸ A" },
-        { suite: "ordinary", parameter: "intuitionistic", sequent: "a ∧ b ⊢ b ∧ a" },
-      ],
-    }),
-  );
-  await expect(bar(page)).toContainText("0 of 3 done");
-  await page.getByRole("button", { name: "Settings", exact: true }).click();
-  const settings = page.getByRole("region", { name: "Settings" });
-  await settings.getByRole("checkbox", { name: "Apply invertible rules by themselves" }).check();
-  await expect(settings).toContainText("This pack asks for every step by hand.");
-  // Settings is a page: its own button leaves it.
-  await page.getByRole("button", { name: "Settings", exact: true }).click();
-  // In linear logic and in LJ alike.
-  for (const problem of [/^Problem 2/, /^Problem 3/]) {
-    await bar(page).getByRole("button", { name: problem }).click();
-    await expect(bar(page)).toContainText("0 of 3 done");
-    await expect(page.locator(".gt")).toHaveCount(1);
-  }
-  // Outside the pack the setting holds: a tab of one's own (in LJ, the calculus last started)
-  // is finished by the rules alone.
-  await page.getByRole("button", { name: "New sequent", exact: true }).click();
-  await page.getByRole("textbox", { name: "Sequent" }).fill("|- a -> a");
-  await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
-  await expect(page.locator(".chip[aria-selected=true] svg.lucide-check")).toBeVisible();
 });

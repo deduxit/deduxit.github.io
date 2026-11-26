@@ -274,6 +274,9 @@
   --size-panel-wide: 35rem;
   --size-page: 40rem;
   --size-text: 40rem;
+  /* A course pack's page: its column, and a problem's row. */
+  --size-pack: 32.5rem;
+  --size-row: 2.875rem;
   /* The tallest a countermodel's drawing stands under its note before it scales down. */
   --size-model: 15rem;
   /* A tableau's line: its number, its sign, and the indent of a branch's end under the formulas. */

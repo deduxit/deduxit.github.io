@@ -2,13 +2,14 @@
 // Licensed under the EUPL
 
 /**
- * Course packs on the page. A teacher packs the open tabs' problems into a link (`PackSheet`); a
- * student who opens it gets one tab per problem, in the calculus the pack fixes, with the search
- * barred where the pack says so (`Limits`, asked by the prover itself), a bar to move between
- * the problems (`PackBar`), and a hand-in: the answers packed in a link or a file
- * (`HandinSheet`). A teacher opens a hand-in in the check view (`CheckSheet`), which reads every
- * answer again with deduxit and trusts none of it. The answers are kept in the browser under the
- * pack's code; nothing is sent anywhere.
+ * Course packs on the page (boards D17 and D18). A teacher makes one in the Export panel's entry
+ * "Course pack" (`PackForm`): a title and the sequents at the top as problems, then its link, its
+ * embed code and its printed sheet. A student who opens the link gets the pack as one chip at the
+ * top with its count done (`PackChip`) and a page of its problems (`PackPage`); a problem opens
+ * in the calculus the pack fixes (`Limits`, asked by the prover itself), and Hint and Close all
+ * work as anywhere. The answers are kept in the browser under the pack's code; nothing is sent
+ * anywhere. A hand-in, from a link or a file of the page before, opens as its pack with its
+ * answers.
  */
 
 import {
@@ -17,24 +18,17 @@ import {
   createResource,
   createSignal,
   For,
-  type JSX,
   on,
-  onMount,
   Show,
   useContext,
 } from "solid-js";
 import { Portal } from "solid-js/web";
 import { unwrap } from "solid-js/store";
-import { failure } from "../lib/deduxit";
-import { kripkeJson } from "../lib/kripke";
-import { writeHandinLink, writePackLink } from "../lib/link";
-import { frameWords, type Model, prettyModal } from "../lib/modal";
-import { isOrdinary, prettyOrdinary } from "../lib/ordinary";
+import { writePackLink } from "../lib/link";
+import { type Model, prettyModal } from "../lib/modal";
+import { prettyOrdinary } from "../lib/ordinary";
 import {
   type Answer,
-  HANDIN_VERSION,
-  type Handin,
-  handinText,
   MOST_PROBLEMS,
   PACK_SUITES,
   PACK_VERSION,
@@ -43,9 +37,9 @@ import {
   packCode,
   packText,
 } from "../lib/pack";
-import { calculusOf, markLabel, parameterOf } from "../lib/suites";
+import { calculusOf, markLabel, markOf, parameterOf } from "../lib/suites";
 import { pretty } from "../lib/words";
-import { download } from "./Panels";
+import { Sign } from "./Signs";
 import { NO_LIMITS, type Proof, type Prover } from "./state";
 import type { Ui } from "./ui";
 
@@ -78,6 +72,12 @@ const calculusOfProblem = (p: Problem) => calculusOf(p.suite, "sequent", p.param
 const calculusLabel = (p: Problem): string => {
   const c = calculusOfProblem(p);
   return c ? markLabel(c) : p.parameter;
+};
+
+/** A problem's calculus by its short name, "LJ". */
+const calculusMark = (p: Problem): string => {
+  const c = calculusOfProblem(p);
+  return c ? markOf(c) : p.parameter;
 };
 
 /** A proof's answer: its session, its model, or none yet. */
@@ -127,15 +127,15 @@ interface Open {
   readonly tabs: readonly (string | null)[];
 }
 
-/** Creates the page's course packs: the one a student works on, and the hand-in a teacher checks. */
+/** Creates the page's course pack: the one a student works on. */
 export function createPacks(prover: Prover, view: Ui) {
   const [open, setOpen] = createSignal<Open | null>(null);
-  /** The hand-in the check view shows, with its pack's code. */
-  const [checking, setChecking] = createSignal<{ handin: Handin; code: string } | null>(null);
-  /** The answers kept from an earlier visit, for the problems whose tab is closed. */
+  /** The answers kept from an earlier visit or a hand-in, for the problems whose tab is closed. */
   let kept: (Answer | undefined)[] = [];
 
   const indexOf = (id: string) => open()?.tabs.indexOf(id) ?? -1;
+  /** Whether a proof is a problem of the open pack. */
+  const isProblem = (id: string | null | undefined) => !!id && indexOf(id) >= 0;
 
   // The pack's limits, asked by the prover at every action that would break one.
   createEffect(() => {
@@ -147,7 +147,7 @@ export function createPacks(prover: Prover, view: Ui) {
               const at = o.tabs.indexOf(id);
               const p = prover.store.proofs.find((q) => q.id === id);
               if (at < 0 || !p || (!p.session && !p.modal?.statement)) return null;
-              return `This is problem ${String(at + 1)} of the pack: its sequent and calculus are fixed. A new tab takes another sequent.`;
+              return `This is problem ${String(at + 1)} of the pack: its sequent and calculus are fixed. A new sequent takes another.`;
             },
           }
         : NO_LIMITS,
@@ -174,7 +174,7 @@ export function createPacks(prover: Prover, view: Ui) {
         try {
           storage()?.setItem(answersKey(o.code), text);
         } catch {
-          // A full or closed storage keeps nothing: the hand-in still has the answers.
+          // A full or closed storage keeps nothing: the work stays on its tabs for this visit.
         }
       },
       { defer: true },
@@ -213,14 +213,18 @@ export function createPacks(prover: Prover, view: Ui) {
     return id;
   }
 
-  /** Opens a pack: a tab per problem, the first shown, the answers kept for it restored. */
-  async function arrive(pack: Pack) {
+  /**
+   * Opens a pack: a tab per problem, from the answers given (a hand-in's) or else those kept for
+   * it in this browser; then its page.
+   */
+  async function arrive(pack: Pack, given?: readonly Answer[]) {
     const code = await packCode(pack);
-    kept = keptAnswers(code, pack.problems.length);
+    kept = given ? [...given] : keptAnswers(code, pack.problems.length);
     setOpen({ pack, code, tabs: pack.problems.map(() => null) });
     for (let at = 0; at < pack.problems.length; at++) await openProblem(at);
     const first = open()?.tabs[0];
     if (first) prover.activate(first);
+    view.setUi({ packPage: true, menu: null, tab: "tree" });
   }
 
   /** Shows problem `at`: its tab, or a new one where it was closed. */
@@ -232,40 +236,40 @@ export function createPacks(prover: Prover, view: Ui) {
       const opened = await openProblem(at);
       if (opened) prover.activate(opened);
     }
+    view.setUi({ packPage: false, menu: null, tab: "tree" });
   }
 
-  /** Closes the pack: its tabs stay, as tabs of their own. */
-  function leave() {
-    setOpen(null);
-  }
-
-  /** The hand-in of the open pack. */
-  const handin = (): Handin | null => {
+  /**
+   * Closes the pack with its problems' tabs, whose answers stay kept in the browser; the
+   * function returned opens it again as it was.
+   */
+  function close(): () => void {
     const o = open();
-    return o ? { handin: HANDIN_VERSION, pack: o.pack, answers: answers() } : null;
-  };
-
-  /** Shows a hand-in in the check view. */
-  async function check(h: Handin) {
-    setChecking({ handin: h, code: await packCode(h.pack) });
-    view.setUi("menu", "check");
+    if (!o) return () => undefined;
+    const backs = o.tabs.flatMap((id) =>
+      id && prover.store.proofs.some((p) => p.id === id) ? [prover.closeChip(id)] : [],
+    );
+    setOpen(null);
+    view.setUi("packPage", false);
+    return () => {
+      for (const back of backs.reverse()) back();
+      setOpen(o);
+      view.setUi({ packPage: true, menu: null, tab: "tree" });
+    };
   }
 
-  return {
-    open,
-    checking,
-    arrive,
-    show,
-    leave,
-    handin,
-    check,
-    indexOf,
-    /** Each problem's tab, for the bar. */
-    proofOf: (at: number) => {
-      const id = open()?.tabs[at];
-      return id ? prover.store.proofs.find((p) => p.id === id) : undefined;
-    },
+  /** How many of the pack's problems are done. */
+  const done = () => {
+    const o = open();
+    return o ? o.pack.problems.filter((_, at) => finished(proofOf(at))).length : 0;
   };
+  /** Each problem's tab. */
+  const proofOf = (at: number) => {
+    const id = open()?.tabs[at];
+    return id ? prover.store.proofs.find((p) => p.id === id) : undefined;
+  };
+
+  return { open, arrive, show, close, indexOf, isProblem, done, proofOf };
 }
 
 /** The page's course packs. */
@@ -276,78 +280,116 @@ export const PacksContext = createContext<Packs>();
 /** The page's course packs; every component under the app has them. */
 export const usePacks = () => useContext(PacksContext);
 
-/** The open pack's bar: its title, its problems to move between, how many are done, the hand-in. */
-export function PackBar(props: { packs: Packs; prover: Prover; ui: Ui }) {
+/** The pack's words at the top: its title, else "Course pack". */
+const titleOf = (pack: Pack) => pack.title || "Course pack";
+
+/**
+ * The open pack's chip at the top: its title and its count done. A press shows its page; it is
+ * chosen while its page or one of its problems is shown.
+ */
+export function PackChip(props: { packs: Packs; prover: Prover; ui: Ui; close: () => void }) {
+  const { ui, setUi } = props.ui;
   return (
     <Show when={props.packs.open()}>
       {(o) => {
-        const done = () =>
-          o().pack.problems.filter((_, at) => finished(props.packs.proofOf(at))).length;
+        const chosen = () =>
+          ui.menu !== "settings" &&
+          (ui.packPage || props.packs.isProblem(props.prover.store.active));
+        const count = () => `${props.packs.done()}/${o().pack.problems.length}`;
+        const all = () => props.packs.done() === o().pack.problems.length;
         return (
-          <section class="pack-bar cluster" aria-label="Course pack">
-            <span class="pk-title">{o().pack.title || "Course pack"}</span>
-            <ol class="pk-problems">
-              <For each={o().pack.problems}>
-                {(problem, at) => {
-                  const proof = () => props.packs.proofOf(at());
-                  const shown = () => !!proof() && props.prover.current()?.id === proof()?.id;
-                  return (
-                    <li>
-                      <button
-                        type="button"
-                        class="pk-problem"
-                        aria-current={shown() ? "true" : undefined}
-                        data-done={finished(proof()) ? "" : undefined}
-                        aria-label={`Problem ${String(at() + 1)}: ${problem.sequent}${finished(proof()) ? ", done" : ""}`}
-                        onClick={() => void props.packs.show(at())}
-                      >
-                        {String(at() + 1)}
-                      </button>
-                    </li>
-                  );
-                }}
-              </For>
-            </ol>
-            <span class="pk-done">
-              {done()} of {o().pack.problems.length} done
-            </span>
+          <div class="chip-wrap" role="presentation">
             <button
               type="button"
-              class="btn btn-primary"
-              onClick={() => props.ui.setUi("menu", "handin")}
+              role="tab"
+              class="chip pack-chip"
+              data-rove=""
+              data-pack=""
+              aria-selected={chosen()}
+              aria-keyshortcuts={chosen() ? "W Delete" : "Delete"}
+              tabindex={chosen() ? 0 : -1}
+              aria-label={`${titleOf(o().pack)}, ${count()}, course pack, ${props.packs.done()} of ${o().pack.problems.length} done`}
+              data-tip={`${titleOf(o().pack)}: its problems`}
+              onKeyDown={(event) => {
+                if (event.key !== "Delete" || event.altKey || event.ctrlKey || event.metaKey)
+                  return;
+                event.preventDefault();
+                props.close();
+              }}
+              onClick={() => setUi({ packPage: true, menu: null, tab: "tree" })}
             >
-              Hand in
+              <Sign name="pack" class="pack-sign" />
+              <span class="chip-text">
+                {titleOf(o().pack)}, {count()}
+              </span>
+              <Show when={all()}>
+                <Sign name="close" class="sign good" />
+              </Show>
             </button>
-          </section>
+            <span
+              class="chip-close"
+              aria-hidden="true"
+              data-tip={`Close ${titleOf(o().pack)}`}
+              onClick={() => props.close()}
+            >
+              <Sign name="shut" />
+            </span>
+          </div>
         );
       }}
     </Show>
   );
 }
 
-/** A sheet over the stage with its title, which takes the focus when it opens. */
-function Sheet(props: { title: string; intro: string; children: JSX.Element }) {
-  let title: HTMLHeadingElement | undefined;
-  onMount(() => title?.focus());
+/**
+ * The open pack's page, in the stage's place: its title, its problems with their calculus and
+ * state, and how many are done. A press on a problem opens it. No bottom box, no tools.
+ */
+export function PackPage(props: { packs: Packs; prover: Prover }) {
   return (
-    <div class="cluster menu transform pack-sheet" role="dialog" aria-label={props.title}>
-      <h2 class="pr-title" tabindex="-1" ref={title}>
-        {props.title}
-      </h2>
-      <p class="sub tf-intro">{props.intro}</p>
-      {props.children}
-    </div>
+    <Show when={props.packs.open()}>
+      {(o) => (
+        <section class="pack-page" aria-labelledby="pack-title">
+          <h1 id="pack-title">{titleOf(o().pack)}</h1>
+          <ol class="pk-rows">
+            <For each={o().pack.problems}>
+              {(problem, at) => {
+                const isDone = () => finished(props.packs.proofOf(at()));
+                return (
+                  <li>
+                    <button
+                      type="button"
+                      class="pk-row"
+                      aria-label={`Problem ${String(at() + 1)}: ${problem.sequent}, ${calculusMark(problem)}, ${isDone() ? "done" : "open"}`}
+                      onClick={() => void props.packs.show(at())}
+                    >
+                      <span class="pk-n">{at() + 1}</span>{" "}
+                      <span class="m pk-sequent">{problem.sequent}</span>{" "}
+                      <span class="pk-calc">{calculusMark(problem)}</span>{" "}
+                      <span class="pk-state">
+                        <Show when={isDone()} fallback={<span class="pk-open" />}>
+                          <Sign name="close" class="sign good" />
+                        </Show>
+                      </span>
+                    </button>
+                  </li>
+                );
+              }}
+            </For>
+          </ol>
+          <p class="pk-progress">
+            {props.packs.done()} of {o().pack.problems.length} done
+          </p>
+          <Show when={props.prover.settings().guide}>
+            <p class="guide-line">
+              A course pack is a set of problems from your teacher. Press one to work on it. Your
+              work stays in this browser.
+            </p>
+          </Show>
+        </section>
+      )}
+    </Show>
   );
-}
-
-/** Copies text to the clipboard, and says so or why not. */
-async function copied(text: string, what: string): Promise<string> {
-  try {
-    await navigator.clipboard.writeText(text);
-    return `${what} copied.`;
-  } catch {
-    return `The browser keeps the clipboard closed: select the ${what.toLowerCase()} to copy it.`;
-  }
 }
 
 /** The page's address with a fragment. */
@@ -357,24 +399,30 @@ const address = (hash: string) => `${location.origin}${location.pathname}${hash}
 export const embedCode = (url: string, title: string) =>
   `<iframe src="${url.replaceAll('"', "%22")}" title="${title.replaceAll('"', "&quot;")}" width="100%" height="560" loading="lazy"></iframe>`;
 
-/** The Export panel's form of a course pack: the open sequents' problems, the link, the embed and the handout. */
+/**
+ * The Export panel's form of a course pack (board D18): a title, the sequents at the top as
+ * problems to tick, then "Copy the link", "Copy the embed code" and "Print". A sequent need not
+ * be proved to go in.
+ */
 export function PackForm(props: { prover: Prover; ui: Ui }) {
+  const packs = usePacks();
+  /** The sequents at the top that a pack takes: each chip's own proof, started. */
   const candidates = () =>
     props.prover.store.proofs.flatMap((proof) => {
+      if (props.prover.chipOf(proof.id) !== proof.id || packs?.isProblem(proof.id)) return [];
       const problem = problemOf(proof);
       return problem ? [{ id: proof.id, problem }] : [];
     });
   const [left, setLeft] = createSignal<ReadonlySet<string>>(new Set());
   const [title, setTitle] = createSignal("");
-  const [search, setSearch] = createSignal(false);
-  const [said, setSaid] = createSignal("");
+  const picked = () => candidates().filter((c) => !left().has(c.id));
   const pack = (): Pack | null => {
-    const problems = candidates()
-      .filter((c) => !left().has(c.id))
+    const problems = picked()
       .map((c) => c.problem)
       .slice(0, MOST_PROBLEMS);
+    // The search is never barred: the field stays for the readers of earlier packs.
     return problems.length
-      ? { pack: PACK_VERSION, title: title().trim(), search: search(), problems }
+      ? { pack: PACK_VERSION, title: title().trim(), search: true, problems }
       : null;
   };
   const [made] = createResource(
@@ -382,35 +430,49 @@ export function PackForm(props: { prover: Prover; ui: Ui }) {
     async (p) => {
       const text = packText(p);
       return {
-        code: await packCode(p),
         link: address(await writePackLink(text)),
         embed: address(await writePackLink(text, true)),
       };
     },
   );
+  const say = (words: string) => props.ui.setUi({ notice: { text: words }, live: words });
+  async function copy(text: string | undefined, what: string) {
+    if (!text) return say("Choose at least one problem.");
+    try {
+      await navigator.clipboard.writeText(text);
+      say(`${what} copied.`);
+    } catch {
+      say(`The browser keeps the clipboard closed: ${what.toLowerCase()} not copied.`);
+    }
+  }
+  const count = () => picked().length;
   return (
     <div class="pack-form">
+      <p class="ex-title">
+        <span class="ex-file">Course pack</span>
+        <span class="ex-note">{count() === 1 ? "1 problem" : `${count()} problems`}</span>
+      </p>
       <Show
         when={candidates().length}
         fallback={
-          <p class="method-verdict">
-            Start a sequent on a tab first: each started tab of linear, ordinary or modal logic is a
-            problem of the pack.
+          <p class="sub">
+            Enter a sequent first. Each sequent at the top in linear, ordinary or modal logic can be
+            a problem of the pack.
           </p>
         }
       >
-        <label class="custom-field pk-field">
-          <span>Title</span>
+        <label class="ex-row">
+          <span class="ex-label">Title</span>
           <input
-            class="field"
+            class="field pk-title-in"
             maxLength={120}
-            placeholder="Week 3: the intuitionistic connectives"
+            placeholder="Week 3: implication"
             value={title()}
             onInput={(event) => setTitle(event.currentTarget.value)}
           />
         </label>
         <fieldset class="pk-list">
-          <legend class="kw-label h">Problems</legend>
+          <legend class="sr-only">Problems</legend>
           <For each={candidates()}>
             {(c) => (
               <label class="pk-item">
@@ -424,367 +486,72 @@ export function PackForm(props: { prover: Prover; ui: Ui }) {
                     setLeft(next);
                   }}
                 />
-                <span class="m">{c.problem.sequent}</span>
-                <span class="pk-calc">{calculusLabel(c.problem)}</span>
+                <span class="m">{c.problem.sequent}</span>{" "}
+                <span class="pk-calc">{calculusMark(c.problem)}</span>
               </label>
             )}
           </For>
         </fieldset>
-        <label class="sw">
-          <input
-            type="checkbox"
-            checked={search()}
-            onChange={(event) => setSearch(event.currentTarget.checked)}
-          />
-          <span class="sw-t" aria-hidden="true" />
-          The search may close goals and give hints
-        </label>
-        <Show when={made()}>
-          {(m) => (
-            <>
-              <p class="method-verdict">
-                Pack code <span class="pk-code">{m().code}</span>: a hand-in of this pack shows the
-                same code.
-              </p>
-              <p class="row">
-                <button
-                  type="button"
-                  class="btn btn-primary"
-                  onClick={async () => setSaid(await copied(m().link, "Link"))}
-                >
-                  Copy the link
-                </button>
-                <button
-                  type="button"
-                  class="btn"
-                  onClick={async () =>
-                    setSaid(
-                      await copied(
-                        embedCode(m().embed, `deduxit: ${title().trim() || "course pack"}`),
-                        "Embed code",
-                      ),
-                    )
-                  }
-                >
-                  Copy the embed code
-                </button>
-                <button type="button" class="btn" onClick={() => window.print()}>
-                  Print the problems
-                </button>
-              </p>
-              <Handout pack={pack() as Pack} link={m().link} code={m().code} />
-            </>
-          )}
-        </Show>
-        <Show when={said()}>
-          <p class="said" role="status">
-            {said()}
-          </p>
+        <p class="pk-acts">
+          <button
+            type="button"
+            class="btn btn-primary pk-copy"
+            onClick={() => void copy(made()?.link, "Link to the pack")}
+          >
+            <Sign name="share" />
+            Copy the link
+          </button>
+          <button
+            type="button"
+            class="btn"
+            onClick={() =>
+              void copy(
+                made() &&
+                  embedCode(made()?.embed ?? "", `deduxit: ${title().trim() || "course pack"}`),
+                "Embed code",
+              )
+            }
+          >
+            <Sign name="copy" />
+            Copy the embed code
+          </button>
+          <button
+            type="button"
+            class="btn"
+            onClick={() => {
+              if (!pack()) return say("Choose at least one problem.");
+              window.print();
+            }}
+          >
+            <Sign name="print" />
+            Print
+          </button>
+        </p>
+        <Show when={pack() && made()}>
+          {(m) => <Handout pack={pack() as Pack} link={m().link} />}
         </Show>
       </Show>
     </div>
   );
 }
 
-/** The pack's problems as a handout: shown in print alone. */
-function Handout(props: { pack: Pack; link: string; code: string }) {
+/** The pack's problems as a printed sheet: shown in print alone. */
+function Handout(props: { pack: Pack; link: string }) {
   return (
     <Portal>
       <section class="pk-handout print-only" aria-hidden="true">
-        <h1>{props.pack.title || "Course pack"}</h1>
+        <h1>{titleOf(props.pack)}</h1>
         <ol>
           <For each={props.pack.problems}>
-            {(p) => {
-              return (
-                <li>
-                  <span class="m">{p.sequent}</span> <span>({calculusLabel(p)})</span>
-                </li>
-              );
-            }}
+            {(p) => (
+              <li>
+                <span class="m">{p.sequent}</span> <span>({calculusLabel(p)})</span>
+              </li>
+            )}
           </For>
         </ol>
-        <p>
-          Open the problems on deduxit: {props.link} (pack code {props.code}).
-        </p>
+        <p>Open the problems on deduxit: {props.link}</p>
       </section>
     </Portal>
   );
-}
-
-/** The student's sheet: the answers as a link or a file for the teacher. */
-export function HandinSheet(props: { packs: Packs; prover: Prover }) {
-  const [said, setSaid] = createSignal("");
-  const [made] = createResource(
-    () => props.packs.handin() ?? undefined,
-    async (h) => {
-      const text = handinText(h);
-      const hash = await writeHandinLink(text);
-      return { text, link: hash ? address(hash) : null, code: await packCode(h.pack) };
-    },
-  );
-  const done = () => {
-    const o = props.packs.open();
-    return o ? o.pack.problems.filter((_, at) => finished(props.packs.proofOf(at))).length : 0;
-  };
-  return (
-    <Sheet
-      title="Hand in"
-      intro="Your answers as a link or a file: send it to your teacher, who opens it on this page and has every answer checked again. This page sends nothing itself."
-    >
-      <Show when={props.packs.open()}>
-        {(o) => (
-          <p class="method-verdict">
-            {o().pack.title || "Course pack"}: {done()} of {o().pack.problems.length} problems done.
-          </p>
-        )}
-      </Show>
-      <Show when={made()}>
-        {(m) => (
-          <>
-            <p class="method-verdict">
-              Pack code <span class="pk-code">{m().code}</span>
-            </p>
-            <Show
-              when={m().link}
-              fallback={
-                <p class="method-verdict">The answers are too long for a link: send the file.</p>
-              }
-            >
-              {(link) => (
-                <p class="row">
-                  <button
-                    type="button"
-                    class="btn btn-primary"
-                    onClick={async () => setSaid(await copied(link(), "Link"))}
-                  >
-                    Copy the link
-                  </button>
-                </p>
-              )}
-            </Show>
-            <p class="row">
-              <button
-                type="button"
-                class="btn"
-                onClick={() =>
-                  download(
-                    `hand-in-${m().code.replaceAll(" ", "")}.json`,
-                    m().text,
-                    "application/json",
-                  )
-                }
-              >
-                Download the file
-              </button>
-            </p>
-          </>
-        )}
-      </Show>
-      <Show when={said()}>
-        <p class="said" role="status">
-          {said()}
-        </p>
-      </Show>
-    </Sheet>
-  );
-}
-
-/** What the check view says of one answer: a tone, a keyword and a sentence. */
-interface Checked {
-  readonly tone: "ok" | "bad" | "warn";
-  readonly keyword: string;
-  readonly sentence: string;
-}
-
-/**
- * Checks an answer against its problem with deduxit, trusting nothing the hand-in says: a proof
- * is read again (deduxit replays and checks every step it holds), its sequent and calculus held to
- * the problem's, and its goals counted; a model is checked against the problem's sequent.
- */
-export async function checkAnswer(
-  prover: Prover,
-  problem: Problem,
-  answer: Answer,
-): Promise<Checked> {
-  const api = prover.api;
-  if (answer === null) return { tone: "warn", keyword: "No answer", sentence: "" };
-  try {
-    if (problem.suite === "modal") {
-      if (!("model" in answer))
-        return {
-          tone: "bad",
-          keyword: "Not an answer",
-          sentence: "A modal problem's answer is a model.",
-        };
-      const statement = await api.modal.read(problem.sequent, problem.parameter, "{}");
-      const e = await api.modal.evaluate(
-        statement,
-        kripkeJson(answer.model as Model, "modal"),
-        answer.world ?? undefined,
-        "{}",
-      );
-      if (e.frame)
-        return {
-          tone: "bad",
-          keyword: `No model of ${problem.parameter}`,
-          sentence: frameWords(e.frame),
-        };
-      return e.holds
-        ? {
-            tone: "warn",
-            keyword: "No countermodel",
-            sentence: "The sequent holds in the model handed in.",
-          }
-        : {
-            tone: "ok",
-            keyword: "Countermodel",
-            sentence: `The sequent fails at world ${String(e.failing ?? 0)} of the model handed in: deduxit checked it.`,
-          };
-    }
-    if (!("session" in answer))
-      return {
-        tone: "bad",
-        keyword: "Not an answer",
-        sentence: "This problem's answer is a proof.",
-      };
-    const session = answer.session as Record<string, unknown> | null;
-    const sequent = JSON.stringify(session?.["sequent"] ?? null);
-    if (problem.suite === "ordinary") {
-      if (!isOrdinary(session) || session.logic !== problem.parameter)
-        return {
-          tone: "bad",
-          keyword: "Another calculus",
-          sentence: "The proof is not in the problem's logic.",
-        };
-      const [own, theirs] = await Promise.all([
-        api.ordinary.read(problem.sequent, problem.parameter, "{}"),
-        api.ordinary.read(sequent, problem.parameter, "{}"),
-      ]);
-      if (own.text !== theirs.text)
-        return {
-          tone: "bad",
-          keyword: "Another sequent",
-          sentence: `The proof is of ${theirs.text}.`,
-        };
-      const view = await api.ordinary.view(session, "{}");
-      return finishedWords(view.complete, view.goals.length);
-    }
-    const mode = problem.parameter as never;
-    if (session?.["mode"] !== problem.parameter)
-      return {
-        tone: "bad",
-        keyword: "Another calculus",
-        sentence: "The proof is not in the problem's mode.",
-      };
-    const [own, theirs] = await Promise.all([
-      api.readAs(problem.sequent, mode, "{}"),
-      api.readAs(sequent, mode, "{}"),
-    ]);
-    if (own.text !== theirs.text)
-      return {
-        tone: "bad",
-        keyword: "Another sequent",
-        sentence: `The proof is of ${theirs.text}.`,
-      };
-    const view = await api.view(session as never, "{}");
-    if (view.complete) await api.proof(session as never, "{}");
-    return finishedWords(view.complete, view.goals.length);
-  } catch (thrown) {
-    return {
-      tone: "bad",
-      keyword: "Refused",
-      sentence: `deduxit does not read the answer: ${failure(thrown instanceof Error ? thrown.message : thrown).message}`,
-    };
-  }
-}
-
-/** What a proof read again says: finished and checked, or the goals left open. */
-const finishedWords = (complete: boolean, open: number): Checked =>
-  complete
-    ? {
-        tone: "ok",
-        keyword: "Proved",
-        sentence: "deduxit read every step again: the proof is finished and checked.",
-      }
-    : {
-        tone: "warn",
-        keyword: "Not finished",
-        sentence: `${String(open)} ${open === 1 ? "goal is" : "goals are"} still open.`,
-      };
-
-/** The teacher's check view: a hand-in's problems, each answer checked again by deduxit. */
-export function CheckSheet(props: { packs: Packs; prover: Prover; ui: Ui }) {
-  return (
-    <Show when={props.packs.checking()}>
-      {(c) => (
-        <Sheet
-          title="Check a hand-in"
-          intro="Every answer is read again by deduxit here: what the hand-in claims counts for nothing. Compare the pack code with your pack's to see that these are your problems."
-        >
-          <p class="method-verdict">
-            {c().handin.pack.title || "Course pack"}, pack code{" "}
-            <span class="pk-code">{c().code}</span>
-            {c().handin.pack.search ? ", the search allowed" : ", the search barred"}.
-          </p>
-          <ol class="pk-checks">
-            <For each={c().handin.pack.problems}>
-              {(problem, at) => {
-                const answer = () => c().handin.answers[at()] ?? null;
-                const [said] = createResource(
-                  () => [problem, answer()] as const,
-                  ([p, a]) => checkAnswer(props.prover, p, a),
-                );
-                return (
-                  <li class="pk-check">
-                    <p class="method-verdict">
-                      <span class="m">{problem.sequent}</span>{" "}
-                      <span class="pk-calc">{calculusLabel(problem)}</span>
-                    </p>
-                    <p class="method-verdict" role="status">
-                      <Show when={said()} fallback={<>Checking…</>}>
-                        {(s) => (
-                          <>
-                            <span class={`kw ${s().tone}`}>{s().keyword}</span> {s().sentence}
-                          </>
-                        )}
-                      </Show>
-                    </p>
-                    <Show when={answer()}>
-                      <p class="row">
-                        <button
-                          type="button"
-                          class="btn btn-s"
-                          aria-label={`Open the answer to problem ${String(at() + 1)}`}
-                          onClick={() => void openAnswer(props.prover, props.ui, problem, answer())}
-                        >
-                          Open the answer
-                        </button>
-                      </p>
-                    </Show>
-                  </li>
-                );
-              }}
-            </For>
-          </ol>
-        </Sheet>
-      )}
-    </Show>
-  );
-}
-
-/** Opens an answer on a tab of its own: a proof's session, or the problem with the model. */
-async function openAnswer(prover: Prover, ui: Ui, problem: Problem, answer: Answer) {
-  const calculus = calculusOfProblem(problem);
-  if (!calculus || answer === null) return;
-  ui.setUi("menu", null);
-  if ("session" in answer) {
-    await prover.open(JSON.stringify(answer.session), calculus);
-    return;
-  }
-  const id = prover.add();
-  await prover.setCalculus(id, calculus);
-  prover.setInput(id, problem.sequent);
-  await prover.submit(id);
-  prover.setModalModel(id, answer.model as Model);
-  prover.setModalWorld(id, answer.world);
 }

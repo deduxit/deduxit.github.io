@@ -1872,32 +1872,36 @@ svg.sign {
   align-items: center;
   gap: var(--spacing-2);
 }
-/* In a compact window the entries are one row that scrolls sideways, the rest under it. */
+/* In a compact window the entries wrap in rows above the rest, each group kept together: a row
+   that scrolls sideways would hide entries partly, under the size a target must have. */
 @media (width < 600px) {
   .menu.export {
     flex-direction: column;
   }
   .ex-list {
     flex-direction: row;
+    flex-wrap: wrap;
+    gap: var(--spacing-1) var(--spacing-2);
     width: auto;
-    overflow-x: auto;
-    overflow-y: hidden;
+    overflow: visible;
   }
   .ex-group {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
+    gap: var(--spacing-1);
   }
   .ex-group + .ex-group {
-    margin: 0 0 0 var(--spacing-1);
-    padding-left: var(--spacing-1);
+    margin: 0;
     border-top: 0;
-    border-left: var(--line) solid var(--color-hair);
   }
   .ex-head {
     display: none;
   }
   .ex-entry {
+    flex: none;
     width: auto;
+    gap: var(--spacing-2);
   }
   .ex-side {
     padding: var(--spacing-1) 0 0;
@@ -2591,88 +2595,123 @@ fieldset {
   cursor: help;
 }
 
-/* A course pack's bar, over the stage's top left: its title, a button per problem (done ones
-   ticked, the shown one outlined), how many are done, the hand-in. */
-.pack-bar {
+/* A course pack's page, in the stage's place: its title, a row per problem with its calculus
+   and state, how many are done. */
+.pack-page {
   position: absolute;
-  top: calc(var(--size-inset) + var(--size-toggle-box) + var(--spacing-2));
-  left: var(--size-inset);
-  z-index: var(--layer-hud);
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--spacing-2);
-  max-width: calc(100% - 2 * var(--spacing-2));
-  padding: var(--spacing-2) var(--spacing-3);
-  font-size: var(--text-control);
+  inset: 0;
+  overflow: auto;
+  padding: var(--spacing-5) var(--spacing-4) var(--spacing-7);
 }
-.pk-title {
-  font-weight: var(--font-weight-semibold);
+.pack-page > * {
+  max-width: var(--size-pack);
+  margin-inline: auto;
 }
-.pk-problems {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--spacing-1);
-  margin: 0;
+.pack-page h1 {
+  margin-block: 0 var(--spacing-2);
+  font: var(--font-weight-bold) var(--text-head) / var(--leading-snug) var(--font-head);
+}
+.pk-rows {
+  margin-block: 0;
   padding: 0;
   list-style: none;
 }
-.pk-problem {
-  min-width: var(--size-button);
-  min-height: var(--size-button);
-  padding: 0 var(--spacing-1);
-  border: var(--line) solid var(--color-edge);
-  border-radius: var(--radius-control);
-  background: var(--color-paper);
-  color: var(--color-ink);
-  font: inherit;
-  cursor: pointer;
+.pk-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  width: 100%;
+  min-height: var(--size-row);
+  padding: 0 var(--spacing-3) 0 var(--spacing-2);
+  border-top: var(--line) solid var(--color-hair);
+  border-radius: 0;
+  text-align: left;
 }
-.pk-problem[aria-current="true"] {
-  border: var(--line-strong) solid var(--color-lapis);
+.pk-n {
+  min-width: var(--spacing-4);
+  color: var(--color-ink2);
 }
-/* Done is a tick beside the number, not the colour alone. */
-.pk-problem[data-done] {
-  background: var(--color-paper);
+.pk-sequent {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--text-math-large);
+  overflow-wrap: anywhere;
 }
-.pk-problem[data-done]::after {
-  content: "✓";
-  margin-left: var(--spacing-0-5);
-  color: var(--color-good);
+.pk-state {
+  flex: none;
+  display: flex;
+  justify-content: center;
+  width: var(--spacing-5);
 }
-.pk-code {
-  font-family: var(--font-mono);
+/* An open problem: a dashed ring, as an open goal's dashed line. */
+.pk-open {
+  width: var(--spacing-3);
+  height: var(--spacing-3);
+  border: var(--line-strong) dashed var(--color-lapis);
+  border-radius: var(--radius-round);
 }
-.pk-field .field {
-  width: min(var(--size-text), calc(100vw - var(--spacing-7)));
+.pk-progress {
+  margin-block: 0;
+  padding: var(--spacing-3) var(--spacing-2) var(--spacing-1);
+  border-top: var(--line) solid var(--color-hair);
+  color: var(--color-ink2);
+}
+.pack-page .guide-line {
+  padding-inline: var(--spacing-2);
+}
+.pack-chip .pack-sign {
+  flex: none;
+}
+/* The Export panel's form of a course pack. */
+.pack-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+  min-height: 100%;
+}
+.pk-title-in {
+  flex: 1;
+  min-width: 0;
 }
 .pk-list {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-1);
   margin: 0;
   padding: 0;
   border: 0;
 }
 .pk-item {
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: var(--spacing-2);
+  align-items: center;
+  gap: var(--spacing-3);
+  min-height: var(--size-check-row);
+}
+.pk-item .m {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .pk-calc {
   color: var(--color-ink2);
   font-size: var(--text-control);
 }
-.pk-checks {
+.pk-acts {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   gap: var(--spacing-2);
-  margin: 0;
-  padding-left: var(--spacing-4);
+  margin: auto 0 0;
 }
-.pk-check .row {
-  margin: 0;
+.pk-acts .btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-2);
+}
+.pk-acts .pk-copy {
+  flex-basis: 100%;
 }
 .print-only {
   display: none;
@@ -3936,7 +3975,6 @@ table.keys th {
   .app .tools,
   .app .toggles-place,
   .app .bottom,
-  .app .pack-bar,
   .app .embed-open,
   .app .stage-ctl,
   .app .menu {

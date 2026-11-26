@@ -63,6 +63,7 @@ import { Sign } from "./Signs";
 import { redoStructure, undoStructure } from "./Structure";
 import { Toggles } from "./Toggles";
 import { useWorkspace } from "./Workspace";
+import { PackChip, usePacks } from "./Packs";
 import { stepCounts, stepShown, stepTo } from "./Clausal";
 import { pressesOf, undoPress } from "./HandTableau";
 import { elimOn, elimSettings } from "./Stage";
@@ -355,9 +356,11 @@ export function TopRow(props: {
   setTheme: (t: Theme) => void;
   newTab: () => void;
   closeChip: (chip: string) => void;
+  closePack: () => void;
 }) {
   const { ui, setUi } = props.ui;
   const settings = () => props.prover.settings();
+  const packs = usePacks();
   return (
     <header class="top-row">
       <a
@@ -381,9 +384,19 @@ export function TopRow(props: {
           aria-label="Sequents"
           onKeyDown={(event) => rove(event, false)}
         >
-          <For each={props.prover.store.proofs.filter((p) => props.prover.chipOf(p.id) === p.id)}>
+          <Show when={packs}>
+            {(p) => (
+              <PackChip packs={p()} prover={props.prover} ui={props.ui} close={props.closePack} />
+            )}
+          </Show>
+          <For
+            each={props.prover.store.proofs.filter(
+              (p) => props.prover.chipOf(p.id) === p.id && !packs?.isProblem(p.id),
+            )}
+          >
             {(proof) => {
-              const mine = () => props.prover.chipOf(props.prover.store.active ?? "") === proof.id;
+              const mine = () =>
+                props.prover.chipOf(props.prover.store.active ?? "") === proof.id && !ui.packPage;
               const chosen = () => mine() && ui.menu !== "settings";
               const text = () => (proof.input ? tabText(proof) : "New sequent");
               return (
@@ -417,6 +430,7 @@ export function TopRow(props: {
                       props.prover.activate(proof.id);
                       setUi({
                         menu: null,
+                        packPage: false,
                         tab: chosen() && main && !graph && hasGraph ? "graph" : "tree",
                       });
                     }}

@@ -70,8 +70,6 @@ export type Menu =
   | "search"
   | "views"
   | "about"
-  | "handin"
-  | "check"
   | null;
 
 /** A negative translation, each a view of its own. */
@@ -192,6 +190,8 @@ export function createUi() {
     notice: Notice | null;
     /** In a compact window, whether the tools' second row (More) is open. */
     more: boolean;
+    /** Whether the open course pack's page is shown, its problems listed, in the stage's place. */
+    packPage: boolean;
     /** The model the model view starts from, the sequent it is checked against, and the logic. */
     modelSeed: ModelSeed | null;
     /** The countermodel view `⊭` of each proof that has one open, by the proof's id. */
@@ -215,6 +215,7 @@ export function createUi() {
     stepAt: {},
     notice: null,
     more: false,
+    packPage: false,
     modelSeed: null,
     counters: {},
     ladder: null,

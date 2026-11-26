@@ -6,7 +6,6 @@
 // controls in every state, tests/accessibility.spec.ts runs axe in every
 // state: a new control, popover or state gets a step here, and both see it.
 
-import { readFile } from "node:fs/promises";
 import { devices, expect, type Page } from "@playwright/test";
 import {
   addView,
@@ -137,8 +136,7 @@ export async function exporting(page: Page, visit: Visit) {
   await expect(panel.locator(".ex-link")).toContainText("#v=2");
   await visit("Export, this proof's link");
   await page.keyboard.press("Escape");
-  await start(page, "A |- B", false);
-  await closeGoal(page);
+  await start(page, "A * B |- B * A", false);
   await press(page, "Export", visit);
   await panel.getByRole("button", { name: "Text", exact: true }).click();
   await panel.getByRole("button", { name: "Rocq", exact: true }).click();
@@ -643,41 +641,26 @@ export async function deducing(page: Page, visit: Visit) {
 }
 
 /**
- * Course packs: the teacher's sheet, a pack opened with its bar, its fixed calculus, the hand-in,
- * the check view of a hand-in imported, and a pack embedded in a course's page.
+ * Course packs: the Export panel's form, a pack's page as a student meets it, one of its
+ * problems open, a hand-in of the page before opened as its pack, and a pack embedded in a
+ * course's page.
  */
 export async function packing(page: Page, visit: Visit) {
   await start(page, "A * B |- B * A");
   await press(page, "Export");
-  await page.getByRole("menuitem", { name: /^Course pack/ }).click();
-  const sheet = page.getByRole("dialog", { name: "Course pack" });
-  await sheet.getByRole("textbox", { name: "Title" }).fill("Week 3");
-  await expect(sheet.locator(".pk-code")).toBeVisible();
-  await visit("course pack");
+  const panel = page.getByRole("dialog", { name: "Export" });
+  await panel.getByRole("button", { name: "Course pack", exact: true }).click();
+  await panel.getByRole("textbox", { name: "Title" }).fill("Week 3");
+  await visit("course pack's form");
   const handout = (await page.locator(".pk-handout p").textContent()) ?? "";
   const link = handout.match(/https?:\S+#v=4&k=\S+/)?.[0] ?? "";
   await page.goto(link);
-  const bar = page.getByRole("region", { name: "Course pack" });
-  await expect(bar).toContainText("Week 3");
-  await visit("pack opened");
+  const pagePack = page.getByRole("region", { name: "Week 3" });
+  await expect(pagePack).toBeVisible();
+  await visit("pack's page");
+  await pagePack.getByRole("button", { name: /^Problem 1:/ }).click();
   await expect(page.locator(".calc-fixed")).toContainText("problem 1 of the pack");
-  await visit("pack's fixed calculus");
-  await bar.getByRole("button", { name: "Hand in" }).click();
-  const handin = page.getByRole("dialog", { name: "Hand in" });
-  await expect(handin.locator(".pk-code")).toBeVisible();
-  await visit("hand-in");
-  const download = page.waitForEvent("download");
-  await handin.getByRole("button", { name: "Download the file" }).click();
-  const text = await readFile(await (await download).path(), "utf8");
-  await page.keyboard.press("Escape");
-  await press(page, "Import");
-  await page.getByRole("dialog", { name: "Import" }).locator("textarea").fill(text);
-  await page
-    .getByRole("dialog", { name: "Import" })
-    .getByRole("button", { name: "Import" })
-    .click();
-  await expect(page.getByRole("dialog", { name: "Check a hand-in" }).locator(".kw")).toHaveCount(1);
-  await visit("check view");
+  await visit("pack's problem, its calculus fixed");
   // Only the fragment changes: a reload opens the link as a course's page would.
   await page.goto(`${link}&e=1`);
   await page.reload();

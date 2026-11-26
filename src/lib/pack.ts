@@ -9,9 +9,9 @@
  * each problem fixes its calculus (a suite of the registry and its mode, logic or system), and
  * `search` says whether the search may close goals and give hints. A hand-in is `{"handin": 1,
  * "pack", "answers"}`, one answer per problem: the proof's session document, a Kripke model with
- * the world it is checked at, or null. A hand-in is the student's claim and nothing more: the
- * check view reads every answer again with deduxit, and shows the pack's code so that the teacher
- * sees it is their pack.
+ * the world it is checked at, or null. The page writes no hand-in any more; one written before
+ * opens as its pack, its answers on the problems' tabs, each read again by deduxit as any session
+ * is.
  *
  * Both are read key by key within bounds, since a link is anyone's text.
  */
@@ -197,9 +197,5 @@ export async function packCode(p: Pack): Promise<string> {
   return `${hex.slice(0, 4)} ${hex.slice(4, 8)} ${hex.slice(8)}`;
 }
 
-/** A hand-in's JSON. */
-export const handinText = (h: Handin): string =>
-  JSON.stringify({ handin: h.handin, pack: JSON.parse(packText(h.pack)), answers: h.answers });
-
-/** Whether a document's text is a hand-in, by its first key: what an import opens in the check view. */
+/** Whether a document's text is a hand-in, by its first key: what an import opens as its pack. */
 export const isHandin = (text: string): boolean => /^\s*\{\s*"handin"\s*:/.test(text);

@@ -55,7 +55,7 @@ import {
   viewUndo,
 } from "./Frame";
 import { ExportPanel } from "./Export";
-import { CheckSheet, createPacks, HandinSheet, PackBar, PacksContext } from "./Packs";
+import { createPacks, PackPage, PacksContext } from "./Packs";
 import {
   AboutPane,
   ImportPanel,
@@ -72,7 +72,7 @@ import { Tour } from "./Tour";
 import { createUi, ladderKey, Why } from "./ui";
 
 /** The menus that open as a panel beside the tools, a sheet in a compact window. */
-const PANELS: readonly string[] = ["steps", "search", "export", "import", "handin", "check"];
+const PANELS: readonly string[] = ["steps", "search", "export", "import"];
 
 /** The browser's storage, or undefined where it is refused. */
 const storage = () => {
@@ -144,8 +144,8 @@ export default function App(props: {
   });
 
   /**
-   * Opens a course pack's link (its problems, a tab each) or a hand-in's (the check view, the open
-   * tabs left as they are); false where the fragment holds neither.
+   * Opens a course pack's link, or a hand-in's as its pack with its answers (its problems, a tab
+   * each, behind the pack's chip); false where the fragment holds neither.
    */
   async function openPack(hash: string, pasted = false): Promise<boolean> {
     const link = await readPackLink(hash);
@@ -164,23 +164,20 @@ export default function App(props: {
       );
       return true;
     }
-    if (link.kind === "handin") {
-      const handin = readHandin(link.text);
-      if ("problem" in handin)
-        refused(keyword, `The link holds no hand-in this page reads (${handin.problem}).`);
-      else await packs.check(handin);
-      return true;
-    }
-    const pack = readPack(link.text);
-    if ("problem" in pack) {
-      refused(keyword, `The link holds no course pack this page reads (${pack.problem}).`);
+    const read = link.kind === "handin" ? readHandin(link.text) : readPack(link.text);
+    if ("problem" in read) {
+      refused(
+        keyword,
+        `The link holds no ${link.kind === "handin" ? "hand-in" : "course pack"} this page reads (${read.problem}).`,
+      );
       return true;
     }
     if (pasted) {
       prover.leave();
       hold(prover.shelfKey());
     }
-    await packs.arrive(pack);
+    if ("handin" in read) await packs.arrive(read.pack, read.answers);
+    else await packs.arrive(read);
     return true;
   }
 
@@ -262,8 +259,23 @@ export default function App(props: {
     });
   };
 
-  /** Closes a chip with the views beside it; the notice's Undo puts them back. */
+  /** Closes the open course pack with its problems; the notice's Undo opens it again. */
+  const closePack = () => {
+    const title = packs.open()?.pack.title || "The course pack";
+    const back = packs.close();
+    setUi({
+      menu: null,
+      tab: "tree",
+      notice: { text: `${title} closed.`, undo: { label: "Undo", run: back } },
+    });
+  };
+
+  /** Closes a chip with the views beside it, or the pack a problem is of; the notice's Undo puts them back. */
   const closeChip = (chip: string) => {
+    if (ui.packPage || packs.isProblem(chip)) {
+      closePack();
+      return;
+    }
     const closed = prover.store.proofs.find((p) => p.id === chip);
     const text = closed?.input ? tabText(closed) : "The new sequent";
     const back = prover.closeChip(chip);
@@ -285,10 +297,12 @@ export default function App(props: {
 
   /** Opens the new tab view: the empty sequent there is, or a new one. */
   const newTab = () => {
-    const empty = prover.store.proofs.find((p) => !started(p) && !p.input.trim());
+    const empty = prover.store.proofs.find(
+      (p) => !started(p) && !p.input.trim() && !packs.isProblem(p.id),
+    );
     if (empty) prover.activate(empty.id);
     else prover.add();
-    setUi({ menu: null, tab: "tree" });
+    setUi({ menu: null, tab: "tree", packPage: false });
     queueMicrotask(() => document.querySelector<HTMLInputElement>(".box .field")?.focus());
   };
 
@@ -459,6 +473,8 @@ export default function App(props: {
         setUi({
           // An import opens its proof and keeps the panel, to say what it read.
           menu: ui.menu === "import" ? "import" : null,
+          // A proof outside the open pack leaves its page.
+          ...(packs.isProblem(prover.store.active) ? {} : { packPage: false }),
           selected: null,
           offered: null,
           split: null,
@@ -637,14 +653,24 @@ export default function App(props: {
       setUi({ tab: next.view, menu: null });
     }
   };
-  /** Shows the sequent next to the one shown in the top row, `step` chips on. */
+  /** Shows the sequent next to the one shown in the top row, `step` chips on; the pack is one. */
   const cycleSequent = (step: number) => {
-    const all = prover.store.proofs.filter((p) => prover.chipOf(p.id) === p.id);
-    const at = all.findIndex((p) => p.id === prover.chipOf(prover.store.active ?? ""));
+    const all = [
+      ...(packs.open() ? ["pack"] : []),
+      ...prover.store.proofs
+        .filter((p) => prover.chipOf(p.id) === p.id && !packs.isProblem(p.id))
+        .map((p) => p.id),
+    ];
+    const here =
+      ui.packPage || packs.isProblem(prover.store.active)
+        ? "pack"
+        : prover.chipOf(prover.store.active ?? "");
+    const at = all.indexOf(here);
     const next = all[(Math.max(at, 0) + step + all.length) % all.length];
-    if (next) {
-      prover.activate(next.id);
-      setUi({ menu: null, tab: "tree" });
+    if (next === "pack") setUi({ menu: null, tab: "tree", packPage: true });
+    else if (next) {
+      prover.activate(next);
+      setUi({ menu: null, tab: "tree", packPage: false });
     }
   };
 
@@ -671,6 +697,16 @@ export default function App(props: {
       if (ui.menu === "keys" || ui.menu === "about") return;
       const action = keyAction(event, { inField, singleKeys: prover.settings().singleKeys });
       if (!action) return;
+      // A pack's page has no view: only the keys of the frame act there.
+      const frameKeys = [
+        "nextSequent",
+        "previousSequent",
+        "closeSequent",
+        "newTab",
+        "settings",
+        "keys",
+      ];
+      if (packShown() && !frameKeys.includes(action)) return;
       const proof = prover.current();
       const proving = !!proof?.session && ui.tab === "tree" && !isNatural(proof.calculus);
       const goal = prover.activeGoal();
@@ -745,6 +781,8 @@ export default function App(props: {
   );
 
   const settingsShown = () => ui.menu === "settings";
+  /** Whether the open pack's page stands in the stage's place. */
+  const packShown = () => ui.packPage && !!packs.open();
   const current = () => prover.current();
   const tour = () => {
     setUi({ menu: null, tour: null });
@@ -762,6 +800,7 @@ export default function App(props: {
             setTheme={setTheme}
             newTab={newTab}
             closeChip={closeChip}
+            closePack={closePack}
           />
           {/* biome-ignore lint/a11y/noStaticElementInteractions: a file dropped anywhere under the top row opens; "Open a file" and Import are the controls that do the same. */}
           <div
@@ -783,7 +822,7 @@ export default function App(props: {
               if (file) void openFile(file);
             }}
           >
-            <Show when={!settingsShown()}>
+            <Show when={!settingsShown() && !packShown()}>
               <Rail prover={prover} ui={view} />
             </Show>
             <div class="stage-area" data-view={ui.tab}>
@@ -799,54 +838,95 @@ export default function App(props: {
                   />
                 }
               >
-                <Show
-                  when={started(current())}
-                  fallback={
-                    <NewTab
-                      prover={prover}
-                      ui={view}
-                      samples={props.samples}
-                      openFile={(file) => void openFile(file)}
-                    />
-                  }
-                >
-                  <Stage prover={prover} ui={view} />
-                  <PackBar packs={packs} prover={prover} ui={view} />
-                  <Tools prover={prover} ui={view} hint={() => void hint()} tour={tour} />
+                <Show when={!packShown()} fallback={<PackPage packs={packs} prover={prover} />}>
+                  <Show
+                    when={started(current())}
+                    fallback={
+                      <NewTab
+                        prover={prover}
+                        ui={view}
+                        samples={props.samples}
+                        openFile={(file) => void openFile(file)}
+                      />
+                    }
+                  >
+                    <Stage prover={prover} ui={view} />
+                    <Tools prover={prover} ui={view} hint={() => void hint()} tour={tour} />
+                  </Show>
+                  <TogglesPlace prover={prover} ui={view} />
+                  <div class="panels">
+                    {/* In a compact window a panel is a sheet, and a sheet has a close button. */}
+                    <Show when={PANELS.includes(ui.menu ?? "")}>
+                      <button
+                        type="button"
+                        class="tool sheet-close"
+                        aria-label="Close"
+                        data-tip="Close"
+                        onClick={() => setUi("menu", null)}
+                      >
+                        <X aria-hidden="true" />
+                      </button>
+                    </Show>
+                    <Show when={ui.menu === "steps"}>
+                      <StepsPanel prover={prover} />
+                    </Show>
+                    <Show when={ui.menu === "search"}>
+                      <SearchPanel prover={prover} ui={view} />
+                    </Show>
+                    <Show when={ui.menu === "export"}>
+                      <ExportPanel prover={prover} ui={view} font={font} />
+                    </Show>
+                    <Show when={ui.menu === "import"}>
+                      <ImportPanel prover={prover} ui={view} />
+                    </Show>
+                  </div>
+                  <BottomBox
+                    prover={prover}
+                    ui={view}
+                    notes={
+                      <>
+                        <Show when={current()}>{(p) => <ProblemNote proof={p()} />}</Show>
+                        <Show when={current()?.banner}>
+                          {(banner) => (
+                            <p class="note said-banner" role="status">
+                              <span class="kw">{banner().keyword}</span> <Why said={banner()} />
+                            </p>
+                          )}
+                        </Show>
+                        <GoalNotes prover={prover} ui={view} />
+                        <GuideLine prover={prover} ui={view} />
+                        <Show when={current()?.view?.complete && ui.tab === "tree"}>
+                          <p class="note verdict" role="status">
+                            <span class="kw ok">Proved.</span> Every goal is closed.
+                          </p>
+                        </Show>
+                        <Show when={ui.notice}>
+                          {(notice) => (
+                            <p class="note notice" role="status">
+                              {notice().text}
+                              <Show when={notice().undo}>
+                                {(undo) => (
+                                  <button
+                                    type="button"
+                                    class="btn"
+                                    onClick={() => {
+                                      const run = undo().run;
+                                      setUi("notice", null);
+                                      run();
+                                    }}
+                                  >
+                                    {undo().label}
+                                  </button>
+                                )}
+                              </Show>
+                            </p>
+                          )}
+                        </Show>
+                        <Examples prover={prover} samples={props.samples} />
+                      </>
+                    }
+                  />
                 </Show>
-                <TogglesPlace prover={prover} ui={view} />
-                <div class="panels">
-                  {/* In a compact window a panel is a sheet, and a sheet has a close button. */}
-                  <Show when={PANELS.includes(ui.menu ?? "")}>
-                    <button
-                      type="button"
-                      class="tool sheet-close"
-                      aria-label="Close"
-                      data-tip="Close"
-                      onClick={() => setUi("menu", null)}
-                    >
-                      <X aria-hidden="true" />
-                    </button>
-                  </Show>
-                  <Show when={ui.menu === "steps"}>
-                    <StepsPanel prover={prover} />
-                  </Show>
-                  <Show when={ui.menu === "search"}>
-                    <SearchPanel prover={prover} ui={view} />
-                  </Show>
-                  <Show when={ui.menu === "export"}>
-                    <ExportPanel prover={prover} ui={view} font={font} />
-                  </Show>
-                  <Show when={ui.menu === "import"}>
-                    <ImportPanel prover={prover} ui={view} />
-                  </Show>
-                  <Show when={ui.menu === "handin"}>
-                    <HandinSheet packs={packs} prover={prover} />
-                  </Show>
-                  <Show when={ui.menu === "check"}>
-                    <CheckSheet packs={packs} prover={prover} ui={view} />
-                  </Show>
-                </div>
                 <Show when={embedded}>
                   <a
                     class="embed-open btn"
@@ -861,52 +941,6 @@ export default function App(props: {
                     Open in deduxit
                   </a>
                 </Show>
-                <BottomBox
-                  prover={prover}
-                  ui={view}
-                  notes={
-                    <>
-                      <Show when={current()}>{(p) => <ProblemNote proof={p()} />}</Show>
-                      <Show when={current()?.banner}>
-                        {(banner) => (
-                          <p class="note said-banner" role="status">
-                            <span class="kw">{banner().keyword}</span> <Why said={banner()} />
-                          </p>
-                        )}
-                      </Show>
-                      <GoalNotes prover={prover} ui={view} />
-                      <GuideLine prover={prover} ui={view} />
-                      <Show when={current()?.view?.complete && ui.tab === "tree"}>
-                        <p class="note verdict" role="status">
-                          <span class="kw ok">Proved.</span> Every goal is closed.
-                        </p>
-                      </Show>
-                      <Show when={ui.notice}>
-                        {(notice) => (
-                          <p class="note notice" role="status">
-                            {notice().text}
-                            <Show when={notice().undo}>
-                              {(undo) => (
-                                <button
-                                  type="button"
-                                  class="btn"
-                                  onClick={() => {
-                                    const run = undo().run;
-                                    setUi("notice", null);
-                                    run();
-                                  }}
-                                >
-                                  {undo().label}
-                                </button>
-                              )}
-                            </Show>
-                          </p>
-                        )}
-                      </Show>
-                      <Examples prover={prover} samples={props.samples} />
-                    </>
-                  }
-                />
               </Show>
               <Show when={dropping()}>
                 <div class="drop">

@@ -68,7 +68,7 @@ test("the goal's menu and the rule popover are sheets above the stage's controls
   }
 });
 
-test("Export from More's sheet at a phone's width: the entries one row, the LaTeX under them, no sideways scroll", async ({
+test("Export from More's sheet at a phone's width: the entries in rows over the LaTeX, no sideways scroll", async ({
   page,
 }) => {
   await start(page, "|- (a -o b) -o (b -o c) -o a -o c");
@@ -80,12 +80,14 @@ test("Export from More's sheet at a phone's width: the entries one row, the LaTe
   const panel = page.getByRole("dialog", { name: "Export" });
   await panel.getByRole("button", { name: "LaTeX", exact: true }).click();
   await expect(panel.locator("pre")).toContainText("\\begin{prooftree}");
-  // The entries stand in one row, above the chosen entry's text.
-  const svg = await panel.getByRole("button", { name: "SVG", exact: true }).boundingBox();
-  const pack = await panel.getByRole("button", { name: "Course pack", exact: true }).boundingBox();
+  // Every entry is whole in the window, above the chosen entry's text.
+  const width = page.viewportSize()?.width ?? 0;
   const text = await panel.locator("pre").boundingBox();
-  expect(svg && pack && Math.abs(svg.y - pack.y) < 2).toBe(true);
-  expect(svg && text && text.y > svg.y + svg.height).toBe(true);
+  for (const entry of await panel.locator(".ex-entry").all()) {
+    const box = await entry.boundingBox();
+    expect(box && box.x >= 0 && box.x + box.width <= width).toBe(true);
+    expect(box && text && box.y + box.height <= text.y).toBe(true);
+  }
   const overflow = await page.evaluate(
     () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
   );
