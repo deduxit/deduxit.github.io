@@ -32,7 +32,7 @@ the page reads.
 - **`render` runs in a second module**, deduxit's renderers (`deduxit_web_render.js`, 1.6
   MB at gzip), which the worker imports on the first `render` request and keeps for the next
   (`loadRenderers`): the main module every visitor waits for is 2.4 MB without it, where
-  it was 3.9. A failure to load it answers that request with an error the export menu shows,
+  it was 3.9. A failure to load it answers that request with an error the Export panel shows,
   and the next export tries again: the module's file always, its glue only where the
   browser does not keep a failed `import()` for the worker's life (some do), else from the
   next worker on. `offline.spec.ts` holds that a session without a PNG or
@@ -126,15 +126,19 @@ the page reads.
   (`ui.ways`, `wayOf`: the tableau's Search or By hand, resolution's Search, DPLL or By hand, the
   normal form's kinds, CE's Derivation or Net); the calculus toggles show on a proof's own view
   and its net alone. Every view panel is a `ViewPanel` (`.method.view-panel`, a hidden h2 for the
-  heading order, `tabindex=0` since it scrolls). The table and the tableau decide, so a pack that
-  bars the search hides their cells (`decidable`).
+  heading order, `tabindex=0` since it scrolls). The table and the tableau are of a started
+  classical sequent alone (`decidable`).
 - **A translation is a view of its own** (`TranslationView`, `EmbeddingView`): the translated
   sequent on a strip with "Prove it in LJ" (or LM, LL, ILL) at its end, the sign of "Prove apart",
   its words shown with the guide on; then the verdicts. A negative translation's "Prove it in" is
   the workspace's `proveTranslation` (a new chip, its line in the workspace); the embedding into
   linear logic is the library's workspace operation `ordinary.embed` (the logic's default
-  embedding), run on a scratch document of its own (`embed`), its node's `summary` the text and
-  its `value` the linear sequent the new chip opens. The interpolant's parts are toggles (part 1
+  embedding), shown from a scratch document of its own (`embed`, its node's `summary` the text),
+  and its "Prove it in" is the workspace's `proveEmbedding`: one action, "embedding", that joins
+  the tab, makes `ordinary.embed` and `linear.start` on it and opens the proof node's linear
+  session as a chip linked to that node, so the graph shows it as a made sequent's chip. The
+  workspace lays in no linear session (`work` is ordinary sessions'), so the node keeps the
+  session it started with; Undo or Redo never reopens a linear node's tab. The interpolant's parts are toggles (part 1
   pressed, its number written before it), Craig's split at the start and again for a new sequent.
 - **The normal form and resolution are views of the sequent** (`Clausal.tsx`).
   - The normal form (`ordinary_normalize`, `NormalView`): its kind is the view's toggle (`FORMS`,
@@ -284,44 +288,43 @@ the page reads.
   - a modal sequent's model (`ModalCountermodel`, the editor bare, its verdict and system over
     it), whose cell stands while the sequent is not valid; the modal panel keeps the drawing
     and the button that opens it. The system's toggle stays: the model must meet it.
-- **Course packs** (`src/lib/pack.ts` the formats, `src/islands/Packs.tsx` the runtime and its
-  sheets, `PacksContext`): a pack `{"pack": 1, "title", "search", "problems": [{"suite",
-  "parameter", "sequent"}]}` is `#v=4&k=…`, a hand-in `{"handin": 1, "pack", "answers"}` is
-  `#v=4&h=…` up to `HANDIN_LIMIT` characters and a file past it, each packed as `d` is
-  (`link.ts`). Nothing is sent anywhere: the answers are kept in the browser under
-  `deduxit-pack:<code>`, and the link and the file are the student's to send.
-  - Both are read key by key within bounds (`readPack`, `readHandin`: no key of its own, a
-    calculus the registry knows in the linear, ordinary or modal suite, at most `MOST_PROBLEMS`).
-    zod is not used here: its probe of `eval` is a CSP violation, and it would weigh on the
-    island's first load.
-  - The limits are the prover's (`Limits`, `prover.restrict`, `NO_LIMITS` without a pack): every
-    action that searches (`close`, `closeAll`, `hint`, the hint in `App.tsx`) or
-    changes a started problem's sequent or calculus (`submit`, `setCalculus`) asks first and says
-    the reason on the proof's banner, so a key does no more than a button; the tools are greyed
-    with the reason as their tip. `modalSteps`, `customFrom` and `showModalStatement` ask `fixed`
-    too (each would turn a pack's tab into another calculus). deduxit's table and tableau
-    decide, so "+ view" does not offer them where the search is barred (`decidable`). The
-    invertible rules applied by themselves are barred with the search (the author, 2026-11-16):
-    `invertibleOn(id)` is the setting less a pack's bar, and every call's `json`, the undo's
-    grouping and `setInvertible`'s run read it, so the setting stays the visitor's elsewhere and
-    the Settings page says "This pack asks for every step by hand."; a hand-in whose session
-    holds such steps is still a proof, and the check view takes it. A modal
-    problem with the search barred is not decided (`startModal`): the editor is open, empty, its
-    tab's status "Undecided: find a model", and the model the student makes is the answer; a
-    valid modal problem has none, so it is never done.
+- **Course packs** (`src/lib/pack.ts` the formats, `src/islands/Packs.tsx` the runtime,
+  `PacksContext`; boards D17 and D18): a pack `{"pack": 1, "title", "search", "problems":
+  [{"suite", "parameter", "sequent"}]}` is `#v=4&k=…`, packed as `d` is (`link.ts`). Nothing is
+  sent anywhere: the answers are kept in the browser under `deduxit-pack:<code>` (`packCode`, 48
+  bits of SHA-256 of `packText`, shown nowhere).
+  - **Made in Export** (`PackForm`, the panel's entry "Course pack" under Link): a title, the
+    sequents at the top (each chip's own proof, started, outside an open pack) as problems to
+    tick, then "Copy the link", "Copy the embed code" (`embedCode`, the link with `&e=1`) and
+    "Print", which prints the problems' sheet (`Handout`). No switch bars the search and no code
+    is shown: the page writes `search: true`, and reads an earlier pack's `false` as barring
+    nothing.
+  - **Met by a student as one chip** (`PackChip` first in the top row's tab list: the title and
+    the count done, "Week 3, 1/3", a check once all are done) **and a page** (`PackPage`, in the
+    stage's place while `ui.packPage`): the problems with their calculus (`markOf`) and state (a
+    check, or a dashed ring), how many are done, with the guide on one sentence. The page has no
+    rail, bottom box, toggles or tools, and only the frame's keys act there. The problems' proofs
+    are not chips of their own (the top row leaves out `packs.isProblem`); a press on a row
+    shows the problem (`show`), a press on the chip the page. The chip is chosen while its page
+    or a problem is shown; T and Shift+T take the pack as one sequent; its close (the hidden
+    target, Delete, W, More's "Close this sequent") closes every problem's proof with one Undo
+    (`close`, which returns the way back).
+  - **The limits are the prover's** (`Limits` holds `fixed` alone, `prover.restrict`,
+    `NO_LIMITS` without a pack): a started problem's sequent or calculus does not change
+    (`submit`, `setCalculus`, `modalSteps`, `customFrom`, `showModalStatement` ask first and say
+    the reason on the proof's banner, `.calc-fixed` in the toggles' place). The search, the
+    hint, the table and the tableau, the marking and the invertible rules work as anywhere; a
+    modal problem is decided on opening, so a sequent that is not valid is done at once.
+  - Both a pack and a hand-in are read key by key within bounds (`readPack`, `readHandin`: no
+    key of its own, a calculus the registry knows in the linear, ordinary or modal suite, at
+    most `MOST_PROBLEMS`). zod is not used here: its probe of `eval` is a CSP violation.
+  - **A hand-in of the page before** (`{"handin": 1, "pack", "answers"}`, `#v=4&h=…`, or a file
+    imported or dropped, `isHandin` by its first key) opens as its pack with its answers
+    (`arrive(pack, answers)`): each session opens on its problem, read again by deduxit as any
+    session is. The page writes no hand-in and has no check view.
   - A pack opened holds the address (the linking effect writes no tab's link meanwhile), so a
-    reload opens it again with its kept answers: a kept session opens as its tab (its text the
-    problem's), a kept model is checked again.
-  - **The check view trusts nothing of a hand-in** (`checkAnswer`): a session is read again by
-    its suite's call (deduxit replays and checks every step of a session it reads), its mode or
-    logic held to the problem's and its sequent's text (`read_as`, `ordinary_read` on the
-    session's `sequent`) to the problem's; a finished linear proof is checked once more by
-    `proof`. A model is checked by `modal_evaluate` against the problem. The pack inside a
-    hand-in is the student's too: the view shows its code (`packCode`, 48 bits of SHA-256 of
-    `packText`), which the teacher compares with the code their own sheet showed.
-  - A hand-in imported (the Import panel, a file dropped on the stage, `isHandin` by its first
-    key) opens the check view and leaves the open sequents alone; "Open the answer" opens one on a
-    tab of its own.
+    reload opens it again with its kept answers: a kept session opens as its problem (its text
+    the problem's), a kept model is checked again.
 - **The embed**: `&e=1` on any link sets `data-embed` on the root: no earlier visit set aside,
   the top row's new-chip button and the new tab view's actions (`.new-actions`) hidden, an "Open
   in deduxit" link, and the links the page
@@ -329,11 +332,10 @@ the page reads.
   `frame-ancestors`, so any page may frame it; the page in a frame reads and keeps only its own
   partitioned storage.
 - **Print** (`@media print` in `app.css`, last in the file): the light scheme whatever
-  `data-theme` says, no top row, rail, tools, panel, pack bar or stage controls (the selectors
-  weigh what the screen's rules weigh, and come later); with the course pack's sheet
-  open, its handout alone (`.pk-handout`, `print-only`: the title, each problem and its calculus,
-  the link and the code), drawn at the body's end through a `Portal` so that it flows over
-  pages, everything else in the body left out.
+  `data-theme` says, no top row, rail, tools, panel or stage controls (the selectors weigh what
+  the screen's rules weigh, and come later); with Export's Course pack shown, its sheet alone
+  (`.pk-handout`, `print-only`: the title, each problem and its calculus, the link), drawn at the
+  body's end through a `Portal` so that it flows over pages, everything else left out.
 - **The tableau by hand is built by presses** (`HandTableau.tsx`, `src/lib/hand.ts`; the guide
   drops typing a tableau): it starts with the sequent's formulas, true left of ⊢ and false right
   of it (`begin`); a press on a line expands it by its rule on every open branch below it
@@ -508,7 +510,7 @@ board and the guide disagree, the guide holds.
   "?") each shows its name. A compact window makes them a bar of Undo, Redo, Hint, Close all and
   More, the rest (`data-rare`) in More's row (`ui.more`); a short window keeps the column with
   the same split.
-- **Panels** (`ui.menu`: steps, search, export, import, packs) stand left of the
+- **Panels** (`ui.menu`: steps, search, export, import) stand left of the
   tools; in an expanded window the stage's box shrinks so that the drawing moves aside (the
   stage refits on its resize), in a medium one a panel lies over it, in a compact one it is a
   sheet above the bar. The Settings page and the dialogs (keys, About) are `ui.menu` too.
@@ -529,6 +531,37 @@ board and the guide disagree, the guide holds.
   otherwise the new tab view offers them. Settings' "Close every sequent" is `leave()`, whose
   proofs are then the ones to restore: the notice's Undo restores them.
 
+- **The page's start** (`App.tsx`): the app is `aria-busy` until a link has opened or a plain
+  visit's proofs were restored. A plain visit restores them after the first paint, so a test that
+  goes to the page again in the same browser saw the new tab view and raced the restore: the
+  tests' `goto` waits for the start.
+- **The Export panel** (`Export.tsx`, board D16) exports the view shown: a linear proof's net as
+  a picture (its texts say to show the proof), a derivation in every format, any other view its
+  proof's, the right column naming "The proof in LK". The entries are buttons with
+  `aria-current`, under fieldsets per group; the chosen one is kept for the visit. Each setting
+  is one of deduxit's `--style` options (`Settings.exports`, an `ExportLook`, stored): a
+  picture's font (`Settings.font`), background (`svg.background`) and PNG scale (`png.scale`),
+  the rule names (`labels` of every format), a whole LaTeX or Typst document (`form`), the text
+  tree's line (`text.bar`), the Rocq lemma's name (`rocq.lemma`, sent only while Rocq reads it
+  as a name: one it refuses would refuse every format's settings). A text format shows what it
+  writes (a resource on the proof, the entry and the settings) before Copy or Save. Rocq writes
+  the finished proof's certificate, else a refuted goal's (`certificate`, the linear outcome;
+  `modelCertificate`, the ordinary countermodel), else says why not. Copy and Save say what they
+  did in the notes. In a compact window the entries wrap in rows (a row that scrolls sideways
+  hid entries partly, which the target-size walk failed).
+- **The Settings page** (`SettingsPage` in `Panels.tsx`, board D10): sections of rows (`.st-row`,
+  label left, control right or under it): Look, Search ("Defaults for" Ordinary, Linear or Modal:
+  the engine where deduxit takes one, linear logic's, for the visit; the budget and the
+  first-order bounds, each logic's, `Settings.search` with `setSearch`), Proving, Keys, This
+  browser, About (three rows: the keys, About with its licences, the privacy page). The settings
+  in force (`prover.settings()`) take the search's values of the shown proof's logic
+  (`searchLogic`: natural deduction and lambda-terms are ordinary logic's); the flat values stored
+  before them are every logic's start.
+- **The signs are the page's own** (`Signs.tsx`, the guide's 18-unit grid, round stroke, no
+  fill, class `icon icon-NAME`); no icon package is left. A new sign is a path there.
+- **More's rows hold "Close this sequent"** (`more-only`, hidden in a column): a real button
+  outside the chips' tab list, where a screen reader on a touch screen finds it; it closes as W
+  does, the pack a problem is of included.
 ## The drawing and the stage (`src/islands/Stage.tsx`)
 
 - deduxit's SVG goes in by `innerHTML`; it stays a picture (`role="img"`, its `<desc>`),
@@ -567,14 +600,14 @@ board and the guide disagree, the guide holds.
   dotted and the input side's edges point up, so no net colour is all that tells its kind.
   A witness is drawn only for a structure that is no proof net, which the page never
   draws (its nets are of finished proofs).
-- The net is drawn as Settings' "Net drawing" says (`styles.svg.net`: `formulas`, every
+- The net is drawn as Settings' "Proof nets" says (and a net view's toggle) (`styles.svg.net`: `formulas`, every
   occurrence written, or `compact`), in the view and the net's exports alike. The stage
   fits the drawing afresh whenever what it draws changes (another proof, the tree or the
   net, the net's drawing), since the net with its formulas is far larger than the tree.
 - **The net's look** is `Settings.netLook` (`styles.svg.net_look`, deduxit's `NetLook`, sent
   as its three fields by `lookJson`), stored with the other settings, each field read back as
-  deduxit's default where the stored value is not one of its own (`storedLook`). Settings' "Net
-  drawing" shows it as a row "Look" (deduxit, Textbook: `DEDUXIT_LOOK`, `TEXTBOOK_LOOK`, each
+  deduxit's default where the stored value is not one of its own (`storedLook`). Settings' "Look"
+  shows it as a row "Look of a net" (deduxit, Textbook: `DEDUXIT_LOOK`, `TEXTBOOK_LOOK`, each
   pressed only while all three fields are its own) and a row per field (`LookRow`), each
   button with its tip and a line under them for a touch. The stage and the exports draw with
   it, and the stage refits when it changes (a look can add rows).
@@ -653,7 +686,8 @@ board and the guide disagree, the guide holds.
 
 - **Every reason is a line in view under its keyword, never a tip** (`Why` in `ui.tsx`, class
   `said-why`): a goal's note (a refusal, a verdict), a greyed rule's card, the stage's banner, the field's parse error, the status's verdict, a greyed export
-  item (`.fn .off`), a greyed engine in Settings (`.why-not`), the greyed Mix switch, and the
+  entry (its "Nothing to export" line in the panel's right column), a greyed engine in the
+  search's settings (`.why-not`), the greyed Mix switch, and the
   greyed Net tab once pressed (`.net-why`, until Tree is pressed). Tips
   follow no touch, and a reason is what the visitor needs to act. A `Said` with `more` keeps
   its rest behind a "more" button (the saturation refutation's); the keyword is a `span.kw`,
@@ -675,8 +709,8 @@ board and the guide disagree, the guide holds.
   with a caret for that search's settings, Prove apart (`openGoal`: a new chip whose `origin` is
   the goal), "Use its proof" once that chip's proof is finished in the same calculus
   (`apartFor`, `useApart`), and Go back on a goal marked as having no proof while the sequent
-  may still have one. Its buttons show their names with the guide on. A pack that bars the
-  search shows its reason in place of the close. Natural deduction has a `?` beside the goal
+  may still have one. Its buttons show their names with the guide on. Natural deduction has a
+  `?` beside the goal
   in its panel with Prove apart alone: the rules suite has no search.
 - **A proof made apart closes its goal by its steps** (`useApart`, `replayOnto`): its
   sequent is the goal's as written, so the positions are the goal's; each step is applied
@@ -694,7 +728,7 @@ board and the guide disagree, the guide holds.
   the answers cached for the visit by the goal's calculus and formulas, so a step asks only of
   the goals it opened. A goal marked "none" has its line red with a cross at its end and its
   `⊢`'s name says "no proof"; a sequent whose root was marked "none" gets the verdict "No
-  proof" (its chip's cross). Nothing is marked while a pack bars the search. The marking's
+  proof" (its chip's cross). The marking's
   time is a User Timing measure, `deduxit:mark`.
 - **An open goal has a dashed lapis line over it** (`.goal-line`, two pixels on the screen at
   every zoom through `--zoom` on the world); deduxit's `⋮` over it is hidden (`.goal-dots`).
@@ -742,7 +776,8 @@ board and the guide disagree, the guide holds.
   `pointerdown` stops there (no pan) and its `click` is swallowed (no formula picked, no stage
   button pressed); a press on a button of the frame closes and acts. A toggle must carry
   `aria-expanded`, or its own press would close its menu before its click opens it again.
-- **The first-order bounds** are Settings' "Witness depth", "Instances" and "Terms"
+- **The first-order bounds** are Settings' "Witness depth", "Instances" and "Terms" of ordinary
+  and of linear logic, each its own"
   (`search.witness_depth`, `search.instances`, `limits.terms`), deduxit's tab defaults (64,
   2¹⁶, a million) and sent only where changed, so every other call's settings read as
   before; a search they stop says so (`verdict`'s `witness_depth`, `instances`).
@@ -826,9 +861,9 @@ board and the guide disagree, the guide holds.
 - **The link** (`src/lib/link.ts`): `#v=2&u=<suite>&m=<parameter>&s=<sequent>&d=<session>` in
   the fragment (a link of the first version, `#v=1&m=<mode>&…`, reads as the linear suite;
   `link.test.ts` holds both),
-  the session deflate-raw and base64url, dropped past 2000 characters (the export menu
-  says so). The export menu's "Share a link" copies it with the session ("This proof") or
-  without ("The sequent": an exercise, no step taken). A link whose session deduxit refuses loads the sequent and the mode, with
+  the session deflate-raw and base64url, dropped past 2000 characters (Export's "This proof"
+  says so). Export's entries under Link show the link and copy it with the session ("This
+  proof") or without ("The sequent": an exercise, no step taken). A link whose session deduxit refuses loads the sequent and the mode, with
   "Proof not restored"; one past `UNPACKED_LIMIT` (512 KiB, read through a capped
   inflate) says so, and one whose sequent does not parse puts it in the field with the
   parse error marked, as if typed. The sequent is the field's text with the ASCII connectives as their signs (`pretty`, which `words.test.ts` holds to read as the same sequent).
@@ -910,7 +945,7 @@ board and the guide disagree, the guide holds.
   adds them to the document under the family its file names (`MATH_FONTS[].family`, which
   deduxit's drawing asks for): Euler Math at the start, another font when it is chosen for
   the stage or an export, never before. **The exports' font** is `Settings.font`, null for
-  the stage's (`exportFont`); the export menu's `menuitemradio`s set it, the stage's font
+  the stage's (`exportFont`); the Export panel's Font list sets it, the stage's font
   setting it back to null; `render` gets that font's file and no other.
 - **Rocq's logo is the one third-party file the repository holds** (`src/third-party/rocq/`:
   `icon-rocq-black.svg`, the path of rocq-prover.org's small logo, and `LICENSE.txt`, its source
