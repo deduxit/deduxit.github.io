@@ -20,8 +20,10 @@ export const pixel = phone;
 /** Presses a tool, through More's row where a compact window keeps it there. */
 async function press(page: Page, name: string, visit?: Visit) {
   const button = tool(page, name);
-  if (!(await button.isVisible())) {
-    await tool(page, "More").click();
+  // Only a compact or short window keeps tools behind More; elsewhere the tool comes by itself.
+  const more = tool(page, "More");
+  if ((await more.isVisible()) && !(await button.isVisible())) {
+    await more.click();
     await visit?.("more");
   }
   await button.click();

@@ -47,7 +47,8 @@ async function pressField(page: Page, touch: boolean) {
 /** Presses a tool, through More's row where a compact window keeps it there. */
 async function band(page: Page, name: string) {
   const button = tool(page, name);
-  if (!(await button.isVisible())) await tool(page, "More").click();
+  const more = tool(page, "More");
+  if ((await more.isVisible()) && !(await button.isVisible())) await more.click();
   await button.click();
 }
 
