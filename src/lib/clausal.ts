@@ -12,7 +12,17 @@
 import { formulaTexts, type SequentForm } from "./ordinary";
 
 /** A normal form, as deduxit names it. */
-export type Form = "nnf" | "cnf" | "dnf" | "tseitin" | "plaisted-greenbaum";
+export type Form =
+  | "nnf"
+  | "cnf"
+  | "dnf"
+  | "tseitin"
+  | "plaisted-greenbaum"
+  | "prenex"
+  | "miniscope"
+  | "skolem"
+  | "herbrand"
+  | "clausal";
 
 /** A form as the page offers it: its name, what it is, and what it keeps. */
 export interface FormWords {
@@ -24,8 +34,8 @@ export interface FormWords {
 
 /**
  * The forms, the equivalent ones first, conjunctive normal form (a first course's) first of all,
- * then negation and disjunctive normal form, then the two encodings. deduxit's `about` lists the
- * same names (`clausal.test.ts` holds them equal).
+ * then negation and disjunctive normal form, then the two encodings, then the five forms of
+ * first-order logic. deduxit's `about` lists the same names (`clausal.test.ts` holds them equal).
  */
 export const FORMS: readonly FormWords[] = [
   {
@@ -52,6 +62,31 @@ export const FORMS: readonly FormWords[] = [
     key: "plaisted-greenbaum",
     name: "Plaisted–Greenbaum",
     is: "Tseitin's clauses, keeping only the half of each new atom's clauses that its place needs.",
+  },
+  {
+    key: "prenex",
+    name: "Prenex",
+    is: "Prenex normal form: every quantifier in front of a formula without one.",
+  },
+  {
+    key: "miniscope",
+    name: "Miniscope",
+    is: "Miniscope form: negation normal form with every quantifier moved as far in as it goes.",
+  },
+  {
+    key: "skolem",
+    name: "Skolem",
+    is: "Skolem normal form: the sequent's negation as hypotheses, each ∃ replaced by a term of new function symbols over the variables free in it.",
+  },
+  {
+    key: "herbrand",
+    name: "Herbrand",
+    is: "Herbrand normal form: each ∃ left of ⊢ and each ∀ right of it replaced by a term of new function symbols over the variables free in it.",
+  },
+  {
+    key: "clausal",
+    name: "Clausal",
+    is: "Clausal normal form: Skolem normal form's hypotheses as clauses, each closed by ∀ in front.",
   },
 ];
 
