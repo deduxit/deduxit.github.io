@@ -214,6 +214,10 @@
   --size-top: 3rem;
   /* The bottom box with its notes as the page measures it (Frame.tsx), the box alone at first. */
   --size-bottom: var(--size-box);
+  /* The zoom group's width as the page measures it (Stage.tsx), none while no zoom is shown; and
+     how far a panel moves the drawing aside, none at first. The bottom box keeps clear of both. */
+  --size-zoom: 0rem;
+  --size-aside: 0rem;
   /* The bottom box, its Enter, its most width. */
   --size-box: 3.375rem;
   /* The bottom box in a compact window. */

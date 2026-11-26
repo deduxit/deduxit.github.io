@@ -3333,6 +3333,7 @@ fieldset {
 .stage-area > .stage {
   position: absolute;
   inset: 0;
+  right: var(--size-aside);
   transition: right var(--duration-panel) var(--ease-standard);
 }
 .toggles-place {
@@ -3483,14 +3484,21 @@ textarea {
     min-width: var(--size-tool);
   }
 }
-/* The bottom box, 24 from the stage's bottom, at most 560 wide; the notes right above it. */
+/* The bottom box, 24 from the stage's bottom, at most 560 wide; the notes right above it. It is
+   centred where the zoom group at the stage's lower right leaves room, and otherwise narrows and
+   moves left so that neither the box nor a note ever covers the zoom (a stage of a medium window,
+   a short one, or one a panel narrowed). */
 .bottom {
+  --box-clear: max(
+    var(--size-box-inset),
+    calc(var(--size-aside) + var(--size-inset) + var(--size-zoom) + var(--spacing-2))
+  );
+  --box-width: min(var(--size-box-most), calc(100% - var(--size-box-inset) - var(--box-clear)));
   position: absolute;
-  left: 50%;
+  left: min(calc((100% - var(--box-width)) / 2), calc(100% - var(--box-clear) - var(--box-width)));
   bottom: calc(var(--size-box-inset) + env(safe-area-inset-bottom));
-  transform: translateX(-50%);
   z-index: var(--layer-hud);
-  width: min(var(--size-box-most), calc(100% - 2 * var(--size-box-inset)));
+  width: var(--box-width);
   display: flex;
   flex-direction: column;
   gap: var(--spacing-2);
@@ -3616,11 +3624,11 @@ textarea {
   }
 }
 @container stage (width >= 48.75rem) {
-  .stage-area:has(.panels > .menu) > .stage {
-    right: min(var(--size-panel), 50%);
+  .stage-area:has(.panels > .menu) > :is(.stage, .bottom) {
+    --size-aside: min(var(--size-panel), 50%);
   }
-  .stage-area:has(.panels > .menu.export, .panels > .menu.transform) > .stage {
-    right: min(var(--size-panel-wide), 50%);
+  .stage-area:has(.panels > .menu.export, .panels > .menu.transform) > :is(.stage, .bottom) {
+    --size-aside: min(var(--size-panel-wide), 50%);
   }
 }
 /* A dialog over the page: the list of keys, About. */
@@ -3956,6 +3964,7 @@ table.keys th {
     display: none;
   }
   .bottom {
+    left: var(--spacing-2);
     bottom: calc(var(--size-views) + var(--spacing-2) + env(safe-area-inset-bottom));
     width: calc(100% - 2 * var(--spacing-2));
   }
@@ -3970,8 +3979,14 @@ table.keys th {
   .stage-area > .stage {
     bottom: calc(var(--size-views) + var(--size-button) + 2 * var(--spacing-2));
   }
+  /* The zoom stands a gap above the notes, which rise from the box over the stage's bottom
+     (`--size-bottom` is the notes and the box as measured). */
   .stage-ctl {
-    bottom: var(--spacing-2);
+    bottom: calc(var(--spacing-2) + var(--size-bottom) - var(--size-box-compact));
+  }
+  /* A popover is a sheet over the stage's bottom: the zoom waits under it until it closes. */
+  .stage:has(.pop, .premises) > .stage-ctl {
+    visibility: hidden;
   }
   .stage-ctl .zoom-v {
     display: none;
@@ -4008,7 +4023,6 @@ table.keys th {
   }
   .bottom {
     left: var(--size-box-inset);
-    transform: none;
   }
 }
 

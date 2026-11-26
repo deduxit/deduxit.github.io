@@ -6,6 +6,7 @@
 // their switch, light and dark, the Settings page, restoring and closing, files opened, and the
 // layout at each window class.
 
+import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
 import { addView, closeGoal, goto, newTab, proved, start, tool } from "./prover";
 
@@ -416,6 +417,44 @@ test.describe("a medium window", () => {
       .poll(async () => (await page.locator(".stage").boundingBox())?.width ?? 0)
       .toBeLessThan(1280 - 60 - 300);
   });
+});
+
+/** Whether each of the zoom group's buttons is the element drawn at its centre. */
+async function zoomUncovered(page: Page) {
+  return page.locator(".stage-ctl").evaluate((group) =>
+    [...group.querySelectorAll("button")].every((button) => {
+      const r = button.getBoundingClientRect();
+      const at = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+      return at !== null && button.contains(at);
+    }),
+  );
+}
+
+test("the zoom group is covered by neither the bottom box nor a note, nor where a panel narrows the stage", async ({
+  page,
+}) => {
+  await start(page, "A * B |- B * A");
+  await tool(page, "Close all").click();
+  await expect(page.getByRole("status").filter({ hasText: "Proved." })).toBeVisible();
+  for (const [width, height] of [
+    [600, 900],
+    [700, 900],
+    [839, 900],
+    [1280, 800],
+    [640, 400],
+    [390, 844],
+  ] as const) {
+    await page.setViewportSize({ width, height });
+    await expect.poll(() => zoomUncovered(page), `${width} by ${height}`).toBe(true);
+  }
+  // An expanded window with a panel: the stage narrows, and the box keeps clear of its zoom.
+  await page.setViewportSize({ width: 1280, height: 800 });
+  for (const panel of ["Steps", "Export"]) {
+    await tool(page, panel).click();
+    await expect(page.getByRole("dialog", { name: panel })).toBeVisible();
+    await expect.poll(() => zoomUncovered(page), `${panel} open`).toBe(true);
+    await page.keyboard.press("Escape");
+  }
 });
 
 test.describe("a coarse pointer", () => {

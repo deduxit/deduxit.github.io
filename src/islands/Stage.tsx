@@ -863,7 +863,10 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
     let left: number;
     let top: number;
     if (compact()) {
-      const controls = stage.querySelector<HTMLElement>(".stage-ctl")?.offsetTop ?? s.height;
+      // Above the zoom's place at the stage's bottom; the zoom itself rises over the notes and
+      // hides while a sheet is open, so a sheet stays clear of the goal it is about.
+      const zoom = stage.querySelector<HTMLElement>(".stage-ctl")?.offsetHeight ?? 0;
+      const controls = s.height - gap - zoom;
       left = gap;
       top = controls - el.offsetHeight - gap;
     } else {
@@ -1444,6 +1447,20 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
     const e = p?.elim[onView()];
     if (p && ui.tab === "elim" && e) markSteps(props.ui, p.id, "elim", e.taken.length > 0);
   });
+  // The zoom group's width, for the bottom box beside it to keep clear of (none while a view
+  // hides it, and none once the stage is gone).
+  const measureZoom = (el: HTMLFieldSetElement) => {
+    let area: HTMLElement | null = null;
+    const said = new ResizeObserver(() => {
+      area = el.closest<HTMLElement>(".stage-area");
+      area?.style.setProperty("--size-zoom", `${el.offsetWidth}px`);
+    });
+    said.observe(el);
+    onCleanup(() => {
+      said.disconnect();
+      area?.style.removeProperty("--size-zoom");
+    });
+  };
   return (
     <section
       class="stage"
@@ -1975,7 +1992,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
         </div>
       </Show>
 
-      <fieldset class="cluster stage-ctl zoom" aria-label="Zoom">
+      <fieldset class="cluster stage-ctl zoom" aria-label="Zoom" ref={measureZoom}>
         <button
           type="button"
           class="btn icon"
