@@ -300,7 +300,7 @@ export function entries(prover: Prover, ui: Ui): readonly Entry[] {
       there: has("net"),
       why:
         c?.suite !== "linear"
-          ? "A proof net is drawn for a proof of linear logic."
+          ? "This needs a proof of linear logic. Start one with + at the top."
           : p?.view?.net
             ? `This proof has no net: ${p.view.net.message.replace(/^not a proof net: /, "")}.`
             : complete

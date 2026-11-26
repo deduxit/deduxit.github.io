@@ -2253,7 +2253,7 @@ function viewWords(ui: Ui, p: Proof): string | null | undefined {
       ? "Press Start again to make this view from the proof as it is now."
       : "Press Update to make this view from the sequent as it is now.";
   if (isNegative(tab))
-    return "The translated sequent holds in its logic exactly when this one holds classically. Press its button to prove it there.";
+    return "Press the button at the translated sequent's end to prove it in its logic.";
   switch (tab) {
     case "net":
       return "The proof drawn as a net: links in place of rules.";
@@ -2263,7 +2263,7 @@ function viewWords(ui: Ui, p: Proof): string | null | undefined {
       return "Each row gives the atoms values. A cross marks a row that refutes the sequent.";
     case "tableau":
       return wayOf<string>(ui, p.id, "tableau", "search") === "hand"
-        ? "Write the tableau a line at a time, then press Check the tableau."
+        ? "Press a line to expand it on every branch below. A branch closes by itself."
         : "Each branch closes on a formula marked both true and false. An open branch refutes the sequent.";
     case "resolution":
       return wayOf<string>(ui, p.id, "resolution", "search") === "hand"
