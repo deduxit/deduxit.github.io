@@ -319,6 +319,8 @@ export default function App(props: {
   // While the link and the saved proofs load, a change of the active proof is
   // the page starting, not the visitor's: a menu opened meanwhile stays open.
   let starting = true;
+  /** Whether the page's start (a link opened, or the last visit's proofs restored) is done. */
+  const [startDone, setStarted] = createSignal(false);
   /** The fragment the page wrote last, as the browser reads it back: a change to it is the page's own. */
   let wrote = "";
   /** The page's start, then each link pasted into it, opened one after another. */
@@ -375,6 +377,7 @@ export default function App(props: {
       prover.prune();
       if (prover.store.proofs.length === 0) prover.add();
       starting = false;
+      setStarted(true);
     })();
     window.addEventListener("hashchange", pasted);
     onCleanup(() => window.removeEventListener("hashchange", pasted));
@@ -795,7 +798,11 @@ export default function App(props: {
   return (
     <PacksContext.Provider value={packs}>
       <WorkspaceContext.Provider value={workspace}>
-        <div class="app" data-guide={prover.settings().guide ? "" : undefined}>
+        <div
+          class="app"
+          data-guide={prover.settings().guide ? "" : undefined}
+          aria-busy={startDone() ? undefined : "true"}
+        >
           <TopRow
             prover={prover}
             ui={view}

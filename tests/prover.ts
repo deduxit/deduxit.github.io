@@ -8,6 +8,8 @@ import { expect, type Page } from "@playwright/test";
 /** Opens the page and waits for the bottom box. */
 export async function goto(page: Page) {
   await page.goto("/");
+  // The page's start is done: a plain visit may bring the last visit's proofs back by itself.
+  await expect(page.locator(".app")).not.toHaveAttribute("aria-busy", "true");
   await expect(page.getByRole("textbox", { name: "Sequent" })).toBeVisible();
 }
 
