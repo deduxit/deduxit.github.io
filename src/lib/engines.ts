@@ -88,14 +88,16 @@ export function engineOf(outcome: Outcome | undefined | null): string | undefine
   return outcome.engine;
 }
 
-/** The key under which a proof filled in from another tab is named, as an engine's is: `tab:<its shortened sequent>`. */
-export const fromTab = (tab: string) => `tab:${tab}`;
+/** The key under which the steps of a proof made apart are named, at the goal they close. */
+export const APART = "apart";
 
 /** The tab a key names, for a proof filled in from it, or null for an engine's. */
 const tabOf = (key: string): string | null => (key.startsWith("tab:") ? key.slice(4) : null);
 
 /** An engine's hover: its name, what it does and its source. */
 export function engineTip(key: string): string {
+  if (key === APART)
+    return "The steps of the proof made apart of this goal, taken here again and checked in this proof.";
   const tab = tabOf(key);
   if (tab !== null)
     return `Filled in from the finished proof of ${tab}, in another tab, checked again in this proof's calculus.`;
@@ -112,6 +114,7 @@ export function engineLabel(key: string): string {
 
 /** An engine's name inside a sentence; for a filled-in proof, the tab it came from. */
 export function engineName(key: string): string {
+  if (key === APART) return "proof made apart";
   const tab = tabOf(key);
   if (tab !== null) return `proof from ${tab}`;
   return ENGINES[key]?.name ?? key;

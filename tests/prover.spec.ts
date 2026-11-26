@@ -8,6 +8,8 @@ import { readFile } from "node:fs/promises";
 import { expect, test } from "./fixtures";
 import {
   calculus,
+  closeGoal,
+  goalMenu,
   goto,
   newTab,
   proveCommuted,
@@ -32,49 +34,60 @@ test("the sequent field starts a proof, and marks where a sequent does not parse
   await expect(page.getByRole("button", { name: /^A⊥ ⅋ B⊥, formula 1 of goal 1/ })).toBeVisible();
 });
 
-test("a formula's popover lists only the rules deduxit gives for it", async ({ page }) => {
+test("a formula's popover holds one button per rule, a rule that does not apply greyed with its reason", async ({
+  page,
+}) => {
   await start(page, "A * B |- B * A");
   await page.getByRole("button", { name: /^B ⊗ A, formula 2/ }).click();
-  const rules = page.getByRole("dialog", { name: "Rules" }).getByRole("listitem");
-  await expect(rules).toHaveCount(1);
-  await expect(rules.first()).toContainText("⊗");
+  const rules = page.getByRole("dialog", { name: "Rules" });
+  await expect(rules.locator("button.rule")).toHaveText(["⊗"]);
+  // The rule's card draws it, premises over conclusion, while the focus is on it.
+  await expect(page.locator(".rule-card")).toContainText("⊢ Γ, Δ, A ⊗ B");
+  await page.keyboard.press("Escape");
+  await start(page, "|- A, B", false);
+  await page.getByRole("button", { name: /^A, formula 1/ }).click();
+  const ax = rules.getByRole("button", { name: "ax, does not apply" });
+  await expect(ax).toHaveAttribute("aria-disabled", "true");
+  await ax.hover();
+  await expect(page.locator(".rule-card")).toContainText("ax refused: no dual partner");
+  // A press, which a touch has instead of a hover, keeps the reason shown and takes no step.
+  // A greyed rule is aria-disabled, which Playwright will not press unforced; a visitor can.
+  await ax.click({ force: true });
+  await page.mouse.move(0, 0);
+  await expect(page.locator('.rule-card[role="note"]')).toContainText("no dual partner");
+  await expect(page.getByRole("button", { name: /^A, formula 1 of goal 1/ })).toBeVisible();
 });
 
-test("the split chooser sends formulas left and says whether the split can close", async ({
+test("the digits pick a rule in the popover and the arrows move along it", async ({ page }) => {
+  await start(page, "|- (A * B) + C");
+  await page.getByRole("button", { name: /^\(A ⊗ B\) ⊕ C, formula 1/ }).click();
+  const rules = page.getByRole("dialog", { name: "Rules" }).locator("button.rule");
+  await expect(rules).toHaveCount(2);
+  await expect(rules.first()).toBeFocused();
+  await page.keyboard.press("ArrowRight");
+  await expect(rules.nth(1)).toBeFocused();
+  await page.keyboard.press("2");
+  await expect(page.getByRole("button", { name: /^C, formula 1 of goal 2/ })).toBeVisible();
+});
+
+test("a split shows its two premises over the goal; a chip pressed moves, and the arrow applies it", async ({
   page,
 }) => {
   await start(page, "A * B |- B * A");
   await rule(page, /^A⊥ ⅋ B⊥/, "⅋");
   await rule(page, /^B ⊗ A/, "⊗");
-  const split = page.getByRole("dialog", { name: "Split" });
-  await page.getByRole("button", { name: /^A⊥, formula 1/ }).click();
-  await expect(split.getByText("Cannot close")).toBeVisible();
-  await expect(split).toContainText("this split leads nowhere");
-  await page.getByRole("button", { name: /^A⊥, formula 1/ }).click();
-  await page.getByRole("button", { name: /^B⊥, formula 2/ }).click();
-  await expect(split.getByText("Passes")).toBeVisible();
-  await split.getByRole("button", { name: "Apply" }).click();
-  // The bar numbers the goal among the open ones; the steps list keeps deduxit's ids.
-  await expect(page.locator(".dock .gn")).toHaveText("Open goal 1 of 2", { useInnerText: true });
-  await page.getByRole("button", { name: "Next goal" }).click();
-  await expect(page.locator(".dock .gn")).toHaveText("Open goal 2 of 2", { useInnerText: true });
+  const split = page.getByRole("group", { name: /^Split for ⊗/ });
+  const premises = split.locator(".prem");
+  await expect(premises.nth(0)).toHaveText(/⊢\s*B$/);
+  await expect(premises.nth(1)).toContainText("A⊥");
+  await split.getByRole("button", { name: "B⊥", exact: true }).click();
+  await expect(premises.nth(0).getByRole("button", { name: "B⊥" })).toBeVisible();
+  // Nothing says whether a split can be closed: every split is a legal step.
+  await expect(split.getByRole("button", { name: "Apply ⊗" })).toBeEnabled();
+  await split.getByRole("button", { name: "Apply ⊗" }).click();
+  await expect(split).toBeHidden();
   await tool(page, "Steps").click();
   await expect(page.getByRole("dialog", { name: "Steps" })).toContainText("⊗ on goal 2");
-});
-
-test("a refused step says the library's reason at the goal", async ({ page }) => {
-  await start(page, "|- A, B");
-  await rule(page, /^A, formula 1/, "ax");
-  const refusal = page.locator(".dock .note");
-  await expect(refusal.locator(".kw.bad")).toHaveText("ax refused: no dual partner");
-  // The reason is a line in view, which a touch sees too.
-  await expect(refusal).toContainText("and its dual alone in the goal");
-  await expect(page.locator("[aria-live]")).toContainText("ax refused");
-  // The refusal changed nothing, so there is nothing to undo there: the way on is another rule.
-  await expect(refusal.getByRole("button", { name: "Undo" })).toHaveCount(0);
-  await refusal.getByRole("button", { name: "Other rules" }).click();
-  await expect(page.getByRole("dialog", { name: "Rules" })).toContainText("A");
-  await expect(refusal).toBeHidden();
 });
 
 test("undo takes back the last step on the active branch only, and redo puts it back", async ({
@@ -83,7 +96,6 @@ test("undo takes back the last step on the active branch only, and redo puts it 
   await start(page, "|- (~A | A) & (~B | B)");
   await rule(page, /^\(A⊥ ⅋ A\) & \(B⊥ ⅋ B\)/, "&");
   // The right premise first, then the left: the session's last step is on the left branch.
-  await page.getByRole("button", { name: "Next goal" }).click();
   await rule(page, /^B⊥ ⅋ B, formula 1 of goal 3/, "⅋");
   await page.getByRole("button", { name: /^A⊥ ⅋ A, formula 1 of goal 2/ }).click();
   await page.getByRole("dialog", { name: "Rules" }).getByRole("button", { name: /⅋/ }).click();
@@ -103,7 +115,7 @@ test("a goal's close grafts the search's proof, and close all closes the rest", 
   page,
 }) => {
   await start(page, "A * B |- B * A");
-  await page.getByRole("button", { name: "Close goal" }).click();
+  await closeGoal(page);
   await expect(
     page.getByRole("status").filter({ hasText: "Proved. Every goal is closed." }),
   ).toBeVisible();
@@ -116,80 +128,99 @@ test("a goal's close grafts the search's proof, and close all closes the rest", 
   await expect(page.locator(".drawing g.search").first()).toBeAttached();
 });
 
-test("an unprovable goal's close says why, checked; a search that gives up offers twice the budget", async ({
+test("an unprovable goal's close says why, checked; a search that gives up offers to search longer", async ({
   page,
 }) => {
   await start(page, "A * B |- A");
-  await page.getByRole("button", { name: "Close goal" }).click();
-  await expect(page.locator(".dock .kw.bad")).toHaveText("Unprovable, checked: atom balance");
-  await expect(page.locator(".dock .note")).toContainText("do not pair off");
+  await closeGoal(page);
+  const note = page.locator(".goal-note");
+  await expect(note.locator(".kw.bad")).toHaveText("Unprovable, checked: atom balance.");
+  await expect(note).toContainText("do not pair off");
   // The sequent itself has no proof: there is no step to go back over.
-  await expect(page.getByRole("button", { name: "Go back" })).toHaveCount(0);
+  await expect((await goalMenu(page)).getByRole("button", { name: "Go back" })).toHaveCount(0);
+  await page.keyboard.press("Escape");
   await page.getByRole("button", { name: "Settings", exact: true }).click();
   await page.getByRole("spinbutton", { name: "Budget" }).fill("1");
   await page.getByRole("spinbutton", { name: "Budget" }).press("Enter");
   // Settings is a page: its own button leaves it.
   await page.getByRole("button", { name: "Settings", exact: true }).click();
   await start(page, "!A |- A * A", false);
-  await page.getByRole("button", { name: "Close goal" }).click();
-  await expect(page.locator(".dock .kw.warn")).toHaveText("Unknown: gave up");
-  await expect(page.getByRole("button", { name: "Try 2 units" })).toBeVisible();
+  await closeGoal(page);
+  await expect(note.locator(".kw.warn")).toHaveText("Unknown: gave up.");
+  await note.getByRole("button", { name: "Search longer (2)" }).click();
+  await expect(note.locator(".kw.warn")).toHaveText("Unknown: gave up.");
+  await expect(note.getByRole("button", { name: "Search longer (4)" })).toBeVisible();
+  // The caret opens that one search's settings, its budget the doubled one.
+  await note.getByRole("button", { name: "This search's settings" }).click();
+  const panel = page.getByRole("dialog", { name: "The search's settings" });
+  await expect(panel.getByRole("textbox", { name: "Budget, in units of work" })).toHaveValue("4");
 });
 
-test("a goal an earlier step lost offers Go back, to the last goal that still has a proof", async ({
+test("a goal with no proof is marked, and its ⊢ goes back to where every goal had one", async ({
   page,
 }) => {
   await start(page, "A * B |- B * A");
   await rule(page, /^A⊥ ⅋ B⊥/, "⅋");
   await rule(page, /^B ⊗ A/, "⊗");
-  // A⊥ goes left with B: neither premise has a proof any more.
-  await page.getByRole("button", { name: /^A⊥, formula 1/ }).click();
-  const split = page.getByRole("dialog", { name: "Split" });
-  await expect(split.getByText("Cannot close")).toBeVisible();
-  await split.getByRole("button", { name: "Apply" }).click();
-  await page.getByRole("button", { name: "Close goal" }).click();
-  const note = page.locator(".dock .note");
-  await expect(note.locator(".kw.bad")).toContainText("Unprovable");
-  await expect(note).toContainText("The sequent may still have one: an earlier step lost it.");
-  await note.getByRole("button", { name: "Go back" }).click();
+  // A⊥ goes to the first premise with B: neither premise has a proof any more.
+  await page
+    .getByRole("group", { name: /^Split for ⊗/ })
+    .getByRole("button", { name: "A⊥" })
+    .click();
+  await page.getByRole("button", { name: "Apply ⊗" }).click();
+  await expect(page.locator(".goal-line[data-dead]")).toHaveCount(2);
+  await expect(page.locator(".goal-cross")).toHaveCount(2);
+  await expect(page.locator(".gt").first()).toHaveAccessibleName(/no proof/);
+  await (await goalMenu(page)).getByRole("button", { name: "Go back" }).click();
   // The split is undone: its goal is open again, and the search found it a proof.
   await expect(page.getByRole("button", { name: /^B ⊗ A, formula 3 of goal 2/ })).toBeVisible();
-  await expect(note.locator(".kw.ok")).toHaveText("Back at a goal with a proof");
-  await expect(page.locator(".dock .gn")).toHaveText("Open goal 1 of 1", { useInnerText: true });
+  const note = page.locator(".goal-note");
+  await expect(note.locator(".kw.ok")).toHaveText("Back at a goal with a proof.");
+  await expect(page.locator(".goal-line[data-dead]")).toHaveCount(0);
   // Redo takes the split again.
   await page.getByRole("button", { name: "Redo", exact: true }).click();
   await expect(page.getByRole("button", { name: /^B ⊗ A/ })).toHaveCount(0);
-  // From a goal of a sequent with no proof, Go back finds none and says so.
+  // The marking is a setting, on at first: off, no goal is marked.
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await page.getByRole("checkbox", { name: "Mark goals that have no proof" }).uncheck();
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await expect(page.locator(".goal-line[data-dead]")).toHaveCount(0);
+  // A sequent with no proof is marked at the top, and its goals' ⊢ offers no way back.
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await page.getByRole("checkbox", { name: "Mark goals that have no proof" }).check();
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
   await start(page, "A * B |- A", false);
+  await expect(page.getByRole("tab", { name: /^A ⊗ B ⊢ A/ })).toHaveAccessibleName(/refuted/);
   await rule(page, /^A⊥ ⅋ B⊥/, "⅋");
-  await page.getByRole("button", { name: "Close goal" }).click();
-  await note.getByRole("button", { name: "Go back" }).click();
-  await expect(note.locator(".kw.bad")).toHaveText("No step to go back to");
-  await expect(note).toContainText("The sequent itself has no proof");
+  await expect(page.locator(".goal-line[data-dead]")).toHaveCount(1);
+  await expect((await goalMenu(page)).getByRole("button", { name: "Go back" })).toHaveCount(0);
 });
 
-test("the hint ladder climbs four rungs, and the last applies the step", async ({ page }) => {
-  await start(page, "A * B |- B * A");
-  const hint = page.getByRole("button", { name: "Hint" });
+test("the hint points at the next press from where the visitor is, and takes no step", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Guide", exact: true }).click();
+  await start(page, "A * B |- B * A", false);
+  const hint = tool(page, "Hint");
+  const line = page.locator(".hint-line");
   await hint.click();
-  await expect(page.locator(".dock .hint")).toContainText("an invertible rule comes next");
+  await expect(line).toHaveText("Hint. Press A⊥ ⅋ B⊥ and take ⅋.");
+  await expect(page.locator(".fb[data-hinted]")).toHaveAccessibleName(/^A⊥ ⅋ B⊥/);
+  await page.getByRole("button", { name: /^A⊥ ⅋ B⊥/ }).click();
+  await expect(line).toHaveText("Hint. Take ⅋.");
+  await expect(page.locator("button.rule[data-hinted]")).toHaveText("⅋");
+  await page.locator("button.rule[data-hinted]").click();
   await hint.click();
-  await expect(page.locator(".dock .hint")).toContainText("Look at A⊥ ⅋ B⊥");
-  await expect(page.locator(".fb[data-hinted]")).toHaveCount(1);
-  await hint.click();
-  await expect(page.locator(".dock .hint")).toContainText("Apply ⅋ to A⊥ ⅋ B⊥");
-  await hint.click();
-  await expect(page.locator(".dock .hint")).toContainText(
-    "Can you say why this was the step to take?",
-  );
-  // The page applied ⅋: its formula is gone, its premise's are the goal, and it is a step.
-  await expect(page.getByRole("button", { name: /^A⊥, formula 1 of goal 2/ })).toBeVisible();
-  await expect(page.getByRole("button", { name: /^A⊥ ⅋ B⊥/ })).toHaveCount(0);
-  await page.getByRole("button", { name: "Steps" }).click();
-  await expect(page.getByRole("dialog", { name: "Steps" }).getByRole("button")).toHaveText([
-    /^0/,
-    /^1⅋ on goal 1/,
-  ]);
+  await expect(line).toHaveText("Hint. Press B ⊗ A and take ⊗.");
+  await rule(page, /^B ⊗ A/, "⊗");
+  await expect(line).toContainText("to the other premise");
+  const split = page.getByRole("group", { name: /^Split for ⊗/ });
+  await split.locator(".chip-f[data-hinted]").click();
+  await expect(line).toHaveText("Hint. This split works. Press the arrow to apply it.");
+  await expect(split.locator(".apply-step[data-hinted]")).toBeVisible();
+  // The hint applied nothing: the split is still the visitor's to make.
+  await expect(page.getByRole("button", { name: /^B ⊗ A, formula 3/ })).toBeVisible();
 });
 
 test("the finished MLL and MELL proofs' nets are drawn, and + view says why a net is not there", async ({
@@ -208,7 +239,7 @@ test("the finished MLL and MELL proofs' nets are drawn, and + view says why a ne
   await start(page, "A & B |- A");
   expect(await netEntry()).toEqual({ faint: true, why: expect.stringContaining("exist for") });
   await start(page, "!A |- A", false);
-  await page.getByRole("button", { name: "Close goal" }).click();
+  await closeGoal(page);
   await page.getByRole("tab", { name: "Proof net" }).click();
   await expect(page.locator(".drawing svg desc")).toContainText("proof net");
   await page.getByRole("tab", { name: /^Classical linear logic/ }).click();
@@ -218,7 +249,7 @@ test("the finished MLL and MELL proofs' nets are drawn, and + view says why a ne
     why: "The net is drawn once the proof is finished.",
   });
   await expect(page.getByRole("tab", { name: "Proof net" })).toHaveCount(0);
-  await page.getByRole("button", { name: "Close goal" }).click();
+  await closeGoal(page);
   await page.getByRole("tab", { name: "Proof net" }).click();
   await expect(page.getByRole("tab", { name: "Proof net" })).toHaveAttribute(
     "aria-selected",
@@ -384,7 +415,7 @@ test("the export menu chooses the font of the SVG, PNG and PDF, kept for the nex
 
 test("the certificate of non-derivability downloads for a refuted goal", async ({ page }) => {
   await start(page, "A |- B");
-  await page.getByRole("button", { name: "Close goal" }).click();
+  await closeGoal(page);
   await page.getByRole("button", { name: "Export" }).click();
   const download = page.waitForEvent("download");
   await page.getByRole("menuitem", { name: /^Not derivable/ }).click();
@@ -516,11 +547,11 @@ test("a sequent's state is told on its chip by a sign and in its name, not by it
   const chip = (n: number) => page.locator(".chip").nth(n);
   await start(page, "A |- A");
   await expect(chip(0)).toHaveAccessibleName("A ⊢ A, 1 goal open");
-  await page.getByRole("button", { name: "Close goal" }).click();
+  await closeGoal(page);
   await expect(chip(0).locator("svg.lucide-check")).toBeVisible();
   await expect(chip(0)).toHaveAccessibleName("A ⊢ A, proved");
   await start(page, "A |- B", false);
-  await page.getByRole("button", { name: "Close goal" }).click();
+  await closeGoal(page);
   await expect(chip(1).locator("svg.lucide-x")).toBeVisible();
   await expect(chip(1)).toHaveAccessibleName("A ⊢ B, refuted");
   await page.getByRole("button", { name: "Settings", exact: true }).click();
@@ -529,7 +560,7 @@ test("a sequent's state is told on its chip by a sign and in its name, not by it
   await page.getByRole("button", { name: "Settings", exact: true }).click();
   await start(page, "!(a -o a * a), a |- a * a * a * a", false);
   await calculus(page, ["Intuitionistic"]);
-  await page.getByRole("button", { name: "Close goal" }).click();
+  await closeGoal(page);
   await expect(chip(2)).toHaveAccessibleName(/, unknown$/);
   await page.getByRole("button", { name: "New sequent", exact: true }).click();
   await expect(chip(3)).toHaveAccessibleName("New sequent, not started");
@@ -591,20 +622,35 @@ test("a proof goes by keyboard alone", async ({ page }) => {
   await expect(page.getByRole("dialog", { name: "Keys" })).toHaveCount(0);
 });
 
-test("the calculus's switches restart the proof after a warning, and two-sided shows in classical mode alone", async ({
+test("a toggle keeps the proof where its steps hold, else opens the new calculus beside; two-sided shows in classical mode alone", async ({
   page,
 }) => {
-  await start(page, "A, B |- A * B");
+  await start(page, "A * B |- B * A");
   // Classical derivations are drawn one-sided by default: the tool is there, off.
   await expect(tool(page, "Two-sided")).toBeEnabled();
   await expect(tool(page, "Two-sided")).toHaveAttribute("aria-pressed", "false");
-  await rule(page, /^A ⊗ B/, "⊗");
-  await page.getByRole("button", { name: /^B⊥, formula 2/ }).click();
-  await page.getByRole("dialog", { name: "Split" }).getByRole("button", { name: "Apply" }).click();
+  await rule(page, /^A⊥ ⅋ B⊥/, "⅋");
+  // Every classical step holds with Mix: the proof stays, its goal with it.
+  await (await switches(page)).getByRole("button", { name: "Mix" }).click();
+  await expect(viewCell(page)).toHaveAttribute("data-tip", /LL\+mix/);
+  await expect(page.locator(".chip")).toHaveCount(1);
+  await expect(page.getByRole("button", { name: /^A⊥, formula 1 of goal 2/ })).toBeVisible();
+  // The one-sided ⅋ on a hypothesis is ⊗L in intuitionistic logic: the proof stays there too.
   await (await switches(page)).getByRole("button", { name: "Intuitionistic" }).click();
-  await page.getByRole("button", { name: "Restart" }).click();
   await expect(viewCell(page)).toHaveAttribute("data-tip", /ILL/);
-  await expect(page.getByRole("button", { name: /^A ⊗ B, formula 3 of goal 1/ })).toBeVisible();
+  await expect(page.locator(".chip")).toHaveCount(1);
+  // An affine weakening does not hold without Affine: that calculus opens beside.
+  await start(page, "A, B |- A", false);
+  await (await switches(page)).getByRole("button", { name: "Affine" }).click();
+  await rule(page, /^B, formula/, "wk");
+  await (await switches(page)).getByRole("button", { name: "Affine" }).click();
+  await expect(page.getByRole("status").filter({ hasText: "opened beside" })).toContainText(
+    "Step 1 does not hold",
+  );
+  await expect(page.locator(".chip")).toHaveCount(3);
+  await page.locator(".chip").nth(1).click();
+  await expect(page.getByRole("button", { name: /^B, formula/ })).toHaveCount(0);
+  await page.locator(".chip").first().click();
   // Intuitionistic derivations are two-sided already: the tool is not shown.
   await expect(tool(page, "Two-sided")).toHaveCount(0);
   await start(page, "A |- B, C", false);
@@ -643,7 +689,7 @@ test("the light and dark toggle pins a scheme, kept on the next visit", async ({
 test("the step list goes back to a step, and redo brings the rest back", async ({ page }) => {
   await start(page, "A * B |- B * A");
   await rule(page, /^A⊥ ⅋ B⊥/, "⅋");
-  await page.getByRole("button", { name: "Close goal" }).click();
+  await closeGoal(page);
   await expect(
     page.getByRole("status").filter({ hasText: "Proved. Every goal is closed." }),
   ).toBeVisible();
@@ -667,7 +713,7 @@ test("a finished intuitionistic proof's essential net is drawn", async ({ page }
   await start(page, "A, B |- A * B");
   await calculus(page, ["Intuitionistic"]);
   await expect(viewCell(page)).toHaveAttribute("data-tip", /ILL/);
-  await page.getByRole("button", { name: "Close goal" }).click();
+  await closeGoal(page);
   await page.getByRole("tab", { name: "Proof net" }).click();
   await expect(page.locator(".drawing svg desc")).toContainText("proof net");
 });
@@ -677,7 +723,7 @@ test("a finished intuitionistic MELL proof's net is drawn with its boxes", async
   await calculus(page, ["Intuitionistic"]);
   await expect(viewCell(page)).toHaveAttribute("data-tip", /ILL/);
   await expect(page.getByRole("tab", { name: "Proof net" })).toHaveCount(0);
-  await page.getByRole("button", { name: "Close goal" }).click();
+  await closeGoal(page);
   await page.getByRole("tab", { name: "Proof net" }).click();
   await expect(page.getByRole("tab", { name: "Proof net" })).toHaveAttribute(
     "aria-selected",
@@ -720,7 +766,7 @@ test("Settings' net look draws the net as the textbooks do, by the preset or fie
 }) => {
   // ⊢ ?a⊥, ?b⊥, !a: a box with a copy of ?a⊥ in it, and ?b⊥ weakened.
   await start(page, "!a, !b |- !a");
-  await page.getByRole("button", { name: "Close goal" }).click();
+  await closeGoal(page);
   await page.getByRole("tab", { name: "Proof net" }).click();
   await expect(page.locator(".drawing svg desc")).toContainText("proof net");
   const weakening = page.locator(".drawing svg text", { hasText: "?w" });
@@ -804,7 +850,7 @@ test("the essential net draws its input side in the Okabe–Ito palette's blue, 
   await start(page, "A * B |- B * A");
   await calculus(page, ["Intuitionistic"]);
   await expect(viewCell(page)).toHaveAttribute("data-tip", /ILL/);
-  await page.getByRole("button", { name: "Close goal" }).click();
+  await closeGoal(page);
   await page.getByRole("tab", { name: "Proof net" }).click();
   const input = page.locator('.drawing svg text[fill="#0072b2"]').first();
   const edge = page.locator('.drawing svg g[stroke="#0072b2"] path').first();
@@ -821,7 +867,7 @@ test("the essential net draws its input side in the Okabe–Ito palette's blue, 
 
 test("the net view fits the whole net, drawn afresh with each drawing", async ({ page }) => {
   await start(page, "A * B * C * D * E * F |- F * E * D * C * B * A");
-  await page.getByRole("button", { name: "Close goal" }).click();
+  await closeGoal(page);
   await expect(
     page.getByRole("status").filter({ hasText: "Proved. Every goal is closed." }),
   ).toBeVisible();
@@ -857,22 +903,22 @@ test("an action asked for while a search runs waits, and loses neither result", 
   // A search of about half a second, which refutes the goal in the end.
   await start(page, "!(A & B) * !(A & B) |- !A * !B * !A * !B * ?C");
   await rule(page, /^\?\(A⊥ ⊕ B⊥\) ⅋ \?\(A⊥ ⊕ B⊥\)/, "⅋");
-  await page.getByRole("button", { name: "Close goal" }).click();
+  await closeGoal(page);
   // Undo while the search runs: it does nothing, rather than replaying a session the search replaces.
   await page.keyboard.press("u");
-  await expect(page.locator(".dock .kw.bad")).toContainText("Unprovable");
+  await expect(page.locator(".goal-note .kw.bad")).toContainText("Unprovable");
   await expect(page.getByRole("button", { name: /^\?\(A⊥ ⊕ B⊥\) ⅋/ })).toHaveCount(0);
   // Once it ended, undo takes back the ⅋.
   await tool(page, "Undo").click();
   await expect(page.getByRole("button", { name: /^\?\(A⊥ ⊕ B⊥\) ⅋ \?\(A⊥ ⊕ B⊥\)/ })).toBeVisible();
 });
 
-test("a goal opens in a new tab of its sequent, in the same calculus, which remembers where it came from", async ({
+test("a goal proved apart opens as a sequent of its own, in the same calculus, which remembers where it came from", async ({
   page,
 }) => {
   await start(page, "A * B |- B * A");
   await rule(page, /^A⊥ ⅋ B⊥/, "⅋");
-  await page.getByRole("button", { name: "Open this goal in a new tab" }).click();
+  await (await goalMenu(page)).getByRole("button", { name: "Prove apart" }).click();
   await expect(page.locator(".chip")).toHaveCount(2);
   await expect(page.locator(".chip[aria-selected=true] .chip-text")).toHaveText("⊢ A⊥, B⊥, B ⊗ A");
   await expect(viewCell(page)).toHaveAttribute("data-tip", /LL/);
@@ -888,54 +934,64 @@ test("a goal opens in a new tab of its sequent, in the same calculus, which reme
   expect(origin?.origin).toEqual({ from: origin?.from, path: [0] });
 });
 
-test("a goal is filled from another tab's finished proof as one step named with the tab's sequent, undone as one, and a proof of another calculus is refused at the goal", async ({
+test("a goal is closed by its proof made apart: its steps taken again, grey, and marked apart in the steps", async ({
   page,
 }) => {
   await start(page, "A * B |- B * A");
   await rule(page, /^A⊥ ⅋ B⊥/, "⅋");
-  await expect(page.getByRole("button", { name: /^Fill from/ })).toHaveCount(0);
-  await page.getByRole("button", { name: "Open this goal in a new tab" }).click();
+  await expect((await goalMenu(page)).getByRole("button", { name: "Use its proof" })).toHaveCount(
+    0,
+  );
+  await (await goalMenu(page)).getByRole("button", { name: "Prove apart" }).click();
+  await rule(page, /^B ⊗ A/, "⊗");
+  const split = page.getByRole("group", { name: /^Split for ⊗/ });
+  await split.getByRole("button", { name: "B⊥", exact: true }).click();
+  await split.getByRole("button", { name: "Apply ⊗" }).click();
   await tool(page, "Close all").click();
   await expect(page.getByText("Proved. Every goal is closed.")).toBeVisible();
-  const goal = "⊢ A⊥, B⊥, B ⊗ A";
-  await expect(page.locator(".chip").nth(1).locator(".chip-text")).toHaveText(goal);
   await page.locator(".chip").first().click();
-  await page.getByRole("button", { name: `Fill from ${goal}` }).click();
+  await (await goalMenu(page)).getByRole("button", { name: "Use its proof" }).click();
   await expect(page.getByText("Proved. Every goal is closed.")).toBeVisible();
-  await expect(page.locator(".drawing svg text.engine")).toHaveText([`Proof from ${goal}`]);
-  await page.getByRole("button", { name: "Steps" }).click();
-  await expect(page.getByRole("dialog", { name: "Steps" })).toContainText(
-    `The proof from ${goal} closed goal`,
-  );
-  await page.keyboard.press("Escape");
-  await tool(page, "Undo").click();
-  await expect(page.getByRole("button", { name: /^B ⊗ A, formula/ })).toBeVisible();
-  await expect(page.getByRole("button", { name: `Fill from ${goal}` })).toBeVisible();
-
-  // A proof under Mix, offered for the same formulas, is refused in classical logic.
-  await start(page, "|- A, ~A, B, ~B", false);
-  await start(page, "|- A, ~A, B, ~B", false);
-  await calculus(page, ["Mix"]);
-  await expect(viewCell(page)).toHaveAttribute("data-tip", /LL\+mix/);
-  await tool(page, "Close all").click();
-  await expect(page.getByText("Proved. Every goal is closed.")).toBeVisible();
-  await page.locator(".chip").nth(2).click();
-  await page.getByRole("button", { name: "Fill from ⊢ A, A⊥, B, B⊥" }).click();
-  await expect(page.locator(".dline .kw.bad")).toHaveText(
-    "Not filled: not a proof in this calculus",
-  );
-  await expect(page.getByRole("button", { name: /^A, formula/ })).toBeVisible();
+  await expect(page.locator(".drawing g.search").first()).toBeAttached();
+  await tool(page, "Steps").click();
+  const steps = page.getByRole("dialog", { name: "Steps" });
+  await expect(steps.getByRole("button").nth(1)).not.toContainText("apart");
+  await expect(steps.getByRole("button").nth(2)).toContainText("⊗ on goal 2 apart");
 });
 
-test("a fill names its proof by the proof's sequent", async ({ page }) => {
-  await start(page, "|- C, ~C");
-  await start(page, "A * B |- B * A", false);
-  await rule(page, /^A⊥ ⅋ B⊥/, "⅋");
-  await page.getByRole("button", { name: "Open this goal in a new tab" }).click();
-  await tool(page, "Close all").click();
-  await expect(page.getByText("Proved. Every goal is closed.")).toBeVisible();
-  await page.locator(".chip").nth(1).click();
-  await expect(page.getByRole("button", { name: /^Fill from/ })).toHaveText(
-    "Fill from ⊢ A⊥, B⊥, B ⊗ A",
+test("a net's view has the toggle Formulas or Compact where the calculus's toggles stand", async ({
+  page,
+}) => {
+  await proveCommuted(page);
+  await page.getByRole("tab", { name: "Proof net" }).click();
+  const drawing = (await switches(page)).getByRole("group", { name: "Net drawing" });
+  await expect(drawing.getByRole("button", { name: "Formulas" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
   );
+  const before = await page.locator(".drawing svg").getAttribute("width");
+  await drawing.getByRole("button", { name: "Compact" }).click();
+  await expect(drawing.getByRole("button", { name: "Compact" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await expect(page.locator(".drawing svg")).not.toHaveAttribute("width", before ?? "");
+});
+
+test("with the guide on, one sentence over the bottom box says what to press next", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Guide", exact: true }).click();
+  await start(page, "A * B |- B * A", false);
+  const line = page.locator(".guide-line");
+  await expect(line).toHaveText("Press a formula on a dashed line to see its rules.");
+  await page.getByRole("button", { name: /^B ⊗ A, formula/ }).click();
+  await expect(line).toHaveText(
+    "Press a rule to apply it. A grey rule shows why it does not apply.",
+  );
+  await page.getByRole("dialog", { name: "Rules" }).getByRole("button", { name: "⊗" }).click();
+  await expect(line).toHaveText("Press a formula to move it to the other premise, then press ⊗ ↵.");
+  await page.getByRole("button", { name: "Guide", exact: true }).click();
+  await expect(line).toHaveCount(0);
 });

@@ -7,7 +7,7 @@
 
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
-import { goto, start } from "./prover";
+import { closeGoal, goto, start } from "./prover";
 
 /** Opens the page and waits until the service worker controls it, its cache written. */
 async function controlled(page: Page) {
@@ -28,7 +28,7 @@ test("after one visit the page proves a sequent with no network", async ({ page,
   await page.reload();
   await page.getByRole("textbox", { name: "Sequent" }).fill("A * B |- B * A");
   await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
-  await page.getByRole("button", { name: "Close goal" }).click();
+  await closeGoal(page);
   await expect(
     page.getByRole("status").filter({ hasText: "Proved. Every goal is closed." }),
   ).toBeVisible();
@@ -62,7 +62,7 @@ test("a session without a PNG or PDF export never fetches the renderers, and the
   };
   await controlled(page);
   await start(page, "A * B |- B * A", false);
-  await page.getByRole("button", { name: "Close goal" }).click();
+  await closeGoal(page);
   await expect(
     page.getByRole("status").filter({ hasText: "Proved. Every goal is closed." }),
   ).toBeVisible();

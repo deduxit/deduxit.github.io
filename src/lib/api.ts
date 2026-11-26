@@ -104,8 +104,6 @@ export function createApi(changed: (pending: number) => void) {
       json<Played["view"]>("view", doc(session), settings),
     rules: (session: SessionDoc, goal: number, position: number, settings: string) =>
       json<Offered[]>("rules", doc(session), goal, position, settings),
-    splitPasses: (session: SessionDoc, goal: number, step: StepForm, settings: string) =>
-      client.call<boolean>("split_passes", doc(session), goal, JSON.stringify(step), settings),
     apply: (session: SessionDoc, goal: number, step: StepForm, settings: string) =>
       json<Inverted & { opened: number[] }>(
         "apply",
@@ -145,8 +143,6 @@ export function createApi(changed: (pending: number) => void) {
       json<Ran>(on === "tree" ? "eliminate" : "net_eliminate", doc(session), of, settings),
     close: (session: SessionDoc, goal: number, settings: string) =>
       json<Closed>("close", doc(session), goal, settings),
-    fill: (session: SessionDoc, goal: number, source: SessionDoc, settings: string) =>
-      json<Played & { filled: number }>("fill", doc(session), goal, doc(source), settings),
     invertAll: (session: SessionDoc, settings: string) =>
       json<Inverted>("invert_all", doc(session), settings),
     closeAll: (session: SessionDoc, settings: string) =>

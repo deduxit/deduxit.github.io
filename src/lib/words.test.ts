@@ -7,10 +7,8 @@ import {
   displayed,
   lost,
   modeWords,
-  openGoal,
   pretty,
   readingOf,
-  rungs,
   SHORT,
   short,
   verdict,
@@ -79,18 +77,11 @@ describe("an atom-balance refutation", () => {
 
 describe("a goal lost by an earlier step", () => {
   it("offers Go back while the sequent may have a proof, and says no step lost one when it has none", () => {
-    expect(lost(false)).toMatch(/an earlier step lost it\. Go back takes you/);
+    expect(lost(false)).toMatch(/an earlier step lost it\. Press the goal's ⊢ and Go back/);
     expect(lost(true)).not.toMatch(/Go back/);
     expect(wentBack("proved").tone).toBe("ok");
     expect(wentBack("unprovable").sentence).toBe(lost(true));
     expect(wentBack("unknown").sentence).toMatch(/within the budget/);
-  });
-});
-
-describe("the goal bar", () => {
-  it("numbers the active goal among the open ones", () => {
-    expect(openGoal(1, 1)).toBe("Open goal 1 of 1");
-    expect(openGoal(2, 3)).toBe("Open goal 2 of 3");
   });
 });
 
@@ -115,46 +106,6 @@ describe("a tab's sequent, shortened to name the tab", () => {
     expect(Array.from(cut).length).toBeLessThanOrEqual(SHORT);
     expect(cut.endsWith("…")).toBe(true);
     expect(long.startsWith(cut.slice(0, -1))).toBe(true);
-  });
-});
-
-describe("the hint ladder's first rung", () => {
-  const formulas = [{ text: "A ⊗ ~B", occurrence: 0, side: null }];
-  const tensor = [{ position: 0, rule: "⊗", left: [] }];
-  it("names an invertible rule as deduxit judges it, and a dereliction as no such rule", () => {
-    expect(rungs([{ position: 0, rule: "⅋" }], formulas, true, false)[0]).toBe(
-      "Work on this goal: an invertible rule comes next.",
-    );
-    expect(rungs([{ position: 0, rule: "!L" }], formulas, false, false)[0]).toBe(
-      "Work on this goal: an exponential rule comes next.",
-    );
-  });
-  it("takes whether a rule is invertible from deduxit: not a dereliction, but \\R", () => {
-    const hinted = (text: string, mode: string) => {
-      const read = JSON.parse(deduxit.read(text, ""));
-      const start = JSON.parse(deduxit.start(JSON.stringify(read.sequent), mode, ""));
-      const goal = start.view.goals[0].goal as number;
-      const hint = JSON.parse(deduxit.hint(JSON.stringify(start.session), goal, ""));
-      const formulas = start.view.goals[0].formulas;
-      return [hint.steps.at(-1).rule, rungs(hint.steps, formulas, hint.invertible, false)[0]];
-    };
-    expect(hinted("!A |- A", "intuitionistic")).toEqual([
-      "!L",
-      "Work on this goal: an exponential rule comes next.",
-    ]);
-    // A \\ A, one-sided ~A ⅋ A; the page's reader is commutative, and one formula has one order.
-    expect(hinted("|- ~A par A", "lambek-star")).toEqual([
-      "\\R",
-      "Work on this goal: an invertible rule comes next.",
-    ]);
-  });
-  it("says that the invertible rules are done when the page applies them", () => {
-    expect(rungs(tensor, formulas, false, true)[0]).toBe(
-      "The invertible rules are applied already; on this goal a split of the goal's formulas comes next.",
-    );
-    expect(rungs(tensor, formulas, false, false)[0]).toBe(
-      "Work on this goal: a split of the goal's formulas comes next.",
-    );
   });
 });
 

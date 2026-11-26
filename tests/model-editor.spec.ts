@@ -8,7 +8,7 @@
 
 import type { Locator, Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
-import { addView, calculus, goto, switches } from "./prover";
+import { addView, calculus, closeGoal, goto, switches } from "./prover";
 
 /** Opens the page with its tab in modal logic, in `system`, and decides `sequent`. */
 async function modal(page: Page, system: string, sequent: string) {
@@ -165,7 +165,7 @@ test("an ordinary countermodel opens in the model view; a model of another logic
   page,
 }) => {
   await ordinary(page, "Intuitionistic", "|- a \\/ ~a");
-  await page.getByRole("button", { name: "Close goal" }).click();
+  await closeGoal(page);
   await page.getByRole("button", { name: "Change this model and check it" }).click();
   const view = page.getByRole("region", { name: "Model" });
   await expect(view).toContainText("The countermodel deduxit found");
@@ -229,7 +229,7 @@ test("adding and removing worlds keeps the places, and the world checked at foll
 
 test("ordinary logic draws no loop, and a removal hands the focus to a world", async ({ page }) => {
   await ordinary(page, "Intuitionistic", "|- a \\/ ~a");
-  await page.getByRole("button", { name: "Close goal" }).click();
+  await closeGoal(page);
   await page.getByRole("button", { name: "Change this model and check it" }).click();
   const zero = await centre(world(page, 0));
   await drag(page, 0, { x: zero.x + 150, y: zero.y }, zero);

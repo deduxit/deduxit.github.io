@@ -70,7 +70,7 @@ test("a proof is built backwards and forwards, and a line out of reach is refuse
   await expect(view.getByRole("status")).toContainText("Valid in NJ");
 });
 
-test("the tree and Fitch's lines draw one proof, and each is saved as it is drawn", async ({
+test("the toggles' Natural and Fitch draw one proof, and each is saved as it is drawn", async ({
   page,
 }) => {
   await natural(page);
@@ -95,7 +95,7 @@ test("the tree and Fitch's lines draw one proof, and each is saved as it is draw
     return all;
   });
   expect(text).toContain("\\begin{nd}");
-  await page.getByRole("button", { name: "Tree" }).click();
+  await page.getByRole("button", { name: "Natural", exact: true }).click();
   await expect(drawing.locator("#i0")).toBeAttached();
 });
 

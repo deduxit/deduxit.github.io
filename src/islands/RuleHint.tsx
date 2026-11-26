@@ -44,6 +44,9 @@ export function hinted(
     : { "data-rule-hint": label, "aria-describedby": hintId(hint.name) };
 }
 
+/** The rule a label names, its form drawn by the rule popover's card, or nothing where none is known. */
+export const ruleForm = (label: string): RuleHint | undefined => named(label);
+
 /** The full name of the rule a label names ("tensor, right"), or nothing where none is known. */
 export const titled = (label: string): string | undefined => named(label)?.title;
 

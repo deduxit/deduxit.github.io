@@ -10,20 +10,11 @@
  * the hint), the rule popover and the split chooser.
  */
 
-import {
-  ChevronLeft,
-  ChevronRight,
-  Info,
-  Maximize,
-  SquareArrowOutUpRight,
-  ZoomIn,
-  ZoomOut,
-} from "lucide-solid";
+import { Maximize, ZoomIn, ZoomOut } from "lucide-solid";
 import {
   createEffect,
   createMemo,
   createRenderEffect,
-  createResource,
   createSignal,
   For,
   on,
@@ -31,23 +22,16 @@ import {
   onMount,
   Show,
 } from "solid-js";
-import { engineLabel, engineOf, engineTip } from "../lib/engines";
+import { APART, engineLabel } from "../lib/engines";
 import { keyAction } from "../lib/keys";
 import { type Box, spread } from "../lib/gap";
-import {
-  type CutShown,
-  failure,
-  type LinkShown,
-  type MathFont,
-  type Offered,
-  type Outcome,
-  type StepForm,
-} from "../lib/deduxit";
+import { type CutShown, failure, type LinkShown, type MathFont } from "../lib/deduxit";
 import { countermodelOf, isOrdinary, type OrdinaryOutcome, sequentText } from "../lib/ordinary";
 import { goalAt, paths, searchMade, subtree } from "../lib/steps";
 import { intuitionistic, isNatural } from "../lib/suites";
-import { formulaText, lost, openGoal, rungs, type Said, shown, stepLine } from "../lib/words";
+import { formulaText, lost, type Said, shown, stepLine } from "../lib/words";
 import {
+  type Candidate,
   type Elim,
   lookJson,
   type NetDrawing,
@@ -58,6 +42,8 @@ import {
   type Settings,
   viewJson,
 } from "./state";
+import { type Chip, EngineChip, GoalMenu, PremisesView, RulePopover } from "./Goal";
+import { Sign } from "./Signs";
 import { ModelFigure } from "./Countermodel";
 import { CustomPanel } from "./Custom";
 import { ModelView } from "./ModelCheck";
@@ -66,7 +52,7 @@ import { LambdaPanel } from "./Lambda";
 import { ModalPanel } from "./Modal";
 import { type Method, MethodView } from "./Methods";
 import { NaturalView } from "./Natural";
-import { hinted, titled } from "./RuleHint";
+import { hinted } from "./RuleHint";
 import { compact, ladderKey, token, type Ui, Why } from "./ui";
 
 /** A formula's button over the drawing, in the drawing's own pixels. */
@@ -104,6 +90,23 @@ interface CutHit {
   readonly y: number;
   readonly w: number;
   readonly h: number;
+}
+
+/**
+ * An open goal on the drawing, in the drawing's own pixels: its `⊢`, whose button opens the goal's
+ * menu, and the line over it where its rule will go.
+ */
+interface GoalHit {
+  readonly goal: number;
+  /** The `⊢`'s button. */
+  readonly x: number;
+  readonly y: number;
+  readonly w: number;
+  readonly h: number;
+  /** The line over the goal: its left end, its height on the drawing and its width. */
+  readonly lineX: number;
+  readonly lineY: number;
+  readonly lineW: number;
 }
 
 /** The camera: the drawing's offset in the stage and its scale. */
@@ -153,9 +156,11 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
   let stage!: HTMLElement;
   let world!: HTMLDivElement;
   let host!: HTMLDivElement;
-  let dock: HTMLDivElement | undefined;
   let popover: HTMLDivElement | undefined;
+  let menuEl: HTMLDivElement | undefined;
+  let premisesEl: HTMLFieldSetElement | undefined;
   const [hits, setHits] = createSignal<Hit[]>([]);
+  const [goalHits, setGoalHits] = createSignal<GoalHit[]>([]);
   const [cutHits, setCutHits] = createSignal<CutHit[]>([]);
   const [labelHits, setLabelHits] = createSignal<LabelHit[]>([]);
   /** The cut chooser's formula as typed, and what deduxit said of it. */
@@ -188,16 +193,6 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
 
   const view = () => proof()?.view ?? null;
   const active = () => prover().activeGoal();
-  // The other tabs a goal may be filled from: asked again as the goal or the tabs change.
-  const [fills] = createResource(
-    () =>
-      [
-        active(),
-        props.prover.store.proofs.map((p) => `${p.id}:${p.view?.complete ?? false}`).join(),
-      ] as const,
-    ([goal]) => (goal === undefined ? [] : props.prover.fillable(goal)),
-  );
-  const openCount = () => view()?.goals.length ?? 0;
   const formulasOf = (goal: number) => view()?.goals.find((g) => g.goal === goal)?.formulas ?? [];
 
   /** The drawing's `i<n>` of a goal. */
@@ -256,6 +251,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
           host.replaceChildren();
           hostSession = undefined;
           setHits([]);
+          setGoalHits([]);
           return;
         }
         const net = tab === "net" && v.complete && v.net === null;
@@ -299,6 +295,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
           host.replaceChildren();
           hostSession = undefined;
           setHits([]);
+          setGoalHits([]);
           setCutHits([]);
           setProblem(failure(thrown instanceof Error ? thrown.message : thrown).message);
           return;
@@ -354,11 +351,13 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
     if (session !== hostSession) {
       // The drawing of this session is on its way; the one shown is another's.
       setHits([]);
+      setGoalHits([]);
       return;
     }
     const eliminating = proof()?.elim[net ? "net" : "tree"];
     if (eliminating) {
       setHits([]);
+      setGoalHits([]);
       markElimination(eliminating);
       return;
     }
@@ -376,7 +375,14 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
             return at === undefined ? [] : subtree(session, at);
           }),
         )
-      : searchMade(session);
+      : new Set([
+          ...searchMade(session),
+          ...Object.entries(engines).flatMap(([key, engine]) => {
+            if (engine !== APART) return [];
+            const at = goalAt(session, key === "" ? [] : key.split(".").map(Number));
+            return at === undefined ? [] : subtree(session, at);
+          }),
+        ]);
     v.inferences.forEach((inference, n) => {
       const group = host.querySelector(`#i${n}`);
       if (!group) return;
@@ -396,16 +402,20 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
         mark.setAttribute("x", String(box.x + box.width + box.height / 3));
         mark.setAttribute("y", label.getAttribute("y") ?? String(box.y + box.height));
         mark.setAttribute("font-size", String(box.height * 0.6));
-        mark.setAttribute("data-tip", engineTip(engine));
         mark.textContent = engineLabel(engine);
         label.after(mark);
       }
     });
     if (net) {
       setHits([]);
+      setGoalHits([]);
       return;
     }
+    // deduxit's ⋮ over an open goal gives way to the goal's line.
+    for (const text of host.querySelectorAll("svg > text"))
+      if (text.textContent === "⋮") text.classList.add("goal-dots");
     setHits(targets(v.goals));
+    setGoalHits(goalTargets(v.goals));
   }
 
   /**
@@ -612,6 +622,40 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
     return found;
   }
 
+  /**
+   * The open goals' `⊢` buttons and the lines over the goals. A `⊢` is a text of the goal's group;
+   * its button is at least a control on the screen. The line spans the goal's formulas.
+   */
+  function goalTargets(goals: NonNullable<ReturnType<typeof view>>["goals"]): GoalHit[] {
+    const v = view();
+    if (!v) return [];
+    const origin = host.getBoundingClientRect();
+    const at = rendered();
+    const least = token("--size-button") / camera().k;
+    const lift = token("--spacing-2") / camera().k;
+    return goals.flatMap((goal) => {
+      const group = host.querySelector(`#i${v.inferences.indexOf(goal.goal)}`);
+      const turnstile = [...(group?.children ?? [])].find((c) => c.textContent === "⊢");
+      if (!group || !turnstile) return [];
+      const g = group.getBoundingClientRect();
+      const t = turnstile.getBoundingClientRect();
+      const w = Math.max(t.width / at, least);
+      const h = Math.max(t.height / at, least);
+      return [
+        {
+          goal: goal.goal,
+          x: (t.left - origin.left) / at + t.width / at / 2 - w / 2,
+          y: (t.top - origin.top) / at + t.height / at / 2 - h / 2,
+          w,
+          h,
+          lineX: (g.left - origin.left) / at,
+          lineY: (g.top - origin.top) / at - lift,
+          lineW: g.width / at,
+        },
+      ];
+    });
+  }
+
   // A zoom changes the least size of a formula's button on the screen.
   createEffect(
     on(
@@ -623,8 +667,10 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
           host.firstChild &&
           hostSession === proof()?.session &&
           !(ui.tab === "net" && netReady())
-        )
+        ) {
           setHits(targets(view()?.goals ?? []));
+          setGoalHits(goalTargets(view()?.goals ?? []));
+        }
       },
       { defer: true },
     ),
@@ -654,14 +700,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
     return { w: Math.max(svg.width.baseVal.value, ...labels), h: svg.height.baseVal.value };
   };
 
-  /**
-   * Whether the camera stands where the page put it (a fit, a goal brought into view), not
-   * where the visitor moved it: only then may the dock move the drawing to make room.
-   */
-  let placedByPage = true;
-
-  function move(next: Camera, smooth = false, byVisitor = false) {
-    placedByPage = !byVisitor;
+  function move(next: Camera, smooth = false) {
     setGlide(smooth && !reduced());
     setCamera(next);
   }
@@ -736,7 +775,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
     const k = Math.max(0.2, Math.min(4, c.k * by));
     const px = at?.x ?? stage.clientWidth / 2;
     const py = at?.y ?? stage.clientHeight / 2;
-    move({ k, x: px - ((px - c.x) * k) / c.k, y: py - ((py - c.y) * k) / c.k }, !at, true);
+    move({ k, x: px - ((px - c.x) * k) / c.k, y: py - ((py - c.y) * k) / c.k }, !at);
   }
 
   /** Zooms by `by` about the point `from` of the stage, which then lies at `to`: a pinch. */
@@ -744,11 +783,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
     byHand = true;
     const c = camera();
     const k = Math.max(0.2, Math.min(4, c.k * by));
-    move(
-      { k, x: to.x - ((from.x - c.x) * k) / c.k, y: to.y - ((from.y - c.y) * k) / c.k },
-      false,
-      true,
-    );
+    move({ k, x: to.x - ((from.x - c.x) * k) / c.k, y: to.y - ((from.y - c.y) * k) / c.k }, false);
   }
 
   // A render effect runs before every effect of the same change, so the dock, the buttons and
@@ -757,100 +792,80 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
   // readers, and the dock trailed the goal by a move during a drag.
   createRenderEffect(() => {
     const c = camera();
-    if (world) world.style.transform = `translate(${c.x}px, ${c.y}px) scale(${c.k})`;
+    if (!world) return;
+    world.style.transform = `translate(${c.x}px, ${c.y}px) scale(${c.k})`;
+    // What the world draws at a size on the screen (a goal's line) divides by the zoom.
+    world.style.setProperty("--zoom", String(c.k));
   });
 
-  // The dock sits above the active goal; the popover beside the selected formula.
-  createEffect(() => {
-    camera();
-    drawn();
-    note();
-    ladder();
-    props.prover.busy();
-    const goal = active();
-    if (!dock) return;
-    if (goal === undefined || ui.tab === "net" || !host.firstChild) {
-      dock.style.visibility = "hidden";
-      return;
-    }
-    const element = host.querySelector(`#i${drawingIndex(goal)}`);
-    if (!element) return;
-    const r = element.getBoundingClientRect();
+  /**
+   * Places an overlay of the stage over an element of the drawing: its bottom a gap above the
+   * element's top, its left at the element's left; below the element where the stage's top
+   * leaves no room. In a compact window it is a sheet at the stage's bottom, above its controls.
+   */
+  function placeOver(el: HTMLElement, anchor: Element) {
     const s = stage.getBoundingClientRect();
+    const r = anchor.getBoundingClientRect();
     const gap = token("--spacing-2");
-    const height = dock.offsetHeight;
-    const left = Math.max(gap, Math.min(r.left - s.left, s.width - dock.offsetWidth - gap));
-    // The goal's extent with its formulas' buttons, which reach past its text.
-    const buttons = [...stage.querySelectorAll(".fb[data-active]")].map((b) =>
-      b.getBoundingClientRect(),
-    );
-    const goalTop = Math.min(r.top, ...buttons.map((b) => b.top));
-    const goalBottom = Math.max(r.bottom, ...buttons.map((b) => b.bottom));
-    // Above the goal, or below it where the stage's top leaves no room.
-    const above = goalTop - s.top - height - gap;
-    const below = goalBottom - s.top + gap;
-    // Below, the dock must end over the stage's controls, which would cover its buttons (a
-    // short stage: a phone held sideways). Where it would not, the goal moves down until
-    // the dock fits above it, if the goal then still clears the controls, and unless the
-    // visitor moved the drawing there.
-    const floorY =
-      (stage.querySelector(".stage-ctl")?.getBoundingClientRect().top ?? s.bottom) - gap;
-    const lift = gap - above;
-    if (
-      placedByPage &&
-      above < gap &&
-      s.top + below + height > floorY &&
-      goalBottom + lift <= floorY
-    ) {
-      move({ ...camera(), y: camera().y + lift });
-      return;
+    let left: number;
+    let top: number;
+    if (compact()) {
+      const controls = stage.querySelector<HTMLElement>(".stage-ctl")?.offsetTop ?? s.height;
+      left = gap;
+      top = controls - el.offsetHeight - gap;
+    } else {
+      left = r.left - s.left;
+      top = r.top - s.top - el.offsetHeight - gap;
+      if (top < gap) top = r.bottom - s.top + gap;
     }
-    const top = above >= gap ? above : below;
-    dock.style.visibility = "visible";
-    dock.style.left = `${left}px`;
-    dock.style.top = `${top}px`;
-  });
+    el.style.left = `${Math.max(gap, Math.min(left, s.width - el.offsetWidth - gap))}px`;
+    el.style.top = `${Math.max(gap, Math.min(top, s.height - el.offsetHeight - gap))}px`;
+  }
 
-  // The rule popover beside the selected formula; the split and cut choosers
-  // under the goal's row, so that every formula of the goal stays clickable; on
-  // a narrow stage each sits at its bottom, as a sheet.
+  /** Places the overlays again once one that just opened is in the document and has its size. */
+  const placeSoon = () => queueMicrotask(() => setDrawn((n) => n + 1));
+
+  // The rule popover over its formula, the goal's menu over its ⊢, the premises of a split or a
+  // cut over its goal (the cut's box over them), the witness's box under the goal's row.
   createEffect(() => {
     camera();
     drawn();
     void ui.offered;
+    void ui.split?.own;
+    void ui.split?.left;
+    void ui.cutting?.own;
     void ui.cutting?.left;
     void cutSaid();
     void witnessSaid();
-    const under = ui.split ?? ui.cutting ?? ui.witnessing;
-    const selected = ui.selected;
-    const goal = under?.goal ?? selected?.goal;
-    if (!popover || goal === undefined) return;
-    const s = stage.getBoundingClientRect();
-    const narrow = compact();
-    const gap = token("--spacing-2");
-    const anchor = under
-      ? host.querySelector(`#i${drawingIndex(goal)}`)
-      : stage.querySelector<HTMLElement>(
-          `.fb[data-goal="${goal}"][data-position="${selected?.position}"]`,
-        );
-    if (!anchor) return;
-    const r = anchor.getBoundingClientRect();
-    let left: number;
-    let top: number;
-    if (narrow) {
-      // A sheet at the stage's bottom, above its controls.
-      const controls = stage.querySelector<HTMLElement>(".stage-ctl")?.offsetTop ?? s.height;
-      left = gap;
-      top = controls - popover.offsetHeight - gap;
-    } else if (under) {
-      left = r.left - s.left;
-      top = r.bottom - s.top + gap;
-    } else {
-      left = r.right - s.left + gap;
-      top = r.top - s.top;
+    void goalHits();
+    const goalOf = (goal: number) => host.querySelector(`#i${drawingIndex(goal)}`);
+    const choosing = ui.split ?? ui.cutting;
+    if (premisesEl?.isConnected && choosing) {
+      const goal = goalOf(choosing.goal);
+      if (goal) placeOver(premisesEl, goal);
     }
-    popover.style.left = `${Math.max(gap, Math.min(left, s.width - popover.offsetWidth - gap))}px`;
-    popover.style.top = `${Math.max(gap, Math.min(top, s.height - popover.offsetHeight - gap))}px`;
+    if (popover && ui.cutting) {
+      const under = premisesEl?.isConnected ? premisesEl : goalOf(ui.cutting.goal);
+      if (compact() && premisesEl?.isConnected) {
+        // Two sheets: the cut's box at the bottom, the premises right above it.
+        const goal = goalOf(ui.cutting.goal);
+        if (goal) placeOver(popover, goal);
+        const gap = token("--spacing-2");
+        premisesEl.style.top = `${popover.offsetTop - premisesEl.offsetHeight - gap}px`;
+      } else if (under) placeOver(popover, under);
+    } else if (popover && ui.witnessing) {
+      const goal = goalOf(ui.witnessing.goal);
+      if (goal) placeOver(popover, goal);
+    } else if (popover && ui.selected && !ui.split) {
+      const formula = stage.querySelector(
+        `.fb[data-goal="${ui.selected.goal}"][data-position="${ui.selected.position}"]`,
+      );
+      if (formula) placeOver(popover, formula);
+    }
+    if (menuEl && ui.goalMenu !== null) {
+      const turnstile = stage.querySelector(`.gt[data-goal="${ui.goalMenu}"]`);
+      if (turnstile) placeOver(menuEl, turnstile);
+    }
   });
 
   // Panning by dragging the field, zooming by a pinch (two fingers, or a trackpad's pinch, which
@@ -865,7 +880,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
     const down = (event: PointerEvent) => {
       // The truth table and the tableau scroll as a page does.
       if ((event.target as Element).closest(".method")) return;
-      const control = (event.target as Element).closest("button, input, .dock, .pop, .cluster");
+      const control = (event.target as Element).closest("button, input, .pop, .premises, .cluster");
       if (control && (event.pointerType !== "touch" || pointers.size === 0)) {
         if (event.pointerType === "touch")
           pointers.set(event.pointerId, { x: event.clientX, y: event.clientY, pans: false });
@@ -889,7 +904,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
         if (apart > 0) pinch(Math.hypot(now.x - other.x, now.y - other.y) / apart, from, to);
       } else if (pointers.size === 1 && was.pans) {
         const c = camera();
-        move({ ...c, x: c.x + now.x - was.x, y: c.y + now.y - was.y }, false, true);
+        move({ ...c, x: c.x + now.x - was.x, y: c.y + now.y - was.y }, false);
       }
     };
     const up = (event: PointerEvent) => {
@@ -925,12 +940,10 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
         });
       } else {
         const c = camera();
-        move({ ...c, x: c.x - event.deltaX, y: c.y - event.deltaY }, false, true);
+        move({ ...c, x: c.x - event.deltaX, y: c.y - event.deltaY }, false);
       }
     };
     const resized = new ResizeObserver(() => setDrawn((n) => n + 1));
-    // The dock grows when its note or hint wraps: place it again.
-    if (dock) resized.observe(dock);
     stage.addEventListener("pointerdown", down);
     stage.addEventListener("pointermove", moved);
     stage.addEventListener("pointerup", up);
@@ -970,64 +983,63 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
     });
   });
 
-  /** Opens a formula's rules, or in the split chooser sends it left or right. */
+  /** Opens a formula's rules, or while a split or a cut is chosen moves it to the other premise. */
   async function pick(hit: Hit) {
-    const cutting = ui.cutting;
-    if (cutting) {
-      if (hit.goal !== cutting.goal) return;
-      const left = cutting.left.includes(hit.position)
-        ? cutting.left.filter((p) => p !== hit.position)
-        : [...cutting.left, hit.position].sort((a, b) => a - b);
-      setUi("cutting", { ...cutting, left });
-      return;
-    }
-    const split = ui.split;
-    if (split) {
-      if (hit.goal !== split.goal || hit.position === split.position) return;
-      const left = split.left.includes(hit.position)
-        ? split.left.filter((p) => p !== hit.position)
-        : [...split.left, hit.position].sort((a, b) => a - b);
-      setUi("split", { ...split, left, passes: null });
-      checkSplit();
+    const choosing = ui.split ?? ui.cutting;
+    if (choosing) {
+      if (hit.goal !== choosing.goal) return;
+      if (ui.split && hit.position === ui.split.position) return;
+      moveChip(hit.position);
       return;
     }
     await openRules(hit.goal, hit.position);
   }
 
-  /** Opens the rules popover of a goal's formula. */
+  /** Moves a formula of the split or the cut being chosen to the other premise. */
+  function moveChip(position: number) {
+    const choosing = ui.split ?? ui.cutting;
+    if (!choosing) return;
+    const left = choosing.left.includes(position)
+      ? choosing.left.filter((p) => p !== position)
+      : [...choosing.left, position].sort((a, b) => a - b);
+    if (ui.split) setUi("split", { ...ui.split, left });
+    else if (ui.cutting) setUi("cutting", { ...ui.cutting, left });
+  }
+
+  /**
+   * Opens the rules popover of a goal's formula: each rule of its connective, tried on the goal.
+   * The time from the press to the popover with its greyed rules is measured
+   * (`deduxit:rules`), as the trials are a call per rule.
+   */
   async function openRules(goal: number, position: number) {
+    const begun = performance.now();
     props.prover.focus(goal);
     props.prover.clearNote();
     // Another formula picked: the witness chooser gives way to its rules.
-    setUi({ selected: { goal, position }, offered: null, witnessing: null });
+    setUi({ selected: { goal, position }, offered: null, witnessing: null, goalMenu: null });
     const offered = await props.prover.rules(goal, position);
     if (ui.selected?.goal !== goal || ui.selected.position !== position) return;
     setUi("offered", offered);
+    performance.measure("deduxit:rules", { start: begun, end: performance.now() });
     // A digit typed before the rules arrived picks its rule now.
     const early = typedEarly;
     typedEarly = undefined;
     const rule = early === undefined ? undefined : offered[early - 1];
-    if (rule) {
+    if (rule && !rule.refused) {
       void choose(rule);
       return;
     }
-    queueMicrotask(() => popover?.querySelector<HTMLButtonElement>("button.rule")?.focus());
+    queueMicrotask(() =>
+      popover
+        ?.querySelector<HTMLButtonElement>("button.rule:not([aria-disabled])")
+        ?.focus({ preventScroll: true }),
+    );
   }
 
-  async function checkSplit() {
-    const split = ui.split;
-    if (!split) return;
-    const step: StepForm = { position: split.position, rule: split.rule, left: split.left };
-    const passes = await props.prover.splitPasses(split.goal, step);
-    if (ui.split && ui.split.left === split.left && ui.split.goal === split.goal) {
-      setUi("split", (s) => (s ? { ...s, passes } : s));
-    }
-  }
-
-  /** A rule chosen in the popover: applied, or for a split the chooser opens. */
-  async function choose(rule: Offered) {
+  /** A rule chosen in the popover: applied, or for a split or a witness its chooser opens. */
+  async function choose(rule: Candidate) {
     const spot = ui.selected;
-    if (!spot) return;
+    if (!spot || rule.refused) return;
     if (rule.witness) {
       setWitnessText("");
       setWitnessSaid(null);
@@ -1040,8 +1052,21 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
       return;
     }
     if (rule.split) {
-      setUi({ split: { ...spot, rule: rule.rule, left: [], passes: null }, offered: null });
-      checkSplit();
+      setUi({ split: { ...spot, rule: rule.rule, left: [], own: null }, offered: null });
+      const own = await props.prover.premises(spot.goal, {
+        rule: rule.rule,
+        position: spot.position,
+      });
+      if (
+        ui.split?.goal === spot.goal &&
+        ui.split.position === spot.position &&
+        own &&
+        "own" in own
+      )
+        setUi("split", { ...ui.split, own: own.own });
+      queueMicrotask(() =>
+        premisesEl?.querySelector<HTMLButtonElement>("button")?.focus({ preventScroll: true }),
+      );
       return;
     }
     setUi({ selected: null, offered: null });
@@ -1088,20 +1113,46 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
     announce(true, w.rule);
   }
 
-  /** Opens the cut chooser at a goal. */
-  // The cut chooser, opened by the tools' Cut: a fresh one, its field taking the focus.
+  // The cut's box, opened by the tools' Cut: a fresh one, its field taking the focus.
   createEffect(
     on(
       () => ui.cutting?.goal,
       (goal, before) => {
         if (goal === undefined || goal === before) return;
+        setCutText("");
         setCutSaid(null);
         queueMicrotask(() => popover?.querySelector<HTMLInputElement>("input")?.focus());
       },
     ),
   );
 
-  /** Makes the cut the chooser holds; what deduxit refused stays said in it. */
+  /**
+   * Reads the cut formula as it is typed: once it reads, the two premises the cut would make
+   * show over the goal; a text that is no formula is said under the box.
+   */
+  let typing: ReturnType<typeof setTimeout> | undefined;
+  function typeCut(text: string) {
+    setCutText(text);
+    setCutSaid(null);
+    clearTimeout(typing);
+    const goal = ui.cutting?.goal;
+    if (goal === undefined) return;
+    if (text.trim() === "") {
+      setUi("cutting", (c) => (c ? { ...c, own: null } : c));
+      return;
+    }
+    typing = setTimeout(async () => {
+      const read = await props.prover.premises(goal, { cut: text });
+      if (ui.cutting?.goal !== goal || cutText() !== text) return;
+      if (read && "own" in read) setUi("cutting", (c) => (c ? { ...c, own: read.own } : c));
+      else {
+        setUi("cutting", (c) => (c ? { ...c, own: null } : c));
+        if (read) setCutSaid(read);
+      }
+    }, 250);
+  }
+
+  /** Makes the cut the box holds; what deduxit refused stays said under the box. */
   async function applyCut() {
     const cutting = ui.cutting;
     if (!cutting || cutText().trim() === "") return;
@@ -1147,38 +1198,40 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
     }
   }
 
-  // Escape closes the popover or the chooser; Enter applies a split; a digit picks a rule.
+  // Escape closes the goal's menu, the popover or a chooser, the focus back on its formula or ⊢;
+  // Enter applies a split; a digit typed before the rules arrive picks its rule then.
   onMount(() => {
+    const focusOn = (selector: string) => stage.querySelector<HTMLElement>(selector)?.focus();
     const keys = (event: KeyboardEvent) => {
       if (event.ctrlKey || event.metaKey || event.altKey) return;
-      if (event.key === "Escape" && ui.cutting) {
+      if (event.key === "Escape" && ui.goalMenu !== null) {
+        const goal = ui.goalMenu;
+        setUi("goalMenu", null);
+        focusOn(`.gt[data-goal="${goal}"]`);
+        event.preventDefault();
+      } else if (event.key === "Escape" && ui.cutting) {
         setUi("cutting", null);
         event.preventDefault();
       } else if (event.key === "Escape" && ui.witnessing) {
         const w = ui.witnessing;
         setUi("witnessing", null);
-        stage
-          .querySelector<HTMLElement>(`.fb[data-goal="${w.goal}"][data-position="${w.position}"]`)
-          ?.focus();
+        focusOn(`.fb[data-goal="${w.goal}"][data-position="${w.position}"]`);
         event.preventDefault();
       } else if (event.key === "Escape" && (ui.selected || ui.split)) {
         const spot = ui.split ?? ui.selected;
         setUi({ selected: null, offered: null, split: null });
-        if (spot)
-          stage
-            .querySelector<HTMLElement>(
-              `.fb[data-goal="${spot.goal}"][data-position="${spot.position}"]`,
-            )
-            ?.focus();
+        if (spot) focusOn(`.fb[data-goal="${spot.goal}"][data-position="${spot.position}"]`);
         event.preventDefault();
-      } else if (ui.selected && !ui.split && !ui.witnessing && /^[1-9]$/.test(event.key)) {
+      } else if (
+        ui.selected &&
+        !ui.offered &&
+        !ui.split &&
+        !ui.witnessing &&
+        /^[1-9]$/.test(event.key) &&
+        (event.target as Element).closest(".fb")
+      ) {
         event.preventDefault();
-        if (!ui.offered) {
-          typedEarly = Number(event.key);
-          return;
-        }
-        const rule = ui.offered[Number(event.key) - 1];
-        if (rule) void choose(rule);
+        typedEarly = Number(event.key);
       } else if (
         ui.split &&
         event.key === "Enter" &&
@@ -1192,44 +1245,29 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
     onCleanup(() => window.removeEventListener("keydown", keys));
   });
 
-  const note = createMemo(() => {
-    const p = proof();
-    const goal = active();
-    if (!p?.note || !p.session) return null;
-    const at = goalAt(p.session, p.note.path);
-    return at === goal || (p.note.path.length === 0 && !p.view?.complete) ? p.note : null;
-  });
-
-  const currentKey = () => {
-    const p = proof();
-    const goal = active();
-    return p?.session && goal !== undefined
-      ? ladderKey(p.id, paths(p.session).get(goal) ?? [])
-      : "";
-  };
-  const ladder = () => (ui.ladder && ui.ladder.key === currentKey() ? ui.ladder : null);
-  const hintedPosition = () => {
-    const l = ladder();
-    return l && l.rung >= 2 ? l.hint?.steps?.[0]?.position : undefined;
-  };
-  const hintedLeft = () => {
-    const l = ladder();
-    return l && l.rung >= 3 ? (l.hint?.steps?.[0]?.left ?? []) : [];
-  };
-
+  /** Where the hint points on the active goal, from where the visitor is. */
+  const pointed = () => pointer(props.prover, props.ui);
   const goalNumber = (goal: number) => goal + 1;
 
-  const verdictOf = () => note()?.outcome?.verdict;
-  /** Whether the note is the search's refutation of a goal that is not the sequent itself. */
-  const lostGoal = () => {
-    const verdict: string | undefined = verdictOf();
-    return (note()?.path.length ?? 0) > 0 && (verdict === "unprovable" || verdict === "not_valid");
+  /** The goal marked as having no proof: the marking's search said so, or a search on it did. */
+  const dead = (goal: number) => {
+    if (!props.prover.settings().marking) return false;
+    if (props.prover.marked(goal) === "none") return true;
+    const p = proof();
+    const at = p?.note && p.session ? goalAt(p.session, p.note.path) : undefined;
+    const verdict: string | undefined = p?.note?.outcome?.verdict;
+    return at === goal && (verdict === "unprovable" || verdict === "not_valid");
   };
-  /** Whether a search on the sequent itself found it has no proof. */
-  const sequentUnprovable = () => {
-    const verdict: string | undefined = proof()?.verdict?.outcome?.verdict;
-    return verdict === "unprovable" || verdict === "not_valid";
-  };
+  // After each step, the marking's search on the goals it opened.
+  createEffect(
+    on(
+      () => [proof()?.id, proof()?.session, props.prover.settings().marking] as const,
+      ([id, session, marking]) => {
+        if (id && session && marking) void props.prover.mark(id);
+      },
+    ),
+  );
+
   /** Whether the proof's sequent has a truth table and a tableau: a started classical ordinary one. */
   const decidable = () => {
     const p = proof();
@@ -1292,9 +1330,6 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
       { defer: true },
     ),
   );
-  /** The active goal's place among the open goals, from 1. */
-  const openPlace = () => (view()?.goals.findIndex((g) => g.goal === active()) ?? 0) + 1;
-
   return (
     <section
       class="stage"
@@ -1317,7 +1352,6 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
       }
     >
       <div class="world" ref={world} data-glide={glide() ? "" : undefined}>
-        <div class="drawing" ref={host} />
         <div class="hits">
           {/* Under the formulas' buttons, which win where the two meet. */}
           <For each={labelHits()}>
@@ -1361,10 +1395,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
                   ui.split?.goal === hit.goal && ui.split.position === hit.position ? "" : undefined
                 }
                 data-hinted={
-                  hit.goal === active() &&
-                  (hintedPosition() === hit.position || hintedLeft().includes(hit.position))
-                    ? ""
-                    : undefined
+                  hit.goal === active() && pointed()?.formula === hit.position ? "" : undefined
                 }
                 aria-label={`${hit.text}, formula ${hit.position + 1} of goal ${goalNumber(hit.goal)}`}
                 aria-pressed={
@@ -1382,6 +1413,59 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
                 }}
                 onClick={() => void pick(hit)}
               />
+            )}
+          </For>
+          <For each={goalHits()}>
+            {(hit) => (
+              <>
+                <div
+                  class="goal-line"
+                  data-active={hit.goal === active() ? "" : undefined}
+                  data-dead={dead(hit.goal) ? "" : undefined}
+                  aria-hidden="true"
+                  ref={(el) => {
+                    el.style.left = `${hit.lineX}px`;
+                    el.style.top = `${hit.lineY}px`;
+                    el.style.width = `${hit.lineW}px`;
+                  }}
+                >
+                  <Show when={dead(hit.goal)}>
+                    <Sign name="cross" class="goal-cross" />
+                  </Show>
+                </div>
+                <button
+                  type="button"
+                  class="gt"
+                  data-goal={hit.goal}
+                  data-active={hit.goal === active() ? "" : undefined}
+                  aria-label={`⊢, goal ${goalNumber(hit.goal)}${dead(hit.goal) ? ", no proof" : ""}: its actions`}
+                  aria-expanded={ui.goalMenu === hit.goal}
+                  aria-haspopup="dialog"
+                  data-tip={dead(hit.goal) ? "This goal has no proof" : "This goal"}
+                  ref={(el) => {
+                    el.style.left = `${hit.x}px`;
+                    el.style.top = `${hit.y}px`;
+                    el.style.width = `${hit.w}px`;
+                    el.style.height = `${hit.h}px`;
+                  }}
+                  onClick={() => {
+                    const open = ui.goalMenu === hit.goal;
+                    props.prover.focus(hit.goal);
+                    setUi({
+                      goalMenu: open ? null : hit.goal,
+                      selected: null,
+                      offered: null,
+                      split: null,
+                      cutting: null,
+                      witnessing: null,
+                    });
+                    if (!open)
+                      queueMicrotask(() =>
+                        menuEl?.querySelector<HTMLButtonElement>("button")?.focus(),
+                      );
+                  }}
+                />
+              </>
             )}
           </For>
           <For each={cutHits()}>
@@ -1404,6 +1488,9 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
             )}
           </For>
         </div>
+        {/* Over the buttons, which show through its empty ground: a chosen formula's ground lies
+            under its text. */}
+        <div class="drawing" ref={host} />
       </div>
 
       <Show when={!deduced() && method()}>
@@ -1589,247 +1676,112 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
           </Show>
         </section>
       </Show>
-      <div class="dock" ref={dock} data-tab={ui.tab}>
-        <Show when={active() !== undefined}>
-          <div class="cluster gbar">
-            <button
-              type="button"
-              class="btn btn-s icon"
-              aria-label="Previous goal"
-              data-tip="Previous open goal"
-              data-key="["
-              onClick={() => props.prover.cycle(-1)}
-              disabled={openCount() < 2}
-            >
-              <ChevronLeft aria-hidden="true" />
-            </button>
-            {/* On a phone the bar keeps one row: the count of open goals is the tab's status. */}
-            <span class="gn">
-              <span class="wide-only">{openGoal(openPlace(), openCount())}</span>
-              <span class="phone-only">Goal {openPlace()}</span>
-            </span>
-            <button
-              type="button"
-              class="btn btn-s icon"
-              aria-label="Next goal"
-              data-tip="Next open goal"
-              data-key="]"
-              onClick={() => props.prover.cycle(1)}
-              disabled={openCount() < 2}
-            >
-              <ChevronRight aria-hidden="true" />
-            </button>
-            <span class="sep" />
-            <Show
-              when={!props.prover.busy()}
-              fallback={
-                <>
-                  <span class="lamp run" aria-hidden="true" />
-                  <span class="txt">Searching</span>
-                  <button type="button" class="btn btn-s warn" onClick={() => props.prover.stop()}>
-                    Stop the search
-                  </button>
-                </>
+      {/* A goal is a number from 0: the menu's goal is wrapped, as <Show> takes 0 for false. */}
+      <Show when={ui.goalMenu !== null && ui.tab === "tree" ? { at: ui.goalMenu } : undefined}>
+        {(menu) => {
+          const goal = () => menu().at;
+          return (
+            <GoalMenu
+              ref={(el) => {
+                menuEl = el;
+                placeSoon();
+              }}
+              barred={props.prover.limits().search(proof()?.id ?? "")}
+              apart={props.prover.apartFor(goal())}
+              canBack={dead(goal()) && props.prover.rootMarked(proof()?.id ?? "") !== "none"}
+              settingsOpen={ui.menu === "search"}
+              close={() => {
+                const at = goal();
+                setUi("goalMenu", null);
+                void props.prover.close(at);
+              }}
+              settings={() =>
+                setUi({
+                  searchFor: { goal: goal(), budget: props.prover.settings().budget },
+                  menu: ui.menu === "search" ? null : "search",
+                })
               }
-            >
-              <button
-                aria-keyshortcuts="C"
-                type="button"
-                class="btn btn-s"
-                data-tip={
-                  props.prover.limits().search(proof()?.id ?? "") ?? "The search closes this goal"
-                }
-                data-key="C"
-                disabled={props.prover.limits().search(proof()?.id ?? "") !== null}
-                onClick={() => {
-                  const goal = active();
-                  if (goal !== undefined) void props.prover.close(goal);
-                }}
-              >
-                Close goal
-              </button>
-              <button
-                type="button"
-                class="btn btn-s icon"
-                aria-label="Open this goal in a new tab"
-                data-tip="Open this goal in a new tab, as a proof of its own"
-                onClick={() => {
-                  const goal = active();
-                  if (goal !== undefined) void props.prover.openGoal(goal);
-                }}
-              >
-                <SquareArrowOutUpRight aria-hidden="true" />
-              </button>
-            </Show>
-          </div>
-          <Show when={!props.prover.busy() && (fills() ?? []).length > 0}>
-            <div class="cluster dline">
-              <For each={fills()}>
-                {(f) => (
-                  <button
-                    type="button"
-                    class="btn btn-s"
-                    data-tip={`The tab of ${f.tab} holds a finished proof of this goal's formulas: graft it here as one step`}
-                    onClick={() => {
-                      const goal = active();
-                      if (goal !== undefined) void props.prover.fill(goal, f.id);
-                    }}
-                  >
-                    Fill from <span class="m">{f.tab}</span>
-                  </button>
-                )}
-              </For>
-            </div>
-          </Show>
-          <Show when={note()}>
-            {(n) => (
-              <div class="cluster dline note">
-                <span class={`kw ${n().tone}`}>{n().said.keyword}</span>
-                <EngineChip outcome={n().outcome} ui={props.ui} />
-                <Show when={verdictOf() === "unknown"}>
-                  <button
-                    type="button"
-                    class="btn btn-s warn"
-                    data-key="⇧R"
-                    onClick={() => {
-                      const goal = active();
-                      const budget = n().budget ?? props.prover.settings().budget;
-                      if (goal !== undefined)
-                        void props.prover.close(
-                          goal,
-                          (2 * budget) / props.prover.settings().budget,
-                        );
-                    }}
-                  >
-                    Try {(2 * (n().budget ?? props.prover.settings().budget)).toLocaleString("en")}{" "}
-                    units
-                  </button>
-                </Show>
-                {/* A refusal changed nothing: the way on is another rule of the same formula. */}
-                <Show when={n().position !== undefined}>
-                  <button
-                    type="button"
-                    class="btn btn-s"
-                    onClick={() => {
-                      const goal = active();
-                      const position = n().position;
-                      if (goal !== undefined && position !== undefined)
-                        void openRules(goal, position);
-                    }}
-                  >
-                    Other rules
-                  </button>
-                </Show>
-                <Show when={lostGoal() && !sequentUnprovable()}>
-                  <button
-                    type="button"
-                    class="btn btn-s"
-                    onClick={() => {
-                      const goal = active();
-                      if (goal !== undefined) void props.prover.goBack(goal);
-                    }}
-                  >
-                    Go back
-                  </button>
-                </Show>
-                <Why said={n().said} />
-                <Show when={countermodelOf(n().outcome)}>
-                  <ModelFigure
-                    outcome={n().outcome as unknown as OrdinaryOutcome}
-                    prover={props.prover}
-                    ui={props.ui}
-                  />
-                </Show>
-                <Show when={lostGoal()}>
-                  <p class="said-why">{lost(sequentUnprovable())}</p>
-                </Show>
-              </div>
-            )}
-          </Show>
-          <Show when={ladder()}>
-            {(l) => (
-              <div class="cluster dline hint" role="status">
-                <span class="rungs" role="img" aria-label={`Hint ${l().rung} of 4`}>
-                  <For each={[1, 2, 3, 4]}>
-                    {(r) => <i data-on={r <= l().rung ? "" : undefined} />}
-                  </For>
-                </span>
-                <span class="txt">
-                  {l().hint === null
-                    ? "Asking the search"
-                    : l().hint?.steps
-                      ? rungs(
-                          l().hint?.steps ?? [],
-                          formulasOf(active() ?? 0),
-                          l().hint?.invertible === true,
-                          props.prover.settings().invertible,
-                        )[l().rung - 1]
-                      : "The search found no proof of this goal, so there is no hint: close it to see why."}
-                </span>
-                <EngineChip outcome={l().hint?.outcome} ui={props.ui} />
-              </div>
-            )}
-          </Show>
-        </Show>
-      </div>
+              proveApart={() => {
+                const at = goal();
+                setUi("goalMenu", null);
+                void props.prover.openGoal(at);
+              }}
+              useApart={(id) => {
+                const at = goal();
+                setUi("goalMenu", null);
+                void props.prover.useApart(at, id);
+              }}
+              back={() => {
+                const at = goal();
+                setUi("goalMenu", null);
+                void props.prover.goBack(at);
+              }}
+            />
+          );
+        }}
+      </Show>
 
       <Show when={ui.selected && !ui.split}>
-        <div class="cluster pop" ref={popover} role="dialog" aria-label="Rules">
-          <p class="pop-h">
-            <span class="kw-label">Rules</span>
-            <span class="m">
-              {(() => {
-                const formula = formulasOf(ui.selected?.goal ?? 0)[ui.selected?.position ?? 0];
-                return formula ? shown(formula) : "";
-              })()}
-            </span>
-          </p>
-          <Show when={ui.offered} fallback={<p class="sub">Asking deduxit</p>}>
-            {(offered) => (
-              <Show
-                when={offered().length > 0}
-                fallback={<p class="sub">No rule acts on this formula.</p>}
-              >
-                <ul class="rules">
-                  <For each={offered()}>
-                    {(rule, i) => (
-                      <li>
-                        <button
-                          type="button"
-                          class="rule"
-                          {...hinted(rule.rule)}
-                          onClick={() => void choose(rule)}
-                        >
-                          <span class="rn">{rule.rule}</span>
-                          <span class="rd">
-                            {rule.split ? "split" : rule.witness ? "witness" : ""}
-                          </span>
-                          <kbd>{i() + 1}</kbd>
-                        </button>
-                        <Show when={titled(rule.rule)}>
-                          <button
-                            type="button"
-                            class="btn btn-s rule-info"
-                            data-hint-toggle=""
-                            aria-label={`About ${titled(rule.rule)}`}
-                            {...hinted(rule.rule)}
-                          >
-                            <Info aria-hidden="true" />
-                          </button>
-                        </Show>
-                      </li>
-                    )}
-                  </For>
-                </ul>
-              </Show>
-            )}
-          </Show>
-        </div>
+        <RulePopover
+          ref={(el) => {
+            popover = el;
+            placeSoon();
+          }}
+          formula={(() => {
+            const formula = formulasOf(ui.selected?.goal ?? 0)[ui.selected?.position ?? 0];
+            return formula ? shown(formula) : "";
+          })()}
+          offered={ui.offered}
+          hinted={pointed()?.rule}
+          choose={(rule) => void choose(rule)}
+        />
+      </Show>
+
+      <Show when={ui.split ?? ui.cutting}>
+        {(choosing) => {
+          const chips = (): Chip[] =>
+            formulasOf(choosing().goal).flatMap((f, position) =>
+              ui.split && position === ui.split.position
+                ? []
+                : [{ text: shown(f), side: f.side, position }],
+            );
+          return (
+            <Show when={choosing().own}>
+              {(own) => (
+                <PremisesView
+                  ref={(el) => {
+                    premisesEl = el;
+                    placeSoon();
+                  }}
+                  rule={ui.split?.rule ?? "cut"}
+                  chips={chips()}
+                  left={choosing().left}
+                  own={own()}
+                  twoSided={intuitionistic(
+                    proof()?.calculus ?? { suite: "linear", method: "sequent", mode: "classical" },
+                  )}
+                  move={pointed()?.move ?? []}
+                  ready={pointed()?.ready ?? false}
+                  toggle={moveChip}
+                  apply={() => void (ui.split ? applySplit() : applyCut())}
+                />
+              )}
+            </Show>
+          );
+        }}
       </Show>
 
       <Show when={ui.witnessing}>
         {(w) => (
-          <div class="cluster pop split cut" ref={popover} role="dialog" aria-label="Witness">
+          <div
+            class="cluster pop split cut"
+            ref={(el) => {
+              popover = el;
+              placeSoon();
+            }}
+            role="dialog"
+            aria-label="Witness"
+          >
             <p class="pop-h">
               <span class="kw-label">
                 Witness for <span class="m">{w().rule}</span>
@@ -1902,143 +1854,50 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
       </Show>
 
       <Show when={ui.cutting}>
-        {(cutting) => {
-          const rest = () =>
-            formulasOf(cutting().goal)
-              .filter((_, i) => !cutting().left.includes(i))
-              .map(shown);
-          const chosen = () =>
-            formulasOf(cutting().goal)
-              .filter((_, i) => cutting().left.includes(i))
-              .map(shown);
-          return (
-            <div class="cluster pop split cut" ref={popover} role="dialog" aria-label="Cut">
-              <p class="pop-h">
-                <span class="kw-label">Cut</span>
+        <div
+          class="cluster pop cut-box"
+          ref={(el) => {
+            popover = el;
+            placeSoon();
+          }}
+          role="dialog"
+          aria-label="Cut"
+        >
+          <label class="cut-field">
+            <span class="sub">
+              The cut formula
+              {proof()?.calculus.suite === "linear" &&
+              intuitionistic(
+                proof()?.calculus ?? { suite: "linear", method: "sequent", mode: "classical" },
+              )
+                ? ", in intuitionistic logic"
+                : ""}
+            </span>
+            <input
+              class="field m"
+              type="text"
+              spellcheck={false}
+              autocomplete="off"
+              aria-invalid={cutSaid() ? "true" : undefined}
+              aria-describedby={cutSaid() ? "cut-problem" : undefined}
+              value={cutText()}
+              onInput={(event) => typeCut(event.currentTarget.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  void applyCut();
+                }
+              }}
+            />
+          </label>
+          <Show when={cutSaid()}>
+            {(said) => (
+              <p class="sub warn" id="cut-problem" role="alert">
+                <span class="kw">{said().keyword}</span> {said().sentence}
               </p>
-              <label class="cut-field">
-                <span class="sub">
-                  The cut formula, written as{" "}
-                  {proof()?.calculus.suite === "linear" &&
-                  intuitionistic(
-                    proof()?.calculus ?? { suite: "linear", method: "sequent", mode: "classical" },
-                  )
-                    ? "in intuitionistic logic"
-                    : "in this tab"}
-                </span>
-                <input
-                  class="field m"
-                  type="text"
-                  spellcheck={false}
-                  autocomplete="off"
-                  aria-invalid={cutSaid() ? "true" : undefined}
-                  value={cutText()}
-                  onInput={(event) => {
-                    setCutText(event.currentTarget.value);
-                    setCutSaid(null);
-                  }}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") {
-                      event.preventDefault();
-                      void applyCut();
-                    }
-                  }}
-                />
-              </label>
-              <Show when={cutSaid()}>
-                {(said) => (
-                  <p class="sub warn" role="alert">
-                    <span class="kw">{said().keyword}</span> {said().sentence}
-                  </p>
-                )}
-              </Show>
-              <p class="sub">Choose the goal's formulas that go to the premise proving it.</p>
-              <div class="split-pre">
-                <p class="prem">
-                  <span class="kw-label">Proves</span>
-                  <span class="m">{chosen().join(", ") || "from nothing else"}</span>
-                </p>
-                <p class="prem">
-                  <span class="kw-label">Uses</span>
-                  <span class="m">{rest().join(", ") || "with nothing else"}</span>
-                </p>
-              </div>
-              <p class="row">
-                <button
-                  type="button"
-                  class="btn btn-primary"
-                  disabled={cutText().trim() === "" || props.prover.busy()}
-                  onClick={() => void applyCut()}
-                >
-                  Cut
-                </button>
-                <button type="button" class="btn" onClick={() => setUi("cutting", null)}>
-                  Cancel
-                </button>
-              </p>
-            </div>
-          );
-        }}
-      </Show>
-
-      <Show when={ui.split}>
-        {(split) => (
-          <div class="cluster pop split" ref={popover} role="dialog" aria-label="Split">
-            <p class="pop-h">
-              <span class="kw-label">
-                Split for <span class="m">{split().rule}</span>
-              </span>
-            </p>
-            <p class="sub">Choose the formulas that go to the left premise.</p>
-            <div class="split-pre" data-fails={split().passes === false ? "" : undefined}>
-              <p class="prem">
-                <span class="kw-label">Left</span>
-                <span class="m">
-                  {formulasOf(split().goal)
-                    .filter((_, i) => split().left.includes(i))
-                    .map(shown)
-                    .join(", ") || "nothing else"}
-                </span>
-              </p>
-              <p class="prem">
-                <span class="kw-label">Right</span>
-                <span class="m">
-                  {formulasOf(split().goal)
-                    .filter((_, i) => i !== split().position && !split().left.includes(i))
-                    .map(shown)
-                    .join(", ") || "nothing else"}
-                </span>
-              </p>
-            </div>
-            <p class="row">
-              <Show
-                when={split().passes !== null}
-                fallback={<span class="kw plain">Checking</span>}
-              >
-                <span class={`kw flat ${split().passes ? "acc" : "warn"}`}>
-                  {split().passes ? "Passes" : "Cannot close"}
-                </span>
-              </Show>
-              <button type="button" class="btn btn-primary" onClick={() => void applySplit()}>
-                Apply
-              </button>
-              <button
-                type="button"
-                class="btn"
-                onClick={() => setUi({ split: null, selected: null })}
-              >
-                Cancel
-              </button>
-            </p>
-            <Show when={split().passes !== null}>
-              <p class="said-why">
-                {split().passes
-                  ? "Both premises can still be proved, as far as deduxit's quick test sees."
-                  : "One premise cannot be proved however the rest goes: this split leads nowhere."}
-              </p>
-            </Show>
-          </div>
-        )}
+            )}
+          </Show>
+        </div>
       </Show>
 
       <fieldset class="cluster stage-ctl zoom" aria-label="Zoom">
@@ -2081,15 +1940,198 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
   );
 }
 
-/** The engine whose work a note or a hint is, by name, with its source on hover. */
-export function EngineChip(props: { outcome: Outcome | undefined | null; ui: Ui }) {
+/** Where the hint points on the active goal, and what it says in words. */
+export interface Pointer {
+  readonly words: string;
+  /** The formula to press. */
+  readonly formula?: number;
+  /** The rule to take in the open popover. */
+  readonly rule?: string;
+  /** The formulas of a split to move to the other premise. */
+  readonly move: readonly number[];
+  /** Whether the split being chosen is the hint's, to apply. */
+  readonly ready: boolean;
+  /** Whether no rule leads on from the goal, by the search. */
+  readonly none?: boolean;
+}
+
+/**
+ * Where the hint points on the active goal, from where the visitor is: the formula to press;
+ * with that formula chosen, the rule to take; with its split open, the formulas to move and then
+ * the button that applies it. Null where the hint was not asked on this goal.
+ */
+export function pointer(prover: Prover, view: Ui): Pointer | null {
+  const { ui } = view;
+  const p = prover.current();
+  const goal = prover.activeGoal();
+  if (!p?.session || goal === undefined || !ui.ladder) return null;
+  if (ui.ladder.key !== ladderKey(p.id, paths(p.session).get(goal) ?? [])) return null;
+  const hint = ui.ladder.hint;
+  if (!hint) return { words: "Asking the search.", move: [], ready: false };
+  const step = hint.steps?.[0];
+  if (!step)
+    return {
+      words: "The search finds no proof of this goal, so no rule leads on. Undo the last step.",
+      move: [],
+      ready: false,
+      none: true,
+    };
+  const formulas = p.view?.goals.find((g) => g.goal === goal)?.formulas ?? [];
+  const named = (position: number) => {
+    const f = formulas[position];
+    return f ? shown(f) : `formula ${position + 1}`;
+  };
+  if (ui.cutting?.goal === goal)
+    return {
+      words: "The search proves without a cut. Type the formula you want to cut on.",
+      move: [],
+      ready: false,
+    };
+  const split = ui.split;
+  if (split?.goal === goal && split.position === step.position && split.rule === step.rule) {
+    const want = step.left ?? [];
+    const move = formulas
+      .map((_, i) => i)
+      .filter((i) => i !== split.position && want.includes(i) !== split.left.includes(i));
+    return move.length > 0
+      ? {
+          words: `Move ${move.map(named).join(" and ")} to the other premise.`,
+          move,
+          ready: false,
+        }
+      : { words: "This split works. Press the arrow to apply it.", move: [], ready: true };
+  }
+  if (ui.selected?.goal === goal && ui.selected.position === step.position)
+    return { words: `Take ${step.rule}.`, rule: step.rule, move: [], ready: false };
+  return {
+    words: `Press ${named(step.position)} and take ${step.rule}.`,
+    formula: step.position,
+    move: [],
+    ready: false,
+  };
+}
+
+/**
+ * The active goal's note over the bottom box: a refusal, or what a search found there (its
+ * keyword, its engine, its reason, a countermodel); after Unknown, "Search longer" with twice the
+ * budget and a caret for that search's settings. With the guide on, the hint in words.
+ */
+export function GoalNotes(props: { prover: Prover; ui: Ui }) {
+  const { ui, setUi } = props.ui;
+  const proof = () => props.prover.current();
+  const note = createMemo(() => {
+    const p = proof();
+    const goal = props.prover.activeGoal();
+    if (!p?.note || !p.session || ui.tab !== "tree") return null;
+    const at = goalAt(p.session, p.note.path);
+    return at === goal || (p.note.path.length === 0 && !p.view?.complete) ? p.note : null;
+  });
+  const pointed = () => pointer(props.prover, props.ui);
+  /** Whether a search on the sequent itself found it has no proof. */
+  const sequentUnprovable = () => {
+    const verdict: string | undefined = proof()?.verdict?.outcome?.verdict;
+    return verdict === "unprovable" || verdict === "not_valid";
+  };
   return (
-    <Show when={engineOf(props.outcome)}>
-      {(engine) => (
-        <span class="kw engine" data-tip={engineTip(engine())}>
-          {engineLabel(engine())}
-        </span>
-      )}
-    </Show>
+    <>
+      {/* Keyed: its parts read the note as a value, never through an accessor gone stale. */}
+      <Show when={note()} keyed>
+        {(n) => {
+          const verdict = (): string | undefined => n.outcome?.verdict;
+          const budget = () => n.budget ?? props.prover.settings().budget;
+          return (
+            <div class="note goal-note" role="status">
+              <span class={`kw ${n.tone}`}>{n.said.keyword}.</span>
+              <EngineChip outcome={n.outcome} ui={props.ui} /> <Why said={n.said} />
+              <Show when={verdict() === "unknown"}>
+                <span class="row">
+                  <button
+                    type="button"
+                    class="btn btn-primary"
+                    onClick={() => {
+                      const factor = (2 * budget()) / props.prover.settings().budget;
+                      const goal = props.prover.activeGoal();
+                      if (n.all) void props.prover.closeAll(factor);
+                      else if (goal !== undefined) void props.prover.close(goal, factor);
+                    }}
+                  >
+                    Search longer ({(2 * budget()).toLocaleString("en")})
+                  </button>
+                  <button
+                    type="button"
+                    class="btn icon"
+                    aria-label="This search's settings"
+                    data-tip="The engine and the budget of this search"
+                    aria-expanded={ui.menu === "search"}
+                    onClick={() => {
+                      const goal = props.prover.activeGoal();
+                      setUi({
+                        searchFor: {
+                          goal: n.all || goal === undefined ? "all" : goal,
+                          budget: 2 * budget(),
+                        },
+                        menu: ui.menu === "search" ? null : "search",
+                      });
+                    }}
+                  >
+                    <Sign name="caret" />
+                  </button>
+                </span>
+              </Show>
+              <Show when={countermodelOf(n.outcome)}>
+                <ModelFigure
+                  outcome={n.outcome as unknown as OrdinaryOutcome}
+                  prover={props.prover}
+                  ui={props.ui}
+                />
+              </Show>
+              <Show
+                when={
+                  n.path.length > 0 && (verdict() === "unprovable" || verdict() === "not_valid")
+                }
+              >
+                <p class="said-why">{lost(sequentUnprovable())}</p>
+              </Show>
+            </div>
+          );
+        }}
+      </Show>
+      <Show when={pointed()}>
+        {(pointing) => (
+          <Show when={props.prover.settings().guide || pointing().none}>
+            <p class="note hint-line" role="status">
+              <span class="kw">Hint.</span> {pointing().words}
+            </p>
+          </Show>
+        )}
+      </Show>
+    </>
   );
+}
+
+/**
+ * With the guide on, one sentence over the bottom box that says what to press next on a proof by
+ * hand, one action at a time; nothing where the hint already says it, or where the view is not a
+ * derivation worked on.
+ */
+export function GuideLine(props: { prover: Prover; ui: Ui }) {
+  const { ui } = props.ui;
+  const words = () => {
+    const p = props.prover.current();
+    if (!props.prover.settings().guide || !p?.session || ui.tab !== "tree") return null;
+    if (pointer(props.prover, props.ui)) return null;
+    if (isNatural(p.calculus))
+      return "Press a rule to work back from the goal, or cite lines to work forward from them.";
+    if (p.view?.complete) return "Every goal is closed: the sequent is proved.";
+    if (ui.goalMenu !== null) return "Press ✓ to let the search close this goal.";
+    if (ui.split)
+      return `Press a formula to move it to the other premise, then press ${ui.split.rule} ↵.`;
+    if (ui.cutting)
+      return ui.cutting.own
+        ? "Press a formula to move it to the other premise, then press cut ↵."
+        : "Type the cut formula.";
+    if (ui.selected) return "Press a rule to apply it. A grey rule shows why it does not apply.";
+    return "Press a formula on a dashed line to see its rules.";
+  };
+  return <Show when={words()}>{(text) => <p class="note guide-line">{text()}</p>}</Show>;
 }

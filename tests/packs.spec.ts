@@ -9,7 +9,7 @@
 import { deflateRawSync } from "node:zlib";
 import type { BrowserContext, Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
-import { goto, rule, viewCell } from "./prover";
+import { goalMenu, goto, rule, viewCell } from "./prover";
 
 /** A pack's link, packed as the page packs one. */
 function packLink(pack: object, embed = false): string {
@@ -78,7 +78,10 @@ test("a pack's limits hold: the calculus fixed and the search barred, by keys to
   await page.goto(packLink(BY_HAND));
   await expect(bar(page)).toContainText("0 of 3 done");
   await expect(page.locator(".chip")).toHaveCount(3);
-  await expect(page.getByRole("button", { name: "Close goal" })).toBeDisabled();
+  const menu = await goalMenu(page);
+  await expect(menu.getByRole("button", { name: "Close goal" })).toHaveCount(0);
+  await expect(menu).toContainText("search");
+  await page.keyboard.press("Escape");
   await expect(page.getByRole("button", { name: "Close all" })).toBeDisabled();
   await expect(page.getByRole("button", { name: "Hint" })).toBeDisabled();
   await page.locator(".stage").click({ position: { x: 5, y: 5 } });
@@ -263,7 +266,7 @@ test("with the search barred, the invertible rules wait for the student too", as
   for (const problem of [/^Problem 2/, /^Problem 3/]) {
     await bar(page).getByRole("button", { name: problem }).click();
     await expect(bar(page)).toContainText("0 of 3 done");
-    await expect(page.getByText("Open goal 1 of 1")).toBeVisible();
+    await expect(page.locator(".gt")).toHaveCount(1);
   }
   // Outside the pack the setting holds: a tab of one's own (in LJ, the calculus last started)
   // is finished by the rules alone.

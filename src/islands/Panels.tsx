@@ -8,7 +8,7 @@
  */
 
 import { createResource, createSignal, For, Show } from "solid-js";
-import { engineLabel, engineName, engineTip } from "../lib/engines";
+import { APART, engineLabel, engineName, engineTip } from "../lib/engines";
 import {
   failure,
   type Failure,
@@ -27,9 +27,9 @@ import {
   prettyOrdinary,
   stepsOf,
 } from "../lib/ordinary";
-import { actions, goalAt, paths } from "../lib/steps";
+import { actions, goalAt, paths, within } from "../lib/steps";
 import { intuitionistic, parameterOf, suite } from "../lib/suites";
-import { noTerm, notTaken, pretty } from "../lib/words";
+import { noTerm, notTaken, pretty, shown } from "../lib/words";
 import type { Theme } from "../lib/theme";
 import {
   DEFAULT_BUDGET,
@@ -698,6 +698,20 @@ export function SettingsPage(props: {
         >
           <p class="sub">This pack asks for every step by hand.</p>
         </Show>
+        <label class="sw">
+          <input
+            type="checkbox"
+            checked={props.prover.settings().marking}
+            aria-describedby="marking-sub"
+            onChange={(event) => props.prover.setSettings({ marking: event.currentTarget.checked })}
+          />
+          <span class="sw-t" aria-hidden="true" />
+          Mark goals that have no proof
+        </label>
+        <p class="sub" id="marking-sub">
+          After each step a short search asks whether each new goal has a proof. A goal with none
+          gets a red line and a cross, and its ⊢ offers Go back.
+        </p>
         <h2>Look</h2>
         <fieldset class="lbl col">
           <legend>Theme</legend>
@@ -934,6 +948,19 @@ export function EngineChoice(props: { prover: Prover }) {
 
 export function StepsPanel(props: { prover: Prover }) {
   const proof = () => props.prover.current();
+  /**
+   * Who took a step at a path: a proof made apart whose steps were taken again here ("apart"),
+   * the search ("search"), or the visitor (nothing said).
+   */
+  const byOf = (path: readonly number[], closed: boolean) =>
+    Object.entries(proof()?.engines ?? {}).some(
+      ([key, engine]) =>
+        engine === APART && within(path, key === "" ? [] : key.split(".").map(Number)),
+    )
+      ? "apart"
+      : closed
+        ? "search"
+        : "";
   /** Each step, as the list says it: its rule and goal, or the search that closed the goal. */
   const list = () => {
     const session = proof()?.session;
@@ -943,17 +970,26 @@ export function StepsPanel(props: { prover: Prover }) {
       return stepsOf(session).map((step) => {
         const path = where.get(step.goal) ?? [];
         const engine = proof()?.engines[pathKey(path)];
-        return engine
-          ? `The ${engineName(engine)} closed goal ${step.goal + 1}`
-          : `${step.rule} on goal ${step.goal + 1}`;
+        return engine && engine !== APART
+          ? { text: `The ${engineName(engine)} closed goal ${step.goal + 1}`, by: "search" }
+          : { text: `${step.rule} on goal ${step.goal + 1}`, by: byOf(path, false) };
       });
     }
     return actions(session, proof()?.view?.cuts, proof()?.view).map((action) =>
       action.kind === "step"
-        ? `${action.step.rule} on goal ${goalNumber(action.path)}`
+        ? {
+            text: `${action.step.rule} on goal ${goalNumber(action.path)}`,
+            by: byOf(action.path, false),
+          }
         : action.kind === "cut"
-          ? `cut on ${action.formula} in goal ${goalNumber(action.path)}`
-          : `The ${engineName(proof()?.engines[pathKey(action.path)] ?? "") || "search"} closed goal ${goalNumber(action.path)}`,
+          ? {
+              text: `cut on ${action.formula} in goal ${goalNumber(action.path)}`,
+              by: byOf(action.path, false),
+            }
+          : {
+              text: `The ${engineName(proof()?.engines[pathKey(action.path)] ?? "") || "search"} closed goal ${goalNumber(action.path)}`,
+              by: byOf(action.path, true),
+            },
     );
   };
   const goalNumber = (path: readonly number[]) => {
@@ -975,7 +1011,10 @@ export function StepsPanel(props: { prover: Prover }) {
             <li>
               <button type="button" class="mi" onClick={() => void props.prover.backTo(i() + 1)}>
                 <span class="fmt">{i() + 1}</span>
-                <span class="fn">{line}</span>
+                <span class="fn">{line.text}</span>
+                <Show when={line.by}>
+                  <span class="by"> {line.by}</span>
+                </Show>
               </button>
             </li>
           )}
@@ -1042,22 +1081,65 @@ export function AboutPane(props: { prover: Prover }) {
   );
 }
 
-/** The search's settings for one search, beside the tools: the engine, a "Search" button, and a link to the defaults. */
-export function SearchPanel(props: { prover: Prover; ui: Ui; search: () => void }) {
+/**
+ * The search's settings for one search: on the goal whose menu opened it, or after Unknown on the
+ * search that said it, else on every open goal as Close all; the engine and the budget start from
+ * Settings' values, the budget changing for this search alone. "Defaults" opens Settings.
+ */
+export function SearchPanel(props: { prover: Prover; ui: Ui }) {
+  const { ui, setUi } = props.ui;
+  const target = () => ui.searchFor?.goal ?? "all";
+  const [budget, setBudget] = createSignal(
+    String(ui.searchFor?.budget ?? props.prover.settings().budget),
+  );
+  const on = () => {
+    const goal = target();
+    if (goal === "all") return "Every open goal";
+    const formulas =
+      props.prover.current()?.view?.goals.find((g) => g.goal === goal)?.formulas ?? [];
+    return `Goal ${goal + 1}: ${formulas.map(shown).join(", ")}`;
+  };
+  const search = () => {
+    const units = Number(budget());
+    const factor =
+      (units > 0 ? units : props.prover.settings().budget) / props.prover.settings().budget;
+    const goal = target();
+    setUi({ menu: null, searchFor: null, goalMenu: null });
+    if (goal === "all") void props.prover.closeAll(factor);
+    else void props.prover.close(goal, factor);
+  };
   return (
     <div class="cluster menu" role="dialog" aria-label="The search's settings">
       <p class="kw-label h">The search's settings</p>
+      <p class="sub search-on">{on()}</p>
       <EngineChoice prover={props.prover} />
+      <label class="lbl">
+        <span>Budget, in units of work</span>
+        <input
+          class="field num"
+          type="text"
+          inputmode="numeric"
+          autocomplete="off"
+          value={budget()}
+          onInput={(event) => setBudget(event.currentTarget.value.replace(/[^0-9]/g, ""))}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              search();
+            }
+          }}
+        />
+      </label>
       <p class="row">
         <button
           type="button"
           class="btn btn-primary"
           disabled={props.prover.busy() || !!props.prover.current()?.view?.complete}
-          onClick={() => props.search()}
+          onClick={search}
         >
           Search
         </button>
-        <button type="button" class="btn" onClick={() => props.ui.setUi("menu", "settings")}>
+        <button type="button" class="btn" onClick={() => setUi("menu", "settings")}>
           Defaults
         </button>
       </p>

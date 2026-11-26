@@ -7,35 +7,36 @@
 
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
-import { calculus, goto, rule, start, tool } from "./prover";
+import { calculus, closeGoal, goto, rule, start, tool } from "./prover";
 
 const hint = (page: Page) => page.locator(".rule-tip");
 
-test("a rule of the popover shows its hint on hover, with Learn off", async ({ page }) => {
+test("a rule of the popover shows its card on hover: the rule drawn, premises over conclusion", async ({
+  page,
+}) => {
   await start(page, "A * B |- B * A");
   await page.getByRole("button", { name: /^A⊥ ⅋ B⊥, formula/ }).click();
-  const par = page.getByRole("dialog", { name: "Rules" }).getByRole("button", { name: /^⅋/ });
-  await expect(par).toHaveAccessibleDescription(/^⅋, par: from ⊢ Γ, A, B to ⊢ Γ, A ⅋ B\. Puts A/);
+  const par = page.getByRole("dialog", { name: "Rules" }).getByRole("button", { name: "⅋" });
+  await page.locator(".stage").hover({ position: { x: 5, y: 5 } });
+  await par.blur();
   await par.hover();
-  await expect(hint(page)).toBeVisible();
-  await expect(hint(page)).toContainText("⅋: par");
-  await expect(
-    hint(page).getByRole("img", { name: "⅋: from ⊢ Γ, A, B to ⊢ Γ, A ⅋ B" }),
-  ).toBeVisible();
-  await expect(hint(page)).toContainText("never loses a proof");
+  const card = page.locator(".rule-card");
+  await expect(card.getByRole("img", { name: "⊢ Γ, A, B, over ⊢ Γ, A ⅋ B" })).toBeVisible();
+  // The card draws the rule alone: no name, no sentence.
+  await expect(card).not.toContainText("par");
 });
 
-test("the keyboard's focus opens a rule's hint, and Escape closes it alone", async ({ page }) => {
+test("the keyboard's focus on a rule shows its card, and Escape closes the popover", async ({
+  page,
+}) => {
   await start(page, "A * B |- B * A");
   await page.getByRole("button", { name: /^A⊥ ⅋ B⊥, formula/ }).click();
   const rules = page.getByRole("dialog", { name: "Rules" });
-  await rules.getByRole("button", { name: /^⅋/ }).focus();
-  await page.keyboard.press("Tab");
-  await expect(rules.getByRole("button", { name: "About par" })).toBeFocused();
-  await expect(hint(page)).toContainText("⅋: par");
+  await expect(rules.getByRole("button", { name: "⅋" })).toBeFocused();
+  await expect(page.locator(".rule-card")).toContainText("⊢ Γ, A ⅋ B");
   await page.keyboard.press("Escape");
-  await expect(hint(page)).toHaveCount(0);
-  await expect(rules).toBeVisible();
+  await expect(rules).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /^A⊥ ⅋ B⊥, formula/ })).toBeFocused();
 });
 
 test("a label of the derivation opens its hint on a click, and a press elsewhere closes it", async ({
@@ -57,7 +58,7 @@ test("each label is named by its step, as the drawing's description numbers the 
   page,
 }) => {
   await start(page, "A * B |- B * A");
-  await page.getByRole("button", { name: "Close goal" }).click();
+  await closeGoal(page);
   await expect(
     page.getByRole("status").filter({ hasText: "Proved. Every goal is closed." }),
   ).toBeVisible();
@@ -79,7 +80,7 @@ test("each label is named by its step, as the drawing's description numbers the 
 
 test("drawn two-sided, a classical label shows its two-sided rule", async ({ page }) => {
   await start(page, "A * B |- B * A");
-  await page.getByRole("button", { name: "Close goal" }).click();
+  await closeGoal(page);
   await expect(
     page.getByRole("status").filter({ hasText: "Proved. Every goal is closed." }),
   ).toBeVisible();
@@ -96,7 +97,7 @@ test("an ordinary sequent's labels show LJ's rules", async ({ page }) => {
   await calculus(page, ["Ordinary", "Intuitionistic"]);
   await page.getByRole("textbox", { name: "Sequent" }).fill("a -> b, a |- b");
   await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
-  await page.getByRole("button", { name: "Close goal" }).click();
+  await closeGoal(page);
   await page.getByRole("button", { name: /^Rule →L, step \d+$/ }).hover();
   await expect(hint(page)).toContainText("→L: implication, left");
   await expect(

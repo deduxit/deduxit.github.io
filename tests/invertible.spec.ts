@@ -3,7 +3,7 @@
 
 // The invertible rules applied by themselves: Settings' switch, off by default and kept with
 // the other settings, its tip, the rules applied at once when it is turned on and after each
-// step, undo taking back the visitor's step with them, and the hint ladder's first rung.
+// step, undo taking back the visitor's step with them, and the hint past them.
 
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
@@ -65,14 +65,14 @@ test("with the switch on, undo takes back a step with the invertible steps after
   // (on the page loaded again, the switch kept on).
   await start(page, "A * B |- B * A");
   await tool(page, "Undo").click();
-  const note = page.locator(".dock .note");
-  await expect(note.locator(".kw")).toHaveText("Nothing to undo on this branch");
+  const note = page.locator(".goal-note");
+  await expect(note.locator(".kw")).toHaveText("Nothing to undo on this branch.");
   await expect(note).toContainText(
     "Every step on this branch is an invertible rule the page applied by itself.",
   );
 });
 
-test("with the switch on, the hint ladder's first rung says the invertible rules are done", async ({
+test("with the switch on, the hint points past the invertible rules, at the split that comes next", async ({
   page,
 }) => {
   await goto(page);
@@ -80,7 +80,5 @@ test("with the switch on, the hint ladder's first rung says the invertible rules
   await page.keyboard.press("Escape");
   await start(page, "A * B |- B * A", false);
   await page.getByRole("button", { name: "Hint" }).click();
-  await expect(page.locator(".dock .hint")).toContainText(
-    "The invertible rules are applied already; on this goal a split of the goal's formulas comes next.",
-  );
+  await expect(page.locator(".fb[data-hinted]")).toHaveAccessibleName(/^B ⊗ A/);
 });

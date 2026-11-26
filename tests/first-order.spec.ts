@@ -3,7 +3,7 @@
 
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
-import { calculus, start, tool } from "./prover";
+import { calculus, closeGoal, start, tool } from "./prover";
 
 /** Opens the rules of the formula whose button's name starts with `formula` and picks `name`. */
 async function pick(page: Page, formula: string, name: string) {
@@ -11,10 +11,11 @@ async function pick(page: Page, formula: string, name: string) {
     .getByRole("button", { name: new RegExp(`^${formula.replace(/[().$*+?]/g, "\\$&")}, formula`) })
     .first()
     .click();
+  // A greyed rule is aria-disabled, which Playwright will not press unforced; a visitor can.
   await page
     .getByRole("dialog", { name: "Rules" })
     .getByRole("button", { name: new RegExp(`^${name}`) })
-    .click();
+    .click({ force: true });
 }
 
 /** Starts an intuitionistic tab on `sequent`. */
@@ -69,10 +70,11 @@ test("the eigenvariable condition is refused in words", async ({ page }) => {
   await chooser.getByRole("textbox").fill("a");
   await chooser.getByRole("button", { name: "Apply" }).click();
   await pick(page, "∃y. r(a, y)", "∃L");
+  // The axiom is greyed by its trial; a press says why under its drawing.
   await pick(page, "r(a, b)", "ax");
-  const note = page.locator(".dock .kw.bad");
-  await expect(note).toHaveText("ax refused: the eigenvariable condition");
-  await expect(page.locator(".dock .note")).toContainText("The eigenvariable b cannot stand here");
+  const card = page.locator('.rule-card[role="note"]');
+  await expect(card).toContainText("ax refused: the eigenvariable condition");
+  await expect(card).toContainText("The eigenvariable b cannot stand here");
 });
 
 test("a cut at first order names an eigenvariable made below its goal", async ({ page }) => {
@@ -81,13 +83,12 @@ test("a cut at first order names an eigenvariable made below its goal", async ({
   await tool(page, "Cut").click();
   const chooser = page.getByRole("dialog", { name: "Cut" });
   await chooser.getByRole("textbox").fill("r(a)");
-  await chooser.getByRole("button", { name: "Cut", exact: true }).click();
   await expect(chooser.getByRole("alert")).toContainText("r is not in the sequent");
   await chooser.getByRole("textbox").fill("p(a)");
   await page.getByRole("button", { name: /^∀x\. p\(x\), formula/ }).click();
-  await chooser.getByRole("button", { name: "Cut", exact: true }).click();
+  await page.getByRole("button", { name: "Apply the cut" }).click();
   await expect(chooser).toBeHidden();
-  await expect(page.locator(".gn")).toContainText("of 2");
+  await expect(page.locator(".gt")).toHaveCount(2);
   await page.getByRole("button", { name: "Close all" }).first().click();
   await expect(
     page.getByRole("status").filter({ hasText: "Proved. Every goal is closed." }),
@@ -109,10 +110,7 @@ test("an undo on one branch replays the other with its eigenvariable's new lette
     .getByRole("button", { name: /^∀x\. p\(x\), formula/ })
     .first()
     .click();
-  await page
-    .getByRole("dialog", { name: "Split" })
-    .getByRole("button", { name: /^Apply/ })
-    .click();
+  await page.getByRole("button", { name: /^Apply ⊗/ }).click();
   await pick(page, "∀y. p(y)", "∀R");
   await pick(page, "∀y. q(y)", "∀R");
   await pick(page, "∀x. q(x)", "∀L");
@@ -144,8 +142,8 @@ test("the first-order bounds are settings, and a search says which one stopped i
   await depth.press("Enter");
   // Settings is a page: its own button leaves it.
   await page.getByRole("button", { name: "Settings", exact: true }).click();
-  await page.getByRole("button", { name: "Close goal" }).click();
-  const note = page.locator(".dock .kw.warn");
-  await expect(note).toHaveText("Unknown: gave up");
-  await expect(page.locator(".dock .note")).toContainText("Settings' witness depth");
+  await closeGoal(page);
+  const note = page.locator(".goal-note .kw.warn");
+  await expect(note).toHaveText("Unknown: gave up.");
+  await expect(page.locator(".goal-note")).toContainText("Settings' witness depth");
 });

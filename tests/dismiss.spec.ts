@@ -7,7 +7,7 @@
 
 import { devices, type Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
-import { start, tool } from "./prover";
+import { goalMenu, start, tool } from "./prover";
 
 /**
  * A press on the stage's empty field, right of the drawing and above whatever is open (on a
@@ -22,7 +22,7 @@ async function pressField(page: Page, touch: boolean) {
   const stage = await page.locator(".stage").boundingBox();
   if (!stage) throw new Error("no stage");
   const open = await page
-    .locator(".menu, .pop, .mode-warn, .tools[data-more]")
+    .locator(".menu, .pop, .tools[data-more]")
     .evaluateAll((all) => all.map((e) => e.getBoundingClientRect().top));
   // A surface that starts at or above the stage's top covers it there.
   const top = Math.min(stage.y + stage.height * 0.2, ...open.map((t) => Math.max(t, stage.y)));
@@ -88,12 +88,10 @@ async function dismissals(page: Page, touch: boolean) {
   await page.getByRole("button", { name: /^A⊥ ⅋ B⊥, formula/ }).click();
   await rules.getByRole("button", { name: /^⅋/ }).click();
   await expect(page.getByRole("button", { name: /^A⊥, formula/ })).toBeVisible();
-  // The restart warning: a press outside keeps the proof, as Escape does.
-  await page.getByRole("button", { name: "Intuitionistic", exact: true }).click();
-  const warning = page.getByRole("alertdialog", { name: "Restart the proof" });
-  await expect(warning).toBeVisible();
+  // The goal's menu at its ⊢: a press outside closes it and takes no step.
+  const menu = await goalMenu(page);
   await pressField(page, touch);
-  await expect(warning).toBeHidden();
+  await expect(menu).toBeHidden();
   await expect(page.getByRole("button", { name: /^A⊥, formula/ })).toBeVisible();
   // A press on another of the tools closes the open panel and acts.
   await band(page, "Export");

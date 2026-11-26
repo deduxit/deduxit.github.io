@@ -36,10 +36,11 @@ import {
 } from "../lib/natural";
 import { isOrdinary, type SequentForm } from "../lib/ordinary";
 import { download } from "./Panels";
+import { Sign } from "./Signs";
 import type { Proof, Prover } from "./state";
 
 /** The two drawings of one proof. */
-type Layout = "tree" | "fitch";
+export type Layout = "tree" | "fitch";
 
 /** A natural deduction proof under way, for one tab's sequent: the store's record, which it writes. */
 interface Work {
@@ -56,8 +57,8 @@ interface Work {
 
 /** Every tab's proof, by the tab and its sequent: kept while the visitor looks at other views. */
 const [works, setWorks] = createStore<Record<string, Work>>({});
-/** The drawing the visitor chose, the same for every proof. */
-const [layout, setLayout] = createSignal<Layout>("tree");
+/** The drawing the visitor chose, the same for every proof: the toggles' "Natural" or "Fitch". */
+export const [layout, setLayout] = createSignal<Layout>("tree");
 
 /** Sets the drawing of every natural deduction proof: a lesson's, whose reasons cite its lines. */
 export const setNaturalLayout = (chosen: Layout) => setLayout(chosen);
@@ -253,26 +254,6 @@ export function NaturalView(props: { prover: Prover }) {
         {(v) => (
           <>
             <div class="nd-bar">
-              <fieldset class="seg" aria-label="Drawing">
-                <button
-                  type="button"
-                  class="seg-b"
-                  aria-pressed={layout() === "tree"}
-                  data-tip="Gentzen's tree: the conclusion at the root, assumptions at the leaves"
-                  onClick={() => setLayout("tree")}
-                >
-                  Tree
-                </button>
-                <button
-                  type="button"
-                  class="seg-b"
-                  aria-pressed={layout() === "fitch"}
-                  data-tip="Fitch's lines: numbered, a subproof indented under its assumption"
-                  onClick={() => setLayout("fitch")}
-                >
-                  Fitch
-                </button>
-              </fieldset>
               <button
                 type="button"
                 class="btn"
@@ -453,14 +434,47 @@ function GoalSteps(props: {
     }
   }
 
+  const [menu, setMenu] = createSignal(false);
+  /** The goal as a sequent of its own: the lines in force left of ⊢, the goal right of it. */
+  const apart = () =>
+    `${props.goal.lines.map((l) => l.sequent).join(", ")} ⊢ ${props.goal.sequent}`.trim();
   return (
     <div class="custom-steps">
-      <p class="method-verdict">
+      <div class="method-verdict nd-goal">
+        <button
+          type="button"
+          class="goal-act nd-q"
+          aria-label="?, this goal: its actions"
+          aria-expanded={menu()}
+          onClick={() => setMenu(!menu())}
+        >
+          ?
+        </button>
+        <Show when={menu()}>
+          <fieldset class="nd-menu" aria-label="This goal">
+            <button
+              type="button"
+              class="goal-act"
+              aria-label="Prove apart"
+              data-tip="Prove this goal apart, as a sequent of its own at the top"
+              onClick={() => {
+                setMenu(false);
+                const c = props.prover.current()?.calculus;
+                if (c) void props.prover.open(apart(), c);
+              }}
+            >
+              <Sign name="apart" />
+              <span class="tool-name" aria-hidden="true">
+                Prove apart
+              </span>
+            </button>
+          </fieldset>
+        </Show>{" "}
         Goal <span class="m">{props.goal.sequent}</span>
         <Show when={props.goal.lines.length} fallback={<>, no lines in force yet.</>}>
           , with these lines in force:
         </Show>
-      </p>
+      </div>
       <Show when={props.goal.lines.length}>
         <ol class="nd-lines" aria-label="Lines in force">
           <For each={listedLines(props.goal.lines)}>

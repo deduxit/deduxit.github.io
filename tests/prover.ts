@@ -108,9 +108,22 @@ export function proved(page: Page) {
   return page.getByRole("status").filter({ hasText: "Proved. Every goal is closed." });
 }
 
+/** Opens the menu of the active goal, at its ⊢. */
+export async function goalMenu(page: Page) {
+  const menu = page.getByRole("dialog", { name: "This goal" });
+  if (!(await menu.isVisible())) await page.locator(".stage .gt[data-active]").click();
+  await expect(menu).toBeVisible();
+  return menu;
+}
+
+/** Closes the active goal by the search, from its menu at its ⊢. */
+export async function closeGoal(page: Page) {
+  await (await goalMenu(page)).getByRole("button", { name: "Close goal" }).click();
+}
+
 /** Proves A ⊗ B ⊢ B ⊗ A by the search. */
 export async function proveCommuted(page: Page) {
   await start(page, "A * B |- B * A");
-  await page.getByRole("button", { name: "Close goal" }).click();
+  await closeGoal(page);
   await expect(proved(page)).toBeVisible();
 }

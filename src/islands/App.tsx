@@ -63,7 +63,7 @@ import {
   StepsPanel,
 } from "./Panels";
 import { RuleHints } from "./RuleHint";
-import { Stage } from "./Stage";
+import { GoalNotes, GuideLine, pointer, Stage } from "./Stage";
 import { createProver } from "./state";
 import { InterpolateSheet, TranslateSheet } from "./Transforms";
 import { createWorkspace, WorkspaceContext } from "./Workspace";
@@ -456,14 +456,17 @@ export default function App(props: {
           offered: null,
           split: null,
           cutting: null,
+          goalMenu: null,
           witnessing: null,
-          pendingCalculus: null,
         }),
       { defer: true },
     ),
   );
 
-  /** The next rung of the hint ladder on the active goal. */
+  /**
+   * The hint on the active goal: the search is asked once per goal, and the hint then points at
+   * the next press from where the visitor is (`pointer` in Stage.tsx), taking nothing back.
+   */
   async function hint() {
     const p = prover.current();
     const goal = prover.activeGoal();
@@ -474,53 +477,27 @@ export default function App(props: {
       return;
     }
     const key = ladderKey(p.id, paths(p.session).get(goal) ?? []);
-    const ladder = ui.ladder?.key === key ? ui.ladder : null;
-    if (!ladder) {
-      setUi("ladder", { key, rung: 1, hint: null });
-      try {
-        const answer = await prover.hint(goal);
-        if (ui.ladder?.key === key) setUi("ladder", (l) => (l ? { ...l, hint: answer } : l));
-      } catch (thrown) {
-        if (ui.ladder?.key === key) setUi("ladder", null);
-        // A refusal (a forced engine that does not take the goal) is said at the goal.
-        if (!(thrown instanceof Cancelled))
-          prover.note(
-            goal,
-            inputProblem(failure(thrown instanceof Error ? thrown.message : thrown)),
-            "bad",
-          );
-      }
+    if (ui.ladder?.key === key && ui.ladder.hint) {
+      const said = pointer(prover, view);
+      if (said) setUi("live", `Hint: ${said.words}`);
       return;
     }
-    const steps = ladder.hint?.steps;
-    if (!steps) return;
-    if (ladder.rung < 3) {
-      setUi("ladder", { ...ladder, rung: ladder.rung + 1 });
-      return;
-    }
-    if (ladder.rung === 3) {
-      // The bottom-out: the page applies the steps, each on the goal the one before opened.
-      const hinted = ladder.hint;
-      let at = goal;
-      for (const step of steps) {
-        if (!(await prover.apply(at, step))) return;
-        const next = prover.activeGoal();
-        if (next === undefined) break;
-        at = next;
-      }
-      const now = prover.current();
-      const after = prover.activeGoal();
-      if (now?.session && after !== undefined && hinted) {
-        setUi("ladder", {
-          key: ladderKey(now.id, paths(now.session).get(after) ?? []),
-          rung: 4,
-          hint: hinted,
-        });
-      }
-      setUi(
-        "live",
-        now?.view?.complete ? "Applied the hint: the proof is finished." : "Applied the hint.",
-      );
+    setUi("ladder", { key, hint: null });
+    try {
+      const answer = await prover.hint(goal);
+      if (ui.ladder?.key !== key) return;
+      setUi("ladder", { key, hint: answer });
+      const said = pointer(prover, view);
+      if (said) setUi("live", `Hint: ${said.words}`);
+    } catch (thrown) {
+      if (ui.ladder?.key === key) setUi("ladder", null);
+      // A refusal (a forced engine that does not take the goal) is said at the goal.
+      if (!(thrown instanceof Cancelled))
+        prover.note(
+          goal,
+          inputProblem(failure(thrown instanceof Error ? thrown.message : thrown)),
+          "bad",
+        );
     }
   }
 
@@ -592,17 +569,17 @@ export default function App(props: {
         setUi("more", false);
         closed = true;
       }
-      if (ui.pendingCalculus && outside(".mode-warn, .toggles")) {
-        setUi("pendingCalculus", null);
-        closed = true;
-      }
-      if ((ui.selected || ui.split) && outside(".stage .pop, .fb")) {
+      if ((ui.selected || ui.split) && outside(".stage .pop, .premises, .fb")) {
         setUi({ selected: null, offered: null, split: null });
         closed = true;
       }
-      // The cut chooser stays while its formulas are chosen and its button pressed again.
-      if (ui.cutting && outside(".stage .pop, .fb, .gbar")) {
+      // The cut's box stays while its formulas are chosen and the tool that opened it is pressed.
+      if (ui.cutting && outside(".stage .pop, .premises, .fb, .tools")) {
         setUi("cutting", null);
+        closed = true;
+      }
+      if (ui.goalMenu !== null && outside(".goal-menu, .gt")) {
+        setUi("goalMenu", null);
         closed = true;
       }
       if (ui.witnessing && outside(".stage .pop, .fb")) {
@@ -677,9 +654,9 @@ export default function App(props: {
         return;
       }
       if (event.key === "Escape") {
-        if (ui.menu === null && !ui.pendingCalculus && !ui.more) return;
+        if (ui.menu === null && !ui.more) return;
         setTip(null);
-        setUi({ menu: null, pendingCalculus: null, more: false });
+        setUi({ menu: null, more: false });
         event.preventDefault();
         return;
       }
@@ -823,14 +800,7 @@ export default function App(props: {
                     <StepsPanel prover={prover} />
                   </Show>
                   <Show when={ui.menu === "search"}>
-                    <SearchPanel
-                      prover={prover}
-                      ui={view}
-                      search={() => {
-                        setUi("menu", null);
-                        void prover.closeAll();
-                      }}
-                    />
+                    <SearchPanel prover={prover} ui={view} />
                   </Show>
                   <Show when={ui.menu === "export"}>
                     <ExportMenu prover={prover} ui={view} font={font} />
@@ -887,6 +857,8 @@ export default function App(props: {
                           </p>
                         )}
                       </Show>
+                      <GoalNotes prover={prover} ui={view} />
+                      <GuideLine prover={prover} ui={view} />
                       <Show when={current()?.view?.complete && ui.tab === "tree"}>
                         <p class="note verdict" role="status">
                           <span class="kw ok">Proved.</span> Every goal is closed.

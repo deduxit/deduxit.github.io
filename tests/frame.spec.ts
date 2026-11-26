@@ -7,7 +7,7 @@
 // layout at each window class.
 
 import { expect, test } from "./fixtures";
-import { addView, goto, newTab, proved, start, tool } from "./prover";
+import { addView, closeGoal, goto, newTab, proved, start, tool } from "./prover";
 
 test("the new tab view offers four logics, and a sequent entered becomes a chip", async ({
   page,
@@ -89,7 +89,7 @@ test("the rail shows a finished linear proof's net in its capsule, and V moves b
   await expect(rail.getByRole("tab").first()).toHaveAccessibleName(
     "Classical linear logic, LL, 1 goal open",
   );
-  await page.getByRole("button", { name: "Close goal" }).click();
+  await closeGoal(page);
   await expect(proved(page)).toBeVisible();
   const net = rail.getByRole("tab", { name: "Proof net" });
   await expect(net).toHaveAttribute("data-capsule", "");
@@ -202,16 +202,15 @@ test("J and K go to the next and the previous open goal", async ({ page }) => {
   await page.getByRole("dialog", { name: "Rules" }).getByRole("button", { name: /^⅋/ }).click();
   await page.getByRole("button", { name: /^B ⊗ A, formula/ }).click();
   await page.getByRole("dialog", { name: "Rules" }).getByRole("button", { name: /^⊗/ }).click();
-  await page
-    .getByRole("dialog", { name: "Split" })
-    .getByRole("button", { name: /^Apply/ })
-    .click();
-  await expect(page.getByText("Open goal 1 of 2")).toBeVisible();
+  await page.getByRole("button", { name: "Apply ⊗" }).click();
+  const active = page.locator(".gt[data-active]");
+  await expect(page.locator(".gt")).toHaveCount(2);
+  const first = await active.getAttribute("data-goal");
   await page.locator(".stage").click({ position: { x: 20, y: 300 } });
   await page.keyboard.press("j");
-  await expect(page.getByText("Open goal 2 of 2")).toBeVisible();
+  await expect(active).not.toHaveAttribute("data-goal", first ?? "");
   await page.keyboard.press("k");
-  await expect(page.getByText("Open goal 1 of 2")).toBeVisible();
+  await expect(active).toHaveAttribute("data-goal", first ?? "");
 });
 
 test("Settings' Single keys off leaves the letters alone and keeps the keys with Ctrl", async ({
@@ -332,7 +331,7 @@ test("a file dropped under the top row opens, the dashed frame saying so while i
 
 test("a session pasted as deduxit's JSON into the bottom box opens on Enter", async ({ page }) => {
   await start(page, "A * B |- B * A");
-  await page.getByRole("button", { name: "Close goal" }).click();
+  await closeGoal(page);
   await expect(proved(page)).toBeVisible();
   await page.waitForTimeout(500);
   // The session as the page keeps it in the browser: deduxit's JSON.

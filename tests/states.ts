@@ -8,7 +8,18 @@
 
 import { readFile } from "node:fs/promises";
 import { devices, expect, type Page } from "@playwright/test";
-import { addView, calculus, goto, newTab, rule, start, switches, tool } from "./prover";
+import {
+  addView,
+  calculus,
+  closeGoal,
+  goalMenu,
+  goto,
+  newTab,
+  rule,
+  start,
+  switches,
+  tool,
+} from "./prover";
 
 /** Called in each state, with the state's name. */
 export type Visit = (state: string) => Promise<void>;
@@ -35,8 +46,8 @@ async function guide(page: Page) {
 }
 
 /**
- * The new tab view, a parse error, a proof with the rule popover, the split chooser, a refusal, a
- * hint, and a proof closed and its net.
+ * The new tab view, a parse error, a proof with the rule popover and a rule's card, a greyed rule
+ * with its reason, the premises of a split, the goal's menu, a hint, and a proof closed and its net.
  */
 export async function proving(page: Page, visit: Visit) {
   await goto(page);
@@ -45,23 +56,34 @@ export async function proving(page: Page, visit: Visit) {
   await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
   await expect(page.getByRole("alert")).toBeVisible();
   await visit("parse error");
+  await start(page, "|- 1, A", false);
+  await page.getByRole("button", { name: /^1, formula/ }).click();
+  // A greyed rule is aria-disabled, which Playwright will not press unforced; a visitor can.
+  await page.getByRole("button", { name: "1, does not apply" }).click({ force: true });
+  await expect(page.locator(".rule-card")).toContainText("1 refused");
+  await visit("a greyed rule's reason");
+  await page.keyboard.press("Escape");
   await start(page, "A * B |- B * A", false);
   await visit("started");
   await page.getByRole("button", { name: /^A⊥ ⅋ B⊥, formula/ }).click();
-  await expect(page.getByRole("dialog", { name: "Rules" })).toBeVisible();
+  await expect(page.locator(".rule-card")).toBeVisible();
   await visit("rules");
   await page.keyboard.press("Escape");
   await rule(page, /^A⊥ ⅋ B⊥, formula/, "⅋");
   await rule(page, /^B ⊗ A, formula/, "⊗");
-  await page.getByRole("button", { name: /^B⊥, formula/ }).click();
-  await expect(page.getByRole("dialog", { name: "Split" })).toContainText("Passes");
+  const split = page.getByRole("group", { name: /^Split for ⊗/ });
+  await split.getByRole("button", { name: "B⊥", exact: true }).click();
+  await expect(split.getByRole("button", { name: "B⊥", exact: true })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
   await visit("split");
-  await page.getByRole("dialog", { name: "Split" }).getByRole("button", { name: "Cancel" }).click();
-  await rule(page, /^A⊥, formula/, "ax");
-  await expect(page.locator(".dline .kw.bad")).toBeVisible();
-  await visit("refusal");
+  await split.getByRole("button", { name: "Apply ⊗" }).click();
+  await goalMenu(page);
+  await visit("goal menu");
+  await page.keyboard.press("Escape");
   await press(page, "Hint", visit);
-  await expect(page.locator(".dline.hint")).toContainText("Work on this goal");
+  await expect(page.locator(".fb[data-hinted]")).toBeVisible();
   await visit("hint");
   await press(page, "Close all");
   await expect(page.getByText("Proved. Every goal is closed.")).toBeVisible();
@@ -105,13 +127,15 @@ export async function framePages(page: Page, visit: Visit) {
   await page.keyboard.press("Escape");
   await guide(page);
   await visit("guide on");
-  // A step of the visitor's own, which a change of the logic would lose.
-  await start(page, "A * B |- B * A", false);
-  await rule(page, /^A⊥ ⅋ B⊥, formula/, "⅋");
-  await (await switches(page)).getByRole("button", { name: "Intuitionistic" }).click();
-  await expect(page.getByRole("alertdialog", { name: "Restart the proof" })).toBeVisible();
-  await visit("restart warning");
-  await page.getByRole("button", { name: "Keep the proof" }).click();
+  // A step of the visitor's own that holds only in affine logic: without Affine, it opens beside.
+  await start(page, "A, B |- A", false);
+  await expect(page.locator(".guide-line")).toBeVisible();
+  await visit("guide's sentence");
+  await (await switches(page)).getByRole("button", { name: "Affine" }).click();
+  await rule(page, /^B⊥, formula/, "wk");
+  await (await switches(page)).getByRole("button", { name: "Affine" }).click();
+  await expect(page.getByRole("status").filter({ hasText: "opened beside" })).toBeVisible();
+  await visit("a view opened beside");
   await newTab(page);
   await page.getByRole("button", { name: /^Ordinary logic/ }).click();
   await expect(page.getByRole("button", { name: /^Example: / }).first()).toBeVisible();
@@ -153,19 +177,27 @@ export async function restoring(page: Page, visit: Visit) {
 
 /** A goal's reasons: a goal an earlier step lost, with Go back, and a long reason with its "more". */
 export async function reasons(page: Page, visit: Visit) {
-  await start(page, "A * B |- A");
+  await start(page, "A * B |- B * A");
   await rule(page, /^A⊥ ⅋ B⊥, formula/, "⅋");
-  await page.getByRole("button", { name: "Close goal" }).click();
-  await expect(page.getByRole("button", { name: "Go back" })).toBeVisible();
+  await rule(page, /^B ⊗ A, formula/, "⊗");
+  await page
+    .getByRole("group", { name: /^Split for ⊗/ })
+    .getByRole("button", { name: "A⊥" })
+    .click();
+  await page.getByRole("button", { name: "Apply ⊗" }).click();
+  await closeGoal(page);
+  await expect(page.locator(".goal-line[data-dead]").first()).toBeVisible();
+  await expect((await goalMenu(page)).getByRole("button", { name: "Go back" })).toBeVisible();
   await visit("lost goal");
+  await page.keyboard.press("Escape");
   await newTab(page);
   await calculus(page, ["Intuitionistic"]);
   await page
     .getByRole("textbox", { name: "Sequent" })
     .fill("!(a -o a * a * a), !(a -o a), a |- a * (a + 0)");
   await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
-  await page.getByRole("button", { name: "Close goal" }).click();
-  await expect(page.locator(".dock .note").getByRole("button", { name: "more" })).toBeVisible();
+  await closeGoal(page);
+  await expect(page.locator(".goal-note").getByRole("button", { name: "more" })).toBeVisible();
   await visit("long reason");
 }
 
@@ -187,7 +219,7 @@ export async function ordinary(page: Page, visit: Visit) {
   await calculus(page, ["Intuitionistic"]);
   await page.getByRole("textbox", { name: "Sequent" }).fill("|- a \\/ ~a");
   await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
-  await page.getByRole("button", { name: "Close goal" }).click();
+  await closeGoal(page);
   await expect(page.getByRole("img", { name: /^A countermodel of/ })).toBeVisible();
   await visit("ordinary countermodel");
   await page.getByRole("button", { name: "Change this model and check it" }).click();
@@ -348,9 +380,10 @@ export async function cutting(page: Page, visit: Visit) {
   await start(page, "A, A -o B |- B");
   await press(page, "Cut");
   await page.getByRole("dialog", { name: "Cut" }).getByRole("textbox").fill("A -o B");
+  const premises = page.getByRole("group", { name: /^Cut/ });
+  await premises.getByRole("button", { name: "A ⊗ B⊥", exact: true }).click();
   await visit("cut");
-  await page.getByRole("button", { name: /^A ⊗ B⊥, formula 2/ }).click();
-  await page.getByRole("dialog", { name: "Cut" }).getByRole("button", { name: "Cut" }).click();
+  await premises.getByRole("button", { name: "Apply the cut" }).click();
   await press(page, "Close all");
   const panel = page.getByRole("region", { name: "Cut elimination" });
   await panel.getByRole("button", { name: "Eliminate the cuts" }).click();
@@ -373,7 +406,7 @@ export async function fonts(page: Page, visit: Visit) {
     await visit(`${font}, started`);
     await rule(page, /^A⊥ ⅋ B⊥, formula/, "⅋");
     await rule(page, /^B ⊗ A, formula/, "⊗");
-    await expect(page.getByRole("dialog", { name: "Split" })).toBeVisible();
+    await expect(page.getByRole("group", { name: /^Split for ⊗/ })).toBeVisible();
     await visit(`${font}, split`);
   }
 }

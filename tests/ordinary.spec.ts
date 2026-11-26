@@ -9,7 +9,7 @@
 import { readFile } from "node:fs/promises";
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
-import { calculus, goto, newTab, tool } from "./prover";
+import { calculus, closeGoal, goalMenu, goto, newTab, tool } from "./prover";
 
 /** The chosen sequent's proof, its cell in the rail, whose hover names its calculus. */
 const mark = (page: Page) =>
@@ -42,7 +42,7 @@ async function rule(page: Page, formula: RegExp, name: string) {
   const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   await page
     .getByRole("dialog", { name: "Rules" })
-    .getByRole("button", { name: new RegExp(`^${escaped}\\s*\\d+$`) })
+    .getByRole("button", { name: new RegExp(`^${escaped}$`) })
     .click();
 }
 
@@ -89,15 +89,15 @@ test("an ordinary goal's close says not valid, and the guide offers the logic's 
   await page.getByRole("button", { name: /^Example: Excluded middle, in LJ/ }).click();
   await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
   await expect(page.locator(".chip[aria-selected=true]")).toHaveText("⊢ a ∨ ¬a");
-  await page.getByRole("button", { name: "Close goal" }).click();
-  await expect(page.locator(".dock .kw.bad")).toHaveText("Not valid");
+  await closeGoal(page);
+  await expect(page.locator(".goal-note .kw.bad")).toHaveText("Not valid.");
   // The same sequent in LK: valid, the derivation found grafted and finished.
   await newTab(page);
   await page.getByRole("button", { name: "Classical", exact: true }).click();
   await page.getByRole("button", { name: /^Example: Excluded middle, in LK/ }).click();
   await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
   await expect(mark(page)).toHaveAttribute("data-tip", "Sequent calculus, LK");
-  await page.getByRole("button", { name: "Close goal" }).click();
+  await closeGoal(page);
   await expect(checked(page)).toBeVisible();
   expect(await drawn(page)).toContain("∨R");
   expect(await drawn(page)).not.toMatch(LINEAR);
@@ -107,9 +107,9 @@ test("a goal that is not valid shows its countermodel drawn, and Export writes i
   page,
 }) => {
   await ordinary(page, "intuitionistic", "((a -> b) -> a) -> a");
-  await page.getByRole("button", { name: "Close goal" }).click();
-  const note = page.locator(".dock .note");
-  await expect(note.locator(".kw.bad")).toHaveText("Not valid");
+  await closeGoal(page);
+  const note = page.locator(".goal-note");
+  await expect(note.locator(".kw.bad")).toHaveText("Not valid.");
   const model = note.getByRole("img", { name: "A countermodel of ⊢ ((a → b) → a) → a" });
   await expect(model).toBeVisible();
   await expect(model.locator("desc")).toContainText("World 0, the model's world, forces nothing");
@@ -244,7 +244,7 @@ test("a search's graft taken back by undo leaves no mark on the steps taken afte
   await ordinary(page, "intuitionistic", "a, b |- a /\\ b");
   await rule(page, /^a ∧ b, formula/, "∧R");
   await rule(page, /^b, formula 3/, "ax");
-  await page.getByRole("button", { name: "Close goal" }).click();
+  await closeGoal(page);
   await expect(checked(page)).toBeVisible();
   const marked = page.locator(".drawing g.search");
   await expect(marked.first()).toBeAttached();
@@ -282,17 +282,20 @@ test("the structural switch with a goal open marks and buttons that goal in the 
   await expect(checked(page)).toBeVisible();
 });
 
-test("an ordinary goal is never offered a fill from a linear tab", async ({ page }) => {
+test("an ordinary goal is proved apart, never with a proof made in a linear tab", async ({
+  page,
+}) => {
   await goto(page);
   await page.getByRole("textbox", { name: "Sequent" }).fill("a |- a");
   await calculus(page, ["Intuitionistic"]);
   await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
-  await page.getByRole("button", { name: "Close goal" }).click();
+  await closeGoal(page);
   await expect(checked(page)).toBeVisible();
   await newTab(page);
   await ordinary(page, "intuitionistic", "a |- a", false);
-  await expect(page.getByRole("button", { name: "Open this goal in a new tab" })).toBeVisible();
-  await expect(page.getByRole("button", { name: /^Fill from/ })).toHaveCount(0);
+  const menu = await goalMenu(page);
+  await expect(menu.getByRole("button", { name: "Prove apart" })).toBeVisible();
+  await expect(menu.getByRole("button", { name: "Use its proof" })).toHaveCount(0);
 });
 
 test("an ordinary goal an earlier step lost goes back to the last goal still valid", async ({
@@ -301,12 +304,12 @@ test("an ordinary goal an earlier step lost goes back to the last goal still val
   await ordinary(page, "intuitionistic", "a |- b \\/ a");
   // Proving b from a cannot work: the step lost the derivation.
   await rule(page, /^b ∨ a, formula/, "∨R₁");
-  await page.getByRole("button", { name: "Close goal" }).click();
-  const note = page.locator(".dock .note");
-  await expect(note.locator(".kw.bad")).toHaveText("Not valid");
+  await closeGoal(page);
+  const note = page.locator(".goal-note");
+  await expect(note.locator(".kw.bad")).toHaveText("Not valid.");
   await expect(note).toContainText("an earlier step lost it");
-  await note.getByRole("button", { name: "Go back" }).click();
-  await expect(note.locator(".kw.ok")).toHaveText("Back at a goal with a proof");
+  await (await goalMenu(page)).getByRole("button", { name: "Go back" }).click();
+  await expect(note.locator(".kw.ok")).toHaveText("Back at a goal with a proof.");
   await rule(page, /^b ∨ a, formula/, "∨R₂");
   await rule(page, /^a, formula 2/, "ax");
   await expect(
@@ -315,9 +318,9 @@ test("an ordinary goal an earlier step lost goes back to the last goal still val
   // ¬L's contraction below it is the step's own: Go back reopens the step's goal and says so.
   await ordinary(page, "intuitionistic", "~a, c |- c");
   await rule(page, /^¬a, formula/, "¬L");
-  await page.getByRole("button", { name: "Close goal" }).click();
-  await expect(note.locator(".kw.bad")).toHaveText("Not valid");
-  await note.getByRole("button", { name: "Go back" }).click();
-  await expect(note.locator(".kw.ok")).toHaveText("Back at a goal with a proof");
+  await closeGoal(page);
+  await expect(note.locator(".kw.bad")).toHaveText("Not valid.");
+  await (await goalMenu(page)).getByRole("button", { name: "Go back" }).click();
+  await expect(note.locator(".kw.ok")).toHaveText("Back at a goal with a proof.");
   await expect(page.getByRole("button", { name: /^¬a, formula 1 of goal 1/ })).toBeVisible();
 });

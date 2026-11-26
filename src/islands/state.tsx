@@ -33,14 +33,13 @@ import {
   type Outcome,
   type Ran,
   type Reached,
-  type SequentDoc,
   type SessionDoc,
   type StepForm,
   type Taken,
   type View,
 } from "../lib/deduxit";
 import type { Example } from "../lib/content";
-import { ENGINE_ORDER, engineName, engineOf, fromTab } from "../lib/engines";
+import { APART, ENGINE_ORDER, engineName, engineOf } from "../lib/engines";
 import {
   asView,
   hintSteps,
@@ -99,11 +98,11 @@ import {
   cutProblem,
   displayed,
   eliminationStopped,
-  fillRefusal,
   inputProblem,
   refusal,
   type Said,
   short,
+  shown,
   type Tone,
   verdict,
   wentBack,
@@ -114,13 +113,39 @@ export interface Note {
   readonly path: Path;
   readonly said: Said;
   readonly tone: Tone;
-  /** A refused step's formula, by its position in the goal: "Other rules" opens its rules again. */
-  readonly position?: number;
   /** A search's outcome, for its certificate or a retry with a larger budget. */
   readonly outcome?: Outcome;
-  /** The budget the search had, for "Try with twice the budget". */
+  /** The budget the search had, for "Search longer" with twice the budget. */
   readonly budget?: number;
+  /** Whether the search was Close all's, which "Search longer" runs again on every open goal. */
+  readonly all?: boolean;
 }
+
+/**
+ * A rule the popover offers for a formula: deduxit's rule of its connective, with the refusal a
+ * trial of it on this goal met, or null where it applies.
+ */
+export interface Candidate extends Offered {
+  readonly refused: Said | null;
+}
+
+/** The two premises a split or a cut would make, by the formulas each takes beside the goal's own. */
+export interface Premises {
+  /**
+   * The formulas each premise holds of its own, as shown and with their side of ⊢ in
+   * intuitionistic mode: the principal's parts, or the cut formula and its dual.
+   */
+  readonly own: readonly [readonly Shown[], readonly Shown[]];
+}
+
+/** A formula as a premise shows it: its text, and in intuitionistic mode its side of ⊢. */
+export interface Shown {
+  readonly text: string;
+  readonly side: GoalFormula["side"];
+}
+
+/** How a search answered whether a goal has a proof, by the goal's sequent. */
+export type Marked = "proof" | "none" | "unknown";
 
 /** Where the cuts of a finished proof are eliminated: on its derivation, or on its net. */
 export type On = "tree" | "net";
@@ -305,6 +330,8 @@ export interface Settings {
   instances: number;
   /** The most terms a first-order session or sequent holds, `limits.terms`. */
   terms: number;
+  /** Whether a goal the search shows to have no proof is marked after each step (Settings, "Proving"). */
+  marking: boolean;
 }
 
 /**
@@ -377,6 +404,11 @@ export const DEFAULT_WITNESS_DEPTH = 64;
 export const DEFAULT_INSTANCES = 2 ** 16;
 /** The terms by default: deduxit's tab, `tab::TERMS`, as many as its occurrences. */
 export const DEFAULT_TERMS = 1_000_000;
+/**
+ * The budget of the search that marks a goal with no proof after a step: a sixty-fourth of the
+ * tab's, since it runs on every goal a step opens, before the next step can start.
+ */
+export const MARK_BUDGET = 2 ** 20;
 
 /** A stored count, the default where it is none. */
 const count = (stored: unknown, fallback: number) =>
@@ -413,6 +445,7 @@ function loadSettings(): Settings {
       witnessDepth: count(stored.witnessDepth, DEFAULT_WITNESS_DEPTH),
       instances: count(stored.instances, DEFAULT_INSTANCES),
       terms: count(stored.terms, DEFAULT_TERMS),
+      marking: stored.marking !== false,
     };
   } catch {
     return {
@@ -431,6 +464,7 @@ function loadSettings(): Settings {
       witnessDepth: DEFAULT_WITNESS_DEPTH,
       instances: DEFAULT_INSTANCES,
       terms: DEFAULT_TERMS,
+      marking: true,
     };
   }
 }
@@ -506,13 +540,6 @@ const blank = (calculus: Calculus): Proof => ({
   modal: modalWork(calculus),
   lambda: lambdaWork(calculus),
 });
-
-/** A goal's formulas as a key, equal for the same formulas in any order: how two tabs' sequents are compared. */
-const keyOf = (formulas: readonly GoalFormula[]) =>
-  formulas
-    .map((f) => `${f.side ?? ""}:${f.text}`)
-    .sort()
-    .join("\n");
 
 /**
  * A goal's sequent as the sequent field reads it: two-sided where the formulas have sides, each
@@ -591,6 +618,33 @@ export function createProver(say: (text: string) => void = () => undefined) {
    * button.
    */
   const [limits, setLimits] = createSignal<Limits>(NO_LIMITS);
+  /**
+   * What the marking's search said of each goal, by the goal's calculus and formulas: a goal's
+   * formulas never change once a step made it, so an answer holds for the visit, wherever the
+   * goal stands.
+   */
+  const [marks, setMarks] = createStore<Record<string, Marked>>({});
+  /** What the marking's search said of each proof's sequent itself, asked while its root was open. */
+  const [roots, setRoots] = createStore<Record<string, Marked>>({});
+  /** Keeps what the marking said of a proof's sequent; with no proof, its chip and cell say so. */
+  const rooted = (id: string, said: Marked) => {
+    setRoots(id, said);
+    if (said === "none")
+      update(id, (q) => {
+        q.verdict ??= {
+          keyword: "No proof",
+          sentence: "The search shows that this sequent has no proof.",
+          tone: "bad",
+          outcome: { verdict: "unprovable" } as Outcome,
+        };
+      });
+  };
+  /** The goals asked of the marking's search and not yet answered, by the same key. */
+  const asking = new Set<string>();
+  const markKey = (p: Proof, goal: number) => {
+    const formulas = p.view?.goals.find((g) => g.goal === goal)?.formulas ?? [];
+    return `${JSON.stringify(p.calculus)}\n${formulas.map((f) => `${f.side ?? ""}${f.text}`).join("\n")}`;
+  };
   /** This visit's key among the stored proofs; a link opened in the page starts a new one. */
   let visit = freshId();
 
@@ -718,24 +772,6 @@ export function createProver(say: (text: string) => void = () => undefined) {
         ? { ...a, own: true }
         : a,
     );
-
-  /** Each finished tab's sequent as a key, by its mode and sequent document. */
-  const keys = new Map<string, string>();
-  const sequentKey = async (q: Proof): Promise<string | null> => {
-    if (!q.session || q.calculus.suite !== "linear") return null;
-    const mode = q.calculus.mode;
-    const at = `${mode}\n${JSON.stringify(q.session.sequent)}`;
-    const known = keys.get(at);
-    if (known !== undefined) return known;
-    const started = await attempt(() =>
-      api.start(q.session?.sequent as SequentDoc, mode, replaying()),
-    );
-    const root = started.ok ? started.value.view.goals[0] : undefined;
-    if (!root) return null;
-    const key = keyOf(root.formulas);
-    keys.set(at, key);
-    return key;
-  };
 
   const update = (id: string, change: (p: Proof) => void) => {
     const at = index(id);
@@ -1197,6 +1233,7 @@ export function createProver(say: (text: string) => void = () => undefined) {
     session: OrdinarySession,
     goal: number,
     budget: number,
+    all = false,
   ): Promise<boolean> {
     const path = pathOf(p, goal);
     const result = await attempt(() => api.ordinary.close(session, goal, ordinaryJson(budget)));
@@ -1241,10 +1278,100 @@ export function createProver(say: (text: string) => void = () => undefined) {
         }
       : ordinaryVerdict(closed.outcome);
     update(p.id, (q) => {
-      q.note = { path, said, tone: said.tone, outcome, budget };
+      q.note = { path, said, tone: said.tone, outcome, budget, ...(all ? { all } : {}) };
       if (path.length === 0) q.verdict = { ...said, outcome };
     });
     return false;
+  }
+
+  /**
+   * Takes a proof's steps again on the goal at `base` of another session, in order, each checked
+   * by deduxit there, and a goal the search closed in the proof is closed by the search again.
+   * Answers the session reached, with no goal left open under `base`, or the number of the first
+   * step (from 1) that did not hold; 0 where every step held but a goal stayed open.
+   */
+  async function replayOnto(
+    source: Proof,
+    start: { session: Session; view: View },
+    base: Path,
+  ): Promise<{ played: { session: Session; view: View } } | { failed: number }> {
+    if (!source.session) return { failed: 1 };
+    let played = start;
+    let taken = 0;
+    const at = (path: Path) => goalAt(played.session, [...base, ...path]);
+    if (isOrdinary(source.session)) {
+      const where = paths(source.session);
+      for (const goalOf of source.session.history) {
+        taken += 1;
+        const inference = source.session.inferences[goalOf];
+        const target = at(where.get(goalOf) ?? []);
+        if (
+          !inference?.rule ||
+          !inference.principal ||
+          target === undefined ||
+          !isOrdinary(played.session)
+        )
+          return { failed: taken };
+        const [side, position] = inference.principal;
+        const session = played.session;
+        const done = await attempt(() =>
+          api.ordinary.apply(
+            session,
+            target,
+            { side, position, rule: inference.rule as string },
+            ordinaryJson(),
+          ),
+        );
+        if (!done.ok) return { failed: taken };
+        played = { session: done.value.session, view: asView(done.value.view) };
+      }
+    } else {
+      for (const action of actionsOf(source.session, source.view?.cuts, source.view)) {
+        taken += 1;
+        const target = at(action.path);
+        if (target === undefined || isOrdinary(played.session)) return { failed: taken };
+        const session = played.session;
+        const done = await attempt<{ session: Session; view: View }>(() =>
+          action.kind === "step"
+            ? api.apply(session, target, action.step, replaying())
+            : action.kind === "cut"
+              ? api.cut(session, target, action.formula, action.left, replaying())
+              : api.close(session, target, replaying()),
+        );
+        if (!done.ok) return { failed: taken };
+        played = done.value;
+      }
+    }
+    // A goal the source has closed and the steps have not (a search's graft) is closed by the
+    // search again; every goal left open must be open in the source too.
+    const source_ = source.session;
+    const closedThere = (path: Path) => {
+      const at = goalAt(source_, path.slice(base.length));
+      return at !== undefined && source_.inferences[at]?.rule !== undefined;
+    };
+    for (const g of played.view.goals.map((x) => x.goal)) {
+      const path = paths(played.session).get(g) ?? [];
+      if (!within(path, base) || !closedThere(path)) continue;
+      const session = played.session;
+      const done = await attempt<{ session: Session; view: View }>(() =>
+        isOrdinary(session)
+          ? api.ordinary
+              .close(session, g, ordinaryJson())
+              .then((c) => ({ session: c.session, view: asView(c.view) }))
+          : api.close(session as SessionDoc, g, replaying()),
+      );
+      if (!done.ok) return { failed: 0 };
+      played = done.value;
+    }
+    const reached = played;
+    if (
+      reached.view.goals.some((g) => {
+        const path = paths(reached.session).get(g.goal) ?? [];
+        return within(path, base) && closedThere(path);
+      })
+    )
+      return { failed: 0 };
+    return { played: reached };
   }
 
   /** Runs a call on a proof's custom session and shows what it answered, or keeps its failure. */
@@ -1803,30 +1930,62 @@ export function createProver(say: (text: string) => void = () => undefined) {
         return;
       }
       const session = p.session;
+      // A proof with steps starts again without the invertible rules: its steps are taken again.
+      const bare = (p.view?.steps ?? 0) > 0;
       const started =
         calculus.suite === "ordinary"
           ? await attempt(async () => {
               const played = await api.ordinary.start(
                 JSON.stringify(session.sequent),
                 calculus.logic,
-                ordinaryStepping(id),
+                bare ? ordinaryJson() : ordinaryStepping(id),
               );
               return { session: played.session, view: asView(played.view) };
             })
-          : await attempt(() => api.start((session as SessionDoc).sequent, calculus.mode, json()));
+          : await attempt(() =>
+              api.start(
+                (session as SessionDoc).sequent,
+                calculus.mode,
+                bare ? replaying() : json(),
+              ),
+            );
       if (!started.ok) {
         if (started.failed) update(id, (q) => (q.banner = inputProblem(started.failed as Failure)));
         return;
+      }
+      // The steps taken again in the new calculus: where all hold, the proof stays; where one
+      // does not, this proof keeps its calculus and the new one opens beside it.
+      const steps = p.view?.steps ?? 0;
+      const kept = steps > 0 ? await replayOnto(p, started.value, []) : { played: started.value };
+      if ("failed" in kept) {
+        const at = index(id);
+        const opened = await actions.open(
+          sequentText(started.value.view.goals[0]?.formulas ?? []),
+          calculus,
+        );
+        if ("problem" in opened) return;
+        const q = current();
+        if (q && q.id !== id) {
+          // Beside the proof it was opened from.
+          setStore("proofs", (all) => {
+            const moved = all.filter((x) => x.id !== q.id);
+            moved.splice(at + 1, 0, q);
+            return moved;
+          });
+        }
+        save();
+        return { beside: kept.failed };
       }
       update(id, (q) => {
         q.calculus = calculus;
         q.redo = [];
         q.later = [];
         q.verdict = null;
-        q.engines = {};
+        if (steps === 0) q.engines = {};
       });
-      show(id, started.value, 0);
+      show(id, kept.played, kept.played.view.goals[0]?.goal ?? 0);
       save();
+      return steps > 0 ? { kept: steps } : undefined;
     }),
 
     /**
@@ -2042,39 +2201,110 @@ export function createProver(say: (text: string) => void = () => undefined) {
       actions.focus(next);
     },
 
-    async rules(goal: number, position: number): Promise<Offered[]> {
+    /**
+     * The rules of a goal's formula, each tried on the goal: deduxit lists them by the formula's
+     * connective, and `apply` refuses one that the goal's other formulas rule out, with the
+     * reason. A trial changes nothing, and runs without the invertible rules, which would only
+     * add steps to a session that is thrown away. A split of linear logic is never tried: every
+     * split is a legal step.
+     */
+    async rules(goal: number, position: number): Promise<Candidate[]> {
       const p = current();
       if (!p?.session) return [];
+      const formulas = p.view?.goals.find((g) => g.goal === goal)?.formulas ?? [];
       const o = ordinaryOf(p);
       if (o) {
-        const formulas = p.view?.goals.find((g) => g.goal === goal)?.formulas ?? [];
         const { side, position: at } = ordinaryStep(formulas, { position, rule: "" });
         const result = await attempt(() =>
           api.ordinary.rules(o.session, goal, side, at, ordinaryJson()),
         );
+        if (!result.ok) return [];
+        const tried: Candidate[] = [];
         // A rule of two premises shares the goal's context, G3's form a first course reads: the
         // page applies it at once.
-        return result.ok ? result.value.map((r) => ({ rule: r.rule, split: false })) : [];
+        for (const r of result.value) {
+          const step = { position, rule: r.rule };
+          const trial = await attempt(() =>
+            api.ordinary.apply(o.session, goal, ordinaryStep(formulas, step), ordinaryJson()),
+          );
+          tried.push({
+            rule: r.rule,
+            split: false,
+            refused:
+              !trial.ok && trial.failed ? ordinaryRefusal(trial.failed, formulas, r.rule) : null,
+          });
+        }
+        return tried;
       }
-      const result = await attempt(() =>
-        api.rules(p.session as SessionDoc, goal, position, json()),
-      );
-      return result.ok ? result.value : [];
+      const session = p.session as SessionDoc;
+      const result = await attempt(() => api.rules(session, goal, position, json()));
+      if (!result.ok) return [];
+      const tried: Candidate[] = [];
+      for (const r of result.value) {
+        if (r.split) {
+          tried.push({ ...r, refused: null });
+          continue;
+        }
+        // A witness is tried left open, which every quantifier step may be.
+        const trial = await attempt(() =>
+          api.apply(session, goal, { position, rule: r.rule }, json(undefined, false)),
+        );
+        tried.push({
+          ...r,
+          refused: !trial.ok && trial.failed ? refusal(trial.failed, formulas, r.rule) : null,
+        });
+      }
+      return tried;
     },
 
-    async splitPasses(goal: number, step: StepForm) {
+    /**
+     * The premises a split or a cut of a goal would make, read off a trial that sends no formula
+     * of the goal to the first premise: what each holds of its own beside the goal's formulas.
+     * A cut whose formula does not read, or a step deduxit refuses, is the refusal to say.
+     */
+    async premises(
+      goal: number,
+      step: { rule: string; position: number } | { cut: string },
+    ): Promise<Premises | Said | null> {
       const p = current();
-      if (!p?.session) return null;
+      if (!p?.session || isOrdinary(p.session)) return null;
+      const session = p.session as SessionDoc;
+      const formulas = p.view?.goals.find((g) => g.goal === goal)?.formulas ?? [];
       const result = await attempt(() =>
-        api.splitPasses(p.session as SessionDoc, goal, step, json()),
+        "cut" in step
+          ? api.cut(session, goal, step.cut, [], json(undefined, false))
+          : api.apply(session, goal, { ...step, left: [] }, json(undefined, false)),
       );
-      return result.ok ? result.value : null;
+      if (!result.ok) {
+        if (!result.failed) return null;
+        return "cut" in step
+          ? cutProblem(result.failed, formulas)
+          : refusal(result.failed, formulas, step.rule);
+      }
+      const opened = result.value.opened.map((g) =>
+        (result.value.view.goals.find((x) => x.goal === g)?.formulas ?? []).map((f) => ({
+          text: shown(f),
+          side: f.side,
+        })),
+      );
+      // The first premise took nothing of the goal; the second took all of it but the principal.
+      const second = [...(opened[1] ?? [])];
+      formulas.forEach((f, i) => {
+        if (!("cut" in step) && i === step.position) return;
+        const at = second.findIndex((x) => x.text === shown(f) && x.side === f.side);
+        if (at >= 0) second.splice(at, 1);
+      });
+      return { own: [opened[0] ?? [], second] };
     },
 
     /** Applies a step; a refusal becomes the note at the goal. Returns whether it applied. */
     apply: guard(async (goal: number, step: StepForm): Promise<boolean> => {
       const p = current();
       if (!p?.session) return false;
+      // The step's time, from its request to its view, measured beside the marking's after it.
+      const begun = performance.now();
+      const measured = () =>
+        performance.measure("deduxit:step", { start: begun, end: performance.now() });
       const o = ordinaryOf(p);
       if (o) {
         const formulas = p.view?.goals.find((g) => g.goal === goal)?.formulas ?? [];
@@ -2085,7 +2315,7 @@ export function createProver(say: (text: string) => void = () => undefined) {
           if (done.failed) {
             const said = ordinaryRefusal(done.failed, formulas, step.rule);
             const path = pathOf(p, goal);
-            update(p.id, (q) => (q.note = { path, said, tone: "bad", position: step.position }));
+            update(p.id, (q) => (q.note = { path, said, tone: "bad" }));
           }
           return false;
         }
@@ -2095,6 +2325,7 @@ export function createProver(say: (text: string) => void = () => undefined) {
           { session: done.value.session, view: asView(done.value.view) },
           done.value.opened[0] ?? done.value.view.goals[0]?.goal,
         );
+        measured();
         save();
         return true;
       }
@@ -2104,12 +2335,13 @@ export function createProver(say: (text: string) => void = () => undefined) {
           const formulas = p.view?.goals.find((g) => g.goal === goal)?.formulas ?? [];
           const said = refusal(result.failed, formulas, step.rule);
           const path = pathOf(p, goal);
-          update(p.id, (q) => (q.note = { path, said, tone: "bad", position: step.position }));
+          update(p.id, (q) => (q.note = { path, said, tone: "bad" }));
         }
         return false;
       }
       update(p.id, (q) => (q.redo = []));
       show(p.id, result.value, result.value.opened[0] ?? result.value.view.goals[0]?.goal);
+      measured();
       save();
       return true;
     }),
@@ -2618,54 +2850,57 @@ export function createProver(say: (text: string) => void = () => undefined) {
     }),
 
     /**
-     * The other tabs whose finished proof is of a goal's formulas in any order, by id and by
-     * their sequent shortened, which names a tab as its place in the row cannot: that changes as
-     * tabs close.
+     * The finished proof made apart of a goal, by "Prove apart": a sequent at the top opened from
+     * this goal, in the same calculus, with no goal open. Its sequent is the goal's as written, so
+     * its steps' positions are the goal's.
      */
-    async fillable(goal: number): Promise<{ id: string; tab: string }[]> {
+    apartFor(goal: number): { id: string; tab: string } | null {
       const p = current();
-      const g = p?.view?.goals.find((x) => x.goal === goal);
-      // A fill is deduxit's linear call: an ordinary goal is filled by none.
-      if (!p || !g || p.calculus.suite !== "linear") return [];
-      const want = keyOf(g.formulas);
-      const found: { id: string; tab: string }[] = [];
-      for (const q of store.proofs) {
-        if (q.id === p.id || !q.view?.complete) continue;
-        if ((await sequentKey(q)) === want)
-          found.push({ id: q.id, tab: short(displayed(q.input)) });
-      }
-      return found;
+      if (!p?.session) return null;
+      const path = pathKey(pathOf(p, goal));
+      const q = store.proofs.find(
+        (x) =>
+          x.origin?.from === p.id &&
+          pathKey(x.origin.path) === path &&
+          x.view?.complete === true &&
+          sameCalculus(x.calculus, p.calculus),
+      );
+      return q ? { id: q.id, tab: short(displayed(q.input)) } : null;
     },
 
     /**
-     * Fills a goal with the finished proof of another tab of the same formulas, as one step
-     * named with that tab; deduxit checks it in this proof's calculus, and a refusal is said at
-     * the goal.
+     * Closes a goal with the proof made apart of it: its steps are taken again on the goal, in
+     * order, each checked by deduxit in this proof, and a goal a search closed there is closed by
+     * the search again. Where a step is refused or a goal stays open, nothing changes and the
+     * note says so.
      */
-    fill: guard(async (goal: number, from: string) => {
-      if (barred(current()?.id, limits().search)) return;
+    useApart: guard(async (goal: number, from: string) => {
       const p = current();
       const q = store.proofs.find((x) => x.id === from);
-      if (!p?.session || !q?.session || p.calculus.suite !== "linear") return;
-      const path = pathOf(p, goal);
-      const result = await attempt(() =>
-        api.fill(p.session as SessionDoc, goal, q.session as SessionDoc, json()),
-      );
+      if (!p?.session || !q?.session || !p.view) return;
+      const base = pathOf(p, goal);
       const tab = short(displayed(q.input));
-      if (!result.ok) {
-        if (result.failed)
-          update(p.id, (x) => {
-            x.note = { path, said: fillRefusal(result.failed as Failure, tab), tone: "bad" };
-          });
-        return;
-      }
+      const refused = () =>
+        update(p.id, (x) => {
+          x.note = {
+            path: base,
+            said: {
+              keyword: "Not used",
+              sentence: `The steps of the proof of ${tab} did not all hold on this goal, so nothing was changed.`,
+            },
+            tone: "bad",
+          };
+        });
+      const reached = await replayOnto(q, { session: p.session, view: p.view }, base);
+      if ("failed" in reached) return refused();
       update(p.id, (x) => {
         x.redo = [];
-        x.engines = { ...x.engines, [pathKey(path)]: fromTab(tab) };
+        x.later = [];
+        x.engines = { ...x.engines, [pathKey(base)]: APART };
       });
-      show(p.id, result.value, result.value.view.goals[0]?.goal);
+      show(p.id, reached.played, reached.played.view.goals[0]?.goal);
       say(
-        `Goal ${goal + 1} filled from ${tab}${result.value.view.complete ? ": the proof is finished" : ""}.`,
+        `Goal ${goal + 1} closed by the proof of ${tab}${reached.played.view.complete ? ": the proof is finished" : ""}.`,
       );
       save();
     }),
@@ -2730,11 +2965,12 @@ export function createProver(say: (text: string) => void = () => undefined) {
       });
     }),
 
-    /** Closes every open goal within one budget. */
-    closeAll: guard(async () => {
+    /** Closes every open goal within one budget (the settings' times `factor`). */
+    closeAll: guard(async (factor: number = 1) => {
       if (barred(current()?.id, limits().search)) return;
       const p = current();
       if (!p?.session) return;
+      const budget = Math.max(1, Math.round(settings().budget * factor));
       const o = ordinaryOf(p);
       if (o) {
         // Each open goal in turn, each within the budget, until one is not closed.
@@ -2742,11 +2978,11 @@ export function createProver(say: (text: string) => void = () => undefined) {
           const now = current();
           const doc = ordinaryOf(now)?.session;
           if (!now || now.id !== p.id || !doc) return;
-          if (!(await closeOrdinary(now, doc, goal, settings().budget))) return;
+          if (!(await closeOrdinary(now, doc, goal, budget, true))) return;
         }
         return;
       }
-      const result = await attempt(() => api.closeAll(p.session as SessionDoc, json()));
+      const result = await attempt(() => api.closeAll(p.session as SessionDoc, json(budget)));
       if (!result.ok) {
         if (result.failed === null) {
           update(
@@ -2785,7 +3021,8 @@ export function createProver(say: (text: string) => void = () => undefined) {
             said,
             tone: said.tone,
             outcome: unproved.outcome as Outcome,
-            budget: settings().budget,
+            budget,
+            all: true,
           };
           if (path.length === 0) q.verdict = { ...said, outcome: unproved.outcome as Outcome };
         });
@@ -2844,6 +3081,55 @@ export function createProver(say: (text: string) => void = () => undefined) {
         automatic: automatic.ok ? (automatic.value.outcome.engine ?? null) : null,
         engines,
       };
+    },
+
+    /**
+     * What the marking's search said of a goal of the proof shown: no proof, a proof, or nothing
+     * known (not asked yet, the marking off, or the budget decided nothing).
+     */
+    marked(goal: number): Marked | undefined {
+      const p = current();
+      return p && settings().marking ? marks[markKey(p, goal)] : undefined;
+    },
+
+    /** What the marking's search said of a proof's sequent itself, while the marking is on. */
+    rootMarked(id: string): Marked | undefined {
+      return settings().marking ? roots[id] : undefined;
+    },
+
+    /**
+     * Asks the search, within `MARK_BUDGET`, whether each open goal of a proof has a proof, for
+     * the goals not asked before; nothing while the marking is off or a course pack bars the
+     * search. A stopped search marks nothing.
+     */
+    async mark(id: string) {
+      const p = store.proofs.find((x) => x.id === id);
+      if (!p?.session || !p.view || !settings().marking || limits().search(id) !== null) return;
+      const session = p.session;
+      const begun = performance.now();
+      let asked = 0;
+      for (const g of p.view.goals) {
+        const key = markKey(p, g.goal);
+        const known = marks[key];
+        if (known !== undefined && g.goal === 0) rooted(id, known);
+        if (known !== undefined || asking.has(key)) continue;
+        asking.add(key);
+        asked += 1;
+        const answer = await attempt<{ outcome: { verdict: string } }>(() =>
+          isOrdinary(session)
+            ? api.ordinary.hint(session, g.goal, ordinaryJson(MARK_BUDGET))
+            : api.hint(session as SessionDoc, g.goal, json(MARK_BUDGET, false)),
+        );
+        asking.delete(key);
+        if (answer.ok) {
+          const decided = decidedOf(answer.value.outcome.verdict);
+          const said =
+            decided === "proved" ? "proof" : decided === "unprovable" ? "none" : "unknown";
+          setMarks(key, said);
+          if (g.goal === 0) rooted(id, said);
+        }
+      }
+      if (asked > 0) performance.measure("deduxit:mark", { start: begun, end: performance.now() });
     },
 
     /** Notes at a goal what the page has to say there: a hint's failure. */

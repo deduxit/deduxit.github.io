@@ -7,7 +7,7 @@
 
 import { devices, type Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
-import { calculus, newTab, rule, start } from "./prover";
+import { calculus, goalMenu, newTab, rule, start } from "./prover";
 
 /** The chosen sequent's proof, its cell in the rail, whose hover names its calculus. */
 const mark = (page: Page) =>
@@ -45,11 +45,13 @@ for (const [label, sequent, switches, shown, formula, name, left] of [
     await expect(mark(page)).toHaveAttribute("data-tip", ends(shown));
     // A goal below the root: a step first.
     await rule(page, formula, name);
-    const split = page.getByRole("dialog", { name: "Split" });
+    const split = page.getByRole("group", { name: /^Split for/ });
+    // Each rule here splits its goal: its premises show, a formula moved where one is named.
+    await expect(split).toBeVisible();
     if (left) await page.getByRole("button", { name: left }).first().click();
-    if (await split.isVisible()) await split.getByRole("button", { name: "Apply" }).click();
+    await split.getByRole("button", { name: /^Apply/ }).click();
     await expect(split).toBeHidden();
-    await page.getByRole("button", { name: "Open this goal in a new tab" }).click();
+    await (await goalMenu(page)).getByRole("button", { name: "Prove apart" }).click();
     await expect(page.locator(".chip")).toHaveCount(2);
     await expect(mark(page)).toHaveAttribute("data-tip", ends(shown));
     await expect(page.locator(".stage .fb").first()).toBeVisible();
@@ -115,7 +117,7 @@ for (const phone of [false, true]) {
   });
 }
 
-test("a goal's hypothesis A ⊸ B opens in a new tab as A ⊸ B, and the split chooser lists the formulas as they read", async ({
+test("a goal's hypothesis A ⊸ B opens in a new tab as A ⊸ B, and the premises of its split write the formulas as they read", async ({
   page,
 }) => {
   await start(page, "A -o B |- A -o B");
@@ -123,21 +125,18 @@ test("a goal's hypothesis A ⊸ B opens in a new tab as A ⊸ B, and the split c
   // The formulas' buttons are named as they read: the hypothesis and the goal both A ⊸ B.
   await expect(page.getByRole("button", { name: /^A ⊸ B, formula/ })).toHaveCount(2);
   await rule(page, /^A ⊸ B, formula 2/, "⊸R");
-  await page.getByRole("button", { name: "Open this goal in a new tab" }).click();
+  await (await goalMenu(page)).getByRole("button", { name: "Prove apart" }).click();
   await expect(page.locator(".chip")).toHaveCount(2);
   await expect(page.locator(".chip[aria-selected=true] .chip-text")).toHaveText("A ⊸ B, A ⊢ B");
   await expect(mark(page)).toHaveAttribute("data-tip", ends("ILL"));
   // The split of ⊸L in the new tab: the lists say A and B, not their one-sided forms.
   await rule(page, /^A ⊸ B, formula/, "⊸L");
-  const split = page.getByRole("dialog", { name: "Split" });
-  await expect(split.locator(".prem").first()).toHaveText(/^Left\s*nothing else$/);
-  await expect(split.locator(".prem").last()).toHaveText(/^Right\s*A, B$/);
-  await page
-    .getByRole("button", { name: /^A, formula/ })
-    .first()
-    .click();
-  await expect(split.locator(".prem").first()).toHaveText(/^Left\s*A$/);
-  await expect(split.locator(".prem").last()).toHaveText(/^Right\s*B$/);
+  const split = page.getByRole("group", { name: /^Split for ⊸L/ });
+  await expect(split.locator(".prem").first()).toHaveText(/^⊢\s*A$/);
+  await expect(split.locator(".prem").last()).toHaveText(/^A\s*B\s*⊢\s*B$/);
+  await split.getByRole("button", { name: "A", exact: true }).click();
+  await expect(split.locator(".prem").first()).toHaveText(/^A\s*⊢\s*A$/);
+  await expect(split.locator(".prem").last()).toHaveText(/^B\s*⊢\s*B$/);
 });
 
 test("the proof's cell names its calculus in words, with its state", async ({ page }) => {

@@ -10,7 +10,7 @@ async function cut(page: import("@playwright/test").Page, formula: string, left:
   const chooser = page.getByRole("dialog", { name: "Cut" });
   await chooser.getByRole("textbox").fill(formula);
   for (const name of left) await page.getByRole("button", { name }).first().click();
-  await chooser.getByRole("button", { name: "Cut", exact: true }).click();
+  await page.getByRole("button", { name: "Apply the cut" }).click();
   await expect(chooser).toBeHidden();
 }
 
@@ -31,14 +31,18 @@ test("a cut is typed in the tab's syntax, its formulas chosen, and both premises
   await tool(page, "Cut").click();
   const chooser = page.getByRole("dialog", { name: "Cut" });
   await chooser.getByRole("textbox").fill("A -o");
-  await chooser.getByRole("button", { name: "Cut", exact: true }).click();
+  // A text that is no formula is said under the box, and no premises show.
   await expect(chooser.getByRole("alert")).toContainText("does not parse");
+  await expect(page.getByRole("group", { name: /^Cut/ })).toHaveCount(0);
   await chooser.getByRole("textbox").fill("A -o B");
-  await page.getByRole("button", { name: /^A ⊗ B⊥, formula 2/ }).click();
-  await expect(chooser.locator(".prem").first()).toContainText("A ⊗ B⊥");
-  await chooser.getByRole("button", { name: "Cut", exact: true }).click();
+  // Once it reads, the two premises show over the goal; a chip pressed moves to the first.
+  const premises = page.getByRole("group", { name: /^Cut/ });
+  await expect(premises.locator(".prem").first()).toContainText("A⊥ ⅋ B");
+  await premises.getByRole("button", { name: "A ⊗ B⊥", exact: true }).click();
+  await expect(premises.locator(".prem").first().getByRole("button")).toHaveText("A ⊗ B⊥");
+  await premises.getByRole("button", { name: "Apply the cut" }).click();
   await expect(chooser).toBeHidden();
-  await expect(page.locator(".gn")).toContainText("of 2");
+  await expect(page.locator(".gt")).toHaveCount(2);
   // The first premise proves the cut formula, the second uses its dual.
   await expect(page.getByRole("button", { name: /^A ⊗ B⊥, formula 1 of goal 2/ })).toBeVisible();
   await expect(page.getByRole("button", { name: /^A⊥ ⅋ B, formula 2 of goal 2/ })).toBeVisible();
@@ -47,7 +51,7 @@ test("a cut is typed in the tab's syntax, its formulas chosen, and both premises
   await start(page, "A, A -o B, B -o C |- C", false);
   await calculus(page, ["Intuitionistic"]);
   await cut(page, "B", [/^A, formula 1/, /^A ⊸ B, formula 2/]);
-  await expect(page.locator(".gn")).toContainText("of 2");
+  await expect(page.locator(".gt")).toHaveCount(2);
   await expect(page.locator(".drawing svg")).toContainText("cut");
 });
 

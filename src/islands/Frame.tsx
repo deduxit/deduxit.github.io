@@ -824,7 +824,10 @@ export function Tools(props: { prover: Prover; ui: Ui; hint: () => void; tour: (
             icon={<ChevronDown aria-hidden="true" />}
             expanded={ui.menu === "search"}
             disabled={!proving()}
-            onClick={() => toggle("search")}
+            onClick={() => {
+              setUi("searchFor", null);
+              toggle("search");
+            }}
           />
         </fieldset>
         <Show when={proof()?.calculus.suite === "ordinary" && !natural()}>
@@ -860,7 +863,7 @@ export function Tools(props: { prover: Prover; ui: Ui; hint: () => void; tour: (
                 else if (goal !== undefined) {
                   props.prover.clearNote();
                   setUi({
-                    cutting: { goal, left: [] },
+                    cutting: { goal, left: [], own: null },
                     selected: null,
                     offered: null,
                     split: null,

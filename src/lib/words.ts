@@ -9,7 +9,7 @@
  */
 
 import { engineName } from "./engines";
-import type { Failure, GoalFormula, Mode, Outcome, StepForm } from "./deduxit";
+import type { Failure, GoalFormula, Mode, Outcome } from "./deduxit";
 
 /** A short keyword, the sentence under it, and for a long reason the rest, shown on request. */
 export interface Said {
@@ -206,34 +206,6 @@ export function short(sequent: string): string {
         .trimEnd()}…`;
 }
 
-/** Why a goal was not filled from another tab's proof (named by its shortened sequent), as the goal's note says it. */
-export function fillRefusal(failed: Failure, tab: string): Said {
-  const details = failed.details ?? {};
-  const listed = (key: string) =>
-    Array.isArray(details[key]) && (details[key] as string[]).length
-      ? (details[key] as string[]).join(", ")
-      : "nothing";
-  switch (failed.code) {
-    case "invalid_proof":
-      return {
-        keyword: "Not filled: not a proof in this calculus",
-        sentence: `deduxit's checker refused the proof of ${tab} here: ${failed.message}. The proof holds in its own tab's logic, which allows a rule this one does not.`,
-      };
-    case "sequent_mismatch":
-      return {
-        keyword: "Not filled: other formulas",
-        sentence: `The proof of ${tab} concludes ${listed("proof")} where this goal holds ${listed("goal")}.`,
-      };
-    case "open_goals":
-      return {
-        keyword: "Not filled: that proof is not finished",
-        sentence: `The tab of ${tab} still has open goals; finish its proof first.`,
-      };
-    default:
-      return { keyword: "Not filled", sentence: failed.message };
-  }
-}
-
 const atom = (outcome: Outcome, index: unknown) => {
   const atoms = (outcome["sequent"] as { atoms?: string[] } | undefined)?.atoms ?? [];
   return typeof index === "number" ? (atoms[index] ?? `atom ${index + 1}`) : "an atom";
@@ -330,7 +302,7 @@ export function verdict(outcome: Outcome, checked: boolean | null): Said & { ton
 export function lost(sequentUnprovable: boolean): string {
   return sequentUnprovable
     ? "The sequent itself has no proof, so no step lost one."
-    : "This goal has no proof. The sequent may still have one: an earlier step lost it. Go back takes you to the last step that could still be proved.";
+    : "This goal has no proof. The sequent may still have one: an earlier step lost it. Press the goal's ⊢ and Go back to return to where every goal had a proof.";
 }
 
 /** What Go back found: a goal below with a proof, the sequent with none, or no goal decided in the budget. */
@@ -354,55 +326,6 @@ export function wentBack(found: "proved" | "unprovable" | "unknown"): Said & { t
       "No goal below this one was shown to have a proof within the budget. Try a larger budget in Settings, or Undo.",
     tone: "warn",
   };
-}
-
-/** The goal bar's words: the active goal's place among the open goals, from 1. */
-export function openGoal(place: number, count: number): string {
-  return `Open goal ${place} of ${count}`;
-}
-
-/**
- * The connective's kind a rule is for, the hint ladder's first rung; whether the rule is
- * invertible in the goal's mode is deduxit's to say (the hint's `invertible`).
- */
-export function ruleKind(rule: string, invertible: boolean): string {
-  if (rule === "ax") return "the axiom";
-  if (["1", "1R"].includes(rule)) return "the unit 1";
-  if (invertible) return "an invertible rule";
-  if (["⊗", "mix", "⊗R", "⊸L"].includes(rule)) return "a split of the goal's formulas";
-  if (["∃", "∃R", "∀L"].includes(rule)) return "a choice of witness";
-  if (rule.startsWith("⊕") || rule.startsWith("&L")) return "a choice of one side";
-  if (rule.startsWith("?") || rule.startsWith("!")) return "an exponential rule";
-  return `the rule ${rule}`;
-}
-
-/**
- * The hint ladder's four rungs for a goal, from the steps the search proposes, whether
- * their rule is invertible, and whether the page applies the invertible rules by itself:
- * then the first rung says that those are done, and what comes after them.
- */
-export function rungs(
-  steps: readonly StepForm[],
-  formulas: readonly GoalFormula[],
-  invertible: boolean,
-  automatic: boolean,
-): string[] {
-  const last = steps.at(-1);
-  const first = steps[0];
-  if (!last || !first) return [];
-  const at = formula(formulas, first.position);
-  const left = (first.left ?? []).map((p) => formula(formulas, p));
-  const kind = ruleKind(last.rule, invertible);
-  return [
-    automatic && !invertible
-      ? `The invertible rules are applied already; on this goal ${kind} comes next.`
-      : `Work on this goal: ${kind} comes next.`,
-    `Look at ${at}.`,
-    steps.length > 1
-      ? `Apply ${steps.map((s) => s.rule).join(", then ")}, starting on ${at}. Press Hint again to apply it.`
-      : `Apply ${first.rule} to ${at}${left.length ? `, with ${left.join(", ")} going left` : first.left ? ", with nothing else going left" : ""}. Press Hint again to apply it.`,
-    "Applied. Can you say why this was the step to take?",
-  ];
 }
 
 /**

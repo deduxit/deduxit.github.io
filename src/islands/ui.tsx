@@ -10,10 +10,11 @@
 
 import { createSignal, For, Show } from "solid-js";
 import { createStore } from "solid-js/store";
-import type { Hint, Offered } from "../lib/deduxit";
+import type { Hint } from "../lib/deduxit";
 import type { Kripke } from "../lib/kripke";
-import type { Calculus, Logic } from "../lib/suites";
+import type { Logic } from "../lib/suites";
 import type { Said } from "../lib/words";
+import type { Candidate, Premises } from "./state";
 
 /** A formula of a goal, by its position. */
 export interface Spot {
@@ -21,20 +22,37 @@ export interface Spot {
   readonly position: number;
 }
 
-/** The split chooser: the rule asked for and the formulas sent to the left premise. */
+/**
+ * A split being chosen: the rule asked for, the formulas sent to the first premise, and the
+ * premises' own formulas, read off a trial (null until it answers).
+ */
 export interface Split extends Spot {
   readonly rule: string;
   readonly left: readonly number[];
-  /** Whether the split can still close, by `split_passes`; null while asked. */
-  readonly passes: boolean | null;
+  readonly own: Premises["own"] | null;
 }
 
-/** The hint ladder on one goal. */
+/**
+ * A cut being made at a goal: the goal's positions going to the premise proving the cut formula,
+ * and the premises' own formulas once the formula typed reads (null before).
+ */
+export interface Cutting {
+  readonly goal: number;
+  readonly left: readonly number[];
+  readonly own: Premises["own"] | null;
+}
+
+/** The hint on one goal: the search's answer, which points at the next press from where the visitor is. */
 export interface Ladder {
   /** The proof and the goal's path it is for, joined. */
   readonly key: string;
-  readonly rung: number;
   readonly hint: Hint | null;
+}
+
+/** The search the panel under Close all runs: on one goal or on every open goal, with its budget. */
+export interface SearchFor {
+  readonly goal: number | "all";
+  readonly budget: number;
 }
 
 /**
@@ -83,10 +101,13 @@ export interface ModelSeed {
 export function createUi() {
   const [ui, setUi] = createStore<{
     selected: Spot | null;
-    offered: Offered[] | null;
+    offered: Candidate[] | null;
     split: Split | null;
-    /** The cut chooser open at a goal: the goal's positions going to the premise proving the cut formula. */
-    cutting: { goal: number; left: number[] } | null;
+    cutting: Cutting | null;
+    /** The goal whose menu is open at its `⊢`. */
+    goalMenu: number | null;
+    /** The search the search's settings run, once a goal's or a note's caret set it; else Close all's. */
+    searchFor: SearchFor | null;
     /** The witness chooser open at a formula, for ∃R or ∀L: a term typed, or the witness left open. */
     witnessing: { goal: number; position: number; rule: string } | null;
     menu: Menu;
@@ -106,8 +127,6 @@ export function createUi() {
     modelSeed: ModelSeed | null;
     ladder: Ladder | null;
     live: string;
-    /** The calculus a switch asked for, until the visitor confirms the restart. */
-    pendingCalculus: Calculus | null;
     /** The tour's stop shown (from 0), or null when no tour runs. */
     tour: number | null;
   }>({
@@ -115,6 +134,8 @@ export function createUi() {
     offered: null,
     split: null,
     cutting: null,
+    goalMenu: null,
+    searchFor: null,
     witnessing: null,
     menu: null,
     tab: "tree",
@@ -124,7 +145,6 @@ export function createUi() {
     modelSeed: null,
     ladder: null,
     live: "",
-    pendingCalculus: null,
     tour: null,
   });
   /** Bumped when the drawing must be laid out again (a new drawing, a resize). */

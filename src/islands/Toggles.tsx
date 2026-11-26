@@ -5,9 +5,10 @@
  * The toggles at the stage's top left, which say which calculus the view is in and change it.
  * Ordinary logic: "Sequent" or "Natural", and classical, intuitionistic or minimal logic (LK, LJ,
  * and LJ without ex falso). Linear logic: classical or intuitionistic, and the single toggles Mix
- * and Affine. Modal logic: its system, one of the fifteen from K to S5. Lambda-terms: how often a
- * term may use a variable. A session is one sequent in one calculus, so a change restarts the
- * proof, and the toggles say so first when the proof has steps.
+ * and Affine, and on a net's view how the net is drawn. Modal logic: its system, one of the
+ * fifteen from K to S5. Lambda-terms: how often a term may use a variable. A change keeps the
+ * proof where its steps hold in the new calculus; where one does not, the new calculus opens
+ * beside the proof, which keeps its own.
  */
 
 import { For, Show } from "solid-js";
@@ -24,6 +25,8 @@ import {
   ordinary,
   sameCalculus,
 } from "../lib/suites";
+import { cellName } from "./Frame";
+import { layout, setLayout } from "./Natural";
 import type { Prover } from "./state";
 import type { Ui } from "./ui";
 
@@ -54,19 +57,29 @@ export function Toggles(props: { prover: Prover; ui: Ui }) {
   const intuitionistic = () => mode().startsWith("intuitionistic");
   const mix = () => mode().endsWith("mix");
   const affine = () => mode().includes("affine");
-  const { ui, setUi } = props.ui;
+  const { setUi } = props.ui;
   const system = () => {
     const c = calculus();
     return c.suite === "modal" ? c.system : "K";
   };
 
-  function ask(next: Chosen) {
+  /** Changes the calculus: the proof stays where its steps hold, else the new one opens beside. */
+  async function ask(next: Chosen) {
     const p = proof();
     if (!p || sameCalculus(next, p.calculus)) return;
-    if ((p.view?.steps ?? p.custom?.view?.steps ?? 0) > 0) setUi("pendingCalculus", next);
-    else void props.prover.setCalculus(p.id, next);
+    const before = cellName(p.calculus);
+    const done = await props.prover.setCalculus(p.id, next);
+    if (done && "beside" in done) {
+      const after = cellName(next);
+      setUi("notice", {
+        text:
+          done.beside > 0
+            ? `Step ${done.beside} does not hold in ${after}, so ${after} opened beside. ${before} keeps your proof.`
+            : `A goal the search closed stays open in ${after}, so ${after} opened beside. ${before} keeps your proof.`,
+      });
+    }
   }
-  const askMode = (next: Mode) => ask(linear(next));
+  const askMode = (next: Mode) => void ask(linear(next));
 
   /** Why the tab's calculus stays as it is: a course pack's problem, or null. */
   const fixed = () => {
@@ -109,16 +122,27 @@ export function Toggles(props: { prover: Prover; ui: Ui }) {
                 on: method() !== "natural",
                 pick: () => {
                   const l = logic();
-                  if (l) ask(ordinary(l, "sequent"));
+                  if (l) void ask(ordinary(l, "sequent"));
                 },
               },
               {
                 name: "Natural",
-                tip: "Natural deduction (NK, NJ, NM): introduction and elimination rules",
-                on: method() === "natural",
+                tip: "Natural deduction (NK, NJ, NM), drawn as Gentzen's tree",
+                on: method() === "natural" && layout() === "tree",
                 pick: () => {
                   const l = logic();
-                  if (l) ask(ordinary(l, "natural"));
+                  setLayout("tree");
+                  if (l) void ask(ordinary(l, "natural"));
+                },
+              },
+              {
+                name: "Fitch",
+                tip: "Natural deduction, drawn as Fitch's numbered lines",
+                on: method() === "natural" && layout() === "fitch",
+                pick: () => {
+                  const l = logic();
+                  setLayout("fitch");
+                  if (l) void ask(ordinary(l, "natural"));
                 },
               },
             ]}
@@ -129,7 +153,7 @@ export function Toggles(props: { prover: Prover; ui: Ui }) {
               name: LOGIC_WORDS[each].name,
               tip: LOGIC_WORDS[each].tip,
               on: logic() === each,
-              pick: () => ask(ordinary(each, method())),
+              pick: () => void ask(ordinary(each, method())),
             }))}
           />
         </Show>
@@ -180,6 +204,20 @@ export function Toggles(props: { prover: Prover; ui: Ui }) {
               Affine
             </button>
           </fieldset>
+          <Show when={props.ui.ui.tab === "net"}>
+            <Seg
+              label="Net drawing"
+              items={(["formulas", "compact"] as const).map((net) => ({
+                name: net === "formulas" ? "Formulas" : "Compact",
+                tip:
+                  net === "formulas"
+                    ? "The net with every formula written"
+                    : "The net compact: only its literals and conclusions written",
+                on: props.prover.settings().net === net,
+                pick: () => props.prover.setSettings({ net }),
+              }))}
+            />
+          </Show>
         </Show>
         <Show when={calculus().suite === "modal"}>
           <label class="toggle-select" data-tip={systemWords(system())}>
@@ -188,7 +226,7 @@ export function Toggles(props: { prover: Prover; ui: Ui }) {
               class="select"
               aria-label="System"
               value={system()}
-              onChange={(event) => ask(modal(event.currentTarget.value))}
+              onChange={(event) => void ask(modal(event.currentTarget.value))}
             >
               <For each={SYSTEMS}>{(s) => <option value={s.name}>{s.name}</option>}</For>
             </select>
@@ -204,7 +242,7 @@ export function Toggles(props: { prover: Prover; ui: Ui }) {
                 const c = calculus();
                 return c.suite === "lambda" ? c.calculus : "simple";
               })()}
-              onChange={(event) => ask(lambda(event.currentTarget.value as LambdaCalculus))}
+              onChange={(event) => void ask(lambda(event.currentTarget.value as LambdaCalculus))}
             >
               <For each={LAMBDA_CALCULI}>
                 {(each) => <option value={each}>{CALCULUS_WORDS[each]}</option>}
@@ -213,31 +251,6 @@ export function Toggles(props: { prover: Prover; ui: Ui }) {
           </label>
         </Show>
       </fieldset>
-      <Show when={ui.pendingCalculus}>
-        {(next) => (
-          <div class="panel mode-warn" role="alertdialog" aria-label="Restart the proof">
-            <p>Changing the logic restarts this proof: its steps are lost.</p>
-            <p class="row">
-              <button
-                type="button"
-                class="btn btn-primary"
-                onClick={() => {
-                  // Read before the warning closes: its accessor goes stale with it.
-                  const chosen = next();
-                  const p = proof();
-                  setUi("pendingCalculus", null);
-                  if (p) void props.prover.setCalculus(p.id, chosen);
-                }}
-              >
-                Restart
-              </button>
-              <button type="button" class="btn" onClick={() => setUi("pendingCalculus", null)}>
-                Keep the proof
-              </button>
-            </p>
-          </div>
-        )}
-      </Show>
     </Show>
   );
 }

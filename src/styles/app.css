@@ -460,13 +460,13 @@ summary {
   text-decoration: underline;
   text-underline-offset: var(--spacing-0-5);
 }
-:is(button, a) svg.lucide {
+:is(button, a) :is(svg.lucide, svg.icon) {
   width: var(--size-icon);
   height: var(--size-icon);
   stroke-width: var(--stroke-icon);
   flex: none;
 }
-.btn svg.lucide {
+.btn :is(svg.lucide, svg.icon) {
   width: var(--size-icon-small);
   height: var(--size-icon-small);
   stroke-width: var(--stroke-icon-small);
@@ -509,6 +509,10 @@ svg.sign {
 }
 .world[data-glide] {
   transition: transform var(--duration-camera) var(--ease-out);
+}
+.drawing {
+  position: relative;
+  pointer-events: none;
 }
 .drawing svg {
   display: block;
@@ -708,42 +712,7 @@ svg.sign {
   outline: var(--line-strong) solid var(--color-lapis);
   outline-offset: var(--spacing-0-5);
 }
-.mode-warn {
-  position: absolute;
-  top: calc(100% + var(--spacing-2));
-  left: 0;
-  width: var(--size-tour);
-  max-width: calc(100vw - var(--spacing-5));
-  border-color: var(--color-ink2);
-  padding: var(--spacing-3);
-  z-index: var(--layer-popover);
-}
-.mode-warn p {
-  margin: 0;
-}
 
-/* The dock at the active goal. */
-.dock {
-  position: absolute;
-  z-index: var(--layer-stage);
-  display: grid;
-  gap: var(--spacing-1);
-  justify-items: start;
-  pointer-events: none;
-  visibility: hidden;
-}
-.dock > * {
-  pointer-events: auto;
-}
-.gbar,
-.dline {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-1);
-  padding: var(--spacing-1);
-  flex-wrap: wrap;
-  max-width: min(var(--size-panel-wide), calc(100vw - var(--spacing-6)));
-}
 /* A reason under its keyword: in view, never a tip, a whole line of the cluster. */
 .said-why {
   flex-basis: 100%;
@@ -756,7 +725,6 @@ svg.sign {
    scrolls as a page does, the stage's camera and dock out of the way while it shows. */
 .stage[data-method] .world,
 .stage[data-method] .hits,
-.stage[data-method] .dock,
 .stage[data-method] .stage-ctl {
   display: none;
 }
@@ -1192,12 +1160,6 @@ svg.sign {
   padding: 0 var(--spacing-1);
   color: var(--color-lapis);
 }
-.gn {
-  font: var(--font-weight-semibold) var(--text-control) / var(--leading-none) var(--font-text);
-  color: var(--color-lapis);
-  padding: 0 var(--spacing-2);
-  white-space: nowrap;
-}
 .sep {
   width: var(--line);
   align-self: stretch;
@@ -1208,29 +1170,6 @@ svg.sign {
   font-size: var(--text-control);
   padding: 0 var(--spacing-1);
 }
-.lamp {
-  width: var(--size-lamp);
-  height: var(--size-lamp);
-  border-radius: var(--radius-round);
-  background: var(--color-ink2);
-}
-.rungs {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-0-5);
-}
-/* A rung climbed is a full bar, one ahead a hairline: its shape, not its colour alone. */
-.rungs i {
-  width: var(--size-rung);
-  height: var(--line-strong);
-  background: var(--color-edge);
-  border-radius: var(--radius-round);
-}
-.rungs i[data-on] {
-  height: var(--size-rung-height);
-  background: var(--color-lapis);
-}
-
 /* Popovers and menus. */
 .pop {
   position: absolute;
@@ -1250,49 +1189,248 @@ svg.sign {
 .pop-h .m {
   font-size: var(--text-head);
 }
-.rules {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: var(--spacing-0-5);
+
+/* The rule popover at a formula: one button per rule, side by side, a greyed rule among them; a
+   card over its rule's button with the rule drawn, and for a greyed rule the reason. */
+.rules-pop {
+  min-width: 0;
+  max-width: calc(100% - 2 * var(--spacing-2));
+  padding: var(--spacing-1);
+  border-color: var(--color-ink);
 }
-.rule {
-  width: 100%;
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: var(--spacing-3);
-  align-items: center;
-  padding: var(--spacing-1) var(--spacing-2);
-  text-align: left;
-}
-.rn {
-  font: var(--text-math-large) / var(--leading-none) var(--font-math);
-}
-.rd {
-  font: var(--font-weight-normal) var(--text-control) / var(--leading-none) var(--font-text);
-  color: var(--color-ink2);
-}
-.split-pre {
-  margin: var(--spacing-2) 0;
-  display: grid;
+.rule-row {
+  display: flex;
+  flex-wrap: wrap;
   gap: var(--spacing-1);
 }
-.prem {
-  display: grid;
-  grid-template-columns: var(--size-premise-column) 1fr;
-  gap: var(--spacing-2);
-  align-items: baseline;
-  padding: var(--spacing-1) var(--spacing-2);
-  border: var(--line) solid var(--color-hair);
+.rule {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--size-rule-least);
+  height: var(--size-rule);
+  padding: 0 var(--spacing-3);
   border-radius: var(--radius-control);
+  background: var(--color-wash);
+  font: var(--font-weight-normal) var(--text-math-large) / var(--leading-none) var(--font-math);
+}
+.rule[aria-disabled="true"] {
+  background: var(--color-band);
+  cursor: help;
+}
+.rule[data-hinted] {
+  outline: var(--line-strong) solid var(--color-lapis);
+  outline-offset: var(--spacing-0-5);
+}
+.rule-card {
+  position: absolute;
+  bottom: calc(100% + var(--spacing-2));
+  z-index: var(--layer-popover);
+  display: grid;
+  gap: var(--spacing-2);
+  width: max-content;
+  max-width: var(--size-popover-wide);
+  padding: var(--spacing-2);
+  border: var(--line) solid var(--color-ink);
+  border-radius: var(--radius-cell);
+  background: var(--color-paper);
+  pointer-events: none;
+}
+.rule-card[data-told] {
+  pointer-events: auto;
+}
+.rule-drawn {
+  justify-self: center;
+  display: grid;
+  font: var(--font-weight-normal) var(--text-math) / var(--leading-normal) var(--font-math);
+  white-space: nowrap;
+}
+.rule-premises {
+  display: flex;
+  justify-content: center;
+  gap: var(--spacing-5);
+  min-height: var(--spacing-1);
+  padding: 0 var(--spacing-2) var(--spacing-1);
+}
+.rule-bar {
+  height: var(--line-strong);
+  background: var(--color-ink);
+}
+.rule-conclusion {
+  padding: var(--spacing-1) var(--spacing-2) 0;
+  text-align: center;
+}
+.rule-card .said-why {
+  padding: 0;
+}
+
+/* The goal's menu at its ⊢: its actions side by side, each a sign with its name beside it while
+   the guide is on. */
+.goal-menu {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-1);
+  min-width: 0;
+  padding: var(--spacing-1);
+  border-color: var(--color-ink);
+}
+.goal-act {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-2);
+  min-width: var(--size-rule);
+  height: var(--size-rule);
+  padding: 0 var(--spacing-3);
+  border: var(--line) solid transparent;
+  border-radius: var(--radius-control);
+  background: var(--color-wash);
+  color: var(--color-ink);
+  font: var(--font-weight-medium) var(--text-body) / var(--leading-none) var(--font-text);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.goal-act:hover {
+  background: var(--color-over);
+}
+.goal-act.caret {
+  min-width: var(--size-caret);
+  padding: 0 var(--spacing-1);
+}
+.app[data-guide] .goal-act .tool-name {
+  display: inline;
+}
+.goal-act.caret .tool-name,
+.app[data-guide] .goal-act.caret .tool-name {
+  display: none;
+}
+
+/* The two premises a split or a cut would make, over its goal: each dashed, the goal's formulas
+   as chips inside, the button that applies the step at the line's end. */
+.premises {
+  position: absolute;
+  z-index: var(--layer-popover);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-2) var(--spacing-5);
+  max-width: calc(100% - 2 * var(--spacing-2));
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.prem {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-1);
+  min-height: var(--size-rule);
+  padding: var(--spacing-1) var(--spacing-2);
+  border: var(--line) dashed var(--color-lapis);
+  border-radius: var(--radius-row);
+  background: var(--color-paper);
+  font: var(--font-weight-normal) var(--text-math) / var(--leading-none) var(--font-math);
+}
+.prem .turn {
+  padding: 0 var(--spacing-1);
+}
+.chip-f {
+  min-height: var(--size-button);
+  min-width: var(--size-button);
+  padding: 0 var(--spacing-2);
+  border: var(--line) solid var(--color-line);
+  border-radius: var(--radius-control);
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font: inherit;
+  cursor: pointer;
+}
+.chip-f:hover {
+  background: var(--color-over);
+}
+.chip-f[data-hinted],
+.apply-step[data-hinted] {
+  outline: var(--line-strong) solid var(--color-lapis);
+  outline-offset: var(--spacing-0-5);
+}
+.apply-step {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  height: var(--size-enter);
+  padding: 0 var(--spacing-3);
+  border: 0;
+  border-radius: var(--radius-control);
+  background: var(--color-ink);
+  color: var(--color-paper);
+  font: var(--font-weight-normal) var(--text-math) / var(--leading-none) var(--font-math);
+  cursor: pointer;
+}
+.cut-box {
+  min-width: var(--size-popover);
+  border-color: var(--color-ink);
+}
+.cut-box .cut-field {
   margin: 0;
 }
-.prem .m {
-  font-size: var(--text-math);
+
+/* An open goal on the drawing: a dashed lapis line where its rule will go, two pixels on the
+   screen at every zoom, and its ⊢'s button. Once the search shows the goal has no proof, the
+   line turns red and ends in a cross. deduxit's ⋮ gives way to the line. */
+.goal-line {
+  position: absolute;
+  height: 0;
+  border-top: calc(var(--line-strong) / var(--zoom)) dashed var(--color-lapis);
+  pointer-events: none;
 }
-.split-pre[data-fails] .prem {
-  border-style: dashed;
+.goal-line[data-dead] {
+  border-top-color: var(--color-bad);
+}
+.goal-cross {
+  position: absolute;
+  left: 100%;
+  top: calc(var(--size-sign) / var(--zoom) / -2);
+  width: calc(var(--size-sign) / var(--zoom));
+  height: calc(var(--size-sign) / var(--zoom));
+  margin-left: calc(var(--spacing-1) / var(--zoom));
+  color: var(--color-bad);
+  stroke-width: var(--stroke-sign);
+}
+.drawing svg text.goal-dots {
+  display: none;
+}
+.gt {
+  position: absolute;
+  pointer-events: auto;
+  padding: 0;
+  border: var(--line) solid transparent;
+  border-radius: var(--radius-control);
+  background: transparent;
+  cursor: pointer;
+}
+.gt[data-active] {
+  border-color: var(--color-hair);
+}
+.gt:hover,
+.gt[aria-expanded="true"] {
+  background: var(--color-wash);
+  border-color: var(--color-edge);
+}
+
+/* The goal's note and the hint over the bottom box. */
+.goal-note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-1) var(--spacing-2);
+}
+.guide-line {
+  color: var(--color-ink2);
+  text-wrap: balance;
+}
+.goal-note .row {
+  display: inline-flex;
+  gap: var(--spacing-1);
 }
 
 .tabs {
@@ -1981,13 +2119,6 @@ fieldset {
 .rule-tip-h {
   margin: 0;
   font-weight: var(--font-weight-semibold);
-}
-.rules li {
-  display: flex;
-  gap: var(--spacing-1);
-}
-.rules li .rule {
-  flex: 1;
 }
 /* A rule label's button over the drawing: seen on hover and on focus only. */
 .lb {

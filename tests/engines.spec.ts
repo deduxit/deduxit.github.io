@@ -8,7 +8,7 @@
 // practice set, and the field's Enter while a search runs.
 
 import { expect, test } from "./fixtures";
-import { calculus, start, tool, viewCell } from "./prover";
+import { calculus, closeGoal, start, tool, viewCell } from "./prover";
 
 /** Sends the visible proof to intuitionistic mode before any step. */
 async function intuitionistic(page: import("@playwright/test").Page) {
@@ -18,8 +18,8 @@ async function intuitionistic(page: import("@playwright/test").Page) {
 
 test("a search names its engine beside its work, with its source on hover", async ({ page }) => {
   await start(page, "A & B |- A * B");
-  await page.getByRole("button", { name: "Close goal" }).click();
-  const chip = page.locator(".dline .kw.engine");
+  await closeGoal(page);
+  const chip = page.locator(".goal-note .kw.engine");
   await expect(chip).toHaveText("Focused search");
   await chip.hover();
   await expect(page.getByRole("tooltip")).toContainText("Andreoli 1992");
@@ -28,9 +28,9 @@ test("a search names its engine beside its work, with its source on hover", asyn
 test("a saturation refutation is shown checked, by the inverse method", async ({ page }) => {
   await start(page, "!(a -o a * a * a), !(a -o a), a |- a * (a + 0)");
   await intuitionistic(page);
-  await page.getByRole("button", { name: "Close goal" }).click();
-  const note = page.locator(".dline");
-  await expect(note.locator(".kw.bad")).toHaveText("Unprovable, checked: saturation");
+  await closeGoal(page);
+  const note = page.locator(".goal-note");
+  await expect(note.locator(".kw.bad")).toHaveText("Unprovable, checked: saturation.");
   await expect(note.locator(".kw.engine")).toHaveText("Inverse method");
   // The long reason: its first sentence in view, the rest behind "more".
   await expect(note).toContainText("The inverse method built every sequent");
@@ -60,14 +60,14 @@ test("Settings forces an engine: those that take the sequent, the others greyed 
   await expect(engines.getByRole("radio", { name: /^Proof-net search/ })).toBeChecked();
   // Settings is a page: its own button leaves it.
   await page.getByRole("button", { name: "Settings", exact: true }).click();
-  await page.getByRole("button", { name: "Close goal" }).click();
+  await closeGoal(page);
   await expect(page.getByText("Proved. Every goal is closed.")).toBeVisible();
   await expect(page.locator(".drawing svg text.engine")).toHaveText("Proof-net search");
   // A sequent with a unit is no net's: the forced engine's refusal is said at the goal.
   await start(page, "|- 1, bot", false);
-  await page.getByRole("button", { name: "Close goal" }).click();
-  await expect(page.locator(".dline .kw.bad")).toHaveText(
-    "The proof-net search does not take this goal",
+  await closeGoal(page);
+  await expect(page.locator(".goal-note .kw.bad")).toHaveText(
+    "The proof-net search does not take this goal.",
   );
 });
 
@@ -105,7 +105,7 @@ test("Enter in the sequent field while a search runs waits for it, and is not lo
 }) => {
   await start(page, "!(a -o a * a * a), !(a -o a), a |- a * (a + 0)");
   await intuitionistic(page);
-  await page.getByRole("button", { name: "Close goal" }).click();
+  await closeGoal(page);
   await page.getByRole("button", { name: "New sequent", exact: true }).click();
   await page.getByRole("textbox", { name: "Sequent" }).fill("A |- A");
   await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
