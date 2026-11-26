@@ -2886,6 +2886,12 @@ fieldset {
 .badge .cell-sub {
   font-size: var(--text-sign);
 }
+/* A badge with letters under its sign grows to hold both. */
+.badge:has(.cell-sub) {
+  height: auto;
+  min-height: var(--size-badge);
+  padding: var(--spacing-0-5) var(--spacing-1);
+}
 /* A view of the sequent or the proof in the drawing's place; faint while it is out of date. */
 /* Its text keeps the contrast of third-rank text: faint is for what cannot act, never text. */
 .view-panel[data-stale] > :not(.stale-bar),

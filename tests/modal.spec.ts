@@ -58,6 +58,32 @@ test("the system chosen decides again: valid in S4 with its labelled derivation"
   await expect(page.getByText("In S4 every world sees itself")).toBeVisible();
 });
 
+test("the conditions on what a world sees make the system, and its name opens the list", async ({
+  page,
+}) => {
+  await modalTab(page);
+  const conditions = page.getByRole("group", { name: "Conditions on what a world sees" });
+  await conditions.getByRole("button", { name: "Reflexive" }).click();
+  await expect(page.getByRole("button", { name: "System T" })).toBeVisible();
+  // Reflexive makes every world see some world: Serial follows, pressed but not the system's own.
+  await expect(conditions.getByRole("button", { name: "Serial" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await conditions.getByRole("button", { name: "Transitive" }).click();
+  await expect(page.getByRole("button", { name: "System S4" })).toBeVisible();
+  await conditions.getByRole("button", { name: "Reflexive" }).click();
+  await expect(page.getByRole("button", { name: "System K4" })).toBeVisible();
+  // The list of the fifteen closes on Escape and on a press outside.
+  await page.getByRole("button", { name: "System K4" }).click();
+  await expect(page.getByRole("listbox", { name: "Systems" })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("listbox", { name: "Systems" })).toBeHidden();
+  await page.getByRole("button", { name: "System K4" }).click();
+  await page.getByRole("textbox", { name: "Sequent" }).click();
+  await expect(page.getByRole("listbox", { name: "Systems" })).toBeHidden();
+});
+
 test("a valid sequent is proved step by step in its system's labelled calculus", async ({
   page,
 }) => {

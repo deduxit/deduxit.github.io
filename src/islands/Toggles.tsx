@@ -11,7 +11,7 @@
  * beside the proof, which keeps its own.
  */
 
-import { createSignal, For, Show } from "solid-js";
+import { createEffect, createSignal, For, onCleanup, Show } from "solid-js";
 import { produce } from "solid-js/store";
 import { FORMS } from "../lib/clausal";
 import type { Mode } from "../lib/deduxit";
@@ -180,6 +180,26 @@ export function Toggles(props: { prover: Prover; ui: Ui }) {
   const own = () => SYSTEMS.find((s) => s.name === system())?.conditions ?? [];
   const holds = () => closure(own());
   const [listing, setListing] = createSignal(false);
+  // The list closes on Escape and on a press outside it, as every list of the page does.
+  createEffect(() => {
+    if (!listing()) return;
+    const outside = (event: PointerEvent) => {
+      if (!(event.target as Element).closest(".system-pick")) setListing(false);
+    };
+    document.addEventListener("pointerdown", outside, true);
+    onCleanup(() => document.removeEventListener("pointerdown", outside, true));
+  });
+  /** Escape in the list or on its button closes the list and gives the button the focus. */
+  const closeOnEscape = (event: KeyboardEvent) => {
+    if (event.key !== "Escape" || !listing()) return;
+    event.stopPropagation();
+    setListing(false);
+    (
+      (event.currentTarget as HTMLElement)
+        .closest(".system-pick")
+        ?.querySelector(".system-name") as HTMLElement | null
+    )?.focus();
+  };
   return (
     <Show when={!fixed()} fallback={<p class="note calc-fixed">{fixed()}</p>}>
       <Show when={tab() === "tableau"}>
@@ -336,6 +356,7 @@ export function Toggles(props: { prover: Prover; ui: Ui }) {
               aria-label={`System ${system()}`}
               aria-expanded={listing()}
               aria-haspopup="listbox"
+              onKeyDown={closeOnEscape}
               data-tip={systemWords(system())}
               onClick={() => setListing(!listing())}
             >
@@ -343,7 +364,12 @@ export function Toggles(props: { prover: Prover; ui: Ui }) {
               <Sign name="caret" />
             </button>
             <Show when={listing()}>
-              <div class="system-list menu" role="listbox" aria-label="Systems">
+              <div
+                class="system-list menu"
+                role="listbox"
+                aria-label="Systems"
+                onKeyDown={closeOnEscape}
+              >
                 <For each={SYSTEMS}>
                   {(s) => (
                     <button
@@ -354,12 +380,6 @@ export function Toggles(props: { prover: Prover; ui: Ui }) {
                       onClick={() => {
                         setListing(false);
                         void ask(modal(s.name));
-                      }}
-                      onKeyDown={(event) => {
-                        if (event.key === "Escape") {
-                          event.stopPropagation();
-                          setListing(false);
-                        }
                       }}
                     >
                       <span class="system-short">{s.name}</span>{" "}
