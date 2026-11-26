@@ -6,6 +6,8 @@
  * the text's colour; app.css sizes them as every icon of a button.
  */
 
+import rocq from "../third-party/rocq/icon-rocq-black.svg?raw";
+
 /** Each sign's path on the 18-unit grid. */
 const PATHS = {
   /** Close this goal by the search: a check. */
@@ -62,6 +64,21 @@ export function Sign(props: { name: SignName; class?: string }) {
       aria-hidden="true"
     >
       <path d={PATHS[props.name]} />
+    </svg>
+  );
+}
+
+/** Rocq's logo, its small form: the path of the file the site serves under /licenses/rocq/. */
+const ROCQ = {
+  box: /viewBox="([^"]+)"/.exec(rocq)?.[1] ?? "0 0 1 1",
+  path: /\sd="([^"]+)"/.exec(rocq)?.[1] ?? "",
+};
+
+/** Rocq's logo in the text's colour, hidden from assistive technology as every sign is. */
+export function RocqLogo() {
+  return (
+    <svg class="icon icon-rocq" viewBox={ROCQ.box} fill="currentColor" aria-hidden="true">
+      <path d={ROCQ.path} />
     </svg>
   );
 }

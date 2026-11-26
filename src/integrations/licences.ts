@@ -18,6 +18,9 @@
  * - `/fonts/<Family>-OFL.txt`: each font's licence beside its files, which
  *   astro.config.ts puts under /fonts/; `<Family>-LICENSE.txt` for a font
  *   whose licence is not the OFL (New Computer Modern Math's).
+ * - `/licenses/rocq/`: Rocq's logo, the one third-party file this repository
+ *   holds (`src/third-party/rocq/`), beside its notice and the Unlicense it is
+ *   released under; the page draws its path beside the Rocq export.
  *
  * A source that is missing fails the build. The `licences` flake check
  * reads the result apart from this code.
@@ -31,6 +34,8 @@ export const LICENCES = {
   bundle: "licenses/bundle.txt",
   crates: "licenses/THIRD-PARTY-NOTICES.txt",
   code: "licenses/LICENSE.txt",
+  rocqLogo: "licenses/rocq/icon-rocq-black.svg",
+  rocqNotice: "licenses/rocq/LICENSE.txt",
 } as const;
 
 /**
@@ -84,6 +89,10 @@ export function licences(): AstroIntegration {
           new URL(LICENCES.crates, dir),
         );
         await copyFile(new URL("LICENSE", root), new URL(LICENCES.code, dir));
+        await mkdir(new URL("licenses/rocq/", dir), { recursive: true });
+        const rocq = new URL("src/third-party/rocq/", root);
+        await copyFile(new URL("icon-rocq-black.svg", rocq), new URL(LICENCES.rocqLogo, dir));
+        await copyFile(new URL("LICENSE.txt", rocq), new URL(LICENCES.rocqNotice, dir));
         const astro = JSON.parse(
           await readFile(new URL("node_modules/astro/package.json", root), "utf8"),
         );

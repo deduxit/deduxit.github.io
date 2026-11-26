@@ -912,6 +912,13 @@ board and the guide disagree, the guide holds.
   the stage or an export, never before. **The exports' font** is `Settings.font`, null for
   the stage's (`exportFont`); the export menu's `menuitemradio`s set it, the stage's font
   setting it back to null; `render` gets that font's file and no other.
+- **Rocq's logo is the one third-party file the repository holds** (`src/third-party/rocq/`:
+  `icon-rocq-black.svg`, the path of rocq-prover.org's small logo, and `LICENSE.txt`, its source
+  and the Unlicense its site releases it under). No package carries it. The build serves both
+  under `/licenses/rocq/` (`licences.ts`), About lists the notice, and `RocqLogo` in `Signs.tsx`
+  draws its path in the text's colour beside the Rocq export. The `licences` check takes it as
+  the one image outside `logo/`, beside a notice that names the source and holds the Unlicense.
+  A new third-party file needs the author's yes and the same three: notice, served, checked.
 - **The service worker caches the four other math fonts when first fetched** (`LATER` in
   `sw.js`, filled by `offline.ts` by their file names, and the build fails unless there
   are four), not at install: a visitor who never chooses one never downloads it (0.4 to 1.3

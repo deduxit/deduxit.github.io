@@ -123,9 +123,10 @@ its comment syntax:
 
 (`#` in Nix, shell, Python and YAML; `/* … */` in CSS; inside an Astro component's
 frontmatter). The written content (explanations, tutorials, worked examples, exercises) is
-CC BY 4.0, as README says, and so is the mark (`src/logo/LICENSE.txt`). No third-party
-file is committed: fonts come from npm through
-the lock or from deduxit's input, never copied in.
+CC BY 4.0, as README says, and so is the mark (`src/logo/LICENSE.txt`). One third-party
+file is committed, Rocq's logo (`src/third-party/rocq/`, the Unlicense, served with its notice
+under `/licenses/rocq/`), because no package carries it; every other one comes from npm
+through the lock or from deduxit's input, never copied in.
 
 ## Writing
 

@@ -19,7 +19,10 @@
 # - every image the site serves is the logo's, under logo/, beside
 #   logo/LICENSE.txt, which puts it under CC BY 4.0 with a link to the
 #   licence, and every SVG of it has its text outlined (no <text>, so no
-#   font file goes with it);
+#   font file goes with it), but Rocq's logo, the one third-party file the
+#   repository holds, at licenses/rocq/icon-rocq-black.svg beside
+#   licenses/rocq/LICENSE.txt, which names its source and holds the
+#   Unlicense it is released under;
 # - every page that carries written content (an element marked
 #   data-written) says that it is under CC BY 4.0, with a link to the
 #   licence, and the prover's page is one of them.
@@ -147,9 +150,25 @@ if (
     problems.append(
         "logo/LICENSE.txt does not put the logo under CC BY 4.0, linking it"
     )
+# Rocq's logo, served with its source and its licence.
+ROCQ_LOGO = site / "licenses/rocq/icon-rocq-black.svg"
+rocq_notice = site / "licenses/rocq/LICENSE.txt"
+if not ROCQ_LOGO.is_file():
+    problems.append("licenses/rocq/icon-rocq-black.svg, Rocq's logo, is not served")
+if (
+    not rocq_notice.is_file()
+    or "github.com/rocq-prover/rocq-prover.org" not in rocq_notice.read_text()
+    or "free and unencumbered software released into the public domain"
+    not in rocq_notice.read_text()
+):
+    problems.append(
+        "licenses/rocq/LICENSE.txt does not name the logo's source and hold the Unlicense"
+    )
 images = sorted(p for p in site.rglob("*") if p.suffix in IMAGE_FILES)
 for path in images:
     name = path.relative_to(site)
+    if path == ROCQ_LOGO:
+        continue
     if path.parent != logo:
         problems.append(
             f"{name}: an image outside logo/, under no licence the site states"
@@ -195,6 +214,6 @@ if problems:
     sys.exit("\n".join(problems))
 print(
     f"the bundle's {len(entries)} notices, the crates' notices and the code's licence are served, "
-    f"every font sits beside its licence, the {len(images)} images are the logo's under CC BY 4.0, "
+    f"every font sits beside its licence, the {len(images) - 1} images are the logo's under CC BY 4.0, Rocq's logo is under the Unlicense, "
     f"and {len(carrying)} pages of written content say CC BY 4.0"
 )

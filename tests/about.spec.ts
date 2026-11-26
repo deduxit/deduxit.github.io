@@ -37,13 +37,19 @@ test("About says what the page is, and every licence it lists is served", async 
     about.getByRole("listitem").filter({ hasText: what }).getByRole("link", { name: "CC BY 4.0" });
   await expect(licence("The written content")).toHaveAttribute("href", CC_BY);
   await expect(licence("deduxit's mark")).toHaveAttribute("href", "/logo/LICENSE.txt");
+  await expect(
+    about
+      .getByRole("listitem")
+      .filter({ hasText: "Rocq's logo" })
+      .getByRole("link", { name: "the Unlicense" }),
+  ).toHaveAttribute("href", "/licenses/rocq/LICENSE.txt");
   const local = await about
     .getByRole("listitem")
     .getByRole("link")
     .evaluateAll((links) =>
       links.map((a) => a.getAttribute("href") ?? "").filter((href) => href.startsWith("/")),
     );
-  expect(local.length).toBe(11);
+  expect(local.length).toBe(12);
   for (const href of local) {
     const response = await request.get(href);
     expect(response.status(), href).toBe(200);
@@ -92,7 +98,7 @@ test("the tour walks the page by keyboard and ends on a checked proof", async ({
     await expect(tour).toContainText(`(${stop} of 8)`);
   }
   await expect(page.locator("[data-tour-spot]")).toHaveCount(1);
-  await expect(page.locator(".chip[aria-selected=true] svg.lucide-check")).toBeVisible();
+  await expect(page.locator(".chip[aria-selected=true] svg.icon-check")).toBeVisible();
   await expect(tour.getByRole("button", { name: "Done" })).toBeFocused();
   await page.keyboard.press("Enter");
   await expect(tour).toHaveCount(0);
