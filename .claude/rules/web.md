@@ -112,7 +112,7 @@ the page reads.
   tab** (`Methods.tsx`, `src/lib/methods.ts`): "+ view" offers Truth table and Tableau, and
   adds each as a rail cell, for a started proof of classical ordinary logic alone (`decidable`
   in `Stage.tsx`), `ui.tab` holds `table` or `tableau`, and the stage puts its panel (`.method`) in the drawing's
-  place, the camera, the formulas' buttons and the dock hidden (`data-method`), the proof kept
+  place, the camera and the formulas' buttons hidden (`data-method`), the proof kept
   as it was. The panel asks deduxit's `ordinary_table` or `ordinary_tableau` with the session's
   sequent (`sequentText`) and shows the verdict in one sentence that names the values (the
   cognitive load: no searching the table for the row), the table (the atoms, then the formulas
@@ -297,7 +297,7 @@ the page reads.
     zod is not used here: its probe of `eval` is a CSP violation, and it would weigh on the
     island's first load.
   - The limits are the prover's (`Limits`, `prover.restrict`, `NO_LIMITS` without a pack): every
-    action that searches (`close`, `closeAll`, `fill`, `hint`, the hint ladder in `App.tsx`) or
+    action that searches (`close`, `closeAll`, `hint`, the hint in `App.tsx`) or
     changes a started problem's sequent or calculus (`submit`, `setCalculus`) asks first and says
     the reason on the proof's banner, so a key does no more than a button; the tools are greyed
     with the reason as their tip. `modalSteps`, `customFrom` and `showModalStatement` ask `fixed`
@@ -369,8 +369,8 @@ the page reads.
   (`showModalStatement`). A copy's own change unlinks it, and so does a switch of a linked tab
   into or out of modal logic (`leaveForSuite`: its node is the other suite's); Undo of either
   links the parked modal tab again and shows its statement.
-- **The linear suite's calls never get an ordinary session**: fill (`fillable`, `fill`), the
-  engine choice and the cut are kept to linear proofs; `setInvertible` calls
+- **The linear suite's calls never get an ordinary session**: the premises' trial
+  (`premises`), the engine choice and the cut are kept to linear proofs; `setInvertible` calls
   `ordinary_invert_all` for an ordinary one.
 - **The registry reads every linear mode deduxit's `about` lists** (the switches build six; a
   session pasted in cyclic linear logic or the Lambek calculus opens and is stored as one), and
@@ -388,7 +388,7 @@ the page reads.
 - **Goals are named by path** (the premise taken at each inference), never by number:
   deduxit numbers inferences in the order they are made, so a replay that leaves a step out
   renumbers every later one. Everything stored across a replay (the active goal, a note,
-  the hint ladder's key, the redo stack) is a path.
+  the hint's key, the redo stack) is a path.
 - **Undo per branch** retracts the step that opened the active goal and every step since
   in that step's premises (`retract`), then replays the rest from the sequent. A history
   entry whose premise was expanded without being in the history is a search's graft; it
@@ -470,9 +470,16 @@ board and the guide disagree, the guide holds.
   the word mark (a plain link to `/`, taken in place) reuse an empty proof before adding one.
 - **The toggles** (`Toggles.tsx`) stand at the stage's top left on the new tab view and on a
   proof: ordinary logic's method and logic, linear logic's logic, Mix and Affine, modal logic's
-  system, lambda's use. A change with steps still asks first (`ui.pendingCalculus`, "Restart the
-  proof"); the guide's view beside the present one is later work. Structural rules and
-  two-sided are the tools' "W C" and "Two-sided"; Cut is a tool.
+  system, lambda's use; ordinary logic's method is "Sequent", "Natural" or "Fitch" (the last two
+  one natural deduction proof, drawn as a tree or as Fitch's lines: `layout` in `Natural.tsx`),
+  and a net's view adds "Formulas" or "Compact" (`Settings.net`). **A change keeps the proof
+  where its steps hold** (`setCalculus` starts the sequent in the new calculus without the
+  invertible rules and plays the proof's steps on it, `replayOnto`); where one does not, the
+  proof keeps its calculus and the new one opens as a chip beside it, and the notice names the
+  step ("Step 1 does not hold in ILL, so ILL opened beside. LL keeps your proof."). No restart
+  warning is left. A replayed step is the same rule at the same positions, which deduxit checks
+  in the new calculus: it may make other premises there (a split in ILL), still a legal proof.
+  Structural rules and two-sided are the tools' "W C" and "Two-sided"; Cut is a tool.
 - **The rail's cells are views** (`cellsOf`): the proof (named by its calculus, LK, LL, NJ), its
   net once finished (one capsule with the proof), and the views added by "+ view"
   (`ui.added[proof]`: truth table, tableau, tableau by hand, a model), each a `ui.tab`. "+ view"
@@ -552,10 +559,12 @@ board and the guide disagree, the guide holds.
   pressed only while all three fields are its own) and a row per field (`LookRow`), each
   button with its tip and a line under them for a touch. The stage and the exports draw with
   it, and the stage refits when it changes (a look can add rows).
-- The split chooser sits under the goal's row, never beside a formula of it (the
-  formulas are what it is clicked on); in a compact window both popovers are a sheet
-  at its bottom. The witness chooser (`ui.witnessing`, a rule offered with `witness`) is
-  the cut chooser's twin: the term typed in the formulas' font, Apply, Leave open (`$1`),
+- **Every overlay of a goal stands over what it acts on** (`placeOver` in `Stage.tsx`, placed
+  again once it mounts, `placeSoon`): the rule popover over its formula, the goal's menu over
+  its `⊢`, a split's or a cut's premises over the goal (the cut's box over them); below where
+  the stage's top leaves no room; in a compact window each is a sheet at the stage's bottom,
+  above its controls. The witness chooser (`ui.witnessing`, a rule offered with `witness`) is
+  the cut's box's twin: the term typed in the formulas' font, Apply, Leave open (`$1`),
   and deduxit's refusal said in it (`witnessed` in the state returns it); it takes the
   selection's place, so digits typed in it pick no rule, and another formula picked closes it
   for that formula's rules.
@@ -582,12 +591,22 @@ board and the guide disagree, the guide holds.
   steps. On a phone the bar keeps one row, "Goal N" (the same place among the open ones), the
   count being the chip's state (`phone.spec.ts` measures the row with Cut in it).
 - Solid's narrowed accessor in `<Show>{(x) => …}` goes stale once its condition is false:
-  read it before the handler changes what the condition reads (the restart warning).
+  read it before the handler changes what the condition reads (the goal's menu: its goal is
+  read before the menu closes).
 
-- **The cut chooser** (`ui.cutting`, the dock's "Cut"): the formula typed in the tab's syntax
-  (ILL's in an intuitionistic tab), the goal's formulas clicked over to the premise proving
-  it, placed under the goal's row as the split chooser is; a parse error or a refusal stays
-  said in it (`cutProblem`), never as the goal's note.
+- **A split and a cut show the two premises they would make over the goal** (`PremisesView`
+  in `Goal.tsx`, `ui.split`, `ui.cutting`): each dashed, the goal's formulas as chips (a press
+  moves one to the other premise; in intuitionistic mode the goal's formula right of ⊢ is
+  written, never moved), each premise's own formulas beside them, and at the line's end the
+  button that applies the step, never greyed: every split is a legal step, and the page says
+  nothing of whether a premise can still be closed (the author's correction, 2026-11-25;
+  `split_passes` is no longer called). The own formulas are read off a trial that sends no
+  formula to the first premise (`premises` in the state: `apply`, or `cut`, then the opened
+  goals' formulas less the goal's). The cut's box (`ui.cutting`, the tools' Cut) takes the
+  formula in the tab's syntax (ILL's in an intuitionistic tab); once it reads (a trial 250 ms
+  after typing), the premises show; a text that is no formula or a refusal is said under the
+  box (`cutProblem`), never as the goal's note. A formula's button pressed on the stage moves
+  it as its chip does.
 - **Cut elimination** is each proof's `elim.tree` and `elim.net`, never stored, cleared by any
   change of the session (`show`): the proof or net reached (deduxit's `cuts`/`net_cuts`
   answer, its document sent back with each call), the steps taken with the drawing each
@@ -601,16 +620,52 @@ board and the guide disagree, the guide holds.
   cut links under its reading. Settings' "Elimination steps" is `cut.steps`.
 
 - **Every reason is a line in view under its keyword, never a tip** (`Why` in `ui.tsx`, class
-  `said-why`): a goal's note (a refusal, a verdict), the split chooser's Passes and Cannot
-  close, the stage's banner, the field's parse error, the status's verdict, a greyed export
+  `said-why`): a goal's note (a refusal, a verdict), a greyed rule's card, the stage's banner, the field's parse error, the status's verdict, a greyed export
   item (`.fn .off`), a greyed engine in Settings (`.why-not`), the greyed Mix switch, and the
   greyed Net tab once pressed (`.net-why`, until Tree is pressed). Tips
   follow no touch, and a reason is what the visitor needs to act. A `Said` with `more` keeps
   its rest behind a "more" button (the saturation refutation's); the keyword is a `span.kw`,
-  no longer a button. Tests read the line (`toContainText` on `.dock .note`), not `data-tip`.
-- **A refused step offers "Other rules", never Undo** (`Note.position`, the refused step's
-  formula): the refusal changed nothing, so Undo there would take back a good step. It opens
-  the same formula's rules popover (`openRules`).
+  no longer a button. Tests read the line (`toContainText` on `.goal-note`), not `data-tip`.
+- **The rule popover holds one button per rule of the formula's connective** (`RulePopover`
+  in `Goal.tsx`): deduxit's `rules` lists them, and each is tried on the goal with `apply`
+  (`rules` in the state; no state change, the invertible rules off, a linear split never
+  tried since every split is legal, a witness tried open); a refused one is greyed
+  (`aria-disabled`, still focusable) and its reason is the refusal's wording (`refusal`,
+  `ordinaryRefusal`). The pointer or the focus on a rule shows its card (`role=tooltip`): the
+  rule drawn, premises over conclusion (`ruleForm` of `RuleHint.tsx`, the hint tables), no name
+  and no sentence; a greyed rule's card adds the reason, and a press on it keeps the card
+  (`role=note`) until the next press, which is a touch screen's way to the reason. The digits
+  and the arrow keys act while the popover has the focus; a digit typed on the formula's button
+  before the rules arrive picks its rule then. The time from the press to the popover with its
+  greyed rules is a User Timing measure, `deduxit:rules`.
+- **The goal's menu at its `⊢`** (`GoalMenu` in `Goal.tsx`, `ui.goalMenu`; the `⊢`'s button is
+  `.gt` over the text `⊢` of the goal's group, at least a control's size): Close goal (key C)
+  with a caret for that search's settings, Prove apart (`openGoal`: a new chip whose `origin` is
+  the goal), "Use its proof" once that chip's proof is finished in the same calculus
+  (`apartFor`, `useApart`), and Go back on a goal marked as having no proof while the sequent
+  may still have one. Its buttons show their names with the guide on. A pack that bars the
+  search shows its reason in place of the close. Natural deduction has a `?` beside the goal
+  in its panel with Prove apart alone: the rules suite has no search.
+- **A proof made apart closes its goal by its steps** (`useApart`, `replayOnto`): its
+  sequent is the goal's as written, so the positions are the goal's; each step is applied
+  again on the goal's subtree (an ordinary proof's history entries by their principal, a linear
+  proof's actions), a goal the search closed there is closed by the search again, and a refusal
+  or a goal left open changes nothing and says so. The goal's path is kept under `APART` in
+  `engines`: the drawing greys its subtree as the search's, and the steps list marks them
+  "apart". deduxit's `fill` is no longer called.
+- **A goal with no proof is marked after each step** (`mark` in the state, run by an effect
+  of the stage on the session; Settings' "Mark goals that have no proof", on at first): a
+  search within `MARK_BUDGET` (a sixty-fourth of the tab's) on each open goal not asked before,
+  the answers cached for the visit by the goal's calculus and formulas, so a step asks only of
+  the goals it opened. A goal marked "none" has its line red with a cross at its end and its
+  `⊢`'s name says "no proof"; a sequent whose root was marked "none" gets the verdict "No
+  proof" (its chip's cross). Nothing is marked while a pack bars the search. The marking's
+  time is a User Timing measure, `deduxit:mark`.
+- **An open goal has a dashed lapis line over it** (`.goal-line`, two pixels on the screen at
+  every zoom through `--zoom` on the world); deduxit's `⋮` over it is hidden (`.goal-dots`).
+- **The formulas' buttons lie under the drawing** (`.hits` before `.drawing` in the world,
+  the drawing `pointer-events: none`): a chosen formula's ground shows through the drawing's
+  empty ground, under its text. Nothing on the drawing itself takes the pointer.
 - **Go back** (`prover.goBack`, `wayBack` in `steps.ts`) is offered beside the verdict of a goal
   the search refuted that is not the sequent itself, unless the sequent's own verdict (kept in
   `Proof.verdict`) is that it has none. It asks each goal below, nearest first, whether it
@@ -628,7 +683,7 @@ board and the guide disagree, the guide holds.
 - **A goal's formula is shown as it reads** (`shown` in `src/lib/words.ts`): in
   intuitionistic mode deduxit's `reading` (a hypothesis `A ⊸ B`), which its `text` is too, else
   the one-sided `text` in signs. The formulas' buttons are named so (`A ⊸ B, formula 2 of
-  goal 1`), and the rules popover and the split chooser's lists write them so; a step still
+  goal 1`), and the rules popover and the premises of a split write them so; a step still
   names a formula by its position.
 - **An intuitionistic sequent is typed in ILL's syntax**: deduxit reads intuitionistic text
   strictly (a `~`, `^`, `par`, `|`, `?` or `bot` refused with a hint), so the page reads the
@@ -644,9 +699,10 @@ board and the guide disagree, the guide holds.
 - **Light dismiss** (`App.tsx`, one capture `pointerdown` on the document): a press outside
   what is open closes it as Escape does: a panel or dialog (`ui.menu`, inside: `.menu`,
   `.dialog`, and any `[aria-expanded=true]` toggle but a formula's; the Settings page is a
-  page and only its own button leaves it), More's row (inside: `.tools`), the restart warning
-  (inside: it and the toggles), and the rule popover or split chooser (inside: the stage's
-  `.pop` and every formula's button, by which a rule or a side is chosen); the tour's caption
+  page and only its own button leaves it), More's row (inside: `.tools`), the goal's menu
+  (inside: it and the `⊢`s), and the rule popover or a split's premises (inside: the stage's
+  `.pop`, `.premises` and every formula's button, by which a rule or a side is chosen); the
+  cut's box keeps the tools inside too; the tour's caption
   is inside everything. A press on the stage that closes something does nothing else: its
   `pointerdown` stops there (no pan) and its `click` is swallowed (no formula picked, no stage
   button pressed); a press on a button of the frame closes and acts. A toggle must carry
@@ -665,9 +721,17 @@ board and the guide disagree, the guide holds.
   lack those steps), and undo passes the view's `invertible` to `retract` of `ordinary.ts`
   less the goals a search grafted (the visitor's choice whatever rule the graft starts with). Its tip (`INVERTIBLE_TIP`) says what an invertible rule is and why
   applying one loses no proof; tips never follow a touch, so the line under it says what the
-  page does. The hint ladder's first rung reads deduxit's judgement of the hinted rule
-  (`Hint.invertible`), not a list of names, and with the switch on says that the invertible
-  rules are done.
+  page does. With the switch on, the hint points past the invertible rules: deduxit's hint
+  starts after them.
+- **The hint points at the next press from where the visitor is** (`pointer` in `Stage.tsx`;
+  `hint` in `App.tsx` asks deduxit once per goal, `ui.ladder`): the formula to press; with that
+  formula chosen, the rule to take (ringed in the popover); with its split open, the chips to
+  move and then the apply button; it takes no step and nothing back. The ring is always shown;
+  the words are a line over the bottom box with the guide on (and in the live region), and
+  where the search finds no proof the line says so and to undo whatever the guide.
+- **The guide's sentence** (`GuideLine` in `Stage.tsx`): with the guide on, one sentence over the
+  bottom box says what to press next on a proof by hand, one action each; none where the hint's
+  line stands.
 - **The Two-sided switch** is a tool ("Two-sided", `Frame.tsx`), a setting of the tab (`Settings.twoSided`, off by default, stored with
   the others), not of the proof: it changes no session and restarts nothing. While it is on,
   `viewJson` adds `view.classical: "two"` to `json()`, the stage's `drawSettings` and the
@@ -677,7 +741,7 @@ board and the guide disagree, the guide holds.
 - **One action that changes a proof at a time** (`guard`): each reads the session, waits on
   the worker and shows the answer, so a second begun meanwhile would build on a session
   the first replaces. An action asked for while one runs does nothing; the tools wait on
-  `busy`, and the dock shows "Stop the search" instead of the close.
+  `busy`, and Close all turns into Stop while a search runs.
 
 ## The workspace of linked tabs (`src/lib/workspace.ts`, `src/islands/Workspace.tsx`)
 
@@ -972,20 +1036,13 @@ board and the guide disagree, the guide holds.
   from the second has at least two provable problems at level 3 or above. Every unprovable
   problem has a lesson (the schema refuses one without), so a store of problems to offer is
   the provable ones alone.
-- **A goal opens in a new chip** (`openGoal`, the dock's arrow): its formulas as the field
-  reads them (`sequentText`, two-sided where they have sides, each formula as its reading,
-  deduxit's `reading`, the dual of its one-sided `text` only where there is none), in the same
-  calculus, the new
-  proof's `origin` the tab and the goal's path (kept in the shelf). **A goal is filled from
-  a tab** (`fill`, the dock's "Fill from <its sequent>") when that tab's proof is finished and its
-  sequent has the goal's formulas in any order (`fillable`: `keyOf` of each, the other
-  tab's from a `start` of its sequent, cached by mode and sequent); deduxit's `fill` carries
-  the proof over and checks it in the goal's calculus, and a refusal is the goal's note
-  (`fillRefusal`). The graft is named like a search's, `engines[path] = "tab:<sequent>"` (the
-  drawing's label, the step list), and replays from its own inferences, never by the search
-  (`own` on its action, set by `actionsFor` from that name), so undo elsewhere keeps it. A
-  tab is named by its sequent as the tab shows it, cut to `SHORT` characters (`short`),
-  never by its place in the row, which changes as tabs close.
+- **A goal opens in a new chip** (`openGoal`, the goal menu's Prove apart): its formulas as
+  the field reads them (`sequentText`, two-sided where they have sides, each formula as its
+  reading, deduxit's `reading`, the dual of its one-sided `text` only where there is none), in
+  the same calculus, the new proof's `origin` the tab and the goal's path (kept in the shelf).
+  A stored graft named `tab:<sequent>` (a fill of the old page) still replays from its own
+  inferences (`own` on its action, set by `actionsFor`). A tab is named by its sequent as the
+  tab shows it, cut to `SHORT` characters (`short`), never by its place in the row.
 
 ## The engines (`src/lib/engines.ts`)
 
@@ -1013,8 +1070,8 @@ board and the guide disagree, the guide holds.
 - **The tour** (`Tour.tsx`) runs on `ui.tour`, from the tools with the guide on: each stop's
   `act` is performed once, on the way forward, through the state's own actions; the caption
   takes the focus, says each stop in the live region, and marks what it points at with
-  `data-tour-spot` (`SPOTS`: the chosen chip, the stage, a formula, the dock, the tools). Its
-  texts are the old page's until the tour is written again.
+  `data-tour-spot` (`SPOTS`: the chosen chip, the stage, a formula, the active goal's `⊢`, the
+  tools). Its texts (`src/content/tour/`) are the new page's.
 - **About** is a dialog from the new tab view and the Settings page: its text, deduxit's version
   from `about`, every licence the site serves (linked, `tests/about.spec.ts` fetches each) and
   the line that GitHub logs visitors' addresses, which links the privacy page. Its text links
@@ -1187,15 +1244,11 @@ board and the guide disagree, the guide holds.
   the world's transform follows the camera, and a glide may be under way; measured at the
   camera's scale, a fitted goal's buttons on a phone lay 30 to 90 pixels off
   their formulas. The sizes a button must reach on the screen still come from `camera().k`.
-- **The dock keeps clear of the stage's controls**: where it fits neither above the goal nor
-  below it without running under them (a short stage: a phone), the goal moves
-  down until the dock fits above it, if the goal then still clears the controls
-  (`phone.spec.ts`).
 - **The world's transform is a render effect** (`createRenderEffect` in `Stage.tsx`): Solid
   1.x runs the effects of one change in the order of the signal's readers, and an effect that
-  ran is put last among them, so the dock's effect, which reads the goal's place on the
+  ran is put last among them, so an overlay's effect, which reads the goal's place on the
   screen, came to run before the transform's and trailed the goal by a move during a drag. A
   render effect runs before every effect. `phone.spec.ts` checks after each move of a drag
-  that the dock lies right above or below the goal.
+  that the goal's line stands right over the goal.
 - In the dev shell, `e2e` drops the host's `LD_LIBRARY_PATH`, which breaks nixpkgs'
   Chromium; a scratch script that launches Chromium needs `env -u LD_LIBRARY_PATH` too.
