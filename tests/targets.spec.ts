@@ -39,7 +39,7 @@ import {
 async function tooSmall(page: Page, least: number): Promise<string[]> {
   return page.evaluate((least) => {
     const controls = document.querySelectorAll<HTMLElement>(
-      "button, input:not([type=checkbox]), select, textarea, summary, a[href], [role=tab], [role=radio], label.sw, label.chip",
+      "button, input:not([type=checkbox]), select, textarea, summary, a[href], [role=tab], [role=radio], label.sw, label.kripke-chip",
     );
     const small: string[] = [];
     const drawn = [...document.querySelectorAll<HTMLElement>(".hits button")].map((b) => ({

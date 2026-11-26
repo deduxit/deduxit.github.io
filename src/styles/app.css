@@ -382,7 +382,9 @@ kbd {
 .kripke-chip {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: var(--spacing-1);
+  min-width: var(--size-button);
   min-height: var(--size-button);
   padding: 0 var(--spacing-2);
   border: var(--line) solid var(--color-line);

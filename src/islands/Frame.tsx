@@ -683,8 +683,6 @@ function Tool(props: {
   soon?: boolean;
   class?: string;
   onClick: () => void;
-  /** Closes More's row: a tool pressed there has done what the visitor opened it for. */
-  closeMore?: () => void;
 }) {
   return (
     <button
@@ -701,10 +699,7 @@ function Tool(props: {
       data-key={props.action ? KEY_NAMES[props.action] : undefined}
       disabled={props.disabled}
       tabindex={-1}
-      onClick={() => {
-        props.onClick();
-        if (props.rare) props.closeMore?.();
-      }}
+      onClick={() => props.onClick()}
     >
       {props.icon}
       <span class="tool-name" aria-hidden="true">
@@ -751,6 +746,11 @@ export function Tools(props: { prover: Prover; ui: Ui; hint: () => void; tour: (
       data-more={ui.more ? "" : undefined}
       ref={toolbar}
       onKeyDown={(event) => rove(event, true)}
+      // A tool pressed closes More's row: it has done what the visitor opened the row for.
+      onClick={(event) => {
+        const pressed = (event.target as Element).closest("[data-rove]");
+        if (pressed && !pressed.classList.contains("more")) setUi("more", false);
+      }}
       onFocusIn={(event) => {
         for (const b of toolbar.querySelectorAll<HTMLElement>("[data-rove]"))
           b.tabIndex = b === event.target ? 0 : -1;
@@ -782,7 +782,6 @@ export function Tools(props: { prover: Prover; ui: Ui; hint: () => void; tour: (
             name="Steps"
             action="steps"
             rare
-            closeMore={() => setUi("more", false)}
             icon={<ListOrdered aria-hidden="true" />}
             disabled={!proving()}
             expanded={ui.menu === "steps"}
@@ -822,7 +821,6 @@ export function Tools(props: { prover: Prover; ui: Ui; hint: () => void; tour: (
             name="The search's settings"
             class="caret"
             rare
-            closeMore={() => setUi("more", false)}
             icon={<ChevronDown aria-hidden="true" />}
             expanded={ui.menu === "search"}
             disabled={!proving()}
@@ -834,7 +832,6 @@ export function Tools(props: { prover: Prover; ui: Ui; hint: () => void; tour: (
             <Tool
               name="W C, weakenings and contractions"
               rare
-              closeMore={() => setUi("more", false)}
               icon={
                 <span class="tool-sign" aria-hidden="true">
                   W C
@@ -854,7 +851,6 @@ export function Tools(props: { prover: Prover; ui: Ui; hint: () => void; tour: (
             <Tool
               name="Cut"
               rare
-              closeMore={() => setUi("more", false)}
               icon={<Scissors aria-hidden="true" />}
               disabled={!proving() || !!proof()?.view?.complete || busy()}
               pressed={ui.cutting !== null}
@@ -876,7 +872,6 @@ export function Tools(props: { prover: Prover; ui: Ui; hint: () => void; tour: (
               <Tool
                 name="Two-sided"
                 rare
-                closeMore={() => setUi("more", false)}
                 icon={
                   <span class="tool-sign m" aria-hidden="true">
                     ⊢⊣
@@ -896,7 +891,6 @@ export function Tools(props: { prover: Prover; ui: Ui; hint: () => void; tour: (
           name="Export"
           action="export"
           rare
-          closeMore={() => setUi("more", false)}
           icon={<Download aria-hidden="true" />}
           disabled={!proof()?.session || natural()}
           expanded={ui.menu === "export"}
@@ -906,7 +900,6 @@ export function Tools(props: { prover: Prover; ui: Ui; hint: () => void; tour: (
           name="Import"
           action="import"
           rare
-          closeMore={() => setUi("more", false)}
           icon={<Upload aria-hidden="true" />}
           expanded={ui.menu === "import"}
           onClick={() => toggle("import")}
@@ -917,7 +910,6 @@ export function Tools(props: { prover: Prover; ui: Ui; hint: () => void; tour: (
           <Tool
             name="Learn"
             rare
-            closeMore={() => setUi("more", false)}
             soon
             icon={<GraduationCap aria-hidden="true" />}
             onClick={() => say("Learn is coming soon.")}
@@ -925,7 +917,6 @@ export function Tools(props: { prover: Prover; ui: Ui; hint: () => void; tour: (
           <Tool
             name="Practice"
             rare
-            closeMore={() => setUi("more", false)}
             soon
             icon={<Dumbbell aria-hidden="true" />}
             onClick={() => say("Practice is coming soon.")}
