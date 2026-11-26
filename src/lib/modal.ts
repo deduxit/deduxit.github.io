@@ -65,6 +65,43 @@ export const CONDITION_WORDS: Readonly<Record<Condition, string>> = {
   euclidean: "sees only worlds that see each other",
 };
 
+/** The five conditions in the order the toggles show them. */
+export const CONDITIONS: readonly Condition[] = [
+  "serial",
+  "reflexive",
+  "symmetric",
+  "transitive",
+  "euclidean",
+];
+
+/** Every condition that follows from the ones given, in the toggles' order. */
+export function closure(given: readonly Condition[]): Condition[] {
+  const has = new Set(given);
+  // Each rule adds what its conditions imply; four rounds reach every consequence.
+  for (let round = 0; round < 4; round += 1) {
+    if (has.has("reflexive")) has.add("serial");
+    if (has.has("symmetric") && has.has("transitive")) has.add("euclidean");
+    if (has.has("symmetric") && has.has("euclidean")) has.add("transitive");
+    if (has.has("reflexive") && has.has("euclidean")) {
+      has.add("symmetric");
+      has.add("transitive");
+    }
+    if (
+      has.has("serial") &&
+      has.has("symmetric") &&
+      (has.has("transitive") || has.has("euclidean"))
+    )
+      has.add("reflexive");
+  }
+  return CONDITIONS.filter((c) => has.has(c));
+}
+
+/** The system whose frames meet exactly the conditions given and what follows from them. */
+export function systemOf(given: readonly Condition[]): string {
+  const want = closure(given).join(" ");
+  return SYSTEMS.find((s) => closure(s.conditions).join(" ") === want)?.name ?? "K";
+}
+
 /** A system as its option in the chooser reads: its name and its conditions. */
 export function systemWords(name: string): string {
   const system = SYSTEMS.find((s) => s.name === name);

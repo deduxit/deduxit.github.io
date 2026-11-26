@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import {
   addWorld,
   atomsOf,
+  closure,
   type Evaluation,
   type ModalOutcome,
   evaluationWords,
@@ -15,7 +16,9 @@ import {
   removeWorld,
   rootSequent,
   SYSTEM_NAMES,
+  SYSTEMS,
   setAtoms,
+  systemOf,
   systemWords,
   toggleArrow,
 } from "./modal";
@@ -36,6 +39,14 @@ describe("the systems", () => {
     const modal = about.suites.find((s) => s.suite === "modal");
     expect(modal?.parameters[0]?.values).toEqual(SYSTEM_NAMES);
     expect(modal?.parameters[0]?.default).toBe("K");
+  });
+
+  it("are reached from their own conditions, and from what follows from them", () => {
+    for (const s of SYSTEMS) expect(systemOf(s.conditions), s.name).toBe(s.name);
+    expect(systemOf(["reflexive", "euclidean"])).toBe("S5");
+    expect(systemOf(["serial", "symmetric", "transitive"])).toBe("S5");
+    expect(closure(["reflexive"])).toEqual(["serial", "reflexive"]);
+    expect(systemOf([])).toBe("K");
   });
 
   it("each name their conditions", () => {
