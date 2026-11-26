@@ -32,6 +32,7 @@ import {
   transforms,
   type Visit,
   witnessing,
+  countermodeling,
 } from "./states";
 
 /** The rule sets run: WCAG 2.0, 2.1 and 2.2 at A and AA, and axe's best practices. */
@@ -127,7 +128,8 @@ const WALKS: readonly (readonly [string, (page: Page, visit: Visit) => Promise<v
   ["lambda-terms", lambdaing],
   ["course packs", packing],
   ["natural deduction", deducing],
-  ["the witness chooser", witnessing],
+  ["the witness's box", witnessing],
+  ["the countermodel view of a first-order sequent", countermodeling],
   ["the cut chooser and the elimination", cutting],
   ["the stage in each math font", typeset],
 ];

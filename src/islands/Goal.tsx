@@ -51,18 +51,103 @@ function RuleDrawn(props: { rule: string }) {
   );
 }
 
+/** The witness a rule pressed in the popover asks for (∃R, ∀L), as the box beside it shows it. */
+export interface WitnessBox {
+  readonly rule: string;
+  /** The quantifier's variable, which the box's label names: `y =`. */
+  readonly variable: string;
+  readonly text: string;
+  /** What deduxit said of the term last applied, under the field. */
+  readonly said: Said | null;
+  readonly busy: boolean;
+  readonly input: (text: string) => void;
+  /** Applies the rule with the term typed, or with the witness left open. */
+  readonly apply: (open: boolean) => void;
+}
+
+/** The variable a quantified formula binds, as written (`∃y. q(y)` binds `y`), or undefined. */
+export const boundVariable = (formula: string): string | undefined =>
+  /^\s*[∀∃]\s*([^\s.,()]+)/u.exec(formula)?.[1];
+
+/**
+ * The box in the popover for the witness of ∃R or ∀L: the variable, the term typed and a button
+ * that applies the rule with it, and `$1`, which leaves the witness open for an axiom or the
+ * search to fill. What deduxit refused stands under the field.
+ */
+function Witness(props: { box: WitnessBox }) {
+  const box = () => props.box;
+  return (
+    <form
+      class="witness"
+      onSubmit={(event) => {
+        event.preventDefault();
+        if (box().text.trim() !== "" && !box().busy) box().apply(false);
+      }}
+    >
+      <div class="witness-row">
+        <div class="witness-field" data-bad={box().said ? "" : undefined}>
+          <label class="m witness-var" for="witness-term">
+            {box().variable} =
+          </label>
+          <input
+            id="witness-term"
+            class="m"
+            type="text"
+            spellcheck={false}
+            autocomplete="off"
+            aria-label={`${box().variable} =, the witness for ${box().rule}`}
+            aria-invalid={box().said ? "true" : undefined}
+            aria-describedby={box().said ? "witness-said" : undefined}
+            value={box().text}
+            onInput={(event) => box().input(event.currentTarget.value)}
+          />
+          <button
+            type="submit"
+            class="witness-go"
+            aria-label={`Apply ${box().rule} with this term for ${box().variable}`}
+            data-tip={`Apply ${box().rule} with this term for ${box().variable}`}
+            aria-disabled={box().text.trim() === "" || box().busy ? "true" : undefined}
+          >
+            <Sign name="enter" />
+          </button>
+        </div>
+        <button
+          type="button"
+          class="witness-open m"
+          aria-label="$1, leave the witness open"
+          data-tip="Leave the witness open: an axiom or the search fills it"
+          aria-disabled={box().busy ? "true" : undefined}
+          onClick={() => !box().busy && box().apply(true)}
+        >
+          $1
+        </button>
+      </div>
+      <Show when={box().said}>
+        {(said) => (
+          <p id="witness-said" class="said-why" role="alert">
+            <span class="kw">{said().keyword}.</span> {said().sentence}
+          </p>
+        )}
+      </Show>
+    </form>
+  );
+}
+
 /**
  * The rule popover at a formula: one button per rule of its connective, side by side, a rule that
  * does not apply to this goal greyed among them. The pointer or the keyboard on a rule shows its
  * card, the rule drawn, and for a greyed rule the reason under it; a press on a greyed rule shows
  * the card until the next press, which a touch screen, having no hover, needs. The arrow keys move
- * along the row; the digits, which pick a rule, are the stage's.
+ * along the row; the digits, which pick a rule, are the stage's. A rule that takes a witness,
+ * pressed, stays pressed and opens the witness's box beside the row.
  */
 export function RulePopover(props: {
   formula: string;
   offered: readonly Candidate[] | null;
   /** The rule the hint points at, ringed. */
   hinted: string | undefined;
+  /** The witness box of the rule pressed, or null. */
+  witness: WitnessBox | null;
   choose: (rule: Candidate) => void;
   ref: (el: HTMLDivElement) => void;
 }) {
@@ -124,6 +209,7 @@ export function RulePopover(props: {
                       type="button"
                       class="rule m"
                       data-hinted={props.hinted === rule.rule ? "" : undefined}
+                      aria-pressed={rule.witness ? props.witness?.rule === rule.rule : undefined}
                       aria-disabled={rule.refused ? "true" : undefined}
                       aria-label={`${rule.rule}${rule.refused ? ", does not apply" : ""}`}
                       aria-describedby={rule.refused ? `rule-why-${i()}` : undefined}
@@ -147,6 +233,7 @@ export function RulePopover(props: {
                 )}
               </For>
             </fieldset>
+            <Show when={props.witness}>{(box) => <Witness box={box()} />}</Show>
             <Show when={carded() !== null ? offered()[carded() as number] : undefined}>
               {(rule) => (
                 <div

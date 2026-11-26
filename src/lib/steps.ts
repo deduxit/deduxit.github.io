@@ -527,9 +527,14 @@ export interface Replayed extends Played {
 /**
  * A recorded witness or formula in the session as it stands: each eigenvariable written by its
  * step's path (`{1.0}`) as the letter that step took, undefined where no ∀R or ∃L step stands
- * at the path.
+ * at the path. With `base`, the actions were recorded on another proof and are played on the goal
+ * at `base`: their paths start there.
  */
-function lettered(text: string, played: Played): string | undefined {
+export function lettered(
+  text: string,
+  played: Pick<Played, "session" | "view">,
+  base: Path = [],
+): string | undefined {
   const where = paths(played.session);
   const letter = new Map<string, string>();
   for (const { inference, term } of played.view.opened ?? []) {
@@ -540,7 +545,8 @@ function lettered(text: string, played: Played): string | undefined {
   }
   let missing = false;
   const out = text.replace(BY_PATH, (_, path: string) => {
-    const name = letter.get(path);
+    const full = [...base, ...(path === "" ? [] : path.split(".").map(Number))];
+    const name = letter.get(full.join("."));
     if (name === undefined) missing = true;
     return name ?? "";
   });

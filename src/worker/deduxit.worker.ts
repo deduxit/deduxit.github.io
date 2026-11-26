@@ -61,6 +61,7 @@ const calls = {
   ordinary_draw: deduxit.ordinary_draw,
   ordinary_export: deduxit.ordinary_export,
   ordinary_model: deduxit.ordinary_model,
+  ordinary_structure: deduxit.ordinary_structure,
   ordinary_model_drawing: deduxit.ordinary_model_drawing,
   ordinary_read: deduxit.ordinary_read,
   ordinary_model_certificate: deduxit.ordinary_model_certificate,

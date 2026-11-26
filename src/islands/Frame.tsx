@@ -59,6 +59,8 @@ import { ONE_WORLD } from "../lib/kripke";
 import square from "../logo/square-light.svg?raw";
 import wordmark from "../logo/wordmark-band.svg?raw";
 import type { Proof, Prover } from "./state";
+import { blank, isFirstOrder, signatureOf } from "../lib/structure";
+import { redoStructure, undoStructure } from "./Structure";
 import { Toggles } from "./Toggles";
 import { useWorkspace } from "./Workspace";
 import { compact, type Ui, type View, Why } from "./ui";
@@ -176,7 +178,9 @@ export interface Cell {
 }
 
 /** The views a classical sequent may add (its table, tableau, model, tableau by hand), with their cells. */
-const ADDED: Readonly<Record<Exclude<View, "tree" | "net">, { short: string; name: string }>> = {
+const ADDED: Readonly<
+  Record<Exclude<View, "tree" | "net" | "countermodel">, { short: string; name: string }>
+> = {
   table: { short: "TT", name: "Truth table, TT" },
   tableau: { short: "T", name: "Tableau, T" },
   written: { short: "TH", name: "Tableau by hand, TH" },
@@ -213,6 +217,18 @@ export function cellsOf(prover: Prover, ui: Ui, proof: Proof | undefined): reado
     const added = ADDED[view as keyof typeof ADDED];
     if (added && (view === "model" || decidable(prover, proof))) own.push({ view, ...added });
   }
+  // The countermodel view: a modal sequent's once it is not valid, another's once opened. A
+  // structure the visitor started from one element is a model of their own, M.
+  const counter = ui.ui.counter;
+  if (
+    (proof.calculus.suite === "modal" && proof.modal?.outcome?.verdict === "not_valid") ||
+    counter?.proof === proof.id
+  )
+    own.push(
+      counter?.proof === proof.id && counter.kind === "structure" && !counter.found
+        ? { view: "countermodel", short: "M", name: "A model of your own, M" }
+        : { view: "countermodel", short: "⊭", name: "Countermodel, ⊭" },
+    );
   return own;
 }
 
@@ -409,6 +425,31 @@ export function Rail(props: { prover: Prover; ui: Ui }) {
     if (view === "model") {
       const session = p.session;
       const c = p.calculus;
+      // A first-order sequent's own model is a finite structure, from one element.
+      if (
+        session &&
+        isOrdinary(session) &&
+        c.suite === "ordinary" &&
+        isFirstOrder(session.sequent)
+      ) {
+        const signature = signatureOf(session.sequent);
+        setUi({
+          counter: {
+            kind: "structure",
+            proof: p.id,
+            sequent: JSON.stringify(session.sequent),
+            logic: c.logic,
+            signature,
+            found: false,
+            now: blank(signature),
+            past: [],
+            future: [],
+          },
+          tab: "countermodel",
+          menu: null,
+        });
+        return;
+      }
       if (session && isOrdinary(session) && c.suite === "ordinary")
         setUi("modelSeed", {
           model: ONE_WORLD,
@@ -756,6 +797,26 @@ export function Tools(props: { prover: Prover; ui: Ui; hint: () => void; tour: (
           b.tabIndex = b === event.target ? 0 : -1;
       }}
     >
+      <Show when={ui.tab === "countermodel" && ui.counter?.kind === "structure" && ui.counter}>
+        {(c) => (
+          <fieldset class="tool-group" aria-label="Changes">
+            <Tool
+              name="Undo"
+              action="undo"
+              icon={<Undo2 aria-hidden="true" />}
+              disabled={c().kind !== "structure" || c().past.length === 0}
+              onClick={() => undoStructure(props.ui)}
+            />
+            <Tool
+              name="Redo"
+              action="redo"
+              icon={<Redo2 aria-hidden="true" />}
+              disabled={c().kind !== "structure" || c().future.length === 0}
+              onClick={() => redoStructure(props.ui)}
+            />
+          </fieldset>
+        )}
+      </Show>
       <Show when={proving() || ui.tab === "tree"}>
         <fieldset class="tool-group" aria-label="Steps">
           <Tool

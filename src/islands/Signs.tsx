@@ -22,6 +22,10 @@ const PATHS = {
   enter: "M14.5 4v5a2 2 0 0 1-2 2H4M7 8l-3 3 3 3",
   /** No proof: a cross. */
   cross: "M5 5l8 8M13 5l-8 8",
+  /** Add: a plus. */
+  plus: "M9 4v10M4 9h10",
+  /** Take away: a minus. */
+  minus: "M4.5 9h9",
 } as const;
 
 /** A sign's name. */

@@ -26,7 +26,14 @@ import { APART, engineLabel } from "../lib/engines";
 import { keyAction } from "../lib/keys";
 import { type Box, spread } from "../lib/gap";
 import { type CutShown, failure, type LinkShown, type MathFont } from "../lib/deduxit";
-import { countermodelOf, isOrdinary, type OrdinaryOutcome, sequentText } from "../lib/ordinary";
+import {
+  countermodelOf,
+  isOrdinary,
+  type OrdinaryOutcome,
+  sequentText,
+  structureOf,
+} from "../lib/ordinary";
+import { complete, signatureOf } from "../lib/structure";
 import { goalAt, paths, searchMade, subtree } from "../lib/steps";
 import { intuitionistic, isNatural } from "../lib/suites";
 import { formulaText, lost, type Said, shown, stepLine } from "../lib/words";
@@ -42,18 +49,19 @@ import {
   type Settings,
   viewJson,
 } from "./state";
-import { type Chip, EngineChip, GoalMenu, PremisesView, RulePopover } from "./Goal";
+import { boundVariable, type Chip, EngineChip, GoalMenu, PremisesView, RulePopover } from "./Goal";
 import { Sign } from "./Signs";
 import { ModelFigure } from "./Countermodel";
 import { CustomPanel } from "./Custom";
 import { ModelView } from "./ModelCheck";
+import { lastEvaluated, StructureView, structureWords } from "./Structure";
 import { TableauCheckView } from "./TableauCheck";
 import { LambdaPanel } from "./Lambda";
-import { ModalPanel } from "./Modal";
+import { ModalCountermodel, ModalPanel } from "./Modal";
 import { type Method, MethodView } from "./Methods";
 import { NaturalView } from "./Natural";
 import { hinted } from "./RuleHint";
-import { compact, ladderKey, token, type Ui, Why } from "./ui";
+import { compact, type Counter, ladderKey, token, type Ui, Why } from "./ui";
 
 /** A formula's button over the drawing, in the drawing's own pixels. */
 interface Hit {
@@ -871,9 +879,6 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
         const gap = token("--spacing-2");
         premisesEl.style.top = `${popover.offsetTop - premisesEl.offsetHeight - gap}px`;
       } else if (under) placeOver(popover, under);
-    } else if (popover && ui.witnessing) {
-      const goal = goalOf(ui.witnessing.goal);
-      if (goal) placeOver(popover, goal);
     } else if (popover && ui.selected && !ui.split) {
       const formula = stage.querySelector(
         `.fb[data-goal="${ui.selected.goal}"][data-position="${ui.selected.position}"]`,
@@ -1061,16 +1066,14 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
     const spot = ui.selected;
     if (!spot || rule.refused) return;
     if (rule.witness) {
+      // The rule stays pressed, its witness's box beside it in the popover.
       setWitnessText("");
       setWitnessSaid(null);
-      setUi({
-        witnessing: { goal: spot.goal, position: spot.position, rule: rule.rule },
-        selected: null,
-        offered: null,
-      });
-      queueMicrotask(() => popover?.querySelector<HTMLInputElement>("input")?.focus());
+      setUi("witnessing", { goal: spot.goal, position: spot.position, rule: rule.rule });
+      queueMicrotask(() => popover?.querySelector<HTMLInputElement>(".witness input")?.focus());
       return;
     }
+    setUi("witnessing", null);
     if (rule.split) {
       setUi({ split: { ...spot, rule: rule.rule, left: [], own: null }, offered: null });
       const own = await props.prover.premises(spot.goal, {
@@ -1129,7 +1132,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
       setUi("live", `${said.keyword}. ${said.sentence}`);
       return;
     }
-    setUi("witnessing", null);
+    setUi({ witnessing: null, selected: null, offered: null });
     setWitnessText("");
     announce(true, w.rule);
   }
@@ -1234,9 +1237,11 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
         setUi("cutting", null);
         event.preventDefault();
       } else if (event.key === "Escape" && ui.witnessing) {
-        const w = ui.witnessing;
+        // The box closes; the rule that opened it keeps the focus, the popover open.
+        const rule = ui.witnessing.rule;
         setUi("witnessing", null);
-        focusOn(`.fb[data-goal="${w.goal}"][data-position="${w.position}"]`);
+        const buttons = [...stage.querySelectorAll<HTMLButtonElement>(".rules-pop button.rule")];
+        buttons.find((b) => b.textContent === rule)?.focus();
         event.preventDefault();
       } else if (event.key === "Escape" && (ui.selected || ui.split)) {
         const spot = ui.split ?? ui.selected;
@@ -1330,6 +1335,24 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
       ? ui.modelSeed
       : null;
   };
+  /** The countermodel view `⊭` the stage shows in the drawing's place, or null. */
+  const counterShown = (): Counter | null => {
+    if (ui.tab !== "countermodel") return null;
+    const p = proof();
+    // A modal sequent's countermodel is its outcome's, kept with the proof.
+    // While the system's change is decided again there is no outcome: the view stays.
+    if (p?.calculus.suite === "modal")
+      return !p.modal?.outcome || p.modal.outcome.verdict === "not_valid"
+        ? { kind: "modal", proof: p.id }
+        : null;
+    const c = ui.counter;
+    return c && c.proof === p?.id ? c : null;
+  };
+  /** The Kripke model of a propositional sequent the countermodel view shows, or null. */
+  const kripkeShown = () => {
+    const c = counterShown();
+    return c?.kind === "kripke" ? c.seed : null;
+  };
   /** The classical sequent whose tableau the visitor writes by hand in the drawing's place, or null. */
   const writtenShown = () => {
     const session = proof()?.session;
@@ -1343,10 +1366,16 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
       () => proof()?.id,
       () => {
         if (ui.tab === "model" || ui.tab === "written") setUi("tab", "tree");
+        if (ui.tab === "countermodel" && !counterShown()) setUi("tab", "tree");
       },
       { defer: true },
     ),
   );
+  // The countermodel view gives way to the tree once there is none to show (a modal sequent
+  // decided valid in another system).
+  createEffect(() => {
+    if (ui.tab === "countermodel" && !counterShown()) setUi("tab", "tree");
+  });
   // The table or the tableau gives way to the tree when the proof changes under it (a key or
   // the band acted on it: the visitor sees what changed) or when the proof shown has none.
   createEffect(
@@ -1365,19 +1394,21 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
       aria-label="The proof"
       ref={stage}
       data-method={
-        proof()?.calculus.suite === "rules"
-          ? "custom"
-          : proof()?.calculus.suite === "modal"
-            ? "modal"
-            : proof()?.calculus.suite === "lambda"
-              ? "lambda"
-              : deduced()
-                ? "natural"
-                : modelShown()
-                  ? "model"
-                  : writtenShown()
-                    ? "written"
-                    : (method() ?? undefined)
+        counterShown()
+          ? "countermodel"
+          : proof()?.calculus.suite === "rules"
+            ? "custom"
+            : proof()?.calculus.suite === "modal"
+              ? "modal"
+              : proof()?.calculus.suite === "lambda"
+                ? "lambda"
+                : deduced()
+                  ? "natural"
+                  : modelShown()
+                    ? "model"
+                    : writtenShown()
+                      ? "written"
+                      : (method() ?? undefined)
       }
     >
       <div class="world" ref={world} data-glide={glide() ? "" : undefined}>
@@ -1526,6 +1557,15 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
         {(m) => <MethodView prover={props.prover} method={m()} ui={props.ui} />}
       </Show>
       <Show when={modelShown()}>{(seed) => <ModelView prover={props.prover} seed={seed()} />}</Show>
+      <Show when={counterShown()?.kind === "structure"}>
+        <StructureView prover={props.prover} ui={props.ui} />
+      </Show>
+      <Show when={kripkeShown()}>
+        {(seed) => <ModelView prover={props.prover} seed={seed()} />}
+      </Show>
+      <Show when={counterShown()?.kind === "modal"}>
+        <ModalCountermodel prover={props.prover} />
+      </Show>
       <Show when={writtenShown()}>
         {(sequent) => <TableauCheckView prover={props.prover} ui={props.ui} sequent={sequent()} />}
       </Show>
@@ -1535,8 +1575,17 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
       <Show when={proof()?.calculus.suite === "rules"}>
         <CustomPanel prover={props.prover} />
       </Show>
-      <Show when={proof()?.calculus.suite === "modal"}>
-        <ModalPanel prover={props.prover} />
+      <Show when={proof()?.calculus.suite === "modal" && !counterShown()}>
+        <ModalPanel
+          prover={props.prover}
+          openCounter={() => {
+            setUi("tab", "countermodel");
+            // The button that opened the view goes with the panel: the model's first world takes the focus.
+            requestAnimationFrame(() =>
+              stage.querySelector<HTMLElement>(".modal-editor .kripke-world")?.focus(),
+            );
+          }}
+        />
       </Show>
       <Show when={proof()?.calculus.suite === "lambda"}>
         <LambdaPanel prover={props.prover} />
@@ -1762,6 +1811,24 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
           })()}
           offered={ui.offered}
           hinted={pointed()?.rule}
+          witness={(() => {
+            const w = ui.witnessing;
+            if (!w || w.goal !== ui.selected?.goal || w.position !== ui.selected.position)
+              return null;
+            const formula = formulasOf(w.goal)[w.position];
+            return {
+              rule: w.rule,
+              variable: boundVariable(formula ? shown(formula) : "") ?? "x",
+              text: witnessText(),
+              said: witnessSaid(),
+              busy: props.prover.busy(),
+              input: (text: string) => {
+                setWitnessText(text);
+                setWitnessSaid(null);
+              },
+              apply: (open: boolean) => void applyWitness(open),
+            };
+          })()}
           choose={(rule) => void choose(rule)}
         />
       </Show>
@@ -1798,88 +1865,6 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
             </Show>
           );
         }}
-      </Show>
-
-      <Show when={ui.witnessing}>
-        {(w) => (
-          <div
-            class="cluster pop split cut"
-            ref={(el) => {
-              popover = el;
-              placeSoon();
-            }}
-            role="dialog"
-            aria-label="Witness"
-          >
-            <p class="pop-h">
-              <span class="kw-label">
-                Witness for <span class="m">{w().rule}</span>
-              </span>
-              <span class="m">
-                {(() => {
-                  const formula = formulasOf(w().goal)[w().position];
-                  return formula ? shown(formula) : "";
-                })()}
-              </span>
-            </p>
-            <label class="cut-field">
-              <span class="sub">
-                Witness: a term of the sequent's constants and function symbols, and of the
-                eigenvariables made below this goal, such as <span class="m">f(a)</span>
-              </span>
-              <input
-                class="field m"
-                type="text"
-                spellcheck={false}
-                autocomplete="off"
-                aria-invalid={witnessSaid() ? "true" : undefined}
-                value={witnessText()}
-                onInput={(event) => {
-                  setWitnessText(event.currentTarget.value);
-                  setWitnessSaid(null);
-                }}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") {
-                    event.preventDefault();
-                    void applyWitness(false);
-                  }
-                }}
-              />
-            </label>
-            <Show when={witnessSaid()}>
-              {(said) => (
-                <p class="sub warn" role="alert">
-                  <span class="kw">{said().keyword}</span> {said().sentence}
-                </p>
-              )}
-            </Show>
-            <p class="sub">
-              Or leave it open: the goal holds <span class="m">$1</span> until an axiom or the
-              search fills it.
-            </p>
-            <p class="row">
-              <button
-                type="button"
-                class="btn btn-primary"
-                disabled={witnessText().trim() === "" || props.prover.busy()}
-                onClick={() => void applyWitness(false)}
-              >
-                Apply
-              </button>
-              <button
-                type="button"
-                class="btn"
-                disabled={props.prover.busy()}
-                onClick={() => void applyWitness(true)}
-              >
-                Leave open
-              </button>
-              <button type="button" class="btn" onClick={() => setUi("witnessing", null)}>
-                Cancel
-              </button>
-            </p>
-          </div>
-        )}
       </Show>
 
       <Show when={ui.cutting}>
@@ -2114,6 +2099,39 @@ export function GoalNotes(props: { prover: Prover; ui: Ui }) {
                   ui={props.ui}
                 />
               </Show>
+              <Show when={structureOf(n.outcome)}>
+                {(found) => (
+                  <p class="row">
+                    <button
+                      type="button"
+                      class="btn btn-s"
+                      onClick={() => {
+                        const p = props.prover.current();
+                        if (!p) return;
+                        const sequent = found().sequent;
+                        const signature = signatureOf(sequent);
+                        setUi({
+                          counter: {
+                            kind: "structure",
+                            proof: p.id,
+                            sequent: JSON.stringify(sequent),
+                            logic: (n.outcome as unknown as OrdinaryOutcome).logic,
+                            signature,
+                            found: true,
+                            now: complete(found().structure, signature),
+                            past: [],
+                            future: [],
+                          },
+                          tab: "countermodel",
+                          menu: null,
+                        });
+                      }}
+                    >
+                      See the countermodel
+                    </button>
+                  </p>
+                )}
+              </Show>
               <Show
                 when={
                   n.path.length > 0 && (verdict() === "unprovable" || verdict() === "not_valid")
@@ -2148,6 +2166,10 @@ export function GuideLine(props: { prover: Prover; ui: Ui }) {
   const words = () => {
     const p = props.prover.current();
     if (!props.prover.settings().guide || !p) return null;
+    if (ui.tab === "countermodel" && ui.counter?.kind === "structure") {
+      const evaluated = lastEvaluated();
+      return evaluated ? structureWords(evaluated) : null;
+    }
     // A sequent not entered yet: ordinary logic's examples say it, the other logics this.
     if (!p.session && !p.modal?.outcome && !p.lambda?.statement)
       return p.calculus.suite === "ordinary"
@@ -2167,6 +2189,12 @@ export function GuideLine(props: { prover: Prover; ui: Ui }) {
       return ui.cutting.own
         ? "Press a formula to move it to the other premise, then press cut ↵."
         : "Type the cut formula.";
+    if (ui.witnessing && ui.selected) {
+      const { goal, position } = ui.witnessing;
+      const formula = p.view?.goals.find((g) => g.goal === goal)?.formulas[position];
+      const variable = boundVariable(formula ? shown(formula) : "") ?? "x";
+      return `Type a term for ${variable} and press Enter, or press $1 to leave it open.`;
+    }
     if (ui.selected) return "Press a rule to apply it. A grey rule shows why it does not apply.";
     return "Press a formula on a dashed line to see its rules.";
   };

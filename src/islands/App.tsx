@@ -63,6 +63,7 @@ import {
   StepsPanel,
 } from "./Panels";
 import { RuleHints } from "./RuleHint";
+import { redoStructure, undoStructure } from "./Structure";
 import { GoalNotes, GuideLine, pointer, Stage } from "./Stage";
 import { createProver } from "./state";
 import { InterpolateSheet, TranslateSheet } from "./Transforms";
@@ -670,8 +671,14 @@ export default function App(props: {
       const toggle = (menu: "steps" | "export" | "import" | "views" | "settings" | "keys") =>
         setUi("menu", ui.menu === menu ? null : menu);
       const act: Partial<Record<typeof action, () => void>> = {
-        undo: () => (proving || !!proof?.custom?.session) && void prover.undo(),
-        redo: () => (proving || !!proof?.custom?.session) && void prover.redo(),
+        undo: () =>
+          ui.tab === "countermodel"
+            ? undoStructure(view)
+            : (proving || !!proof?.custom?.session) && void prover.undo(),
+        redo: () =>
+          ui.tab === "countermodel"
+            ? redoStructure(view)
+            : (proving || !!proof?.custom?.session) && void prover.redo(),
         steps: () => proving && toggle("steps"),
         hint: () => proving && void hint(),
         close: () => proving && goal !== undefined && void prover.close(goal),

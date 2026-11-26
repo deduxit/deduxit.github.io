@@ -111,6 +111,8 @@
   --text-math: 1.0625rem;
   /* A rule's button in the popover. */
   --text-math-large: 1.1875rem;
+  /* What the page itself draws in the stage's place: the countermodel's structure and sequent. */
+  --text-math-stage: 1.4375rem;
   /* The model editor's words on its canvas, in its own units (scaled with the canvas). */
   --text-canvas: 10px;
   --text-canvas-math: 15px;
@@ -223,6 +225,15 @@
   --size-knob: 0.75rem;
   /* A checkbox and its row. */
   --size-check: 1.125rem;
+  /* The countermodel's structure: an element's column, its circle, a dot and the dot's mark. */
+  --size-dot-cell: 3.5rem;
+  --size-element: 2.5rem;
+  --size-dot: 2.75rem;
+  --size-dot-mark: 1rem;
+  /* The witness's field in the rule popover. */
+  --size-witness: 6rem;
+  /* The button that takes an element away. */
+  --size-element-remove: 1.5rem;
   --size-check-row: 2.25rem;
   /* A logic on the new tab view. */
   --size-logic: 11.5rem;
@@ -299,6 +310,8 @@
     --size-caret: 2.75rem;
     --size-chip: 2.75rem;
     --size-rule: 2.75rem;
+    --size-element-remove: 2.75rem;
+    --size-element: 2.75rem;
     --size-check-row: 2.75rem;
     --size-switch: 2.5rem;
     --size-switch-height: 1.5rem;

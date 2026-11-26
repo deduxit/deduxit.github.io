@@ -14,15 +14,20 @@ import type { Ui } from "./ui";
 export function ModelFigure(props: { outcome: OrdinaryOutcome; prover: Prover; ui: Ui }) {
   const change = () => {
     const found = props.outcome.countermodel;
-    if (!found) return;
+    const proof = props.prover.current()?.id;
+    if (!found || !proof) return;
     props.ui.setUi({
-      modelSeed: {
-        model: found.model,
-        sequent: JSON.stringify(found.sequent),
-        logic: props.outcome.logic,
-        found: true,
+      counter: {
+        kind: "kripke",
+        proof,
+        seed: {
+          model: found.model,
+          sequent: JSON.stringify(found.sequent),
+          logic: props.outcome.logic,
+          found: true,
+        },
       },
-      tab: "model",
+      tab: "countermodel",
       menu: null,
     });
   };

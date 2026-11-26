@@ -18,6 +18,9 @@ async function pick(page: Page, formula: string, name: string) {
     .click({ force: true });
 }
 
+/** The witness's box in the rule popover. */
+const witness = (page: Page) => page.getByRole("dialog", { name: "Rules" }).locator("form.witness");
+
 /** Starts an intuitionistic tab on `sequent`. */
 async function intuitionistic(page: Page, sequent: string) {
   await start(page, sequent);
@@ -30,26 +33,35 @@ test("a sequent with quantifiers and terms is proved with a witness typed and on
   await intuitionistic(page, "exists y. forall x. r(x, y) |- forall x. exists y. r(x, y)");
   await pick(page, "∃y. (∀x. r(x, y))", "∃L");
   await pick(page, "∀x. (∃y. r(x, y))", "∀R");
-  // ∀L takes a witness: the chooser says so, and leaving it open writes $1.
+  // ∀L takes a witness: its box opens in the popover beside the rule, which stays pressed.
   await pick(page, "∀x. r(x, a)", "∀L");
-  const chooser = page.getByRole("dialog", { name: "Witness" });
-  await expect(chooser).toContainText("Witness for ∀L");
-  // Another formula picked gives the rules of that one, the chooser closed.
+  const rules = page.getByRole("dialog", { name: "Rules" });
+  const box = witness(page);
+  await expect(box).toContainText("x =");
+  await expect(rules.getByRole("button", { name: /^∀L/ })).toHaveAttribute("aria-pressed", "true");
+  await expect(box.getByRole("textbox")).toBeFocused();
+  // Escape closes the box and leaves the popover, the rule focused.
+  await page.keyboard.press("Escape");
+  await expect(box).toBeHidden();
+  await expect(rules.getByRole("button", { name: /^∀L/ })).toBeFocused();
+  // Another formula picked gives the rules of that one, the box closed.
+  await rules.getByRole("button", { name: /^∀L/ }).click();
   await page.getByRole("button", { name: /^∃y\. r\(b, y\), formula/ }).click();
-  await expect(chooser).toBeHidden();
-  await expect(page.getByRole("dialog", { name: "Rules" })).toBeVisible();
+  await expect(box).toBeHidden();
+  await expect(rules).toBeVisible();
   await pick(page, "∀x. r(x, a)", "∀L");
-  await chooser.getByRole("button", { name: "Leave open" }).click();
-  await expect(chooser).toBeHidden();
+  await box.getByRole("button", { name: /^\$1, leave the witness open/ }).click();
+  await expect(box).toBeHidden();
   await expect(page.getByRole("button", { name: /^r\(\$1, a\), formula/ })).toBeVisible();
-  // ∃R with a term that does not read, then with b.
+  // ∃R with a term that does not read, refused under the field; then with b.
   await pick(page, "∃y. r(b, y)", "∃R");
-  await chooser.getByRole("textbox").fill("g(b)");
-  await chooser.getByRole("button", { name: "Apply" }).click();
-  await expect(chooser.getByRole("alert")).toContainText("no such term");
-  await chooser.getByRole("textbox").fill("a");
-  await chooser.getByRole("button", { name: "Apply" }).click();
-  await expect(chooser).toBeHidden();
+  await box.getByRole("textbox").fill("g(b)");
+  await box.getByRole("textbox").press("Enter");
+  await expect(box.getByRole("alert")).toContainText("no such term");
+  await expect(box.getByRole("textbox")).toHaveAttribute("aria-invalid", "true");
+  await box.getByRole("textbox").fill("a");
+  await box.getByRole("button", { name: /^Apply ∃R with this term for y/ }).click();
+  await expect(box).toBeHidden();
   await pick(page, "r(b, a)", "ax");
   await expect(
     page.getByRole("status").filter({ hasText: "Proved. Every goal is closed." }),
@@ -63,12 +75,13 @@ test("a sequent with quantifiers and terms is proved with a witness typed and on
 test("the eigenvariable condition is refused in words", async ({ page }) => {
   await intuitionistic(page, "forall x. exists y. r(x, y) |- exists y. forall x. r(x, y)");
   await pick(page, "∃y. (∀x. r(x, y))", "∃R");
-  const chooser = page.getByRole("dialog", { name: "Witness" });
-  await chooser.getByRole("button", { name: "Leave open" }).click();
+  await witness(page)
+    .getByRole("button", { name: /^\$1, leave/ })
+    .click();
   await pick(page, "∀x. r(x, $1)", "∀R");
   await pick(page, "∀x. (∃y. r(x, y))", "∀L");
-  await chooser.getByRole("textbox").fill("a");
-  await chooser.getByRole("button", { name: "Apply" }).click();
+  await witness(page).getByRole("textbox").fill("a");
+  await witness(page).getByRole("textbox").press("Enter");
   await pick(page, "∃y. r(a, y)", "∃L");
   // The axiom is greyed by its trial; a press says why under its drawing.
   await pick(page, "r(a, b)", "ax");
@@ -114,9 +127,8 @@ test("an undo on one branch replays the other with its eigenvariable's new lette
   await pick(page, "∀y. p(y)", "∀R");
   await pick(page, "∀y. q(y)", "∀R");
   await pick(page, "∀x. q(x)", "∀L");
-  const chooser = page.getByRole("dialog", { name: "Witness" });
-  await chooser.getByRole("textbox").fill("b");
-  await chooser.getByRole("button", { name: "Apply" }).click();
+  await witness(page).getByRole("textbox").fill("b");
+  await witness(page).getByRole("textbox").press("Enter");
   await expect(page.getByRole("button", { name: /^q\(b\), formula/ }).first()).toBeVisible();
   // Undo the first branch's ∀R: the second's eigenvariable is a now, its witness with it.
   await page

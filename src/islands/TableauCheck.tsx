@@ -146,17 +146,23 @@ export function TableauCheckView(props: { prover: Prover; ui: Ui; sequent: strin
                   <button
                     type="button"
                     class="btn btn-s"
-                    onClick={() =>
+                    onClick={() => {
+                      const proof = props.prover.current()?.id;
+                      if (!proof) return;
                       props.ui.setUi({
-                        modelSeed: {
-                          model: found().model,
-                          sequent: JSON.stringify(found().sequent),
-                          logic: "classical",
-                          found: true,
+                        counter: {
+                          kind: "kripke",
+                          proof,
+                          seed: {
+                            model: found().model,
+                            sequent: JSON.stringify(found().sequent),
+                            logic: "classical",
+                            found: true,
+                          },
                         },
-                        tab: "model",
-                      })
-                    }
+                        tab: "countermodel",
+                      });
+                    }}
                   >
                     Check its countermodel
                   </button>

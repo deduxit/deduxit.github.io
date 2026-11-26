@@ -90,7 +90,7 @@ test("a changed model is checked: the failing world's values and the frame condi
 }) => {
   await modalTab(page);
   await decide(page, "[]p -> [][]p");
-  await page.getByText("Change the model and check it").click();
+  await page.getByRole("button", { name: "Change this model and check it" }).click();
   await page.getByRole("button", { name: "Check the model" }).click();
   const check = page.locator(".modal-check");
   await expect(check).toContainText("Fails");
@@ -105,7 +105,6 @@ test("a changed model is checked: the failing world's values and the frame condi
   // In T every world must see itself.
   await (await switches(page)).getByRole("combobox", { name: "System" }).selectOption("T");
   await expect(page.locator(".modal .kw.bad")).toHaveText("Not valid");
-  await page.getByText("Change the model and check it").click();
   await page.getByRole("checkbox", { name: "World 0 sees world 0" }).uncheck();
   await page.getByRole("button", { name: "Check the model" }).click();
   await expect(check).toContainText("Not reflexive: world 0 does not see itself.");

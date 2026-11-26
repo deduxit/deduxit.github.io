@@ -362,17 +362,60 @@ export async function linking(page: Page, visit: Visit) {
   await visit("copy");
 }
 
-/** The witness chooser with a term typed, and its refusal. */
+/** Opens the page on a new sequent of classical ordinary logic and starts `sequent` there. */
+async function classical(page: Page, sequent: string) {
+  await goto(page);
+  await calculus(page, ["Ordinary", "Classical"]);
+  await page.getByRole("textbox", { name: "Sequent" }).fill(sequent);
+  await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
+  await expect(page.locator(".stage .fb").first()).toBeVisible();
+}
+
+/** The witness's box in the rule popover with a term typed, and its refusal; linear, then LK. */
 export async function witnessing(page: Page, visit: Visit) {
   await start(page, "|- exists x. p(x), ~p(c)");
   await page.getByRole("button", { name: /^∃x\. p\(x\), formula/ }).click();
-  await page.getByRole("dialog", { name: "Rules" }).getByRole("button", { name: /^∃/ }).click();
-  const chooser = page.getByRole("dialog", { name: "Witness" });
-  await chooser.getByRole("textbox").fill("g(c)");
+  const rules = page.getByRole("dialog", { name: "Rules" });
+  await rules.getByRole("button", { name: /^∃/ }).click();
+  const box = rules.locator("form.witness");
+  await box.getByRole("textbox").fill("g(c)");
   await visit("witness");
-  await chooser.getByRole("button", { name: "Apply" }).click();
-  await expect(chooser.getByRole("alert")).toBeVisible();
+  await box.getByRole("textbox").press("Enter");
+  await expect(box.getByRole("alert")).toBeVisible();
   await visit("witness refused");
+  await classical(page, "p(c) |- exists x. p(x)");
+  await page.getByRole("button", { name: /^∃x\. p\(x\), formula/ }).click();
+  await rules.getByRole("button", { name: /^∃R/ }).click();
+  await box.getByRole("textbox").fill("d");
+  await box.getByRole("textbox").press("Enter");
+  await expect(box.getByRole("alert")).toBeVisible();
+  await visit("witness refused in LK");
+}
+
+/**
+ * The countermodel view of a first-order sequent: deduxit's structure, which refutes it; a dot
+ * pressed, so that it no longer does; an element added; and a model of one's own from one element.
+ */
+export async function countermodeling(page: Page, visit: Visit) {
+  await classical(page, "exists x. p(x) |- forall x. p(x)");
+  await page.locator(".gt").first().click();
+  await page
+    .getByRole("dialog", { name: "This goal" })
+    .getByRole("button", { name: "Close goal" })
+    .click();
+  await page.getByRole("button", { name: "See the countermodel" }).click();
+  const view = page.getByRole("region", { name: "Countermodel" });
+  await expect(view.getByRole("img", { name: "This structure refutes the sequent" })).toBeVisible();
+  await visit("countermodel");
+  await view.getByRole("button", { name: /^p (holds|does not hold) of 0$/ }).click();
+  await expect(view.getByRole("status")).toBeVisible();
+  await visit("countermodel changed");
+  await view.getByRole("button", { name: "Add an element" }).click();
+  await visit("countermodel with an element added");
+  await classical(page, "forall x. (p(x) -> q(f(x))), p(a) |- q(f(a))");
+  await addView(page, "A model of your own");
+  await expect(page.getByRole("region", { name: "Countermodel" })).toBeVisible();
+  await visit("a structure of one's own");
 }
 
 /** The cut chooser with a formula typed, and the elimination's panel stepping and at its end. */
@@ -466,7 +509,7 @@ export async function modalising(page: Page, visit: Visit) {
   await expect(page.locator(".modal .kw.bad", { hasText: "Not valid" })).toBeVisible();
   await expect(page.locator(".modal .countermodel-drawing svg")).toBeVisible();
   await visit("modal countermodel");
-  await page.getByText("Change the model and check it").click();
+  await page.getByRole("button", { name: "Change this model and check it" }).click();
   await page.getByRole("button", { name: "Check the model" }).click();
   await expect(page.locator(".modal-check")).toContainText("□□p is false: world 1 shows it");
   await visit("modal check");

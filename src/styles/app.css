@@ -981,6 +981,153 @@ svg.sign {
 .modal .countermodel {
   flex-basis: auto;
 }
+/* The countermodel view of a first-order sequent (board D9): the structure as a grid, the
+   elements across its top, a row of dots per predicate and per term; the sequent under it, each
+   formula with its value, ⊭ or ⊨ between the sides. */
+.structure-view {
+  align-items: center;
+  gap: var(--spacing-6);
+}
+.structure {
+  display: grid;
+  min-inline-size: 0;
+  margin: 0;
+  grid-template-columns: [symbol] auto [elements] repeat(var(--elements), var(--size-dot-cell)) [add] auto [end];
+  align-items: center;
+  padding: var(--spacing-2) var(--spacing-3) var(--spacing-3) var(--spacing-5);
+  border: var(--line) solid var(--color-line);
+  border-radius: var(--radius-panel);
+  background: var(--color-paper);
+  font: var(--font-weight-normal) var(--text-math-stage) / var(--leading-none) var(--font-math);
+}
+.element {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-1);
+  padding: var(--spacing-1) 0;
+}
+.element-name {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: var(--size-element);
+  height: var(--size-element);
+  border: var(--line-strong) solid var(--color-ink);
+  border-radius: 50%;
+}
+.element-remove,
+.element-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: var(--color-ink2);
+  cursor: pointer;
+}
+.element-remove {
+  width: var(--size-element-remove);
+  height: var(--size-element-remove);
+  border: var(--line) solid var(--color-line);
+  background: var(--color-paper);
+}
+.element-add {
+  width: var(--size-element);
+  height: var(--size-element);
+  margin-left: var(--spacing-1);
+  border: var(--line-strong) dashed var(--color-faint);
+  background: none;
+}
+.element-add[aria-disabled="true"] {
+  border-color: var(--color-line);
+  color: var(--color-faint);
+  cursor: default;
+}
+.element-remove:hover,
+.element-add:hover {
+  background: var(--color-over);
+}
+.structure .symbol {
+  padding-right: var(--spacing-4);
+  white-space: nowrap;
+}
+.dot-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dot-cell.span {
+  grid-column: elements / add;
+}
+.dot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--size-dot);
+  height: var(--size-dot);
+  border: 0;
+  border-radius: var(--radius-control);
+  background: none;
+  cursor: pointer;
+}
+.dot:hover {
+  background: var(--color-over);
+}
+.dot-mark {
+  box-sizing: border-box;
+  width: var(--size-dot-mark);
+  height: var(--size-dot-mark);
+  border: var(--line-strong) solid var(--color-faint);
+  border-radius: 50%;
+}
+/* A term's element is a square, a predicate's truth a round dot: filled where it holds. */
+.dot[data-named] .dot-mark {
+  border-radius: var(--radius-check);
+}
+.dot[aria-pressed="true"] .dot-mark {
+  border-color: var(--color-ink);
+  background: var(--color-ink);
+}
+.rows-past {
+  grid-column: symbol / end;
+}
+.valued {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-1);
+  margin: 0;
+  font: var(--font-weight-normal) var(--text-math-stage) / var(--leading-normal) var(--font-math);
+}
+.valued-formula {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-0-5) var(--spacing-2);
+  border-radius: var(--radius-control);
+  background: var(--color-paper);
+}
+.valued-formula .value {
+  display: inline-flex;
+  color: var(--color-bad);
+}
+.valued-formula .icon {
+  width: var(--size-icon);
+  height: var(--size-icon);
+  stroke-width: var(--line-strong);
+}
+.valued-formula[data-holds] .value {
+  color: var(--color-good);
+}
+.valued .turn {
+  padding: 0 var(--spacing-2);
+  color: var(--color-faint);
+}
+.valued .turn[data-refutes] {
+  color: var(--color-ink);
+}
 /* A modal model's editor: each world on a line, its atoms, the worlds it sees, its removal. */
 .modal-worlds {
   display: flex;
@@ -1221,6 +1368,103 @@ svg.sign {
 .rule[data-hinted] {
   outline: var(--line-strong) solid var(--color-lapis);
   outline-offset: var(--spacing-0-5);
+}
+/* A rule pressed for its witness: an edge marks it, the box beside it. */
+.rule[aria-pressed="true"] {
+  box-shadow: inset 0 0 0 var(--line-strong) var(--color-ink);
+}
+.rules-pop:has(.witness) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--spacing-1);
+}
+/* The witness's box (board D8): the variable, the term in the formulas' font, the enter button
+   in one field; `$1` beside it; deduxit's refusal under them. */
+.witness {
+  display: grid;
+  gap: var(--spacing-1);
+  margin: 0;
+}
+.witness-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-1);
+}
+.witness-field {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  padding: 0 var(--spacing-0-5) 0 var(--spacing-3);
+  border: var(--line-strong) solid var(--color-ink);
+  border-radius: var(--radius-control);
+  background: var(--color-paper);
+}
+.witness-field[data-bad] {
+  border-color: var(--color-bad);
+}
+.witness-var {
+  color: var(--color-ink2);
+  font-size: var(--text-math-large);
+  white-space: nowrap;
+}
+.witness-field input {
+  width: var(--size-witness);
+  min-width: 0;
+  height: var(--size-rule);
+  padding: 0 var(--spacing-1);
+  border: 0;
+  background: none;
+  color: var(--color-ink);
+  font: var(--font-weight-normal) var(--text-math-large) / var(--leading-none) var(--font-math);
+}
+.witness-field input:focus-visible {
+  outline: none;
+}
+.witness-field:focus-within {
+  outline: var(--line-strong) solid var(--color-lapis);
+  outline-offset: var(--spacing-0-5);
+}
+.witness-go {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: var(--size-enter);
+  height: var(--size-enter);
+  border: 0;
+  border-radius: var(--radius-control);
+  background: var(--color-ink);
+  color: var(--color-paper);
+  cursor: pointer;
+}
+.witness-go[aria-disabled="true"] {
+  background: var(--color-faint);
+  cursor: default;
+}
+.witness-open[aria-disabled="true"] {
+  color: var(--color-faint);
+  cursor: default;
+}
+.witness-open {
+  height: var(--size-rule);
+  min-width: var(--size-rule);
+  padding: 0 var(--spacing-3);
+  border: var(--line) solid var(--color-line);
+  border-radius: var(--radius-control);
+  background: var(--color-paper);
+  color: var(--color-ink2);
+  font-size: var(--text-math-large);
+  cursor: pointer;
+}
+.witness-open:hover {
+  background: var(--color-over);
+}
+.witness .said-why {
+  max-width: var(--size-popover-wide);
+  margin: 0;
+  padding: 0 var(--spacing-1);
 }
 .rule-card {
   position: absolute;

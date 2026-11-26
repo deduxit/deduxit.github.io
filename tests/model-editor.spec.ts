@@ -76,7 +76,7 @@ test("a modal countermodel is changed by dragging: an arrow, a loop, a world mov
   page,
 }) => {
   await modal(page, "K", "[]p -> [][]p");
-  await page.getByText("Change the model and check it").click();
+  await page.getByRole("button", { name: "Change this model and check it" }).click();
   await page.getByRole("button", { name: "Check the model" }).click();
   await expect(page.locator(".modal-check")).toContainText("Fails");
   // The failing world and the witness are marked on the drawing, in words too.
@@ -110,7 +110,7 @@ test("the frame condition is named, its worlds marked and the arrow it asks for 
   page,
 }) => {
   await modal(page, "T", "[]p -> [][]p");
-  await page.getByText("Change the model and check it").click();
+  await page.getByRole("button", { name: "Change this model and check it" }).click();
   await page.getByRole("checkbox", { name: "World 0 sees world 0" }).uncheck();
   await page.getByRole("button", { name: "Check the model" }).click();
   await expect(page.locator(".modal-check")).toContainText(
@@ -130,10 +130,9 @@ test("the keyboard alone selects, moves and changes a world, and checks the mode
   page,
 }) => {
   await modal(page, "K", "[]p -> [][]p");
-  const summary = page.getByText("Change the model and check it");
-  await summary.focus();
+  // The button opens the countermodel view, its first world taking the focus.
+  await page.getByRole("button", { name: "Change this model and check it" }).focus();
   await page.keyboard.press("Enter");
-  await page.keyboard.press("Tab");
   await expect(world(page, 0)).toBeFocused();
   await page.keyboard.press("Tab");
   await expect(world(page, 1)).toBeFocused();
@@ -161,12 +160,16 @@ test("the keyboard alone selects, moves and changes a world, and checks the mode
   await expect(page.locator(".modal-check")).toContainText("Holds");
 });
 
-test("an ordinary countermodel opens in the model view; a model of another logic is refused", async ({
+test("an ordinary countermodel opens in the countermodel view; a model of another logic is refused", async ({
   page,
 }) => {
   await ordinary(page, "Intuitionistic", "|- a \\/ ~a");
   await closeGoal(page);
   await page.getByRole("button", { name: "Change this model and check it" }).click();
+  await expect(page.getByRole("tab", { name: "Countermodel, ⊭" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
   const view = page.getByRole("region", { name: "Model" });
   await expect(view).toContainText("The countermodel deduxit found");
   await expect(view).toContainText("⊢ a ∨ ¬a");
@@ -205,7 +208,7 @@ test("adding and removing worlds keeps the places, and the world checked at foll
   page,
 }) => {
   await modal(page, "K", "[]p -> [][]p");
-  await page.getByText("Change the model and check it").click();
+  await page.getByRole("button", { name: "Change this model and check it" }).click();
   const two = await centre(world(page, 2));
   await drag(page, 2, { x: two.x + 150, y: two.y });
   const places = async () =>

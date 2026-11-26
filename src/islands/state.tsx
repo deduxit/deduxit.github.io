@@ -78,6 +78,7 @@ import {
   actions as actionsOf,
   type Decided,
   goalAt,
+  lettered,
   paths,
   type Path,
   retract,
@@ -1360,13 +1361,22 @@ export function createProver(say: (text: string) => void = () => undefined) {
         const target = at(action.path);
         if (target === undefined || isOrdinary(played.session)) return { failed: taken };
         const session = played.session;
-        const done = await attempt<{ session: Session; view: View }>(() =>
-          action.kind === "step"
-            ? api.apply(session, target, action.step, replaying())
-            : action.kind === "cut"
-              ? api.cut(session, target, action.formula, action.left, replaying())
-              : api.close(session, target, replaying()),
-        );
+        // A recorded witness or cut formula names each eigenvariable by its step's path: the
+        // letter that step took here, as `play` reads it.
+        const here = (text: string) => lettered(text, { session, view: played.view }, base);
+        let call: () => Promise<{ session: Session; view: View }>;
+        if (action.kind === "step") {
+          const recorded = action.step.witness;
+          const witness = recorded === undefined ? undefined : here(recorded);
+          if (recorded !== undefined && witness === undefined) return { failed: taken };
+          const step = witness === undefined ? action.step : { ...action.step, witness };
+          call = () => api.apply(session, target, step, replaying());
+        } else if (action.kind === "cut") {
+          const formula = here(action.formula);
+          if (formula === undefined) return { failed: taken };
+          call = () => api.cut(session, target, formula, action.left, replaying());
+        } else call = () => api.close(session, target, replaying());
+        const done = await attempt<{ session: Session; view: View }>(call);
         if (!done.ok) return { failed: taken };
         played = done.value;
       }
@@ -2252,7 +2262,7 @@ export function createProver(say: (text: string) => void = () => undefined) {
         if (!result.ok) return [];
         const tried: Candidate[] = [];
         // A rule of two premises shares the goal's context, G3's form a first course reads: the
-        // page applies it at once.
+        // page applies it at once. A witness is tried left open, which ∃R and ∀L may be.
         for (const r of result.value) {
           const step = { position, rule: r.rule };
           const trial = await attempt(() =>
@@ -2261,6 +2271,7 @@ export function createProver(say: (text: string) => void = () => undefined) {
           tried.push({
             rule: r.rule,
             split: false,
+            ...(r.witness ? { witness: true } : {}),
             refused:
               !trial.ok && trial.failed ? ordinaryRefusal(trial.failed, formulas, r.rule) : null,
           });
@@ -2384,11 +2395,24 @@ export function createProver(say: (text: string) => void = () => undefined) {
     witnessed: guard(async (goal: number, step: StepForm): Promise<Said | null> => {
       const p = current();
       if (!p?.session) return null;
-      const result = await attempt(() => api.apply(p.session as SessionDoc, goal, step, json()));
-      if (!result.ok) {
-        const formulas = p.view?.goals.find((g) => g.goal === goal)?.formulas ?? [];
-        return result.failed ? refusal(result.failed, formulas, step.rule) : null;
+      const formulas = p.view?.goals.find((g) => g.goal === goal)?.formulas ?? [];
+      const o = ordinaryOf(p);
+      if (o) {
+        const done = await attempt(() =>
+          api.ordinary.apply(o.session, goal, ordinaryStep(formulas, step), ordinaryStepping(p.id)),
+        );
+        if (!done.ok) return done.failed ? ordinaryRefusal(done.failed, formulas, step.rule) : null;
+        update(p.id, (q) => (q.later = []));
+        show(
+          p.id,
+          { session: done.value.session, view: asView(done.value.view) },
+          done.value.opened[0] ?? done.value.view.goals[0]?.goal,
+        );
+        save();
+        return null;
       }
+      const result = await attempt(() => api.apply(p.session as SessionDoc, goal, step, json()));
+      if (!result.ok) return result.failed ? refusal(result.failed, formulas, step.rule) : null;
       update(p.id, (q) => (q.redo = []));
       show(p.id, result.value, result.value.opened[0] ?? result.value.view.goals[0]?.goal);
       save();

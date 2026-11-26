@@ -33,6 +33,7 @@ import {
   transforms,
   type Visit,
   witnessing,
+  countermodeling,
 } from "./states";
 
 /** Every visible control too small for the floor, described. */
@@ -188,6 +189,13 @@ test("natural deduction's controls are targets of 24 by 24 pixels at least", asy
   expect(await measured(page, 24, deducing)).toEqual([]);
 });
 
+test("the witness's box and the countermodel view are targets of 24 by 24 pixels at least", async ({
+  page,
+}) => {
+  expect(await measured(page, 24, witnessing)).toEqual([]);
+  expect(await measured(page, 24, countermodeling)).toEqual([]);
+});
+
 test.describe("at a phone's width", () => {
   test.use(pixel);
 
@@ -243,8 +251,12 @@ test.describe("at a phone's width", () => {
     expect(await measured(page, 44, reasons)).toEqual([]);
   });
 
-  test("the witness chooser and its refusal are 44 by 44 pixels at least", async ({ page }) => {
+  test("the witness's box and its refusal are 44 by 44 pixels at least", async ({ page }) => {
     expect(await measured(page, 44, witnessing)).toEqual([]);
+  });
+
+  test("the countermodel view's controls are 44 by 44 pixels at least", async ({ page }) => {
+    expect(await measured(page, 44, countermodeling)).toEqual([]);
   });
 
   test("the cut chooser and the elimination's controls are 44 by 44 pixels at least", async ({

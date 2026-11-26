@@ -26,14 +26,36 @@ import { KripkeEditor } from "./KripkeEditor";
 import type { Prover } from "./state";
 import { Why } from "./ui";
 
-export function ModalPanel(props: { prover: Prover }) {
+export function ModalPanel(props: { prover: Prover; openCounter: () => void }) {
   const proof = () => props.prover.current();
   const work = () => proof()?.modal ?? null;
   return (
     <section class="method modal" aria-label="Modal logic">
       <Show when={work()?.statement} fallback={<Setup prover={props.prover} />}>
-        <Decided prover={props.prover} />
+        <Decided prover={props.prover} openCounter={props.openCounter} />
       </Show>
+    </section>
+  );
+}
+
+/**
+ * The countermodel view `⊭` of a modal sequent that is not valid: the model deduxit found, to
+ * change and check again in the model editor.
+ */
+export function ModalCountermodel(props: { prover: Prover }) {
+  const outcome = () => props.prover.current()?.modal?.outcome ?? null;
+  const system = () => outcome()?.system ?? "";
+  return (
+    <section class="method modal" aria-label="Countermodel">
+      <Show when={outcome()}>
+        {(o) => (
+          <p class="method-verdict" role="status">
+            <span class="kw bad">{verdictWords(o()).keyword}</span> {verdictWords(o()).sentence}
+          </p>
+        )}
+      </Show>
+      <p class="method-verdict">{systemSentence(system())}</p>
+      <Editor prover={props.prover} bare />
     </section>
   );
 }
@@ -84,8 +106,11 @@ function Setup(props: { prover: Prover }) {
   );
 }
 
-/** A decided sequent: its verdict, its drawing, and the model to change and check. */
-function Decided(props: { prover: Prover }) {
+/**
+ * A decided sequent: its verdict and its drawing; the model to change and check, which for a
+ * countermodel is the view `⊭`.
+ */
+function Decided(props: { prover: Prover; openCounter: () => void }) {
   const proof = () => props.prover.current();
   const work = () => proof()?.modal ?? null;
   const outcome = () => work()?.outcome ?? null;
@@ -182,11 +207,14 @@ function Decided(props: { prover: Prover }) {
                 World {String(outcome()?.countermodel?.model.world ?? 0)}, outlined, is where the
                 sequent fails. An arrow points from a world to a world it sees.
               </figcaption>
+              <button type="button" class="btn btn-s" onClick={() => props.openCounter()}>
+                Change this model and check it
+              </button>
             </figure>
           </Show>
         )}
       </Show>
-      <Show when={outcome() && outcome()?.verdict !== "unknown"}>
+      <Show when={outcome()?.verdict === "valid"}>
         <Editor prover={props.prover} />
       </Show>
     </Show>
@@ -194,7 +222,7 @@ function Decided(props: { prover: Prover }) {
 }
 
 /** The model to change and check, drawn: its worlds, their atoms and arrows, the world to check at. */
-function Editor(props: { prover: Prover; open?: boolean }) {
+function Editor(props: { prover: Prover; open?: boolean; bare?: boolean }) {
   const proof = () => props.prover.current();
   const work = () => proof()?.modal ?? null;
   const model = (): Model | null => work()?.model ?? null;
@@ -213,67 +241,73 @@ function Editor(props: { prover: Prover; open?: boolean }) {
       witnesses: (e.values ?? []).flatMap((v) => (v.witness === undefined ? [] : [v.witness])),
     };
   };
-  return (
+  const body = () => (
+    <Show
+      when={model()}
+      fallback={
+        <p class="row">
+          <button type="button" class="btn" onClick={() => set({ ...ONE_WORLD })}>
+            Start from one world
+          </button>
+        </p>
+      }
+    >
+      {(m) => (
+        <KripkeEditor
+          model={m()}
+          reading="modal"
+          onChange={(next) => set(next as Model)}
+          marks={marks()}
+          world={work()?.world ?? null}
+          onWorld={(w) => {
+            const p = proof();
+            if (p) props.prover.setModalWorld(p.id, w);
+          }}
+          onCheck={() => {
+            const p = proof();
+            if (p) void props.prover.modalCheck(p.id);
+          }}
+          busy={props.prover.busy()}
+        >
+          <Show when={evaluation()}>
+            {(e) => (
+              <div class="modal-check" role="status">
+                <p class="method-verdict">
+                  <span class={`kw ${e().frame ? "warn" : e().holds ? "ok" : "bad"}`}>
+                    {evaluationWords(e()).keyword}
+                  </span>{" "}
+                  {evaluationWords(e()).sentence}
+                </p>
+                <Show when={e().frame}>
+                  {(f) => (
+                    <p class="said-why">
+                      {f().condition === "serial"
+                        ? `Drag an arrow from world ${String(f().worlds[0] ?? 0)} to any world.`
+                        : `The dashed arrow is the one ${e().system} asks for: drag it in, or change the arrows around it.`}
+                    </p>
+                  )}
+                </Show>
+                <Show when={e().values?.length}>
+                  <ul class="modal-values">
+                    <For each={e().values}>{(v) => <li class="m">{valueWords(v)}</li>}</For>
+                  </ul>
+                </Show>
+              </div>
+            )}
+          </Show>
+        </KripkeEditor>
+      )}
+    </Show>
+  );
+  // In the countermodel view the editor stands open with no summary to close it by.
+  return props.bare ? (
+    <div class="modal-editor">{body()}</div>
+  ) : (
     <details class="custom-file modal-editor" open={props.open}>
       <summary>
         {work()?.outcome?.countermodel ? "Change the model and check it" : "Check a model"}
       </summary>
-      <Show
-        when={model()}
-        fallback={
-          <p class="row">
-            <button type="button" class="btn" onClick={() => set({ ...ONE_WORLD })}>
-              Start from one world
-            </button>
-          </p>
-        }
-      >
-        {(m) => (
-          <KripkeEditor
-            model={m()}
-            reading="modal"
-            onChange={(next) => set(next as Model)}
-            marks={marks()}
-            world={work()?.world ?? null}
-            onWorld={(w) => {
-              const p = proof();
-              if (p) props.prover.setModalWorld(p.id, w);
-            }}
-            onCheck={() => {
-              const p = proof();
-              if (p) void props.prover.modalCheck(p.id);
-            }}
-            busy={props.prover.busy()}
-          >
-            <Show when={evaluation()}>
-              {(e) => (
-                <div class="modal-check" role="status">
-                  <p class="method-verdict">
-                    <span class={`kw ${e().frame ? "warn" : e().holds ? "ok" : "bad"}`}>
-                      {evaluationWords(e()).keyword}
-                    </span>{" "}
-                    {evaluationWords(e()).sentence}
-                  </p>
-                  <Show when={e().frame}>
-                    {(f) => (
-                      <p class="said-why">
-                        {f().condition === "serial"
-                          ? `Drag an arrow from world ${String(f().worlds[0] ?? 0)} to any world.`
-                          : `The dashed arrow is the one ${e().system} asks for: drag it in, or change the arrows around it.`}
-                      </p>
-                    )}
-                  </Show>
-                  <Show when={e().values?.length}>
-                    <ul class="modal-values">
-                      <For each={e().values}>{(v) => <li class="m">{valueWords(v)}</li>}</For>
-                    </ul>
-                  </Show>
-                </div>
-              )}
-            </Show>
-          </KripkeEditor>
-        )}
-      </Show>
+      {body()}
     </details>
   );
 }

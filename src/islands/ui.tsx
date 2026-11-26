@@ -12,6 +12,7 @@ import { createSignal, For, Show } from "solid-js";
 import { createStore } from "solid-js/store";
 import type { Hint } from "../lib/deduxit";
 import type { Kripke } from "../lib/kripke";
+import type { Signature, Structure } from "../lib/structure";
 import type { Logic } from "../lib/suites";
 import type { Said } from "../lib/words";
 import type { Candidate, Premises } from "./state";
@@ -80,7 +81,30 @@ export type Menu =
   | null;
 
 /** A view of a sequent the stage shows, each a cell in the rail. */
-export type View = "tree" | "net" | "table" | "tableau" | "model" | "written";
+export type View = "tree" | "net" | "table" | "tableau" | "model" | "written" | "countermodel";
+
+/**
+ * The countermodel view `⊭` of a proof: a finite structure of a first-order sequent, changed
+ * press by press with its own undo and redo, or the Kripke model deduxit found for a
+ * propositional or modal one, changed in the model editor.
+ */
+export type Counter =
+  | {
+      readonly kind: "structure";
+      /** The proof whose view it is. */
+      readonly proof: string;
+      /** The sequent's JSON, which deduxit checks the structure against. */
+      readonly sequent: string;
+      readonly logic: Logic;
+      readonly signature: Signature;
+      /** Whether deduxit found it; else it is the visitor's own, from one element. */
+      readonly found: boolean;
+      readonly now: Structure;
+      readonly past: readonly Structure[];
+      readonly future: readonly Structure[];
+    }
+  | { readonly kind: "kripke"; readonly proof: string; readonly seed: ModelSeed }
+  | { readonly kind: "modal"; readonly proof: string };
 
 /** A line above the bottom box saying what was done, with an action that takes it back. */
 export interface Notice {
@@ -125,6 +149,8 @@ export function createUi() {
     more: boolean;
     /** The model the model view starts from, the sequent it is checked against, and the logic. */
     modelSeed: ModelSeed | null;
+    /** The countermodel view `⊭` of a proof, once one is opened. */
+    counter: Counter | null;
     ladder: Ladder | null;
     live: string;
     /** The tour's stop shown (from 0), or null when no tour runs. */
@@ -143,6 +169,7 @@ export function createUi() {
     notice: null,
     more: false,
     modelSeed: null,
+    counter: null,
     ladder: null,
     live: "",
     tour: null,

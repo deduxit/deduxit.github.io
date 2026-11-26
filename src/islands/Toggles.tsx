@@ -124,9 +124,11 @@ export function Toggles(props: { prover: Prover; ui: Ui }) {
     </fieldset>
   );
 
+  // A countermodel has no calculus; a modal one keeps the system, whose conditions it must meet.
+  const shown = () => props.ui.ui.tab !== "countermodel" || calculus().suite === "modal";
   return (
     <Show when={!fixed()} fallback={<p class="note calc-fixed">{fixed()}</p>}>
-      <fieldset class="toggles" aria-label="Calculus of this view">
+      <fieldset class="toggles" aria-label="Calculus of this view" hidden={!shown()}>
         <Show when={calculus().suite === "ordinary"}>
           <Seg
             label="Proof method"

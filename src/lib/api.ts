@@ -38,6 +38,7 @@ import type {
   Described,
 } from "./custom";
 import type { Forcing } from "./kripke";
+import type { Evaluated } from "./structure";
 import type { Inhabitants, Inhabitation } from "./lambda";
 import type { TableauReview } from "./written";
 import type { Evaluation, ModalOutcome } from "./modal";
@@ -184,7 +185,7 @@ export function createApi(changed: (pending: number) => void) {
         position: number,
         settings: string,
       ) =>
-        json<{ rule: string; split: boolean }[]>(
+        json<{ rule: string; split: boolean; witness?: boolean }[]>(
           "ordinary_rules",
           JSON.stringify(session),
           goal,
@@ -248,6 +249,12 @@ export function createApi(changed: (pending: number) => void) {
         world: number | undefined,
         settings: string,
       ) => json<Forcing>("ordinary_model", model, sequent, logic, world, settings),
+      /**
+       * A finite structure checked against a first-order sequent: whether it refutes it, and
+       * each formula's value there.
+       */
+      structure: (structure: string, sequent: string, logic: string, settings: string) =>
+        json<Evaluated>("ordinary_structure", structure, sequent, logic, settings),
       /** The Rocq certificate of an outcome's countermodel. */
       modelCertificate: (outcome: OrdinaryOutcome, settings: string) =>
         client.call<string>("ordinary_model_certificate", JSON.stringify(outcome), settings),

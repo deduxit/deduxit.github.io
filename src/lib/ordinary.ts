@@ -12,6 +12,7 @@
 
 import type { Failure, GoalFormula, StepForm, View } from "./deduxit";
 import { subtree } from "./steps";
+import type { Structure } from "./structure";
 import type { Logic } from "./suites";
 import type { Said, Tone } from "./words";
 
@@ -80,6 +81,8 @@ export interface OrdinaryOutcome {
   };
   /** A `not_valid` goal's Kripke model, with the sequent it refutes, where deduxit found one. */
   readonly countermodel?: { readonly sequent: unknown; readonly model: KripkeModel };
+  /** A `not_valid` first-order goal's finite structure, with the sequent it refutes. */
+  readonly structure?: { readonly sequent: unknown; readonly structure: Structure };
   readonly [key: string]: unknown;
 }
 
@@ -89,11 +92,21 @@ export const countermodelOf = (outcome: unknown): KripkeModel | undefined => {
   return o?.verdict === "not_valid" && o.countermodel ? o.countermodel.model : undefined;
 };
 
-/** A step as `ordinary_apply` takes it: the formula's side and position there, and the rule. */
+/** The finite structure of an outcome, where it is a first-order "not valid" that has one. */
+export const structureOf = (outcome: unknown): OrdinaryOutcome["structure"] => {
+  const o = outcome as OrdinaryOutcome | undefined;
+  return o?.verdict === "not_valid" ? o.structure : undefined;
+};
+
+/**
+ * A step as `ordinary_apply` takes it: the formula's side and position there, the rule, and for
+ * ∃R or ∀L the witness as text (left out: open, `$1`).
+ */
 export interface OrdinaryStep {
   readonly side: Side;
   readonly position: number;
   readonly rule: string;
+  readonly witness?: string;
 }
 
 /** Whether a document is an ordinary session: it names a logic, where a linear one names a mode. */
@@ -349,8 +362,9 @@ export function sided(
 
 /** A step of the page's (a place, or a side and position given) as `ordinary_apply` takes it. */
 export function ordinaryStep(formulas: readonly GoalFormula[], step: StepForm): OrdinaryStep {
-  if (step.side) return { side: step.side, position: step.position, rule: step.rule };
-  return { ...sided(formulas, step.position), rule: step.rule };
+  const witness = step.witness === undefined ? {} : { witness: step.witness };
+  if (step.side) return { side: step.side, position: step.position, rule: step.rule, ...witness };
+  return { ...sided(formulas, step.position), rule: step.rule, ...witness };
 }
 
 /**
@@ -394,6 +408,13 @@ export function ordinaryVerdict(outcome: OrdinaryOutcome): Said & { tone: Tone }
       tone: "ok",
     };
   }
+  if (outcome.verdict === "not_valid" && outcome.structure) {
+    return {
+      keyword: "Not valid",
+      sentence: `The sequent has no derivation in ${named(outcome.logic)}. deduxit found a finite structure that makes every formula left of ⊢ true and every formula right of it false.`,
+      tone: "bad",
+    };
+  }
   if (outcome.verdict === "not_valid" && outcome.countermodel) {
     return {
       keyword: "Not valid",
@@ -417,6 +438,8 @@ export function ordinaryVerdict(outcome: OrdinaryOutcome): Said & { tone: Tone }
     recursion_limit: `it reached the depth of ${String(reason?.depth)} a tab allows`,
     memory_limit: "it reached the memory a tab allows",
     stopped: "it was stopped",
+    incomplete:
+      "at first order it finds proofs but cannot show that none exists, and it found no finite countermodel",
   };
   return {
     keyword: "Unknown: gave up",
@@ -456,9 +479,25 @@ export function ordinaryRefusal(
         sentence: `The axiom needs ${at()} on both sides of ⊢. Choose another rule.`,
       };
     case "size":
+    case "terms":
       return {
         keyword: `${rule} refused: too large`,
         sentence: `${failed.message.charAt(0).toUpperCase()}${failed.message.slice(1)}.`,
+      };
+    case "witness":
+      return {
+        keyword: `${rule} refused: no such term`,
+        sentence: `A witness is built from the sequent's constants and function symbols and the eigenvariables made below this goal, and ${String(d["reason"] ?? "")}.`,
+      };
+    case "binding":
+      return {
+        keyword: `${rule} refused: the eigenvariable condition`,
+        sentence: `The axiom would give an open witness a term it may not take: ${String(d["reason"] ?? "")}. Choose another rule, or undo the step that left the witness open.`,
+      };
+    case "no_witness":
+      return {
+        keyword: `${rule} refused: no witness here`,
+        sentence: `${rule} takes no witness; only ∃R and ∀L do.`,
       };
     default:
       return {
