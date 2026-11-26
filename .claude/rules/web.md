@@ -648,8 +648,11 @@ board and the guide disagree, the guide holds.
   in its panel with Prove apart alone: the rules suite has no search.
 - **A proof made apart closes its goal by its steps** (`useApart`, `replayOnto`): its
   sequent is the goal's as written, so the positions are the goal's; each step is applied
-  again on the goal's subtree (an ordinary proof's history entries by their principal, a linear
-  proof's actions), a goal the search closed there is closed by the search again, and a refusal
+  again on the goal's subtree (a linear proof's actions by path; an ordinary proof's steps by
+  `replaySteps` of `ordinary.ts`: the rule above each step's structural run, its formula found in
+  the target goal by its id in the sequent document when both sessions share that document, and
+  each premise followed to the goal the replay opened for it, never by path, since LK and LJ
+  make different structural runs and keep different formulas right of ⊢), a goal the search closed there is closed by the search again, and a refusal
   or a goal left open changes nothing and says so. The goal's path is kept under `APART` in
   `engines`: the drawing greys its subtree as the search's, and the steps list marks them
   "apart". deduxit's `fill` is no longer called.
