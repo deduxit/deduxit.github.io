@@ -24,7 +24,9 @@
     nixpkgs.follows = "deduxit/nixpkgs";
 
     # The flake machinery follows deduxit's too: one set of versions for both
-    # repositories, all of them past the fourteen days an update waits.
+    # repositories, moved when deduxit's lock moves, which takes the newest
+    # of each. The fourteen days an update waits are npm's and the actions'
+    # (the stack spec, §3.8), not these inputs'.
     flake-parts.follows = "deduxit/flake-parts";
     import-tree.follows = "deduxit/import-tree";
     devshell.follows = "deduxit/devshell";
