@@ -363,8 +363,10 @@ export async function linking(page: Page, visit: Visit) {
 }
 
 /** Opens the page on a new sequent of classical ordinary logic and starts `sequent` there. */
-async function classical(page: Page, sequent: string) {
-  await goto(page);
+async function classical(page: Page, sequent: string, fresh = true) {
+  // A second sequent opens beside the first: a fresh visit would race the restore of the first.
+  if (fresh) await goto(page);
+  else await newTab(page);
   await calculus(page, ["Ordinary", "Classical"]);
   await page.getByRole("textbox", { name: "Sequent" }).fill(sequent);
   await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
@@ -383,7 +385,7 @@ export async function witnessing(page: Page, visit: Visit) {
   await box.getByRole("textbox").press("Enter");
   await expect(box.getByRole("alert")).toBeVisible();
   await visit("witness refused");
-  await classical(page, "p(c) |- exists x. p(x)");
+  await classical(page, "p(c) |- exists x. p(x)", false);
   await page.getByRole("button", { name: /^∃x\. p\(x\), formula/ }).click();
   await rules.getByRole("button", { name: /^∃R/ }).click();
   await box.getByRole("textbox").fill("d");
@@ -412,7 +414,7 @@ export async function countermodeling(page: Page, visit: Visit) {
   await visit("countermodel changed");
   await view.getByRole("button", { name: "Add an element" }).click();
   await visit("countermodel with an element added");
-  await classical(page, "forall x. (p(x) -> q(f(x))), p(a) |- q(f(a))");
+  await classical(page, "forall x. (p(x) -> q(f(x))), p(a) |- q(f(a))", false);
   await addView(page, "A model of your own");
   await expect(page.getByRole("region", { name: "Countermodel" })).toBeVisible();
   await visit("a structure of one's own");
