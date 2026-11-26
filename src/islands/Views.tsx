@@ -623,6 +623,7 @@ export function EmbeddingView(props: {
   sequent: { text: string; form: unknown };
   stale: boolean;
 }) {
+  const workspace = useWorkspace();
   const [answer] = createResource(
     () => [props.sequent.text, props.logic] as const,
     ([text, logic]) => answered(() => embed(props.prover, text, logic)),
@@ -649,11 +650,15 @@ export function EmbeddingView(props: {
                 disabled={props.stale || props.prover.busy()}
                 onPress={() =>
                   void (async () => {
-                    const opened = await props.prover.open(
-                      JSON.stringify(m().value),
-                      linear(mode()),
-                    );
-                    if ("problem" in opened) return;
+                    // The new sequent is linked to this one, so that the graph shows it.
+                    if (workspace) await workspace.proveEmbedding(props.proof, mode());
+                    else {
+                      const opened = await props.prover.open(
+                        JSON.stringify(m().value),
+                        linear(mode()),
+                      );
+                      if ("problem" in opened) return;
+                    }
                     props.ui.setUi({ tab: "tree", live: `${m().text}: opened at the top.` });
                   })()
                 }

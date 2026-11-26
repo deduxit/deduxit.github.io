@@ -14,7 +14,7 @@ import { createStore } from "solid-js/store";
 import { failure } from "../lib/deduxit";
 import { prettyModal } from "../lib/modal";
 import { isOrdinary, type OrdinarySession, sequentText } from "../lib/ordinary";
-import { type Logic, modal, ordinary } from "../lib/suites";
+import { type Logic, linear, modal, ordinary } from "../lib/suites";
 import { displayed } from "../lib/words";
 import {
   type Action,
@@ -235,6 +235,7 @@ export function createWorkspace(prover: Prover, ui: Ui) {
    * `kept` lays sessions in for nodes whose tabs no longer hold them.
    */
   async function act(action: Action, kept?: ReadonlyMap<number, OrdinarySession>) {
+    lastClosed = [];
     const answer = await prover.api.workspace.edit(state.doc ?? "", action, work(kept), settings());
     setState("doc", answer.workspace);
     await look();
@@ -321,6 +322,9 @@ export function createWorkspace(prover: Prover, ui: Ui) {
     setUi("live", f ? `The workspace refused: ${f.message}` : "The workspace's call was stopped.");
   };
 
+  /** The tabs the last action "closing" took out, while it is the workspace's last action. */
+  let lastClosed: readonly string[] = [];
+
   /** The tabs the visitor closed, each taken out of the workspace in one action. */
   createEffect(
     on(
@@ -340,11 +344,14 @@ export function createWorkspace(prover: Prover, ui: Ui) {
           }
           batch(() => {
             for (const tab of gone) {
+              // Parked, so that the close's Undo links the tab again when its node comes back.
+              parked.set(state.tabs[tab] as number, tab);
               unlink(tab);
               opened.delete(tab);
             }
           });
           await act({ name: "closing", edits }, kept);
+          lastClosed = gone;
         }).catch(said);
       },
       { defer: true },
@@ -595,6 +602,19 @@ export function createWorkspace(prover: Prover, ui: Ui) {
     stale: () => outOfDate(rows()),
     undo: () => undo(false),
     redo: () => undo(true),
+    /**
+     * The close of these tabs undone in the workspace too, where its action "closing" is still
+     * the last: their nodes come back and each tab, back already, is linked to its node again.
+     */
+    reopened: async (tabs: readonly string[]) => {
+      // Asked behind the close's own action, which the queue may still be running.
+      const ours = await queued(
+        async () => state.view?.undo === "closing" && tabs.some((tab) => lastClosed.includes(tab)),
+      );
+      if (!ours) return;
+      lastClosed = [];
+      await undo(false);
+    },
 
     /**
      * "Prove it in ⟨logic⟩" on the translation sheet: one action, "translation", that joins the
@@ -636,6 +656,40 @@ export function createWorkspace(prover: Prover, ui: Ui) {
                 : "a translation"
             }.`,
           );
+      }).catch(said),
+
+    /**
+     * "Prove it in" on the embedding's view: one action, "embedding", that joins the shown tab,
+     * embeds its sequent into linear logic (the logic's default embedding) and starts a proof of
+     * the image, which opens as a chip linked to it, so that the graph of views shows it.
+     */
+    proveEmbedding: (tab: string, mode: "classical" | "intuitionistic") =>
+      queued(async () => {
+        const join = await joining(tab, 0);
+        if (!join) return;
+        const at = join.edits.length;
+        const made = await act({
+          name: "embedding",
+          edits: [
+            ...join.edits,
+            { connect: { operation: "ordinary.embed", from: [join.sequent] } },
+            { connect: { operation: "linear.start", from: [{ made: at }] } },
+          ],
+        });
+        if (join.edits.length > 0) link(tab, made[1] as number);
+        const image = made[at] as number;
+        const proof = made[at + 1] as number;
+        await checkNode(image);
+        if (!state.view?.nodes.find((n) => n.node === proof)?.value) await runNodes([proof]);
+        const value = state.view?.nodes.find((n) => n.node === proof)?.value;
+        if (!value) return;
+        const done = await prover.open(JSON.stringify(value), linear(mode));
+        if ("problem" in done) return;
+        const chip = prover.current()?.id;
+        if (chip) {
+          opened.add(chip);
+          link(chip, proof);
+        }
       }).catch(said),
 
     /** "Duplicate this proof": one action, "copy", a new tab with the same proof, linked. */

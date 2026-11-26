@@ -278,6 +278,7 @@ export default function App(props: {
     }
     const closed = prover.store.proofs.find((p) => p.id === chip);
     const text = closed?.input ? tabText(closed) : "The new sequent";
+    const ids = prover.members(chip).map((p) => p.id);
     const back = prover.closeChip(chip);
     setUi({
       menu: null,
@@ -289,6 +290,8 @@ export default function App(props: {
           run: () => {
             back();
             setUi("tab", "tree");
+            // The workspace takes its closing back too, so the proofs are linked again.
+            void workspace.reopened(ids);
           },
         },
       },

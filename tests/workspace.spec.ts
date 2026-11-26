@@ -76,3 +76,24 @@ test("a link holds the shown sequent's whole group", async ({ page }) => {
   await expect(fresh.locator(".chip")).toHaveCount(2);
   await expect(fresh.getByRole("tab", { name: /, a copy/ })).toBeVisible();
 });
+
+test("Undo of a sequent's close links it again: the graph shows it as before", async ({ page }) => {
+  await classical(page, "|- a \\/ ~a");
+  await proveTranslation(page);
+  await expect(page.locator(".chip")).toHaveCount(2);
+  // The translated sequent is chosen: Delete on it closes it, the notice's Undo brings it back.
+  await page.locator(".chip[aria-selected=true]").focus();
+  await page.keyboard.press("Delete");
+  await expect(page.locator(".chip")).toHaveCount(1);
+  await page
+    .getByRole("status")
+    .filter({ hasText: "closed." })
+    .getByRole("button", { name: "Undo" })
+    .click();
+  await expect(page.locator(".chip")).toHaveCount(2);
+  // The first sequent's graph has the translated one under it again.
+  await page.locator(".chip").first().click();
+  await page.keyboard.press("g");
+  const graph = page.getByRole("region", { name: "How the views hang together" });
+  await expect(graph.locator(".graph-node[data-chip]")).toHaveCount(1);
+});

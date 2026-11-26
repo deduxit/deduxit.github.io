@@ -68,6 +68,11 @@ test("the embedding into linear logic is a view, and its sequent opens in linear
   await panel.getByRole("button", { name: /^Prove it in LL/ }).click();
   await expect(page.locator(".chip")).toHaveCount(2);
   await expect(page.getByRole("tab", { name: /^Classical linear logic/ })).toBeVisible();
+  // The chip is linked: the sequent's graph shows it, made from the proof by the embedding.
+  await page.locator(".chip").first().click();
+  await page.keyboard.press("g");
+  const graph = page.getByRole("region", { name: "How the views hang together" });
+  await expect(graph.locator(".graph-node[data-chip]")).toHaveCount(1);
 });
 
 test("a normal form opens at its last step; Undo steps back, Next step and To the end go on", async ({
