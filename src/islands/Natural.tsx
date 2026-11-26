@@ -73,6 +73,12 @@ function problemOfProof(p: Proof | undefined): Problem | undefined {
 /** A proof's key in the store: the tab and its natural deduction problem. */
 const keyOf = (p: Proof, q: Problem) => [p.id, q.calculus, q.goal, ...q.assumptions].join("\n");
 
+/** How many steps a proof's natural deduction view holds in its calculus now: 0 for none. */
+export function naturalSteps(p: Proof): number {
+  const q = problemOfProof(p);
+  return q ? (works[keyOf(p, q)]?.played?.view.steps ?? 0) : 0;
+}
+
 /**
  * Puts a session on a proof's natural deduction view, its steps those a lesson's worked proof
  * has played: the view shows it as if the visitor had taken them.

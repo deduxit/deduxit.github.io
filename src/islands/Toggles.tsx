@@ -17,6 +17,7 @@ import { CALCULUS_WORDS, LAMBDA_CALCULI, type LambdaCalculus } from "../lib/lamb
 import { SYSTEMS, systemWords } from "../lib/modal";
 import {
   type Calculus as Chosen,
+  isNatural,
   LOGICS,
   lambda,
   linear,
@@ -26,7 +27,7 @@ import {
   sameCalculus,
 } from "../lib/suites";
 import { cellName } from "./Frame";
-import { layout, setLayout } from "./Natural";
+import { layout, naturalSteps, setLayout } from "./Natural";
 import type { Prover } from "./state";
 import type { Ui } from "./ui";
 
@@ -68,6 +69,20 @@ export function Toggles(props: { prover: Prover; ui: Ui }) {
     const p = proof();
     if (!p || sameCalculus(next, p.calculus)) return;
     const before = cellName(p.calculus);
+    // Natural deduction's steps are kept by its view, by calculus: a change of logic with steps
+    // opens the new logic beside, whose own proof starts afresh.
+    if (isNatural(p.calculus) && naturalSteps(p) > 0 && next.suite === "ordinary") {
+      if (p.calculus.suite === "ordinary" && next.logic === p.calculus.logic) {
+        void props.prover.setCalculus(p.id, next);
+        return;
+      }
+      const after = cellName(next);
+      await props.prover.open(p.input, next);
+      setUi("notice", {
+        text: `${before} keeps your proof, so ${after} opened beside.`,
+      });
+      return;
+    }
     const done = await props.prover.setCalculus(p.id, next);
     if (done && "beside" in done) {
       const after = cellName(next);

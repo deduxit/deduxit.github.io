@@ -713,7 +713,11 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
   function fitView() {
     byHand = false;
     const { w, h } = natural();
-    const W = stage.clientWidth;
+    // The tools' column stands over the stage's right: the drawing fits beside it (with the
+    // guide on it grows with the tools' names). A compact window's tools are a bar below.
+    const tools = compact() ? null : document.querySelector(".tools")?.getBoundingClientRect();
+    const right = tools ? Math.max(0, stage.getBoundingClientRect().right - tools.left) : 0;
+    const W = stage.clientWidth - right;
     const H = stage.clientHeight;
     if (!w || !h) return;
     const margin = token("--spacing-7");
@@ -1029,10 +1033,12 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
       void choose(rule);
       return;
     }
+    // The first rule that applies takes the focus; where none does, the first, whose card says why.
     queueMicrotask(() =>
-      popover
-        ?.querySelector<HTMLButtonElement>("button.rule:not([aria-disabled])")
-        ?.focus({ preventScroll: true }),
+      (
+        popover?.querySelector<HTMLButtonElement>("button.rule:not([aria-disabled])") ??
+        popover?.querySelector<HTMLButtonElement>("button.rule")
+      )?.focus({ preventScroll: true }),
     );
   }
 
@@ -1064,8 +1070,9 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
         "own" in own
       )
         setUi("split", { ...ui.split, own: own.own });
+      // The apply button takes the focus: a chip with the focus ring looked moved already.
       queueMicrotask(() =>
-        premisesEl?.querySelector<HTMLButtonElement>("button")?.focus({ preventScroll: true }),
+        premisesEl?.querySelector<HTMLButtonElement>(".apply-step")?.focus({ preventScroll: true }),
       );
       return;
     }
@@ -2118,7 +2125,15 @@ export function GuideLine(props: { prover: Prover; ui: Ui }) {
   const { ui } = props.ui;
   const words = () => {
     const p = props.prover.current();
-    if (!props.prover.settings().guide || !p?.session || ui.tab !== "tree") return null;
+    if (!props.prover.settings().guide || !p) return null;
+    // A sequent not entered yet: ordinary logic's examples say it, the other logics this.
+    if (!p.session && !p.modal?.outcome && !p.lambda?.statement)
+      return p.calculus.suite === "ordinary"
+        ? null
+        : p.calculus.suite === "lambda"
+          ? "Type a term or a type below and press Enter."
+          : "Type a sequent below and press Enter.";
+    if (!p.session || ui.tab !== "tree") return null;
     if (pointer(props.prover, props.ui)) return null;
     if (isNatural(p.calculus))
       return "Press a rule to work back from the goal, or cite lines to work forward from them.";

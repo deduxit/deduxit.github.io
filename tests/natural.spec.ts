@@ -110,3 +110,22 @@ test("a goal closed by its assumption is drawn in both views", async ({ page }) 
   await view.getByRole("button", { name: "Check the proof" }).click();
   await expect(view.getByRole("status")).toContainText("Valid in NJ");
 });
+
+test("a change of logic with steps taken opens the new logic beside, and ? proves a goal apart", async ({
+  page,
+}) => {
+  await natural(page);
+  await deduce(page, "a ∧ b ⊢ b ∧ a");
+  await customStep(page, "∧I");
+  await page.getByRole("button", { name: "Classical", exact: true }).click();
+  await expect(page.getByRole("status").filter({ hasText: "opened beside" })).toBeVisible();
+  await expect(page.locator(".chip")).toHaveCount(2);
+  // The NJ proof keeps its step.
+  await page.locator(".chip").first().click();
+  await page.getByRole("button", { name: "?, this goal: its actions" }).click();
+  await page
+    .getByRole("group", { name: "This goal" })
+    .getByRole("button", { name: "Prove apart" })
+    .click();
+  await expect(page.locator(".chip")).toHaveCount(3);
+});

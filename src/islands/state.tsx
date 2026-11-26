@@ -50,6 +50,8 @@ import {
   ordinaryRefusal,
   ordinaryStep,
   ordinaryVerdict,
+  placeOf,
+  replaySteps,
   retract as retractOrdinary,
   sequentText as ordinaryText,
 } from "../lib/ordinary";
@@ -626,6 +628,14 @@ export function createProver(say: (text: string) => void = () => undefined) {
   const [marks, setMarks] = createStore<Record<string, Marked>>({});
   /** What the marking's search said of each proof's sequent itself, asked while its root was open. */
   const [roots, setRoots] = createStore<Record<string, Marked>>({});
+  /** Takes the marks of proofs made apart off the proof shown, before steps are taken back. */
+  const dropApart = () => {
+    const p = current();
+    if (p && Object.values(p.engines).includes(APART))
+      update(p.id, (q) => {
+        q.engines = Object.fromEntries(Object.entries(q.engines).filter(([, e]) => e !== APART));
+      });
+  };
   /** Keeps what the marking said of a proof's sequent; with no proof, its chip and cell say so. */
   const rooted = (id: string, said: Marked) => {
     setRoots(id, said);
@@ -641,10 +651,8 @@ export function createProver(say: (text: string) => void = () => undefined) {
   };
   /** The goals asked of the marking's search and not yet answered, by the same key. */
   const asking = new Set<string>();
-  const markKey = (p: Proof, goal: number) => {
-    const formulas = p.view?.goals.find((g) => g.goal === goal)?.formulas ?? [];
-    return `${JSON.stringify(p.calculus)}\n${formulas.map((f) => `${f.side ?? ""}${f.text}`).join("\n")}`;
-  };
+  const markKey = (calculus: Calculus, formulas: readonly GoalFormula[]) =>
+    `${JSON.stringify(calculus)}\n${formulas.map((f) => `${f.side ?? ""}${f.text}`).join("\n")}`;
   /** This visit's key among the stored proofs; a link opened in the page starts a new one. */
   let visit = freshId();
 
@@ -1300,31 +1308,52 @@ export function createProver(say: (text: string) => void = () => undefined) {
     let taken = 0;
     const at = (path: Path) => goalAt(played.session, [...base, ...path]);
     if (isOrdinary(source.session)) {
-      const where = paths(source.session);
-      for (const goalOf of source.session.history) {
+      // A step's run of weakenings and contractions differs between LK and LJ, so the goals are
+      // followed step by step, each premise the source made to the goal the replay opened for it,
+      // never by path.
+      const root = goalAt(start.session, base);
+      if (root === undefined) return { failed: 1 };
+      const into = new Map<number, number>([[0, root]]);
+      // Started from the same sequent document (a change of logic), a formula is found by what it
+      // is; a sequent of its own (a proof made apart) is written as the goal, positions alike.
+      const same =
+        isOrdinary(start.session) &&
+        JSON.stringify(start.session.sequent) === JSON.stringify(source.session.sequent);
+      for (const { goal: goalOf, step, formula, premises } of replaySteps(source.session)) {
         taken += 1;
-        const inference = source.session.inferences[goalOf];
-        const target = at(where.get(goalOf) ?? []);
-        if (
-          !inference?.rule ||
-          !inference.principal ||
-          target === undefined ||
-          !isOrdinary(played.session)
-        )
-          return { failed: taken };
-        const [side, position] = inference.principal;
+        const target = into.get(goalOf);
+        if (target === undefined || !isOrdinary(played.session)) return { failed: taken };
         const session = played.session;
+        const position = same ? placeOf(session, target, step.side, formula) : step.position;
+        if (position < 0) return { failed: taken };
         const done = await attempt(() =>
-          api.ordinary.apply(
-            session,
-            target,
-            { side, position, rule: inference.rule as string },
-            ordinaryJson(),
-          ),
+          api.ordinary.apply(session, target, { ...step, position }, ordinaryJson()),
         );
-        if (!done.ok) return { failed: taken };
+        if (!done.ok || done.value.opened.length !== premises.length) return { failed: taken };
+        for (const [i, p] of premises.entries()) into.set(p, done.value.opened[i] as number);
         played = { session: done.value.session, view: asView(done.value.view) };
       }
+      if (taken < source.session.history.length) return { failed: taken + 1 };
+      // A goal the source closed by the search (a graft), the search closes here again.
+      for (const [from, to] of into) {
+        const session = played.session;
+        if (!isOrdinary(session) || !played.view.goals.some((g) => g.goal === to)) continue;
+        if (source.session.inferences[from]?.rule === undefined) continue;
+        const done = await attempt(() => api.ordinary.close(session, to, ordinaryJson()));
+        if (!done.ok) return { failed: 0 };
+        played = { session: done.value.session, view: asView(done.value.view) };
+      }
+      const open = new Set(
+        [...into]
+          .filter(([from]) => source.session?.inferences[from]?.rule === undefined)
+          .map(([, to]) => to),
+      );
+      const reached = played;
+      return reached.view.goals.every(
+        (g) => open.has(g.goal) || !within(paths(reached.session).get(g.goal) ?? [], base),
+      )
+        ? { played: reached }
+        : { failed: 0 };
     } else {
       for (const action of actionsOf(source.session, source.view?.cuts, source.view)) {
         taken += 1;
@@ -1983,6 +2012,8 @@ export function createProver(say: (text: string) => void = () => undefined) {
         q.verdict = null;
         if (steps === 0) q.engines = {};
       });
+      // What the marking said of the sequent held in the calculus before.
+      setRoots(produce((r) => void delete r[id]));
       show(id, kept.played, kept.played.view.goals[0]?.goal ?? 0);
       save();
       return steps > 0 ? { kept: steps } : undefined;
@@ -2508,6 +2539,8 @@ export function createProver(say: (text: string) => void = () => undefined) {
 
     /** Undo on the active goal's branch (on a finished proof, the last step). */
     undo: guard(async () => {
+      // Steps taken back may be those a proof made apart brought: its mark goes with them.
+      dropApart();
       const p = current();
       // A custom proof takes back its last step: its session keeps no branches apart.
       if (p?.custom?.session) {
@@ -2625,6 +2658,8 @@ export function createProver(say: (text: string) => void = () => undefined) {
      * says why.
      */
     goBack: guard(async (goal: number) => {
+      // Steps taken back may be those a proof made apart brought: its mark goes with them.
+      dropApart();
       const p = current();
       const doc = p?.session;
       if (!p || !doc) return;
@@ -2742,6 +2777,8 @@ export function createProver(say: (text: string) => void = () => undefined) {
 
     /** Goes back to the session as it was after its first `count` actions; redo brings the rest back. */
     backTo: guard(async (count: number) => {
+      // Steps taken back may be those a proof made apart brought: its mark goes with them.
+      dropApart();
       const p = current();
       if (!p?.session) return;
       const o = ordinaryOf(p);
@@ -3089,7 +3126,8 @@ export function createProver(say: (text: string) => void = () => undefined) {
      */
     marked(goal: number): Marked | undefined {
       const p = current();
-      return p && settings().marking ? marks[markKey(p, goal)] : undefined;
+      const formulas = p?.view?.goals.find((g) => g.goal === goal)?.formulas;
+      return p && formulas && settings().marking ? marks[markKey(p.calculus, formulas)] : undefined;
     },
 
     /** What the marking's search said of a proof's sequent itself, while the marking is on. */
@@ -3105,11 +3143,15 @@ export function createProver(say: (text: string) => void = () => undefined) {
     async mark(id: string) {
       const p = store.proofs.find((x) => x.id === id);
       if (!p?.session || !p.view || !settings().marking || limits().search(id) !== null) return;
+      // One snapshot: each goal's key is built from the formulas its search is asked of, even
+      // where an action replaces the proof's view between two searches.
       const session = p.session;
+      const calculus = p.calculus;
+      const goals = p.view.goals;
       const begun = performance.now();
       let asked = 0;
-      for (const g of p.view.goals) {
-        const key = markKey(p, g.goal);
+      for (const g of goals) {
+        const key = markKey(calculus, g.formulas);
         const known = marks[key];
         if (known !== undefined && g.goal === 0) rooted(id, known);
         if (known !== undefined || asking.has(key)) continue;

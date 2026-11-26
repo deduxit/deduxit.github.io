@@ -9,7 +9,7 @@
 import { readFile } from "node:fs/promises";
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
-import { calculus, closeGoal, goalMenu, goto, newTab, tool } from "./prover";
+import { calculus, closeGoal, goalMenu, goto, newTab, switches, tool } from "./prover";
 
 /** The chosen sequent's proof, its cell in the rail, whose hover names its calculus. */
 const mark = (page: Page) =>
@@ -323,4 +323,31 @@ test("an ordinary goal an earlier step lost goes back to the last goal still val
   await (await goalMenu(page)).getByRole("button", { name: "Go back" }).click();
   await expect(note.locator(".kw.ok")).toHaveText("Back at a goal with a proof.");
   await expect(page.getByRole("button", { name: /^¬a, formula 1 of goal 1/ })).toBeVisible();
+});
+
+test("an ordinary proof is kept where its steps hold in the logic chosen, and closes a goal proved apart", async ({
+  page,
+}) => {
+  await ordinary(page, "classical", "a, a -> b |- b");
+  await rule(page, /^a → b, formula/, "→L");
+  await rule(page, /^a, formula/, "ax");
+  await rule(page, /^b, formula/, "ax");
+  await expect(checked(page)).toBeVisible();
+  // →L, then an axiom on each premise: every step holds in LJ too.
+  await (await switches(page)).getByRole("button", { name: "Intuitionistic" }).click();
+  await expect(page.locator(".chip")).toHaveCount(1);
+  await expect(mark(page)).toHaveAttribute("data-tip", /LJ/);
+  await expect(checked(page)).toBeVisible();
+  // The same steps, made apart on a goal, close it.
+  await ordinary(page, "intuitionistic", "c, a, a -> b |- b /\\ c");
+  await rule(page, /^b ∧ c, formula/, "∧R");
+  await (await goalMenu(page)).getByRole("button", { name: "Prove apart" }).click();
+  await rule(page, /^a → b, formula/, "→L");
+  await rule(page, /^a, formula/, "ax");
+  await rule(page, /^b, formula/, "ax");
+  await expect(checked(page)).toBeVisible();
+  await page.getByRole("tab", { name: /^c, a, a → b ⊢ b ∧ c/ }).click();
+  await (await goalMenu(page)).getByRole("button", { name: "Use its proof" }).click();
+  await expect(page.getByRole("button", { name: /^b, formula/ })).toHaveCount(0);
+  await expect(page.locator(".drawing g.search").first()).toBeAttached();
 });

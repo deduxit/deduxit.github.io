@@ -9,6 +9,8 @@ import {
   type OrdinarySession,
   type OrdinaryView,
   ordinaryStep,
+  placeOf,
+  replaySteps,
   retract,
   sequentText,
   stepsOf,
@@ -213,5 +215,71 @@ describe("the ordinary suite", () => {
     // The walk reaches sessions with steps to take back, finished ones among them.
     expect(retracted).toBeGreaterThan(30);
     expect(compared).toBeGreaterThan(0);
+  });
+});
+
+describe("an ordinary proof's steps as they replay", () => {
+  /** Applies each step to the first open goal. */
+  const prove = (p: Played, plan: [string, number, string][]) =>
+    plan.reduce((q, [side, position, rule]) => {
+      const goal = q.view.goals[0]?.goal ?? 0;
+      return apply(q, goal, side, position, rule);
+    }, p);
+  it.each([
+    [
+      "an axiom with no context, under a shared rule",
+      "a |- a /\\ a",
+      "classical",
+      "classical",
+      [
+        ["right", 0, "∧R"],
+        ["right", 0, "ax"],
+        ["right", 0, "ax"],
+      ],
+    ],
+    ["an axiom with a context", "a, b |- a", "classical", "classical", [["right", 0, "ax"]]],
+    [
+      "LK's →L in LJ, which keeps fewer formulas right of ⊢",
+      "a, a -> b |- b",
+      "classical",
+      "intuitionistic",
+      [
+        ["left", 1, "→L"],
+        ["right", 1, "ax"],
+        ["right", 0, "ax"],
+      ],
+    ],
+    [
+      "LJ's →L with another hypothesis, in minimal logic",
+      "a, a -> b |- b",
+      "intuitionistic",
+      "minimal",
+      [
+        ["left", 1, "→L"],
+        ["right", 0, "ax"],
+        ["right", 0, "ax"],
+      ],
+    ],
+  ] as const)("takes %s again, in the same logic or another", (_, text, logic, into, plan) => {
+    const proved = prove(
+      start(text, logic),
+      plan.map((x) => [...x]),
+    );
+    expect(proved.view.complete).toBe(true);
+    let again = start(text, into);
+    // Each premise the source made, to the goal the replay opened for it.
+    const goals = new Map([[0, 0]]);
+    for (const { goal, step, formula, premises } of replaySteps(proved.session)) {
+      const at = goals.get(goal) ?? -1;
+      const position = placeOf(again.session, at, step.side, formula);
+      const next = apply(again, at, step.side, position, step.rule);
+      const opened = (next as Played & { opened: number[] }).opened;
+      for (const [i, p] of premises.entries()) goals.set(p, opened[i] ?? -1);
+      again = next;
+    }
+    expect(again.view.complete).toBe(true);
+    expect(stepsOf(again.session).map((x) => x.rule)).toEqual(
+      stepsOf(proved.session).map((x) => x.rule),
+    );
   });
 });

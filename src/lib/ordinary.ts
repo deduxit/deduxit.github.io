@@ -254,6 +254,49 @@ export function stepsOf(doc: OrdinarySession): { goal: number; rule: string }[] 
   });
 }
 
+/**
+ * Each step of an ordinary session as `ordinary_apply` takes it again on the goal it expanded:
+ * the rule above the structural run (`stepsOf`) and its principal, found in the goal's own lists
+ * by the formula it is (a run's contractions copy formulas, its weakenings drop them). An axiom
+ * names no principal: its formula is the one on both sides of ⊢. Each step comes with its formula
+ * in the sequent document (the same in every session started from that document, whatever the
+ * logic: LK and LJ keep different formulas in a goal, so a position does not carry over) and the
+ * premises it made above its run, the goals the next steps expand.
+ */
+export function replaySteps(
+  doc: OrdinarySession,
+): { goal: number; step: OrdinaryStep; formula: number; premises: readonly number[] }[] {
+  const steps = stepsOf(doc);
+  return doc.history.flatMap((goal, k) => {
+    const rule = steps[k]?.rule ?? "";
+    // The inference that holds the rule: the top of the goal's structural run.
+    let at = goal;
+    while (doc.inferences[at]?.rule !== rule) {
+      const next = doc.inferences[at]?.premises?.[0];
+      if (next === undefined) return [];
+      at = next;
+    }
+    const top = doc.inferences[at];
+    const below = doc.inferences[goal];
+    if (!top || !below) return [];
+    const [side, position] = top.principal ?? [
+      "right" as Side,
+      top.right.findIndex((f) => top.left.includes(f)),
+    ];
+    const formula = top[side][position];
+    const at_ = formula === undefined ? -1 : below[side].indexOf(formula);
+    // The premises the step made, above its run: what the next steps act on.
+    return at_ < 0 || formula === undefined
+      ? []
+      : [{ goal, step: { side, position: at_, rule }, formula, premises: top.premises ?? [] }];
+  });
+}
+
+/** A formula of the sequent document by its place in a goal's side, or -1 where it is not there. */
+export function placeOf(doc: OrdinarySession, goal: number, side: Side, formula: number): number {
+  return doc.inferences[goal]?.[side].indexOf(formula) ?? -1;
+}
+
 /** Why an ordinary proof has no net to show. */
 const NO_NET: Failure = {
   code: "page",

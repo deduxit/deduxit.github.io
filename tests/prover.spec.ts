@@ -957,6 +957,11 @@ test("a goal is closed by its proof made apart: its steps taken again, grey, and
   const steps = page.getByRole("dialog", { name: "Steps" });
   await expect(steps.getByRole("button").nth(1)).not.toContainText("apart");
   await expect(steps.getByRole("button").nth(2)).toContainText("⊗ on goal 2 apart");
+  // Steps taken back take the mark with them: what is taken by hand there is the visitor's.
+  await page.keyboard.press("Escape");
+  await tool(page, "Undo").click();
+  await tool(page, "Steps").click();
+  await expect(steps).not.toContainText("apart");
 });
 
 test("a net's view has the toggle Formulas or Compact where the calculus's toggles stand", async ({
