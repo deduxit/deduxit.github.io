@@ -493,6 +493,35 @@ test("a sheet's close button is drawn and reached by Tab only where the panel is
   await expect(panel).toBeHidden();
 });
 
+test.describe("a compact window 200 high, as 400 % zoom makes one", () => {
+  test.use({ viewport: { width: 320, height: 200 } });
+
+  test("keeps its rows apart and scrolls the page up and down, never sideways", async ({
+    page,
+  }) => {
+    await start(page, "A * B |- B * A");
+    const rows = [
+      page.locator(".top-row"),
+      page.locator(".rail"),
+      page.locator(".stage-ctl"),
+      page.locator(".bottom"),
+      page.getByRole("toolbar", { name: "Tools" }),
+    ];
+    const boxes = [];
+    for (const row of rows) boxes.push(await row.boundingBox());
+    // Each row lies below the one before it (the zoom above the box), none over another.
+    for (let i = 1; i < boxes.length; i++)
+      expect(boxes[i]?.y ?? 0).toBeGreaterThanOrEqual(
+        (boxes[i - 1]?.y ?? 0) + (boxes[i - 1]?.height ?? 0) - 0.5,
+      );
+    const scrolls = await page.evaluate(() => ({
+      tall: document.documentElement.scrollHeight > innerHeight,
+      wide: document.documentElement.scrollWidth > innerWidth,
+    }));
+    expect(scrolls).toEqual({ tall: true, wide: false });
+  });
+});
+
 test.describe("a coarse pointer", () => {
   test.use({ hasTouch: true, isMobile: true, viewport: { width: 1024, height: 768 } });
 

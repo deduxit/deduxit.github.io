@@ -218,6 +218,8 @@
      how far a panel moves the drawing aside, none at first. The bottom box keeps clear of both. */
   --size-zoom: 0rem;
   --size-aside: 0rem;
+  /* The least height of a compact window's frame: a shorter window scrolls the page instead. */
+  --size-frame-least: 30rem;
   /* The bottom box, its Enter, its most width. */
   --size-box: 3.375rem;
   /* The bottom box in a compact window. */

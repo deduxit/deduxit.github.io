@@ -4034,6 +4034,16 @@ table.keys th {
   }
 }
 
+/* A compact window under 480 high (a phone's page at 400 % zoom): the frame keeps the height its
+   rows need and the page scrolls up and down, so that no row lies over another (WCAG 1.4.10). */
+@media (width < 600px) and (height < 480px) {
+  .app {
+    position: absolute;
+    inset: 0 0 auto;
+    height: max(100dvh, var(--size-frame-least));
+  }
+}
+
 /* With forced colours every edge is a real border: grounds and shadows are dropped. */
 @media (forced-colors: active) {
   .tool,
