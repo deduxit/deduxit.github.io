@@ -18,6 +18,7 @@ import {
   Index,
   on,
   Show,
+  untrack,
 } from "solid-js";
 import {
   allClauses,
@@ -183,6 +184,7 @@ export function ResolutionView(props: {
     >
       <ByHand
         text={props.sequent.text}
+        keep={props.proof}
         prover={props.prover}
         onSteps={(n) => markSteps(props.ui, props.proof, "resolution", n > 1)}
       />
@@ -240,21 +242,45 @@ function Found(props: { text: string; way: Way; prover: Prover; ui: Ui }) {
   );
 }
 
-/** A refutation built by hand: two clauses chosen, an atom, the resolvent added, until □. */
-function ByHand(props: { text: string; prover: Prover; onSteps?: (made: number) => void }) {
+/** A refutation built by hand, kept by its proof while its view is left: the sequent it is of, its steps, and whether □ was derived. */
+interface Built {
+  readonly text: string;
+  readonly made: readonly Refutation[];
+  readonly derived: boolean;
+}
+const [built, setBuilt] = createSignal<ReadonlyMap<string, Built>>(new Map());
+
+/**
+ * A refutation built by hand: two clauses chosen, an atom, the resolvent added, until □. Its
+ * steps are kept under `keep` (the proof's id), so leaving its cell and coming back loses none.
+ */
+function ByHand(props: {
+  text: string;
+  keep: string;
+  prover: Prover;
+  onSteps?: (made: number) => void;
+}) {
   const [start] = createResource(
     () => props.text,
     (text) => answered(() => props.prover.api.ordinary.clauses(text, "", "{}")),
   );
+  const kept = untrack(() => built().get(props.keep));
+  const resumed = kept?.text === untrack(() => props.text) ? kept : undefined;
   /** The refutations so far, the last the current one: each step adds one, undo drops it. */
-  const [made, setMade] = createSignal<readonly Refutation[]>([]);
+  const [made, setMade] = createSignal<readonly Refutation[]>(resumed?.made ?? []);
+  /** The sequent the refutations are of. */
+  const [basis, setBasis] = createSignal<string | null>(resumed?.text ?? null);
   // The resolvents made (after the first refutation, the clauses alone) are the view's own steps:
   // bringing it up to date would lose them.
   createEffect(() => props.onSteps?.(made().length));
   createEffect(
     on(start, (s) => {
+      // Steps kept for this very sequent stay; another sequent starts again.
+      if (basis() === props.text && made().length > 0) return;
       const first = given<Refutation>(s);
       setMade(first ? [first] : []);
+      setDerived(false);
+      setBasis(first ? props.text : null);
     }),
   );
   const current = () => made()[made().length - 1];
@@ -262,7 +288,13 @@ function ByHand(props: { text: string; prover: Prover; onSteps?: (made: number) 
   const [said, setSaid] = createSignal<string>("");
   const [busy, setBusy] = createSignal(false);
   /** Whether deduxit said the last step derived □. */
-  const [derived, setDerived] = createSignal(false);
+  const [derived, setDerived] = createSignal(resumed?.derived ?? false);
+  createEffect(() => {
+    const text = basis();
+    if (text === null) return;
+    const now: Built = { text, made: made(), derived: derived() };
+    setBuilt((all) => new Map(all).set(props.keep, now));
+  });
   /** Whether a given clause is □ already, so no step is needed. */
   const startsEmpty = () => (current()?.clauses ?? []).some((c) => c.length === 0);
   const finished = () => derived() || startsEmpty();

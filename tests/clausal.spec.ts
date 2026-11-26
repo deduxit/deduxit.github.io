@@ -155,6 +155,25 @@ test("a refutation by hand adds only what resolution allows, and reaches □", a
   await expect(view.getByRole("status")).not.toContainText("You derived □");
 });
 
+test("a refutation by hand keeps its resolvents when its cell is left and opened again", async ({
+  page,
+}) => {
+  await ordinary(page, "Classical", "a -> b, a |- b");
+  const view = await sheet(page, "Resolution");
+  await way(page, "By hand");
+  await listed(view, 1).click();
+  await listed(view, 2).click();
+  await view.getByRole("button", { name: "Resolve on a" }).click();
+  await expect(view.locator(".cl-list li")).toHaveCount(4);
+  // To the proof's cell and back: the resolvent is still there, and Undo takes it back.
+  await page.getByRole("tab", { name: /^Sequent calculus/ }).click();
+  await expect(view).toBeHidden();
+  await page.getByRole("tab", { name: /^Resolution/ }).click();
+  await expect(view.locator(".cl-list li")).toHaveCount(4);
+  await view.getByRole("button", { name: "Undo" }).click();
+  await expect(view.locator(".cl-list li")).toHaveCount(3);
+});
+
 test("a set that holds □ already says so, and claims no step", async ({ page }) => {
   await ordinary(page, "Classical", "|- true");
   const view = await sheet(page, "Resolution");
