@@ -2,7 +2,8 @@
 // Licensed under the EUPL
 
 import { createResource, Show } from "solid-js";
-import type { OrdinaryOutcome } from "../lib/ordinary";
+import { isOrdinary, type OrdinaryOutcome } from "../lib/ordinary";
+import { rootOf } from "../lib/structure";
 import type { Prover } from "./state";
 import type { Ui } from "./ui";
 
@@ -14,12 +15,15 @@ import type { Ui } from "./ui";
 export function ModelFigure(props: { outcome: OrdinaryOutcome; prover: Prover; ui: Ui }) {
   const change = () => {
     const found = props.outcome.countermodel;
-    const proof = props.prover.current()?.id;
+    const current = props.prover.current();
+    const proof = current?.id;
     if (!found || !proof) return;
+    const session = current?.session;
     props.ui.setUi({
       counter: {
         kind: "kripke",
         proof,
+        ...(session && isOrdinary(session) ? { root: rootOf(session) } : {}),
         seed: {
           model: found.model,
           sequent: JSON.stringify(found.sequent),

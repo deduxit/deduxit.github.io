@@ -33,7 +33,7 @@ import {
   sequentText,
   structureOf,
 } from "../lib/ordinary";
-import { complete, signatureOf } from "../lib/structure";
+import { complete, rootOf, sameRoot, signatureOf } from "../lib/structure";
 import { goalAt, paths, searchMade, subtree } from "../lib/steps";
 import { intuitionistic, isNatural } from "../lib/suites";
 import { formulaText, lost, type Said, shown, stepLine } from "../lib/words";
@@ -1371,6 +1371,14 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
       { defer: true },
     ),
   );
+  // A countermodel belongs to its proof's sequent: typed anew, the sequent drops it.
+  createEffect(() => {
+    const c = ui.counter;
+    const root = c && c.kind !== "modal" ? c.root : undefined;
+    const p = proof();
+    if (!c || !root || c.proof !== p?.id || !p.session || !isOrdinary(p.session)) return;
+    if (!sameRoot(root, p.session)) setUi("counter", null);
+  });
   // The countermodel view gives way to the tree once there is none to show (a modal sequent
   // decided valid in another system).
   createEffect(() => {
@@ -2107,14 +2115,24 @@ export function GoalNotes(props: { prover: Prover; ui: Ui }) {
                       class="btn btn-s"
                       onClick={() => {
                         const p = props.prover.current();
-                        if (!p) return;
-                        const sequent = found().sequent;
-                        const signature = signatureOf(sequent);
+                        const session = p?.session;
+                        if (!p || !session || !isOrdinary(session)) return;
+                        // The goal as deduxit writes it: its JSON's arena may hold eigenvariables.
+                        const goal = goalAt(session, n.path);
+                        const formulas = p.view?.goals.find((g) => g.goal === goal)?.formulas ?? [];
+                        const side = (s: string) =>
+                          formulas
+                            .filter((f) => f.side === s)
+                            .map((f) => f.text)
+                            .join(", ");
+                        const text = `${side("input")} ⊢ ${side("output")}`.trim();
+                        const signature = signatureOf(found().sequent);
                         setUi({
                           counter: {
                             kind: "structure",
                             proof: p.id,
-                            sequent: JSON.stringify(sequent),
+                            sequent: text,
+                            root: rootOf(session),
                             logic: (n.outcome as unknown as OrdinaryOutcome).logic,
                             signature,
                             found: true,

@@ -11,6 +11,8 @@
 
 import { createEffect, createSignal, on, Show } from "solid-js";
 import { type Failure, failure as failureOf } from "../lib/deduxit";
+import { isOrdinary } from "../lib/ordinary";
+import { rootOf } from "../lib/structure";
 import { type TableauReview, reviewWords, startLines } from "../lib/written";
 import type { Prover } from "./state";
 import type { Ui } from "./ui";
@@ -147,12 +149,15 @@ export function TableauCheckView(props: { prover: Prover; ui: Ui; sequent: strin
                     type="button"
                     class="btn btn-s"
                     onClick={() => {
-                      const proof = props.prover.current()?.id;
+                      const current = props.prover.current();
+                      const proof = current?.id;
                       if (!proof) return;
+                      const session = current?.session;
                       props.ui.setUi({
                         counter: {
                           kind: "kripke",
                           proof,
+                          ...(session && isOrdinary(session) ? { root: rootOf(session) } : {}),
                           seed: {
                             model: found().model,
                             sequent: JSON.stringify(found().sequent),

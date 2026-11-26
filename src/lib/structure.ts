@@ -237,3 +237,54 @@ export function structureJson(structure: Structure): string {
 /** A tuple written as its arguments: `p(0, 1)`, `q` for none. */
 export const applied = (name: string, tuple: readonly number[]) =>
   tuple.length ? `${name}(${tuple.join(", ")})` : name;
+
+/** What identifies a session's sequent while its arena grows: the root's sides and the arena so far. */
+export interface Root {
+  readonly left: readonly number[];
+  readonly right: readonly number[];
+  readonly formulas: readonly unknown[];
+  readonly atoms: readonly unknown[];
+  readonly symbols: readonly unknown[];
+}
+
+/** A session document's arena and root, as an ordinary session writes them. */
+interface Rooted {
+  readonly sequent: {
+    readonly formulas?: readonly unknown[];
+    readonly atoms?: readonly unknown[];
+    readonly symbols?: readonly unknown[];
+  };
+  readonly inferences: readonly {
+    readonly left: readonly number[];
+    readonly right: readonly number[];
+  }[];
+}
+
+/** The root of an ordinary session: its sides, and the formulas, atoms and symbols up to now. */
+export function rootOf(session: Rooted): Root {
+  const root = session.inferences[0] ?? { left: [], right: [] };
+  return {
+    left: root.left,
+    right: root.right,
+    formulas: session.sequent.formulas ?? [],
+    atoms: session.sequent.atoms ?? [],
+    symbols: session.sequent.symbols ?? [],
+  };
+}
+
+/**
+ * Whether a session still proves the sequent a root was taken of: a session's arena only grows
+ * by appending (instances of the proof's steps), so the same sequent keeps the root's sides and
+ * every formula, atom and symbol the root had, in place.
+ */
+export function sameRoot(root: Root, session: Rooted): boolean {
+  const now = rootOf(session);
+  const prefix = (a: readonly unknown[], b: readonly unknown[]) =>
+    JSON.stringify(b.slice(0, a.length)) === JSON.stringify(a);
+  return (
+    JSON.stringify([root.left, root.right]) === JSON.stringify([now.left, now.right]) &&
+    prefix(root.formulas, now.formulas) &&
+    prefix(root.atoms, now.atoms) &&
+    prefix(root.symbols, now.symbols)
+  );
+}

@@ -284,8 +284,15 @@ the page reads.
   The check is `ordinary_model`; its `invalid_model` refusal is said as "No model of … logic"
   with deduxit's reason (`refusalWords`).
 - **The countermodel view `⊭`** (board D9; `ui.tab` `"countermodel"`, `ui.counter`,
-  `data-method="countermodel"`, its cell after the proof's in `cellsOf`) shows every
-  countermodel deduxit found, one per proof (`ui.counter.proof`):
+  `data-method="countermodel"`, its cell after the proof's in `cellsOf`) shows one
+  countermodel at a time, of the proof it was opened on (`ui.counter.proof`; opening another
+  proof's takes the first one's cell away), and goes when that proof's sequent is typed anew
+  (`root`, `sameRoot`: the arena only grows, so the same sequent keeps its root and its
+  arena's prefix). The structure is checked against the sequent as text (a goal's formulas as
+  deduxit writes them, or the sequent as typed), never its JSON: once a ∀R or ∃L step was
+  taken anywhere in the proof, the arena holds an eigenvariable, which deduxit's reader of a
+  sequent refuses. A Kripke model with growing domains (`kripke_structure`, intuitionistic
+  and minimal logic) is named in the verdict but not drawn:
   - a first-order sequent's finite structure (`Structure.tsx`, `src/lib/structure.ts`): the
     elements across the grid's top with "−" under each and "+" after them, a row of dots per
     predicate (a nullary one spans the row; arity k: a row per tuple of its first k − 1

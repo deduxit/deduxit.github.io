@@ -59,7 +59,7 @@ import { ONE_WORLD } from "../lib/kripke";
 import square from "../logo/square-light.svg?raw";
 import wordmark from "../logo/wordmark-band.svg?raw";
 import type { Proof, Prover } from "./state";
-import { blank, isFirstOrder, signatureOf } from "../lib/structure";
+import { blank, isFirstOrder, rootOf, signatureOf } from "../lib/structure";
 import { redoStructure, undoStructure } from "./Structure";
 import { Toggles } from "./Toggles";
 import { useWorkspace } from "./Workspace";
@@ -437,7 +437,9 @@ export function Rail(props: { prover: Prover; ui: Ui }) {
           counter: {
             kind: "structure",
             proof: p.id,
-            sequent: JSON.stringify(session.sequent),
+            // The sequent as typed: its JSON's arena may hold the proof's eigenvariables.
+            sequent: p.input,
+            root: rootOf(session),
             logic: c.logic,
             signature,
             found: false,

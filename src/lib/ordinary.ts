@@ -83,6 +83,11 @@ export interface OrdinaryOutcome {
   readonly countermodel?: { readonly sequent: unknown; readonly model: KripkeModel };
   /** A `not_valid` first-order goal's finite structure, with the sequent it refutes. */
   readonly structure?: { readonly sequent: unknown; readonly structure: Structure };
+  /**
+   * A `not_valid` first-order goal's Kripke model with growing domains, in intuitionistic and
+   * minimal logic, where no finite structure was found; the page does not draw it.
+   */
+  readonly kripke_structure?: unknown;
   readonly [key: string]: unknown;
 }
 
@@ -422,10 +427,24 @@ export function ordinaryVerdict(outcome: OrdinaryOutcome): Said & { tone: Tone }
       tone: "bad",
     };
   }
-  if (outcome.verdict === "not_valid") {
+  if (outcome.verdict === "not_valid" && outcome.kripke_structure) {
+    return {
+      keyword: "Not valid",
+      sentence: `The sequent has no derivation in ${named(outcome.logic)}. deduxit found a Kripke model whose worlds have growing domains of elements, at one of which the sequent fails.`,
+      tone: "bad",
+    };
+  }
+  if (outcome.verdict === "not_valid" && outcome.search?.method === "embedding") {
     return {
       keyword: "Not valid",
       sentence: `The sequent has no derivation in ${named(outcome.logic)}. deduxit decided this by translating it into linear logic, where a translation has a proof exactly when the sequent is valid, and this one has none.`,
+      tone: "bad",
+    };
+  }
+  if (outcome.verdict === "not_valid") {
+    return {
+      keyword: "Not valid",
+      sentence: `The sequent has no derivation in ${named(outcome.logic)}, as deduxit's check of its countermodel showed.`,
       tone: "bad",
     };
   }

@@ -107,3 +107,40 @@ test("a proof made apart whose witness names its eigenvariable is used on its go
   await (await goalMenu(page)).getByRole("button", { name: "Use its proof" }).click();
   await expect(proved(page)).toBeVisible();
 });
+
+test("a goal's countermodel is checked after an eigenvariable was made elsewhere in the proof", async ({
+  page,
+}) => {
+  await classical(page, "p(c) |- q(c) /\\ forall x. p(x)");
+  await rule(page, /^q\(c\) ∧ \(∀x\. p\(x\)\), formula/, "∧R");
+  await rule(page, /^∀x\. p\(x\), formula/, "∀R");
+  // The first premise, p(c) ⊢ q(c), has a finite countermodel; the arena holds the ∀R's a.
+  await page.locator(".gt").first().click();
+  await (await goalMenu(page)).getByRole("button", { name: "Close goal" }).click();
+  await page.getByRole("button", { name: "See the countermodel" }).click();
+  await expect(sign(page)).toHaveText("⊭");
+});
+
+test("a countermodel goes with its sequent when another is typed in its place", async ({
+  page,
+}) => {
+  await classical(page, "exists x. p(x) |- forall x. p(x)");
+  await closeGoal(page);
+  await page.getByRole("button", { name: "See the countermodel" }).click();
+  await expect(page.getByRole("tab", { name: "Countermodel, ⊭" })).toBeVisible();
+  await page.getByRole("tab", { name: /^Sequent calculus/ }).click();
+  await page.getByRole("textbox", { name: "Sequent" }).fill("p(c) |- p(c)");
+  await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
+  await expect(page.getByRole("button", { name: /^p\(c\), formula 1/ })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Countermodel, ⊭" })).toHaveCount(0);
+});
+
+test("a Kripke model with growing domains is named as what decided the goal", async ({ page }) => {
+  await goto(page);
+  await calculus(page, ["Ordinary", "Intuitionistic"]);
+  await page.getByRole("textbox", { name: "Sequent" }).fill("|- p(a) \\/ ~p(a)");
+  await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
+  await closeGoal(page);
+  await expect(page.locator(".goal-note")).toContainText("growing domains");
+  await expect(page.locator(".goal-note")).not.toContainText("translating");
+});

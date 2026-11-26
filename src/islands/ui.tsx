@@ -12,7 +12,7 @@ import { createSignal, For, Show } from "solid-js";
 import { createStore } from "solid-js/store";
 import type { Hint } from "../lib/deduxit";
 import type { Kripke } from "../lib/kripke";
-import type { Signature, Structure } from "../lib/structure";
+import type { Root, Signature, Structure } from "../lib/structure";
 import type { Logic } from "../lib/suites";
 import type { Said } from "../lib/words";
 import type { Candidate, Premises } from "./state";
@@ -93,8 +93,14 @@ export type Counter =
       readonly kind: "structure";
       /** The proof whose view it is. */
       readonly proof: string;
-      /** The sequent's JSON, which deduxit checks the structure against. */
+      /**
+       * The sequent as text, which deduxit checks the structure against: a goal's formulas as
+       * deduxit writes them, or the sequent as typed. Not its JSON, whose arena holds the
+       * proof's eigenvariables once a ∀R or ∃L step was taken, which no sequent may hold.
+       */
       readonly sequent: string;
+      /** The proof's sequent when the view was opened: typed anew, it drops the view. */
+      readonly root?: Root;
       readonly logic: Logic;
       readonly signature: Signature;
       /** Whether deduxit found it; else it is the visitor's own, from one element. */
@@ -103,7 +109,12 @@ export type Counter =
       readonly past: readonly Structure[];
       readonly future: readonly Structure[];
     }
-  | { readonly kind: "kripke"; readonly proof: string; readonly seed: ModelSeed }
+  | {
+      readonly kind: "kripke";
+      readonly proof: string;
+      readonly seed: ModelSeed;
+      readonly root?: Root;
+    }
   | { readonly kind: "modal"; readonly proof: string };
 
 /** A line above the bottom box saying what was done, with an action that takes it back. */
