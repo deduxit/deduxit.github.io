@@ -722,11 +722,32 @@ export interface Operands {
 }
 
 /**
+ * A formula's text with each eigenvariable written by the path, from `base`, of the ∀R or ∃L step
+ * that made it (`{1.0}`), as a recorded witness is and `lettered` reads back: sessions letter
+ * eigenvariables in the order their steps are taken, so a letter means nothing in another
+ * session, a path does. An eigenvariable made outside `base`'s subtree keeps its letter.
+ */
+export function byPaths(
+  played: Pick<Played, "session" | "view">,
+  base: Path = [],
+): (text: string) => string {
+  if (played.view.forest === undefined) return (text) => text;
+  const made = new Map<string, string>();
+  for (const [letter, path] of makers(played.session, played.view)) {
+    const at = path === "" ? [] : path.split(".").map(Number);
+    if (within(at, base)) made.set(letter, at.slice(base.length).join("."));
+  }
+  return (text) => byPath(text, made);
+}
+
+/**
  * The formulas each step and cut of a session acted on, by its entry in the history, as
- * deduxit's view writes them; null for a search's graft or a step whose replay failed. The
- * session document numbers formulas by occurrence and has no text of its own, so the steps and
- * cuts are taken again from the sequent and each goal read from the view just before its step;
- * the searches' grafts are left out, since no later step lies under one.
+ * deduxit's view writes them, each eigenvariable by its step's path (`byPaths`); null for a
+ * search's graft and for a step whose replay failed or lies under one that did. The session
+ * document numbers formulas by occurrence and has no text of its own, so the steps and cuts are
+ * taken again from the sequent and each goal read from the view just before its step; the
+ * searches' grafts are left out, since no later step lies under one (their eigenvariables would
+ * take other letters, which the paths make no matter).
  */
 export function principals(
   prover: Prover,
@@ -737,7 +758,7 @@ export function principals(
   const found: (Operands | null)[] = todo.map(() => null);
   const kept = [...todo.entries()].filter(([, a]) => a.kind !== "close");
   const start = JSON.parse(prover.start(JSON.stringify(doc.sequent), doc.mode, settings)) as Played;
-  play(
+  const replayed = play(
     prover,
     start,
     kept.map(([, a]) => a),
@@ -757,8 +778,14 @@ export function principals(
         played.view.forest === undefined
           ? undefined
           : positionsOf(members, memberKeys(played.session, played.view.forest), keys, taken);
+      const keyed = byPaths(played);
+      const rekeyed = (f: GoalFormula): GoalFormula => ({
+        ...f,
+        text: keyed(f.text),
+        ...(f.reading === undefined ? {} : { reading: keyed(f.reading) }),
+      });
       const at = (positions: readonly number[] | undefined) =>
-        positions?.flatMap((p) => (formulas[p] ? [formulas[p]] : []));
+        positions?.flatMap((p) => (formulas[p] ? [rekeyed(formulas[p])] : []));
       if (action.kind === "cut") {
         const left = (action.leftKeys && byKeys(action.leftKeys)) ?? action.left;
         found[index] = { principal: [], left: at(left) ?? [] };
@@ -775,12 +802,15 @@ export function principals(
           principal !== undefined
             ? (at([principal]) ?? [])
             : inference.rule === "ax"
-              ? formulas
+              ? formulas.map(rekeyed)
               : [],
         ...(left ? { left: at(left) ?? [] } : {}),
       };
     },
   );
+  for (const [index, action] of kept) {
+    if (replayed.failed.some((path) => within(action.path, path))) found[index] = null;
+  }
   return found;
 }
 

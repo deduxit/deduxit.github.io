@@ -3,7 +3,7 @@
 
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
-import { calculus, closeGoal, start, tool } from "./prover";
+import { calculus, closeGoal, goalMenu, start, tool } from "./prover";
 
 /** Opens the rules of the formula whose button's name starts with `formula` and picks `name`. */
 async function pick(page: Page, formula: string, name: string) {
@@ -158,4 +158,49 @@ test("the first-order bounds are settings, and a search says which one stopped i
   const note = page.locator(".goal-note .kw.warn");
   await expect(note).toHaveText("Unknown: gave up.");
   await expect(page.locator(".goal-note")).toContainText("Settings' witness depth");
+});
+
+test("a proof made apart in another order is used where the goal's eigenvariables take other letters", async ({
+  page,
+}) => {
+  await start(page, "|- (forall y. (q(y) | ~q(y))) * ((forall x. (p(x) | ~p(x))) | bot)");
+  await pick(page, "(∀y. (q(y) ⅋ q⊥(y))) ⊗ ((∀x. (p(x) ⅋ p⊥(x))) ⅋ ⊥)", "⊗");
+  await page.getByRole("button", { name: "Apply ⊗" }).click();
+  // A ∀ on the first premise takes the letter a, so the goal's ∀ below will take b.
+  await pick(page, "∀y. (q(y) ⅋ q⊥(y))", "∀");
+  await pick(page, "(∀x. (p(x) ⅋ p⊥(x))) ⅋ ⊥", "⅋");
+  // The goal ⊢ ∀x. (p(x) ⅋ p(x)⊥), ⊥, proved apart in another order, where its ∀ takes a.
+  await start(page, "|- bot, forall x. (p(x) | ~p(x))", false);
+  await pick(page, "∀x. (p(x) ⅋ p⊥(x))", "∀");
+  await pick(page, "p(a) ⅋ p⊥(a)", "⅋");
+  await tool(page, "Close all").click();
+  await expect(page.getByText("Proved. Every goal is closed.")).toBeVisible();
+  await page.locator(".chip").first().click();
+  await page.getByRole("button", { name: /^⊥, formula/ }).click();
+  await page.keyboard.press("Escape");
+  await (await goalMenu(page)).getByRole("button", { name: "Use its proof" }).click();
+  await expect(page.getByRole("button", { name: /^⊥, formula/ })).toHaveCount(0);
+  await expect(page.getByText("Not used")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /^q\(a\) ⅋/ })).toBeVisible();
+});
+
+test("Steps names a formula with the letter the session gave it, after a search's graft", async ({
+  page,
+}) => {
+  await start(page, "|- (forall x. (p(x) | ~p(x))) * (forall y. (q(y) | ~q(y)))");
+  await pick(page, "(∀x. (p(x) ⅋ p⊥(x))) ⊗ (∀y. (q(y) ⅋ q⊥(y)))", "⊗");
+  await page.getByRole("button", { name: "Apply ⊗" }).click();
+  await page.getByRole("button", { name: /^∀x\. \(p\(x\) ⅋ p⊥\(x\)\), formula/ }).click();
+  await page.keyboard.press("Escape");
+  await closeGoal(page);
+  // The search's ∀ took a letter first; the ∀ by hand takes the next.
+  await pick(page, "∀y. (q(y) ⅋ q⊥(y))", "∀");
+  const formula = page.getByRole("button", { name: /^q\([a-z]\) ⅋ q⊥\([a-z]\), formula/ });
+  const name = (await formula.getAttribute("aria-label")) ?? (await formula.textContent()) ?? "";
+  const shown = /^q\(([a-z])\)/.exec(name)?.[1] ?? "";
+  await pick(page, `q(${shown}) ⅋ q⊥(${shown})`, "⅋");
+  await tool(page, "Steps").click();
+  await expect(page.getByRole("dialog", { name: "Steps" })).toContainText(
+    `⅋ on q(${shown}) ⅋ q⊥(${shown})`,
+  );
 });

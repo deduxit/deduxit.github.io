@@ -12,7 +12,7 @@ import { APART, ENGINE_ORDER, engineLabel, engineName, engineTip } from "../lib/
 import { type Failure, MATH_FONTS } from "../lib/deduxit";
 import { isHandin, readHandin } from "../lib/pack";
 import { isOrdinary, stepsOf } from "../lib/ordinary";
-import { actions, goalAt, paths, within } from "../lib/steps";
+import { actions, goalAt, lettered, paths, within } from "../lib/steps";
 import { displayed, notTaken, shown } from "../lib/words";
 import type { Theme } from "../lib/theme";
 import {
@@ -619,11 +619,22 @@ export function StepsPanel(props: { prover: Prover }) {
       const p = proof();
       return p?.session ? { p, session: p.session } : undefined;
     },
-    ({ p }) => props.prover.principals(p),
+    async ({ p, session }) => ({ session, names: await props.prover.principals(p) }),
   );
+  /** A cut formula as typed, each eigenvariable (recorded by its step's path) by its letter. */
+  const cutText = (formula: string) => {
+    const p = proof();
+    const lettered_ =
+      p?.session && p.view && !isOrdinary(p.session)
+        ? lettered(formula, { session: p.session, view: p.view })
+        : undefined;
+    return displayed(lettered_ ?? formula);
+  };
   /** A step as the literature names one: its rule, on the formula it acts on. */
   const named = (rule: string, at: number) => {
-    const formula = principals.latest?.[at];
+    // An answer for another session (a step taken since, another proof) names nothing.
+    const answer = principals.latest;
+    const formula = answer?.session === proof()?.session ? answer?.names[at] : undefined;
     return formula ? `${rule} on ${formula}` : rule;
   };
   /** Each step, as the list says it: its rule and formula, or the search that closed the goal. */
@@ -644,7 +655,7 @@ export function StepsPanel(props: { prover: Prover }) {
       action.kind === "step"
         ? { text: named(action.step.rule, at), by: byOf(action.path, false) }
         : action.kind === "cut"
-          ? { text: `cut on ${displayed(action.formula)}`, by: byOf(action.path, false) }
+          ? { text: `cut on ${cutText(action.formula)}`, by: byOf(action.path, false) }
           : {
               text: `The ${engineName(proof()?.engines[pathKey(action.path)] ?? "") || "search"} closed goal ${goalNumber(action.path)}`,
               by: byOf(action.path, true),

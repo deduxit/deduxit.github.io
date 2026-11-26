@@ -748,7 +748,10 @@ board and the guide disagree, the guide holds.
   same order, the positions are the goal's; in another order (`mapped`), each step's formulas
   are found again in the goal it acts on by their text, the source's read off its own replay
   (`principals`: the principal and what a split or cut sent left; an ordinary step's principal by
-  `principalTexts`), so a position is never carried over. Each step is applied
+  `principalTexts`), so a position is never carried over; an eigenvariable is compared by the
+  path of the step that made it below the goal (`byPaths`), never by its letter, which each
+  session gives in its own order. In an ordered calculus (cyclic, Lambek) a sequent in another
+  order is another sequent: only one written as the goal is offered. Each step is applied
   again on the goal's subtree (a linear proof's actions by path; an ordinary proof's steps by
   `replaySteps` of `ordinary.ts`: the rule above each step's structural run, its formula found in
   the target goal by its id in the sequent document when both sessions share that document, and
@@ -797,7 +800,11 @@ board and the guide disagree, the guide holds.
   deduxit's view of the step's goal: `principals` of `steps.ts` replays the steps from the
   sequent in the worker (one request, the request `principals`) and reads each goal just before
   its step; an ordinary session's `principalTexts` opens each step's goal again (`reopen`) and
-  reads `ordinary_view`. Until the answer comes, or where it has none, a step is its rule alone.
+  reads `ordinary_view`. Until the answer for the session shown comes (an answer is kept with
+  the session it is for), or where it has none, a step is its rule alone. With quantifiers the
+  replay letters eigenvariables in its own order (it leaves the searches' grafts out), so
+  `principals` writes each by the path of the step that made it (`byPaths`) and the page letters
+  it as the session does (`lettered`); a cut formula is recorded by paths and lettered the same way.
   A search's close keeps "The ⟨engine⟩ closed goal N": it has no rule.
 - **An intuitionistic sequent is typed in ILL's syntax**: deduxit reads intuitionistic text
   strictly (a `~`, `^`, `par`, `|`, `?` or `bot` refused with a hint), so the page reads the
@@ -1176,7 +1183,8 @@ board and the guide disagree, the guide holds.
   rule (`text.engine` after the rule label, from `Proof.engines`, a goal's path to the
   engine, kept in the shelf), and the step list name it; the hover gives the source.
 - **A search that closes goals says which engine did** (`Proof.searched`, written by `close`,
-  `closeOrdinary` alone and Close all of either suite, cleared by `show` at the next change;
+  `closeOrdinary` alone and Close all of either suite, cleared by `show` at the next change and
+  when another search starts;
   the line `.note.searched` over the bottom box, a notice of something done, so no edge):
   "Goal 2 closed by the focused search.", "Every goal closed by the focused search.", "3 goals
   closed: 2 by the focused search, 1 by the Horn engine." (`closedBy` of `engines.ts`). Every

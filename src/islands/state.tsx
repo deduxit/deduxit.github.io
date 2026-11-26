@@ -78,6 +78,7 @@ import {
   actions as actionsOf,
   type Decided,
   goalAt,
+  byPaths,
   lettered,
   placesOf,
   paths,
@@ -1406,6 +1407,14 @@ export function createProver(say: (text: string) => void = () => undefined) {
     return false;
   }
 
+  /** The linear modes whose sequents keep the order of their formulas. */
+  const ORDERED: ReadonlySet<string> = new Set(["cyclic", "lambek", "lambek-star"]);
+
+  /** Whether a sequent's formulas are a goal's, in the same order and on the same sides. */
+  const inOrder = (root: readonly GoalFormula[] | undefined, goal: readonly GoalFormula[]) =>
+    root?.length === goal.length &&
+    root.every((f, i) => f.text === goal[i]?.text && f.side === goal[i]?.side);
+
   /** Each proof's sequent as its first goal shows it, by the proof and its sequent's document. */
   const sequentsShown = new Map<string, readonly GoalFormula[]>();
 
@@ -1534,7 +1543,9 @@ export function createProver(say: (text: string) => void = () => undefined) {
         // letter that step took here, as `play` reads it.
         const here = (text: string) => lettered(text, { session, view: played.view }, base);
         const found = operands?.ok ? operands.value[index] : undefined;
-        const goal = goalShown(target);
+        // The source's eigenvariables are written by their steps' paths; so are the goal's.
+        const keyed = byPaths({ session, view: played.view }, base);
+        const goal = goalShown(target).map((f) => ({ ...f, text: keyed(f.text) }));
         const free = goal.map(() => false);
         let call: () => Promise<{ session: Session; view: View }>;
         if (action.kind === "step") {
@@ -3195,10 +3206,14 @@ export function createProver(say: (text: string) => void = () => undefined) {
         .filter((x) => x.id !== id && x.view?.complete === true && x.session)
         .filter((x) => sameCalculus(x.calculus, calculus))
         .sort((a, b) => Number(made(b)) - Number(made(a)));
+      // In an ordered calculus a sequent in another order is another sequent.
+      const ordered = !isOrdinary(p.session) && ORDERED.has(p.session.mode);
       for (const q of candidates) {
         const root = await rootOf(q);
-        if (root?.length === formulas.length && placesOf(formulas, root))
-          found.push({ id: q.id, tab: short(displayed(q.input)) });
+        const fits = ordered
+          ? inOrder(root, formulas)
+          : root?.length === formulas.length && placesOf(formulas, root) !== undefined;
+        if (fits) found.push({ id: q.id, tab: short(displayed(q.input)) });
       }
       return found;
     },
@@ -3218,8 +3233,15 @@ export function createProver(say: (text: string) => void = () => undefined) {
       const view = unwrap(p.view);
       const todo = actionsOf(session, view?.cuts, view);
       const found = await attempt(() => api.principals(session, todo, replaying()));
+      // Each eigenvariable, written by its step's path, takes the letter this session gave it.
+      const letter = (text: string) => (view ? (lettered(text, { session, view }) ?? text) : text);
+      const written = (f: GoalFormula) =>
+        shown({
+          text: letter(f.text),
+          ...(f.reading === undefined ? {} : { reading: letter(f.reading) }),
+        });
       return found.ok
-        ? found.value.map((o) => (o?.principal.length ? o.principal.map(shown).join(", ") : null))
+        ? found.value.map((o) => (o?.principal.length ? o.principal.map(written).join(", ") : null))
         : todo.map(() => null);
     },
 
@@ -3249,10 +3271,8 @@ export function createProver(say: (text: string) => void = () => undefined) {
       // A sequent written in another order than the goal has its steps' positions mapped.
       const goalFormulas = p.view.goals.find((g) => g.goal === goal)?.formulas ?? [];
       const root = await rootOf(q);
-      const inOrder =
-        root?.length === goalFormulas.length &&
-        root.every((f, i) => f.text === goalFormulas[i]?.text && f.side === goalFormulas[i]?.side);
-      const reached = await replayOnto(q, { session: p.session, view: p.view }, base, !inOrder);
+      const mapped = !inOrder(root, goalFormulas);
+      const reached = await replayOnto(q, { session: p.session, view: p.view }, base, mapped);
       if ("failed" in reached) return refused();
       update(p.id, (x) => {
         x.redo = [];
@@ -3270,6 +3290,8 @@ export function createProver(say: (text: string) => void = () => undefined) {
     close: guard(async (goal: number, factor: number = 1) => {
       const p = current();
       if (!p?.session) return;
+      // What an earlier search closed is old news once another search runs.
+      update(p.id, (q) => (q.searched = null));
       // A unit of work is whole: a fraction of a budget the visitor set rounds to one.
       const budget = Math.max(1, Math.round(settings().budget * factor));
       const path = pathOf(p, goal);
@@ -3330,6 +3352,7 @@ export function createProver(say: (text: string) => void = () => undefined) {
     closeAll: guard(async (factor: number = 1) => {
       const p = current();
       if (!p?.session) return;
+      update(p.id, (q) => (q.searched = null));
       const budget = Math.max(1, Math.round(settings().budget * factor));
       const o = ordinaryOf(p);
       if (o) {
