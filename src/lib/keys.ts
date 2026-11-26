@@ -23,6 +23,7 @@ export type KeyAction =
   | "previousGoal"
   | "nextSequent"
   | "previousSequent"
+  | "closeSequent"
   | "nextView"
   | "previousView"
   | "graph"
@@ -56,6 +57,7 @@ export const KEY_ROWS: readonly KeyRow[] = [
   { what: "Close this goal by the search; every goal", key: "C; Shift+C" },
   { what: "Export; Import", key: "E; I" },
   { what: "Next, previous sequent", key: "T, Shift+T", also: "Left and Right in the top row" },
+  { what: "Close this sequent", key: "W" },
   { what: "Next, previous view", key: "V, Shift+V", also: "Up and Down in the rail" },
   { what: "The graph of views", key: "G" },
   { what: "Add a view", key: "A" },
@@ -78,8 +80,10 @@ export const SHORTCUTS: Readonly<Partial<Record<KeyAction, string>>> = {
   import: "I",
   nextSequent: "T",
   previousSequent: "Shift+T",
+  closeSequent: "W",
   nextView: "V",
   previousView: "Shift+V",
+  graph: "G",
   addView: "A",
   newTab: "N",
   zoomIn: "+",
@@ -100,6 +104,8 @@ export const KEY_NAMES: Readonly<Partial<Record<KeyAction, string>>> = {
   closeAll: "Shift+C",
   export: "E",
   import: "I",
+  closeSequent: "W",
+  graph: "G",
   addView: "A",
   newTab: "N",
   zoomIn: "+",
@@ -125,6 +131,7 @@ const SINGLE: Readonly<Record<string, KeyAction>> = {
   "[": "previousGoal",
   t: "nextSequent",
   T: "previousSequent",
+  w: "closeSequent",
   v: "nextView",
   V: "previousView",
   g: "graph",
