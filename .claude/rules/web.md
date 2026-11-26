@@ -478,7 +478,9 @@ board and the guide disagree, the guide holds.
   modal or lambda decision) shows **the new tab view** in the stage's place: the four logics
   (pressing one sets the proof's calculus), "Open a file", "Restore N proofs", Learn and Practice
   inactive ("Coming soon", said in a notice when pressed, since a hover follows no touch), About.
-  "+" and the word mark (a plain link to `/`, taken in place) reuse an empty proof before adding
+  The logics are four in a row on a stage of 51rem and more (the row and the view's padding) and
+  two by two below it, a container query: the guide's medium window keeps the row, which is
+  wider than its stage (departs from the design). "+" and the word mark (a plain link to `/`, taken in place) reuse an empty proof before adding
   one.
 - **The toggles** (`Toggles.tsx`) stand at the stage's top left on the new tab view and on a
   proof: ordinary logic's method and logic, linear logic's logic, Mix and Affine, modal logic's
@@ -513,7 +515,19 @@ board and the guide disagree, the guide holds.
 - **Panels** (`ui.menu`: steps, search, export, import) stand left of the
   tools; in an expanded window the stage's box shrinks so that the drawing moves aside (the
   stage refits on its resize), in a medium one a panel lies over it, in a compact one it is a
-  sheet above the bar. The Settings page and the dialogs (keys, About) are `ui.menu` too.
+  sheet above the bar. The Settings page and the dialogs (keys, About) are `ui.menu` too. A
+  sheet's close button (`.tool.sheet-close`) shows in a compact window alone; outside one it is
+  `display: none`, out of the tab order, by a selector that outweighs `.tool`'s later display.
+- **A compact window under 480 high** (a phone's page at 400 % zoom, 320 by 200): the app keeps
+  `--size-frame-least` (30rem) of height and the page scrolls up and down, so that no row lies
+  over another (WCAG 1.4.10); every other window keeps the frame to the visible height.
+- **The bottom box keeps clear of the zoom group**: centred where the zoom at the stage's lower
+  right leaves room, else narrower and moved left (`--box-clear`, `--box-width` in `app.css`),
+  from `--size-zoom` (the zoom's width, which `Stage.tsx` measures onto the stage's region, none
+  while no zoom shows) and `--size-aside` (how far a panel moved the drawing aside in an expanded
+  window, which narrows the stage and moves its zoom). So no note covers the zoom either: the
+  notes are the box's width. In a compact window the box is the window's width less 16 and the
+  zoom stands a gap above the notes instead (`--size-bottom`, the notes and the box measured).
 - **The bottom box** binds the proof's `input`; Enter submits it (a session or a sequent in
   deduxit's JSON opens), and once it reads, the box writes it in signs (`inSigns`). The notes
   above it: the box's problem (with its place marked; the box takes the bad edge), the banner, a
@@ -537,7 +551,14 @@ board and the guide disagree, the guide holds.
   tests' `goto` waits for the start.
 - **The Export panel** (`Export.tsx`, board D16) exports the view shown: a linear proof's net as
   a picture (its texts say to show the proof), a derivation in every format, any other view its
-  proof's, the right column naming "The proof in LK". The entries are buttons with
+  proof's, the right column naming "The proof in LK". Natural deduction, a modal decision and a
+  lambda-term write through their own suite's calls (`kind()`, `subject()`): natural deduction's
+  session (`naturalSession` of `Natural.tsx`) through `rules_export`, with `view.layout` the tree
+  or Fitch lines as shown, its pictures from that SVG; a modal outcome through `modal_export`
+  (a valid one's derivation) and `modal_draw` (its derivation or countermodel as a picture); a
+  checked term through `lambda_export` and `lambda_draw`. These have no Text, Session or Rocq
+  (deduxit writes none), each entry saying so; their links hold the sequent or term alone.
+  The tool is open wherever a proof has something to write (`exportable` in `Frame.tsx`). The entries are buttons with
   `aria-current`, under fieldsets per group; the chosen one is kept for the visit. Each setting
   is one of deduxit's `--style` options (`Settings.exports`, an `ExportLook`, stored): a
   picture's font (`Settings.font`), background (`svg.background`) and PNG scale (`png.scale`),
@@ -615,7 +636,9 @@ board and the guide disagree, the guide holds.
   again once it mounts, `placeSoon`): the rule popover over its formula, the goal's menu over
   its `⊢`, a split's or a cut's premises over the goal (the cut's box over them); below where
   the stage's top leaves no room; in a compact window each is a sheet at the stage's bottom,
-  above its controls.
+  above the zoom's place there (as if no note lifted it), and the zoom hides while one is open
+  (`.stage:has(.pop, .premises)`): placed above a zoom lifted over a long note, the sheet came
+  down on the goal's own formulas (axe's walk of a goal's reasons at a phone's width).
 - **The witness's box is in the rule popover** (board D8; `Witness` in `Goal.tsx`,
   `ui.witnessing` beside `ui.selected`): a rule offered with `witness` (∃R, ∀L; one-sided ∃),
   pressed, stays pressed and opens the box beside the row: the quantifier's variable
