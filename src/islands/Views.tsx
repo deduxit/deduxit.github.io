@@ -26,7 +26,7 @@ import {
 import { displayed, noTerm } from "../lib/words";
 import { ModelFigure } from "./Countermodel";
 import { startPresses } from "./HandTableau";
-import { cellName, decidable, netReady, started, tabText, tone } from "./Frame";
+import { cellName, netReady, started, tabText, tone } from "./Frame";
 import { Sign } from "./Signs";
 import type { Proof, Prover } from "./state";
 import { answered, failureIn, given, Refused, Verdict } from "./Transforms";
@@ -247,8 +247,7 @@ export function entries(prover: Prover, ui: Ui): readonly Entry[] {
   const has = (view: View) =>
     view === "net" ? netReady(p) && !!p : !!p && !!addedOf(ui, p.id, view);
   const classical = classicalWhy(p);
-  const decides =
-    classical ?? (decidable(prover, p) ? null : "This course pack asks for proofs by hand.");
+  const decides = classical;
   const complete = !!p?.view?.complete;
   const cuts = p?.view?.cuts.length ?? 0;
   const termCall = c && c.suite !== "rules" ? suite(c.suite).term : null;
@@ -735,8 +734,16 @@ export function TermView(props: { prover: Prover; ui: Ui; proof: Proof; stale: b
   );
 }
 
-/** The λ-term each proof's view shows, for the tools' "Copy as text". */
-export const termShown = new Map<string, () => string | null>();
+/** The λ-term each proof's view shows, by the proof, for the tools' "Copy as text". */
+const [termsShown, setTermsShown] = createSignal<ReadonlyMap<string, () => string | null>>(
+  new Map(),
+);
+/** The λ-term each proof's view shows: read where it is set, so the tools follow it. */
+export const termShown = {
+  get: (id: string) => termsShown().get(id),
+  set: (id: string, term: () => string | null) =>
+    setTermsShown((shown) => new Map(shown).set(id, term)),
+};
 
 /** A node of the graph of views: a view of a proof, or a sequent made from one. */
 interface GraphNode {

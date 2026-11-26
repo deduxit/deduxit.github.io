@@ -108,6 +108,33 @@ export function tool(page: Page, name: string) {
   return page.getByRole("toolbar", { name: "Tools" }).getByRole("button", { name, exact: true });
 }
 
+/** The Export panel, opened by its tool where it is closed. */
+export async function exportPanel(page: Page) {
+  const panel = page.getByRole("dialog", { name: "Export" });
+  if (!(await panel.isVisible())) await tool(page, "Export").click();
+  await expect(panel).toBeVisible();
+  return panel;
+}
+
+/** Chooses an entry of the Export panel, by its name, and returns the panel. */
+export async function exportEntry(page: Page, name: string) {
+  const panel = await exportPanel(page);
+  await panel.getByRole("button", { name, exact: true }).click();
+  await expect(panel.getByRole("button", { name, exact: true })).toHaveAttribute(
+    "aria-current",
+    "true",
+  );
+  return panel;
+}
+
+/** Saves an entry of the Export panel and returns its download. */
+export async function saveExport(page: Page, name: string) {
+  const panel = await exportEntry(page, name);
+  const download = page.waitForEvent("download");
+  await panel.getByRole("button", { name: "Save" }).click();
+  return download;
+}
+
 /** Adds a view of the sequent shown, by its entry in "+ view". */
 export async function addView(page: Page, name: string) {
   await page.getByRole("button", { name: "Add a view" }).click();

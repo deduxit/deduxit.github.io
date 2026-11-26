@@ -46,6 +46,33 @@ const PATHS = {
   eliminate: "M2.5 9h4M11.5 9h4M7.5 6.5l3 5M10.5 6.5l-3 5",
   /** Close: a small cross. */
   shut: "M5.5 5.5l7 7M12.5 5.5l-7 7",
+  /** SVG: a curve between its two end points, its handle dotted. */
+  svg: "M3.2 12.5C4.5 4.5 13.5 4.5 14.8 12.5M1.9 11.7h2.6v2.6H1.9zM13.5 11.7h2.6v2.6h-2.6zM6.5 4.6h1M8.5 4.6h1M10.5 4.6h1",
+  /** PNG: a framed picture, a sun over hills. */
+  png: "M4.1 3.5h9.8a1.6 1.6 0 0 1 1.6 1.6v7.8a1.6 1.6 0 0 1-1.6 1.6H4.1a1.6 1.6 0 0 1-1.6-1.6V5.1a1.6 1.6 0 0 1 1.6-1.6zM5.2 7.2a1.2 1.2 0 1 0 2.4 0 1.2 1.2 0 1 0-2.4 0M3 13l3.8-3.8 2.9 2.9 2.1-2.1 3.4 3.4",
+  /** PDF: a page with its corner turned. */
+  pdf: "M4.5 2.5h6L14 6v9.5H4.5zM10.5 2.5V6H14M7 9.5h4.5M7 12h4.5",
+  /** LaTeX: TeX with its dropped E. */
+  latex: "M1.5 4.5h5M4 4.5V12M10.7 8H7.5v6h3.2M7.5 11h2.4M12.2 4.5l4.3 7.5M16.5 4.5l-4.3 7.5",
+  /** Typst: its t. */
+  typst: "M7.5 3v9a2.3 2.3 0 0 0 2.3 2.3h1.9M4.8 6.5h6.8",
+  /** Text: lines. */
+  text: "M3 5h12M3 9h12M3 13h7",
+  /** A session: braces. */
+  session:
+    "M7 3.2c-1.6 0-2.2.8-2.2 2v1.9c0 1-.6 1.6-1.6 1.9 1 .3 1.6.9 1.6 1.9v1.9c0 1.2.6 2 2.2 2M11 3.2c1.6 0 2.2.8 2.2 2v1.9c0 1 .6 1.6 1.6 1.9-1 .3-1.6.9-1.6 1.9v1.9c0 1.2-.6 2-2.2 2",
+  /** A link to the proof: a derivation's three lines. */
+  proof: "M2.5 13.8h13M4.8 9.3h8.4M7.2 4.8h3.6",
+  /** A link to the sequent: a turnstile. */
+  sequent: "M5.5 3.5v11M5.5 9h8",
+  /** A course pack: a box. */
+  pack: "M2.5 6L9 3l6.5 3v6.5L9 15.5l-6.5-3zM2.5 6L9 9l6.5-3M9 9v6.5",
+  /** Save: an arrow down into a tray. */
+  save: "M9 3v8M5.5 7.5L9 11l3.5-3.5M3.5 12.5v2h11v-2",
+  /** Print: a printer. */
+  print: "M5.5 7V3h7v4M5.5 13h-2V7.5h11V13h-2M5.5 10.5h7V15h-7z",
+  /** Share a link: two links of a chain. */
+  share: "M7.5 10.5l3-3M8 5.5l1-1a2.8 2.8 0 0 1 4 4l-1 1M10 12.5l-1 1a2.8 2.8 0 0 1-4-4l1-1",
 } as const;
 
 /** A sign's name. */

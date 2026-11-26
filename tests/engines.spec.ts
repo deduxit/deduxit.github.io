@@ -8,7 +8,7 @@
 // practice set, and the field's Enter while a search runs.
 
 import { expect, test } from "./fixtures";
-import { calculus, closeGoal, start, tool, viewCell } from "./prover";
+import { calculus, closeGoal, exportEntry, start, viewCell } from "./prover";
 
 /** Sends the visible proof to intuitionistic mode before any step. */
 async function intuitionistic(page: import("@playwright/test").Page) {
@@ -38,11 +38,10 @@ test("a saturation refutation is shown checked, by the inverse method", async ({
   await note.getByRole("button", { name: "more" }).click();
   await expect(note).toContainText("checker confirmed the set");
   await expect(page.locator(".chip[aria-selected=true] svg.lucide-x")).toBeVisible();
-  await tool(page, "Export").click();
-  // Why the item is greyed is a line of the item itself.
-  await expect(page.getByRole("menuitem", { name: /Not derivable/ })).toContainText(
-    "no Rocq certificate",
-  );
+  // Why Rocq has nothing to give for this refutation is said in its place.
+  const panel = await exportEntry(page, "Rocq");
+  await expect(panel).toContainText("A refutation by saturation has no Rocq certificate");
+  await expect(panel.getByRole("button", { name: "Save" })).toHaveCount(0);
 });
 
 test("Settings forces an engine: those that take the sequent, the others greyed with why, a refusal at the goal", async ({

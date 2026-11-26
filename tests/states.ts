@@ -15,6 +15,7 @@ import {
   goalMenu,
   goto,
   newTab,
+  proveCommuted,
   rule,
   start,
   switches,
@@ -97,7 +98,7 @@ export async function proving(page: Page, visit: Visit) {
 /** On a proof closed: the tools' panels and the list of views to add. */
 export async function menus(page: Page, visit: Visit) {
   for (const [name, role] of [
-    ["Export", "menu"],
+    ["Export", "dialog"],
     ["Steps", "dialog"],
     ["Import", "dialog"],
     ["The search's settings", "dialog"],
@@ -110,6 +111,39 @@ export async function menus(page: Page, visit: Visit) {
   await page.getByRole("button", { name: "Add a view" }).click();
   await expect(page.getByRole("dialog", { name: "Add a view" })).toBeVisible();
   await visit("views to add");
+  await page.keyboard.press("Escape");
+}
+
+/**
+ * The Export panel on a finished proof: a text format with what it writes, a picture's settings,
+ * the Rocq lemma's name refused, a link; then a refuted goal, which Rocq says it cannot write.
+ */
+export async function exporting(page: Page, visit: Visit) {
+  await proveCommuted(page);
+  await press(page, "Export", visit);
+  const panel = page.getByRole("dialog", { name: "Export" });
+  await panel.getByRole("button", { name: "LaTeX", exact: true }).click();
+  await expect(panel.locator("pre")).toContainText("prooftree");
+  await visit("Export, LaTeX");
+  await panel.getByRole("button", { name: "PNG", exact: true }).click();
+  await expect(panel.getByRole("group", { name: "Scale" })).toBeVisible();
+  await visit("Export, PNG");
+  await panel.getByRole("button", { name: "Rocq", exact: true }).click();
+  await panel.getByRole("textbox", { name: "Lemma's name" }).fill("2x");
+  await expect(panel).toContainText("Not a name");
+  await visit("Export, Rocq, a name refused");
+  await panel.getByRole("textbox", { name: "Lemma's name" }).fill("certificate");
+  await panel.getByRole("button", { name: "This proof", exact: true }).click();
+  await expect(panel.locator(".ex-link")).toContainText("#v=2");
+  await visit("Export, this proof's link");
+  await page.keyboard.press("Escape");
+  await start(page, "A |- B", false);
+  await closeGoal(page);
+  await press(page, "Export", visit);
+  await panel.getByRole("button", { name: "Text", exact: true }).click();
+  await panel.getByRole("button", { name: "Rocq", exact: true }).click();
+  await expect(panel).toContainText("Nothing to export");
+  await visit("Export, Rocq of an unfinished proof");
   await page.keyboard.press("Escape");
 }
 

@@ -69,7 +69,7 @@ async function dismissals(page: Page, touch: boolean) {
   };
   for (const name of ["Export", "Steps", "Import", "The search's settings"]) {
     await band(page, name);
-    await closes(page.getByRole(name === "Export" ? "menu" : "dialog", { name }));
+    await closes(page.getByRole("dialog", { name }));
   }
   if (touch) {
     await tool(page, "More").click();
@@ -95,9 +95,9 @@ async function dismissals(page: Page, touch: boolean) {
   await expect(page.getByRole("button", { name: /^A⊥, formula/ })).toBeVisible();
   // A press on another of the tools closes the open panel and acts.
   await band(page, "Export");
-  await expect(page.getByRole("menu", { name: "Export" })).toBeVisible();
+  await expect(page.getByRole("dialog", { name: "Export" })).toBeVisible();
   await tool(page, "Undo").click();
-  await expect(page.getByRole("menu", { name: "Export" })).toBeHidden();
+  await expect(page.getByRole("dialog", { name: "Export" })).toBeHidden();
   await expect(page.getByRole("button", { name: /^A⊥ ⅋ B⊥, formula/ })).toBeVisible();
 }
 

@@ -346,7 +346,50 @@ export interface Settings {
   terms: number;
   /** Whether a goal the search shows to have no proof is marked after each step (Settings, "Proving"). */
   marking: boolean;
+  /** How the exports look: the Export panel's settings of each format. */
+  exports: ExportLook;
 }
+
+/**
+ * How the exports look, each one of deduxit's `--style` options: a picture's background
+ * (`svg.background`) and a PNG's scale (`png.scale`), the form of the rule names (`labels` of
+ * every format), a whole LaTeX or Typst document (`form`), the text tree's line (`text.bar`) and
+ * the Rocq lemma's name (`rocq.lemma`).
+ */
+export interface ExportLook {
+  readonly background: "none" | "white";
+  readonly scale: number;
+  readonly labels: "upright" | "subscript" | "off";
+  readonly whole: boolean;
+  readonly bar: "─" | "=";
+  readonly lemma: string;
+}
+
+/** deduxit's defaults for the exports, but a whole Rocq file's lemma, named for what it proves. */
+export const DEFAULT_EXPORT: ExportLook = {
+  background: "none",
+  scale: 2,
+  labels: "upright",
+  whole: false,
+  bar: "─",
+  lemma: "certificate",
+};
+
+/** The scales a PNG is offered at. */
+export const SCALES = [1, 2, 3, 4] as const;
+
+/** The exports' look as stored, each field deduxit's default where the stored value is not one of its own. */
+const storedExport = (stored: unknown): ExportLook => {
+  const s = (stored ?? {}) as Partial<Record<keyof ExportLook, unknown>>;
+  return {
+    background: s.background === "white" ? "white" : "none",
+    scale: SCALES.find((n) => n === s.scale) ?? DEFAULT_EXPORT.scale,
+    labels: s.labels === "subscript" || s.labels === "off" ? s.labels : "upright",
+    whole: s.whole === true,
+    bar: s.bar === "=" ? "=" : "─",
+    lemma: typeof s.lemma === "string" && s.lemma.length <= 60 ? s.lemma : DEFAULT_EXPORT.lemma,
+  };
+};
 
 /**
  * The view of the settings as deduxit reads it: a classical linear derivation two-sided when
@@ -460,6 +503,7 @@ function loadSettings(): Settings {
       instances: count(stored.instances, DEFAULT_INSTANCES),
       terms: count(stored.terms, DEFAULT_TERMS),
       marking: stored.marking !== false,
+      exports: storedExport(stored.exports),
     };
   } catch {
     return {
@@ -479,6 +523,7 @@ function loadSettings(): Settings {
       instances: DEFAULT_INSTANCES,
       terms: DEFAULT_TERMS,
       marking: true,
+      exports: DEFAULT_EXPORT,
     };
   }
 }
@@ -598,16 +643,14 @@ const eliminationProblem = (failed: Failure): Said => ({
   sentence: `${failed.message.charAt(0).toUpperCase()}${failed.message.slice(1)}.`,
 });
 
-/** What a course pack bars on a proof: each the reason said, or null where it is allowed. */
+/** What a course pack bars on a proof: the reason said, or null where it is allowed. */
 export interface Limits {
-  /** The search: Close goal, Close all, a hint, a goal filled from another tab. */
-  readonly search: (id: string) => string | null;
   /** A change of the proof's sequent or calculus. */
   readonly fixed: (id: string) => string | null;
 }
 
 /** No pack open: nothing barred. */
-export const NO_LIMITS: Limits = { search: () => null, fixed: () => null };
+export const NO_LIMITS: Limits = { fixed: () => null };
 
 /** A pack's reason on a tab's banner. */
 const PACK_SAYS = (sentence: string): Said => ({ keyword: "Course pack", sentence });
@@ -627,10 +670,9 @@ export function createProver(say: (text: string) => void = () => undefined) {
   const [lastCalculus, setLastCalculus] = createSignal<Calculus>(linear("classical"));
   const [busy, setBusy] = createSignal(false);
   /**
-   * What a course pack bars, by proof: the search (Close goal, Close all, Hint, a goal filled
-   * from another tab) and a change of the sequent or the calculus, each the reason said, or null
-   * where it is allowed. Every action that would do one asks here, so a key does no more than a
-   * button.
+   * What a course pack bars, by proof: a change of the sequent or the calculus, the reason said,
+   * or null where it is allowed. Every action that would do one asks here, so a key does no more
+   * than a button.
    */
   const [limits, setLimits] = createSignal<Limits>(NO_LIMITS);
   /**
@@ -776,12 +818,8 @@ export function createProver(say: (text: string) => void = () => undefined) {
    */
   const replaying = () => json(settings().budget, false);
 
-  /**
-   * Whether deduxit applies the invertible rules by itself on proof `id`: the setting is on, and
-   * no course pack that bars the search holds the proof (it asks for every step by hand).
-   */
-  const invertibleOn = (id: string | undefined): boolean =>
-    settings().invertible && (id === undefined || limits().search(id) === null);
+  /** Whether deduxit applies the invertible rules by itself on proof `id`: the setting is on. */
+  const invertibleOn = (_id: string | undefined): boolean => settings().invertible;
 
   const current = () => store.proofs.find((p) => p.id === store.active);
   const index = (id: string) => store.proofs.findIndex((p) => p.id === id);
@@ -1013,11 +1051,6 @@ export function createProver(say: (text: string) => void = () => undefined) {
       q.banner = null;
       q.verdict = null;
     });
-    // A pack that bars the search leaves the decision to the visitor: the model editor is theirs.
-    if (limits().search(id)) {
-      save();
-      return;
-    }
     const decided = await attempt(() => api.modal.decide(read.value, settings));
     update(id, (q) => {
       if (!q.modal || q.modal.statement !== read.value) return;
@@ -1685,7 +1718,6 @@ export function createProver(say: (text: string) => void = () => undefined) {
       actions.setSettings({ invertible: on });
       if (!on) return;
       for (const p of store.proofs) {
-        // A pack that bars the search bars them.
         if (!p.session || p.view?.complete || !invertibleOn(p.id)) continue;
         const o = ordinaryOf(p);
         if (o) {
@@ -3049,7 +3081,6 @@ export function createProver(say: (text: string) => void = () => undefined) {
 
     /** Closes a goal by the search, within the budget (times `factor`). */
     close: guard(async (goal: number, factor: number = 1) => {
-      if (barred(current()?.id, limits().search)) return;
       const p = current();
       if (!p?.session) return;
       // A unit of work is whole: a fraction of a budget the visitor set rounds to one.
@@ -3109,7 +3140,6 @@ export function createProver(say: (text: string) => void = () => undefined) {
 
     /** Closes every open goal within one budget (the settings' times `factor`). */
     closeAll: guard(async (factor: number = 1) => {
-      if (barred(current()?.id, limits().search)) return;
       const p = current();
       if (!p?.session) return;
       const budget = Math.max(1, Math.round(settings().budget * factor));
@@ -3182,8 +3212,6 @@ export function createProver(say: (text: string) => void = () => undefined) {
      */
     async hint(goal: number): Promise<Hint> {
       const p = current();
-      const reason = p ? limits().search(p.id) : null;
-      if (reason) throw new Error(reason);
       const o = ordinaryOf(p);
       if (!o) return api.hint(p?.session as SessionDoc, goal, json());
       const formulas = p?.view?.goals.find((g) => g.goal === goal)?.formulas ?? [];
@@ -3242,12 +3270,12 @@ export function createProver(say: (text: string) => void = () => undefined) {
 
     /**
      * Asks the search, within `MARK_BUDGET`, whether each open goal of a proof has a proof, for
-     * the goals not asked before; nothing while the marking is off or a course pack bars the
-     * search. A stopped search marks nothing.
+     * the goals not asked before; nothing while the marking is off. A stopped search marks
+     * nothing.
      */
     async mark(id: string) {
       const p = store.proofs.find((x) => x.id === id);
-      if (!p?.session || !p.view || !settings().marking || limits().search(id) !== null) return;
+      if (!p?.session || !p.view || !settings().marking) return;
       // One snapshot: each goal's key is built from the formulas its search is asked of, even
       // where an action replaces the proof's view between two searches.
       const session = p.session;

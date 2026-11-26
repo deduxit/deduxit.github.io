@@ -143,10 +143,6 @@ export function createPacks(prover: Prover, view: Ui) {
     prover.restrict(
       o
         ? {
-            search: (id) =>
-              o.pack.search || !o.tabs.includes(id)
-                ? null
-                : "This pack asks for the proof by hand: the search closes no goal and gives no hint in its problems.",
             fixed: (id) => {
               const at = o.tabs.indexOf(id);
               const p = prover.store.proofs.find((q) => q.id === id);
@@ -361,8 +357,8 @@ const address = (hash: string) => `${location.origin}${location.pathname}${hash}
 export const embedCode = (url: string, title: string) =>
   `<iframe src="${url.replaceAll('"', "%22")}" title="${title.replaceAll('"', "&quot;")}" width="100%" height="560" loading="lazy"></iframe>`;
 
-/** The teacher's sheet: the open tabs' problems as a pack, its link, its embed and its handout. */
-export function PackSheet(props: { prover: Prover; ui: Ui }) {
+/** The Export panel's form of a course pack: the open sequents' problems, the link, the embed and the handout. */
+export function PackForm(props: { prover: Prover; ui: Ui }) {
   const candidates = () =>
     props.prover.store.proofs.flatMap((proof) => {
       const problem = problemOf(proof);
@@ -393,10 +389,7 @@ export function PackSheet(props: { prover: Prover; ui: Ui }) {
     },
   );
   return (
-    <Sheet
-      title="Course pack"
-      intro="The open tabs' problems as one link: a student who opens it gets a tab per problem, in its calculus, and hands the answers back as a link or a file. Nothing is stored anywhere but in the link and the student's browser."
-    >
+    <div class="pack-form">
       <Show
         when={candidates().length}
         fallback={
@@ -489,7 +482,7 @@ export function PackSheet(props: { prover: Prover; ui: Ui }) {
           </p>
         </Show>
       </Show>
-    </Sheet>
+    </div>
   );
 }
 

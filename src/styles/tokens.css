@@ -191,6 +191,10 @@
   --size-toggle-box: 1.875rem;
   /* A tool and a top-row button. */
   --size-tool: 2.125rem;
+  /* The Export panel's column of entries, and the height of an entry. */
+  --size-export-list: 10.625rem;
+  --size-entry: var(--size-tool);
+  --size-export-text: 20rem;
   --size-tool-width: 2.25rem;
   /* The tools' column. */
   --size-tools: 2.875rem;

@@ -376,11 +376,11 @@ test.describe("a compact window", () => {
     await expect(tool(page, "Export")).toBeVisible();
     await expect(page.getByRole("textbox", { name: "Sequent" })).toBeHidden();
     await tool(page, "Export").click();
-    await expect(page.getByRole("menu", { name: "Export" })).toBeVisible();
+    await expect(page.getByRole("dialog", { name: "Export" })).toBeVisible();
     await expect(tool(page, "Export")).toBeHidden();
     // The panel is a sheet, with a close button.
     await page.getByRole("button", { name: "Close", exact: true }).click();
-    await expect(page.getByRole("menu", { name: "Export" })).toBeHidden();
+    await expect(page.getByRole("dialog", { name: "Export" })).toBeHidden();
   });
 });
 

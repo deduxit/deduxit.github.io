@@ -210,12 +210,9 @@ export const netReady = (proof: Proof | undefined) => {
   return !!v && v.complete && v.net === null;
 };
 
-/** Whether a proof's sequent has a truth table and a tableau: a started classical ordinary one the search may decide. */
-export const decidable = (prover: Prover, proof: Proof | undefined) =>
-  !!proof?.session &&
-  proof.calculus.suite === "ordinary" &&
-  proof.calculus.logic === "classical" &&
-  prover.limits().search(proof.id) === null;
+/** Whether a proof's sequent has a truth table and a tableau: a started classical ordinary one. */
+export const decidable = (_prover: Prover, proof: Proof | undefined) =>
+  !!proof?.session && proof.calculus.suite === "ordinary" && proof.calculus.logic === "classical";
 
 /**
  * The rail's cells of a proof's chip: the graph once there are two views; then each proof of the
@@ -253,7 +250,7 @@ export function cellsOf(prover: Prover, ui: Ui, proof: Proof | undefined): reado
     for (const a of added) {
       if (a.view === "tree" || a.view === "net" || a.view === "graph" || a.view === "countermodel")
         continue;
-      // The table and the tableau decide: a course pack that bars the search bars them.
+      // The table and the tableau are of a classical sequent alone.
       if ((a.view === "table" || a.view === "tableau") && !decidable(prover, m)) continue;
       const w = VIEWS[a.view];
       const made = w.from === "proof";
@@ -768,11 +765,7 @@ export function Tools(props: { prover: Prover; ui: Ui; hint: () => void; tour: (
   const proving = () => ui.tab === "tree" && !!proof()?.session && !natural();
   /** Whether the view is a derivation in a calculus given as rules (a modal proof step by step). */
   const ruled = () => !!proof()?.custom?.session;
-  const barred = () => {
-    const p = proof();
-    return p ? props.prover.limits().search(p.id) : null;
-  };
-  const searchOff = () => !proving() || !!proof()?.view?.complete || busy() || barred() !== null;
+  const searchOff = () => !proving() || !!proof()?.view?.complete || busy();
   const linearClassical = () => {
     const c = proof()?.calculus;
     return c?.suite === "linear" && !intuitionistic(c);

@@ -68,7 +68,7 @@ test("the goal's menu and the rule popover are sheets above the stage's controls
   }
 });
 
-test("a finished proof's λ-term shows in Export from More's sheet at a phone's width, without sideways scroll", async ({
+test("Export from More's sheet at a phone's width: the entries one row, the LaTeX under them, no sideways scroll", async ({
   page,
 }) => {
   await start(page, "|- (a -o b) -o (b -o c) -o a -o c");
@@ -77,10 +77,15 @@ test("a finished proof's λ-term shows in Export from More's sheet at a phone's 
   await expect(proved(page)).toBeVisible();
   await tool(page, "More").click();
   await tool(page, "Export").click();
-  const item = page
-    .getByRole("menu", { name: "Export" })
-    .getByRole("menuitem", { name: /^λ-term/ });
-  await expect(item.locator(".judgement")).toContainText("λf. λg. λx. g (f x)");
+  const panel = page.getByRole("dialog", { name: "Export" });
+  await panel.getByRole("button", { name: "LaTeX", exact: true }).click();
+  await expect(panel.locator("pre")).toContainText("\\begin{prooftree}");
+  // The entries stand in one row, above the chosen entry's text.
+  const svg = await panel.getByRole("button", { name: "SVG", exact: true }).boundingBox();
+  const pack = await panel.getByRole("button", { name: "Course pack", exact: true }).boundingBox();
+  const text = await panel.locator("pre").boundingBox();
+  expect(svg && pack && Math.abs(svg.y - pack.y) < 2).toBe(true);
+  expect(svg && text && text.y > svg.y + svg.height).toBe(true);
   const overflow = await page.evaluate(
     () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
   );

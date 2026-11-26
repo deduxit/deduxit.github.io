@@ -7,7 +7,7 @@
 
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
-import { closeGoal, goto, start } from "./prover";
+import { closeGoal, goto, saveExport, start } from "./prover";
 
 /** Opens the page and waits until the service worker controls it, its cache written. */
 async function controlled(page: Page) {
@@ -54,11 +54,7 @@ test("a session without a PNG or PDF export never fetches the renderers, and the
       return urls.filter((url) => url.includes("deduxit_web_render"));
     });
   const exported = async (label: string) => {
-    await page.getByRole("button", { name: "Export" }).click();
-    const download = page.waitForEvent("download");
-    await page.getByRole("menuitem", { name: new RegExp(`^${label}`) }).click();
-    await download;
-    await page.keyboard.press("Escape");
+    await (await saveExport(page, label)).path();
   };
   await controlled(page);
   await start(page, "A * B |- B * A", false);

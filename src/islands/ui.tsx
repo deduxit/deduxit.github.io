@@ -70,7 +70,6 @@ export type Menu =
   | "search"
   | "views"
   | "about"
-  | "pack"
   | "handin"
   | "check"
   | null;

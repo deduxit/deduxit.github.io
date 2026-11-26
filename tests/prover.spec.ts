@@ -9,11 +9,13 @@ import { expect, test } from "./fixtures";
 import {
   calculus,
   closeGoal,
+  exportEntry,
   goalMenu,
   goto,
   newTab,
   proveCommuted,
   rule,
+  saveExport,
   start,
   switches,
   tool,
@@ -258,65 +260,90 @@ test("the finished MLL and MELL proofs' nets are drawn, and + view says why a ne
   await expect(page.locator(".drawing svg desc")).toContainText("proof net");
 });
 
-test("every export downloads, and both links are copied", async ({ page, context }) => {
+test("every export downloads, its settings passed on, and both links are copied", async ({
+  page,
+  context,
+}) => {
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
   await proveCommuted(page);
-  const contents: [string, Buffer][] = [];
-  const formats: [string, RegExp][] = [
+  const contents: Record<string, Buffer> = {};
+  const save = async (label: string, name: RegExp, key = label) => {
+    const file = await saveExport(page, label);
+    expect(file.suggestedFilename()).toMatch(name);
+    const bytes = await readFile(await file.path());
+    expect(bytes.length).toBeGreaterThan(20);
+    contents[key] = bytes;
+  };
+  for (const [label, name] of [
     ["SVG", /\.svg$/],
     ["PNG", /\.png$/],
     ["PDF", /\.pdf$/],
     ["LaTeX", /\.tex$/],
-    ["Whole document A LaTeX", /\.tex$/],
     ["Typst", /\.typ$/],
-    ["Whole document A Typst", /\.typ$/],
     ["Text", /\.txt$/],
     ["Session", /\.json$/],
     ["Rocq", /\.v$/],
-  ];
-  for (const [label, name] of formats) {
-    await page.getByRole("button", { name: "Export" }).click();
-    const download = page.waitForEvent("download");
-    await page.getByRole("menuitem", { name: new RegExp(`^${label}`) }).click();
-    const file = await download;
-    expect(file.suggestedFilename()).toMatch(name);
-    const bytes = await readFile(await file.path());
-    expect(bytes.length).toBeGreaterThan(20);
-    contents.push([label, bytes]);
-    await page.keyboard.press("Escape");
-  }
-  // Each file is what its format says: the drawing, the documents, the certificate.
-  const text = (label: string) => contents.find(([l]) => l === label)?.[1].toString("utf8") ?? "";
-  const head = (label: string) =>
-    contents.find(([l]) => l === label)?.[1].subarray(0, 8) ?? Buffer.alloc(0);
+  ] as const)
+    await save(label, name);
+  const text = (key: string) => contents[key]?.toString("utf8") ?? "";
   expect(text("SVG")).toContain("<svg");
-  expect(head("PNG").subarray(1, 4).toString("latin1")).toBe("PNG");
-  expect(head("PDF").subarray(0, 5).toString("latin1")).toBe("%PDF-");
-  // LaTeX and Typst are fragments, each with a whole document beside it; Rocq has its import.
+  expect(contents["PNG"]?.subarray(1, 4).toString("latin1")).toBe("PNG");
+  expect(contents["PDF"]?.subarray(0, 5).toString("latin1")).toBe("%PDF-");
+  // LaTeX and Typst are fragments until "Whole document" is on; Rocq has its import.
   expect(text("LaTeX")).toContain("\\begin{prooftree}");
   expect(text("LaTeX")).not.toContain("\\documentclass");
-  expect(text("Whole document A LaTeX")).toMatch(
-    /^\\documentclass[\s\S]*\\usepackage\{ebproof\}[\s\S]*\\begin\{prooftree\}[\s\S]*\\end\{document\}$/,
-  );
   expect(text("Typst")).toContain("prooftree(");
   expect(text("Typst")).not.toContain("#set page");
-  expect(text("Whole document A Typst")).toMatch(/^#import "@preview\/curryst[\s\S]*#set page\(/);
   expect(text("Text")).toContain("⊢ ~A ⅋ ~B, B ⊗ A");
   expect(JSON.parse(text("Session")).history.length).toBe(1);
   expect(text("Rocq")).toMatch(
     /^From NanoYalla Require Import macroll\.[\s\S]*Lemma certificate[\s\S]*Qed\./,
   );
-  const share = page.getByRole("group", { name: "Share a link" });
-  await page.getByRole("button", { name: "Export" }).click();
-  await share.getByRole("menuitem", { name: /^This proof/ }).click();
-  await expect(page.getByRole("status").filter({ hasText: "Link copied" })).toBeVisible();
+  // A text format shows what it writes before it is saved.
+  const panel = await exportEntry(page, "LaTeX");
+  await expect(panel.locator("pre")).toContainText("\\begin{prooftree}");
+  // Each setting is deduxit's style option: a whole document, the rule names, the line, the lemma.
+  await panel.getByRole("checkbox", { name: "Whole document" }).check();
+  await expect(panel.locator("pre")).toContainText("\\documentclass");
+  await save("LaTeX", /\.tex$/, "whole LaTeX");
+  await save("Typst", /\.typ$/, "whole Typst");
+  expect(text("whole LaTeX")).toMatch(
+    /^\\documentclass[\s\S]*\\usepackage\{ebproof\}[\s\S]*\\begin\{prooftree\}[\s\S]*\\end\{document\}$/,
+  );
+  expect(text("whole Typst")).toMatch(/^#import "@preview\/curryst[\s\S]*#set page\(/);
+  await exportEntry(page, "Text");
+  await panel.getByRole("group", { name: "Rule line" }).getByRole("button", { name: "=" }).click();
+  await panel
+    .getByRole("group", { name: "Rule names" })
+    .getByRole("button", { name: "Off" })
+    .click();
+  await expect(panel.locator("pre")).toContainText("=====");
+  await expect(panel.locator("pre")).not.toContainText(" ax");
+  await exportEntry(page, "Rocq");
+  await panel.getByRole("textbox", { name: "Lemma's name" }).fill("commuted");
+  await expect(panel.locator("pre")).toContainText("Lemma commuted");
+  await panel.getByRole("textbox", { name: "Lemma's name" }).fill("2x");
+  await expect(panel).toContainText("Not a name");
+  await expect(panel.getByRole("button", { name: "Save" })).toBeDisabled();
+  await exportEntry(page, "PNG");
+  await panel.getByRole("group", { name: "Scale" }).getByRole("button", { name: "1×" }).click();
+  await save("PNG", /\.png$/, "small PNG");
+  // Half the default scale: a quarter of the pixels, a smaller file.
+  expect(contents["small PNG"]?.length ?? 0).toBeLessThan(contents["PNG"]?.length ?? 0);
+  // The links: the proof as it stands, and the sequent alone; each shown, then copied.
+  await exportEntry(page, "This proof");
+  await expect(panel.locator(".ex-link")).toContainText("#v=2&u=linear");
+  await panel.getByRole("button", { name: "Copy" }).click();
+  await expect(
+    page.getByRole("status").filter({ hasText: "Link to this proof copied." }),
+  ).toBeVisible();
   const whole = await page.evaluate(() => navigator.clipboard.readText());
   expect(whole).toContain("#v=2&u=linear");
   expect(whole).toContain("&d=");
-  // The menu stays open to say what was copied.
-  await share.getByRole("menuitem", { name: /^The sequent/ }).click();
+  await exportEntry(page, "The sequent");
+  await panel.getByRole("button", { name: "Copy" }).click();
   await expect(
-    page.getByRole("status").filter({ hasText: "it opens the sequent with no step taken" }),
+    page.getByRole("status").filter({ hasText: "Link to the sequent copied." }),
   ).toBeVisible();
   const bare = await page.evaluate(() => navigator.clipboard.readText());
   expect(bare).toContain("#v=2&u=linear");
@@ -351,12 +378,9 @@ test("Settings sets the formulas' font: the drawing laid out in it, every formul
     .evaluate((element) => getComputedStyle(element).fontFamily);
   expect(family).toContain("STIX Two Math");
   // The exports follow the stage until they choose their own, which is kept apart.
-  await page.getByRole("button", { name: "Export" }).click();
-  await expect(page.getByRole("menuitemradio", { name: "STIX Two Math" })).toHaveAttribute(
-    "aria-checked",
-    "true",
-  );
-  await page.getByRole("menuitemradio", { name: "Euler Math" }).click();
+  const panel = await exportEntry(page, "SVG");
+  await expect(panel.getByRole("combobox", { name: "Font" })).toHaveValue("stix-two");
+  await panel.getByRole("combobox", { name: "Font" }).selectOption("euler");
   await page.keyboard.press("Escape");
   await expect(page.locator(".drawing svg")).toHaveAttribute("font-family", /'STIX Two Math'/);
   const stored = await page.evaluate(() =>
@@ -367,18 +391,11 @@ test("Settings sets the formulas' font: the drawing laid out in it, every formul
   await expect(page.locator(".drawing svg")).toHaveAttribute("font-family", /'STIX Two Math'/);
 });
 
-test("the export menu chooses the font of the SVG, PNG and PDF, kept for the next visit, and the page's drawing stays in Euler Math", async ({
+test("the Export panel chooses the font of the SVG, PNG and PDF, kept for the next visit, and the page's drawing stays in Euler Math", async ({
   page,
 }) => {
   await proveCommuted(page);
-  const exported = async (label: string) => {
-    await page.getByRole("button", { name: "Export" }).click();
-    const download = page.waitForEvent("download");
-    await page.getByRole("menuitem", { name: new RegExp(`^${label}`) }).click();
-    const bytes = await readFile(await (await download).path());
-    await page.keyboard.press("Escape");
-    return bytes;
-  };
+  const exported = async (label: string) => readFile(await (await saveExport(page, label)).path());
   const euler = {
     svg: await exported("SVG"),
     png: await exported("PNG"),
@@ -386,15 +403,10 @@ test("the export menu chooses the font of the SVG, PNG and PDF, kept for the nex
   };
   expect(euler.svg.toString("utf8")).toContain("font-family=\"'Euler Math', 'Neo Euler', serif\"");
   expect(euler.pdf.toString("latin1")).toContain("Euler-Math");
-  await page.getByRole("button", { name: "Export" }).click();
-  const font = page.getByRole("menuitemradio", { name: "STIX Two Math" });
-  await expect(page.getByRole("menuitemradio", { name: "Euler Math" })).toHaveAttribute(
-    "aria-checked",
-    "true",
-  );
-  await font.click();
-  await expect(font).toHaveAttribute("aria-checked", "true");
-  await page.keyboard.press("Escape");
+  const font = (await exportEntry(page, "SVG")).getByRole("combobox", { name: "Font" });
+  await expect(font).toHaveValue("euler");
+  await font.selectOption("stix-two");
+  await expect(font).toHaveValue("stix-two");
   const svg = (await exported("SVG")).toString("utf8");
   expect(svg).toContain("font-family=\"'STIX Two Math', serif\"");
   // Laid out in STIX Two Math's advances, not Euler Math's.
@@ -405,21 +417,19 @@ test("the export menu chooses the font of the SVG, PNG and PDF, kept for the nex
   expect((await exported("PDF")).toString("latin1")).toContain("STIXTwoMath-Regular");
   // The page draws in Euler Math whatever the exports are set in.
   await expect(page.locator(".drawing svg")).toHaveAttribute("font-family", /'Euler Math'/);
+  await page.keyboard.press("Escape");
   await start(page, "A |- A");
-  await page.getByRole("button", { name: "Export" }).click();
-  await expect(page.getByRole("menuitemradio", { name: "STIX Two Math" })).toHaveAttribute(
-    "aria-checked",
-    "true",
-  );
+  await expect(
+    (await exportEntry(page, "PNG")).getByRole("combobox", { name: "Font" }),
+  ).toHaveValue("stix-two");
 });
 
 test("the certificate of non-derivability downloads for a refuted goal", async ({ page }) => {
   await start(page, "A |- B");
   await closeGoal(page);
-  await page.getByRole("button", { name: "Export" }).click();
-  const download = page.waitForEvent("download");
-  await page.getByRole("menuitem", { name: /^Not derivable/ }).click();
-  const certificate = await readFile(await (await download).path(), "utf8");
+  const download = await saveExport(page, "Rocq");
+  expect(download.suggestedFilename()).toBe("deduxit-refutation.v");
+  const certificate = await readFile(await download.path(), "utf8");
   expect(certificate).toMatch(
     /^From Stdlib Require[\s\S]*From Deduxit\.Linear Require[\s\S]*Lemma certificate : ~ ll[\s\S]*Qed\./,
   );
@@ -581,10 +591,8 @@ test("import reads a session or a sequent, and refuses a level it does not know"
   page,
 }) => {
   await proveCommuted(page);
-  await page.getByRole("button", { name: "Export" }).click();
-  const download = page.waitForEvent("download");
-  await page.getByRole("menuitem", { name: /^Session/ }).click();
-  const session = await readFile(await (await download).path(), "utf8");
+  const session = await readFile(await (await saveExport(page, "Session")).path(), "utf8");
+  await page.keyboard.press("Escape");
   await page.getByRole("button", { name: "Import" }).click();
   const panel = page.getByRole("dialog", { name: "Import" });
   await panel.getByRole("textbox").fill(session);
@@ -759,10 +767,8 @@ test("Settings' net drawing writes every formula or draws the net compact, in th
   // Settings is a page: its own button leaves it.
   await page.getByRole("button", { name: "Settings", exact: true }).click();
   await expect(page.locator(".drawing svg circle")).toHaveCount(2);
-  await page.getByRole("button", { name: "Export" }).click();
-  const download = page.waitForEvent("download");
-  await page.getByRole("menuitem", { name: /^SVG/ }).click();
-  const svg = await readFile(await (await download).path(), "utf8");
+  const svg = await readFile(await (await saveExport(page, "SVG")).path(), "utf8");
+  await page.keyboard.press("Escape");
   expect(svg).toContain("proof net");
   expect(svg.match(/<circle /g)?.length).toBe(2);
 });
@@ -795,10 +801,8 @@ test("Settings' net look draws the net as the textbooks do, by the preset or fie
   await expect(weakening).toHaveCount(1);
   await expect(page.locator(".drawing svg text", { hasText: "?d" })).toHaveCount(1);
   await expect(dashed).toHaveCount(0);
-  await page.getByRole("button", { name: "Export" }).click();
-  const download = page.waitForEvent("download");
-  await page.getByRole("menuitem", { name: /^SVG/ }).click();
-  const svg = await readFile(await (await download).path(), "utf8");
+  const svg = await readFile(await (await saveExport(page, "SVG")).path(), "utf8");
+  await page.keyboard.press("Escape");
   expect(svg).toContain(">?w<");
   expect(svg).not.toContain("stroke-dasharray");
   // One field changed: the look is neither preset, and that field alone differs.

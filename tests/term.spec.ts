@@ -1,37 +1,29 @@
 // deduxit © Fabian Lukas Grubmüller 2026
 // Licensed under the EUPL
 
-// A finished proof's program: the Export panel shows the λ-term of an intuitionistic
-// proof as its typing judgement and copies it as text, in the linear suite and in the ordinary
-// one, and says why a proof has none.
+// A finished proof's program: the λ-term view shows the λ-term of an intuitionistic proof as its
+// typing judgement and copies it as text, in the linear suite and in the ordinary one, and says
+// why a proof has none.
 
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
-import { calculus, goto, start } from "./prover";
+import { addView, calculus, goto, proved, start, tool } from "./prover";
 
 /** Closes every open goal by the search and waits for the proof to be finished. */
 async function closeAll(page: Page) {
-  await page.getByRole("button", { name: "Close all" }).click();
-  await expect(
-    page.getByRole("status").filter({ hasText: "Proved. Every goal is closed." }),
-  ).toBeVisible();
+  await tool(page, "Close all").click();
+  await expect(proved(page)).toBeVisible();
 }
 
-/** The Export menu's λ-term item, the menu opened. */
-async function termItem(page: Page) {
-  await page.getByRole("button", { name: "Export" }).click();
-  return page.getByRole("menu", { name: "Export" }).getByRole("menuitem", { name: /^λ-term/ });
-}
+/** The λ-term view's judgement. */
+const judgementOf = (page: Page) => page.getByRole("region", { name: "λ-term" }).locator(".m");
 
-/** Copies the term the item shows and returns the clipboard's text. */
+/** Copies the term the view shows and returns the clipboard's text. */
 async function copied(page: Page) {
-  await page
-    .getByRole("menu", { name: "Export" })
-    .getByRole("menuitem", { name: /^λ-term/ })
-    .click();
-  await expect(page.getByRole("menu", { name: "Export" }).getByRole("status")).toHaveText(
-    "λ-term copied as text.",
-  );
+  await tool(page, "Copy as text").click();
+  await expect(
+    page.getByRole("status").filter({ hasText: "λ-term copied as text." }),
+  ).toBeVisible();
   return page.evaluate(() => navigator.clipboard.readText());
 }
 
@@ -42,15 +34,20 @@ test("a finished proof of intuitionistic linear logic shows its λ-term, copied 
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
   await start(page, "|- a -o b -o a * b");
   await calculus(page, ["Intuitionistic"]);
-  // Only a finished proof has a term.
-  const unfinished = await termItem(page);
-  await expect(unfinished).toHaveAttribute("aria-disabled", "true");
-  await expect(unfinished).toContainText("A finished proof has a λ-term");
+  // Only a finished proof has a term: its entry is faint and says why.
+  await page.getByRole("button", { name: "Add a view" }).click();
+  const entry = page
+    .getByRole("dialog", { name: "Add a view" })
+    .getByRole("button", { name: "λ-term", exact: true });
+  await expect(entry).toHaveAttribute("aria-disabled", "true");
+  await expect(page.getByRole("dialog", { name: "Add a view" })).toContainText(
+    "Finish the proof first: the term is read off the finished proof.",
+  );
   await page.keyboard.press("Escape");
   await closeAll(page);
-  const item = await termItem(page);
+  await addView(page, "λ-term");
   const judgement = "⊢ λx. λy. x ⊗ y : a ⊸ (b ⊸ (a ⊗ b))";
-  await expect(item.locator(".judgement")).toHaveText(judgement);
+  await expect(judgementOf(page)).toHaveText(judgement);
   expect(await copied(page)).toBe(judgement);
 });
 
@@ -61,19 +58,20 @@ test("a finished derivation of LJ shows its simply typed λ-term", async ({ page
   await page.getByRole("textbox", { name: "Sequent" }).fill("|- (a -> b) -> (b -> c) -> a -> c");
   await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
   await closeAll(page);
-  const item = await termItem(page);
+  await addView(page, "λ-term");
   const judgement = "⊢ λf. λg. λx. g (f x) : (a → b) → ((b → c) → (a → c))";
-  await expect(item.locator(".judgement")).toHaveText(judgement);
+  await expect(judgementOf(page)).toHaveText(judgement);
   expect(await copied(page)).toBe(judgement);
 });
 
 test("a finished proof without a λ-term says why", async ({ page }) => {
   await start(page, "|- a -o a");
   await closeAll(page);
-  const item = await termItem(page);
-  await expect(item).toContainText(
+  await addView(page, "λ-term");
+  const view = page.getByRole("region", { name: "λ-term" });
+  await expect(view).toContainText(
     "No λ-term: a proof of classical logic has several conclusions at once, and a λ-term has one type.",
   );
-  await expect(item).toHaveAttribute("aria-disabled", "true");
-  await expect(item.locator(".judgement")).toHaveCount(0);
+  await expect(judgementOf(page)).toHaveCount(0);
+  await expect(tool(page, "Copy as text")).toBeDisabled();
 });

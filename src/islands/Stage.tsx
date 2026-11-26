@@ -1333,13 +1333,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
   /** Whether the proof's sequent has a truth table and a tableau: a started classical ordinary one. */
   const decidable = () => {
     const p = proof();
-    // A course pack that bars the search bars deduxit's table and tableau too: they decide.
-    return (
-      !!p?.session &&
-      p.calculus.suite === "ordinary" &&
-      p.calculus.logic === "classical" &&
-      prover().limits().search(p.id) === null
-    );
+    return !!p?.session && p.calculus.suite === "ordinary" && p.calculus.logic === "classical";
   };
   /** The view added to the proof shown that the stage shows now, with whether it is out of date. */
   const addedShown = () => {
@@ -1833,7 +1827,6 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
                 menuEl = el;
                 placeSoon();
               }}
-              barred={props.prover.limits().search(proof()?.id ?? "")}
               apart={props.prover.apartFor(goal())}
               canBack={dead(goal()) && props.prover.rootMarked(proof()?.id ?? "") !== "none"}
               settingsOpen={ui.menu === "search"}

@@ -54,10 +54,10 @@ import {
   viewRedo,
   viewUndo,
 } from "./Frame";
-import { CheckSheet, createPacks, HandinSheet, PackBar, PackSheet, PacksContext } from "./Packs";
+import { ExportPanel } from "./Export";
+import { CheckSheet, createPacks, HandinSheet, PackBar, PacksContext } from "./Packs";
 import {
   AboutPane,
-  ExportMenu,
   ImportPanel,
   importText,
   SearchPanel,
@@ -72,15 +72,7 @@ import { Tour } from "./Tour";
 import { createUi, ladderKey, Why } from "./ui";
 
 /** The menus that open as a panel beside the tools, a sheet in a compact window. */
-const PANELS: readonly string[] = [
-  "steps",
-  "search",
-  "export",
-  "import",
-  "pack",
-  "handin",
-  "check",
-];
+const PANELS: readonly string[] = ["steps", "search", "export", "import", "handin", "check"];
 
 /** The browser's storage, or undefined where it is refused. */
 const storage = () => {
@@ -117,7 +109,6 @@ export default function App(props: {
     x: number;
     y: number;
   } | null>(null);
-  const [linkShort, setLinkShort] = createSignal(false);
   let tipBox: HTMLDivElement | undefined;
 
   const fontBytes = new Map<MathFont, Promise<Uint8Array>>();
@@ -422,7 +413,6 @@ export default function App(props: {
             const written = await writeLink(text, calculus.suite, parameterOf(calculus));
             history.replaceState(null, "", embedded ? `${written.hash}&e=1` : written.hash);
             wrote = location.hash;
-            setLinkShort(!written.whole);
           }, 400);
           return;
         }
@@ -454,7 +444,6 @@ export default function App(props: {
               );
           history.replaceState(null, "", embedded ? `${written.hash}&e=1` : written.hash);
           wrote = location.hash;
-          setLinkShort(!written.whole);
         }, 400);
       },
       { defer: true },
@@ -489,11 +478,6 @@ export default function App(props: {
     const p = prover.current();
     const goal = prover.activeGoal();
     if (!p?.session || goal === undefined) return;
-    const barred = prover.limits().search(p.id);
-    if (barred) {
-      prover.banner(p.id, { keyword: "Course pack", sentence: barred });
-      return;
-    }
     const key = ladderKey(p.id, paths(p.session).get(goal) ?? []);
     if (ui.ladder?.key === key && ui.ladder.hint) {
       const said = pointer(prover, view);
@@ -851,13 +835,10 @@ export default function App(props: {
                     <SearchPanel prover={prover} ui={view} />
                   </Show>
                   <Show when={ui.menu === "export"}>
-                    <ExportMenu prover={prover} ui={view} font={font} />
+                    <ExportPanel prover={prover} ui={view} font={font} />
                   </Show>
                   <Show when={ui.menu === "import"}>
                     <ImportPanel prover={prover} ui={view} />
-                  </Show>
-                  <Show when={ui.menu === "pack"}>
-                    <PackSheet prover={prover} ui={view} />
                   </Show>
                   <Show when={ui.menu === "handin"}>
                     <HandinSheet packs={packs} prover={prover} />
@@ -921,9 +902,6 @@ export default function App(props: {
                             </Show>
                           </p>
                         )}
-                      </Show>
-                      <Show when={linkShort() && ui.menu === "export"}>
-                        <p class="note">The link holds the sequent alone.</p>
                       </Show>
                       <Examples prover={prover} samples={props.samples} />
                     </>

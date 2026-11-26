@@ -298,8 +298,6 @@ function MenuButton(props: {
  */
 export function GoalMenu(props: {
   ref: (el: HTMLDivElement) => void;
-  /** Why the search may not run here (a course pack's bar), or null. */
-  barred: string | null;
   apart: { id: string; tab: string } | null;
   canBack: boolean;
   settingsOpen: boolean;
@@ -311,23 +309,21 @@ export function GoalMenu(props: {
 }) {
   return (
     <div class="cluster pop goal-menu" ref={props.ref} role="dialog" aria-label="This goal">
-      <Show when={props.barred === null} fallback={<p class="said-why">{props.barred}</p>}>
-        <MenuButton
-          name="Close goal"
-          tip="Close this goal by the search"
-          keys="C"
-          sign={<Sign name="close" />}
-          onClick={props.close}
-        />
-        <MenuButton
-          name="This search's settings"
-          tip="The engine and the budget of this search"
-          class="caret"
-          expanded={props.settingsOpen}
-          sign={<Sign name="caret" />}
-          onClick={props.settings}
-        />
-      </Show>
+      <MenuButton
+        name="Close goal"
+        tip="Close this goal by the search"
+        keys="C"
+        sign={<Sign name="close" />}
+        onClick={props.close}
+      />
+      <MenuButton
+        name="This search's settings"
+        tip="The engine and the budget of this search"
+        class="caret"
+        expanded={props.settingsOpen}
+        sign={<Sign name="caret" />}
+        onClick={props.settings}
+      />
       <MenuButton
         name="Prove apart"
         tip="Prove this goal apart, as a sequent of its own at the top"

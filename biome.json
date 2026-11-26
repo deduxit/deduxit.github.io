@@ -10,7 +10,8 @@
       "!!**/.cache",
       "!!**/playwright-report",
       "!!**/test-results",
-      "!!**/package-lock.json"
+      "!!**/package-lock.json",
+      "!src/third-party"
     ]
   },
   "formatter": {

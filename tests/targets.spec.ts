@@ -16,6 +16,7 @@ import {
   clausal,
   cutting,
   deducing,
+  exporting,
   fonts,
   lambdaing,
   linking,
@@ -181,6 +182,10 @@ test("lambda-terms' controls are targets of 24 by 24 pixels at least", async ({ 
   expect(await measured(page, 24, lambdaing)).toEqual([]);
 });
 
+test("the Export panel's controls are targets of 24 by 24 pixels at least", async ({ page }) => {
+  expect(await measured(page, 24, exporting)).toEqual([]);
+});
+
 test("course packs' controls are targets of 24 by 24 pixels at least", async ({ page }) => {
   expect(await measured(page, 24, packing)).toEqual([]);
 });
@@ -201,6 +206,10 @@ test.describe("at a phone's width", () => {
 
   test("natural deduction's controls are 44 by 44 pixels at least", async ({ page }) => {
     expect(await measured(page, 44, deducing)).toEqual([]);
+  });
+
+  test("the Export panel's controls are 44 by 44 pixels at least", async ({ page }) => {
+    expect(await measured(page, 44, exporting)).toEqual([]);
   });
 
   test("course packs' controls are 44 by 44 pixels at least", async ({ page }) => {

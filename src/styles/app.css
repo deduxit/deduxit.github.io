@@ -1741,6 +1741,171 @@ svg.sign {
   pointer-events: none;
 }
 
+/* The Export panel: the entries at its left under their groups' headings, the chosen entry's
+   settings, text and buttons at its right. */
+.menu.export {
+  display: flex;
+  gap: var(--spacing-2);
+  padding: var(--spacing-2);
+}
+.ex-list {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  width: var(--size-export-list);
+  overflow-y: auto;
+}
+.ex-group,
+.ex-settings {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.ex-group + .ex-group {
+  margin-top: var(--spacing-1);
+  border-top: var(--line) solid var(--color-hair);
+}
+.ex-head {
+  margin: 0;
+  padding: var(--spacing-2) var(--spacing-2) var(--spacing-1);
+  font: var(--font-weight-semibold) var(--text-sign) / var(--leading-none) var(--font-text);
+  color: var(--color-ink2);
+}
+.ex-entry {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  width: 100%;
+  min-height: var(--size-entry);
+  padding: 0 var(--spacing-3) 0 var(--spacing-2);
+  border: var(--line) solid transparent;
+  border-radius: var(--radius-row);
+  text-align: left;
+  white-space: nowrap;
+  font: var(--font-weight-medium) var(--text-body) / var(--leading-none) var(--font-text);
+  color: var(--color-ink2);
+}
+.ex-entry[aria-current="true"] {
+  border-color: var(--color-lapis);
+  background: var(--color-wash);
+  color: var(--color-ink);
+  font-weight: var(--font-weight-semibold);
+}
+.ex-entry .icon {
+  flex: none;
+}
+.ex-side {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+  padding: var(--spacing-2) var(--spacing-2) var(--spacing-1) var(--spacing-3);
+  border-left: var(--line) solid var(--color-hair);
+}
+.ex-title {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-3);
+  margin: 0;
+  min-height: var(--size-button);
+}
+.ex-file {
+  font-weight: var(--font-weight-semibold);
+  overflow-wrap: anywhere;
+}
+.ex-note {
+  margin-left: auto;
+  font-size: var(--text-control);
+  color: var(--color-ink2);
+}
+.ex-settings {
+  display: grid;
+  gap: var(--spacing-2);
+}
+.ex-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-2) var(--spacing-3);
+  min-height: var(--size-button);
+}
+.ex-label {
+  font-size: var(--text-control);
+  color: var(--color-ink2);
+}
+.ex-row.sw .sub {
+  flex-basis: 100%;
+}
+.ex-lemma {
+  font-family: var(--font-mono);
+}
+.ex-text {
+  flex: 1;
+  min-height: 0;
+  max-height: var(--size-export-text);
+  margin: 0;
+  padding: var(--spacing-2) var(--spacing-3);
+  overflow: auto;
+  border-radius: var(--radius-cell);
+  background: var(--color-band);
+  font: var(--font-weight-normal) var(--text-control) / var(--leading-normal) var(--font-mono);
+  white-space: pre;
+}
+.ex-link {
+  margin: 0;
+  padding: var(--spacing-2) var(--spacing-3);
+  border-radius: var(--radius-cell);
+  background: var(--color-band);
+  overflow-wrap: anywhere;
+}
+.ex-acts {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-2);
+  margin: auto 0 0;
+}
+.ex-acts .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+/* In a compact window the entries are one row that scrolls sideways, the rest under it. */
+@media (width < 600px) {
+  .menu.export {
+    flex-direction: column;
+  }
+  .ex-list {
+    flex-direction: row;
+    width: auto;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+  .ex-group {
+    display: flex;
+    align-items: center;
+  }
+  .ex-group + .ex-group {
+    margin: 0 0 0 var(--spacing-1);
+    padding-left: var(--spacing-1);
+    border-top: 0;
+    border-left: var(--line) solid var(--color-hair);
+  }
+  .ex-head {
+    display: none;
+  }
+  .ex-entry {
+    width: auto;
+  }
+  .ex-side {
+    padding: var(--spacing-1) 0 0;
+    border-left: 0;
+    border-top: var(--line) solid var(--color-hair);
+  }
+}
+
 /* A sheet's close button: a compact window's alone, where the panels are sheets. */
 .sheet-close {
   display: none;

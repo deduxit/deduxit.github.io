@@ -115,11 +115,6 @@ function Decided(props: { prover: Prover; openCounter: () => void }) {
   const work = () => proof()?.modal ?? null;
   const outcome = () => work()?.outcome ?? null;
   const system = () => outcome()?.system ?? "";
-  /** The tab's system, decided or not. */
-  const chosen = () => {
-    const c = proof()?.calculus;
-    return c?.suite === "modal" ? c.system : "";
-  };
   const font = () => props.prover.settings().stageFont;
   const [drawing] = createResource(
     () => outcome() ?? undefined,
@@ -142,26 +137,8 @@ function Decided(props: { prover: Prover; openCounter: () => void }) {
   };
   const tone = () =>
     outcome()?.verdict === "valid" ? "ok" : outcome()?.verdict === "not_valid" ? "bad" : "warn";
-  /** A course pack's problem with the search barred: deduxit decides nothing, the model is the visitor's. */
-  const barred = () => {
-    const p = proof();
-    return p ? props.prover.limits().search(p.id) !== null : false;
-  };
-
   return (
-    <Show
-      when={!barred()}
-      fallback={
-        <>
-          <p class="method-verdict">
-            This problem is yours to decide: deduxit decides nothing here. Find a model where the
-            sequent fails, and check it.
-          </p>
-          <p class="method-verdict">{systemSentence(chosen())}</p>
-          <Editor prover={props.prover} open />
-        </>
-      }
-    >
+    <>
       <p class="method-verdict" role="status">
         <Show when={verdict()} fallback={<>Deciding…</>}>
           {(said) => (
@@ -205,7 +182,7 @@ function Decided(props: { prover: Prover; openCounter: () => void }) {
       <Show when={outcome()?.verdict === "valid"}>
         <Editor prover={props.prover} />
       </Show>
-    </Show>
+    </>
   );
 }
 

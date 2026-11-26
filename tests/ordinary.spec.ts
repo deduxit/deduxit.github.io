@@ -9,7 +9,7 @@
 import { readFile } from "node:fs/promises";
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
-import { calculus, closeGoal, goalMenu, goto, newTab, switches, tool } from "./prover";
+import { calculus, closeGoal, goalMenu, goto, newTab, saveExport, switches, tool } from "./prover";
 
 /** The chosen sequent's proof, its cell in the rail, whose hover names its calculus. */
 const mark = (page: Page) =>
@@ -116,10 +116,9 @@ test("a goal that is not valid shows its countermodel drawn, and Export writes i
   await expect(note.locator("figcaption")).toContainText(
     "World 0, outlined, forces every formula left of ⊢ and not the one right of it.",
   );
-  await page.getByRole("button", { name: "Export" }).click();
-  const download = page.waitForEvent("download");
-  await page.getByRole("menuitem", { name: /^Countermodel/ }).click();
-  const certificate = await readFile(await (await download).path(), "utf8");
+  const download = await saveExport(page, "Rocq");
+  expect(download.suggestedFilename()).toBe("deduxit-countermodel.v");
+  const certificate = await readFile(await download.path(), "utf8");
   expect(certificate).toMatch(
     /^From Stdlib Require[\s\S]*From Deduxit\.Intuitionistic Require Import KripkeCheck\.[\s\S]*Lemma certificate : ~ lj \(atom := string\) intuitionistic \[\][\s\S]*kripke_refutation[\s\S]*Qed\./,
   );
@@ -191,13 +190,9 @@ test("the structural rules are drawn on request, and the exports are the derivat
     ["Session", /\.json$/],
     ["SVG", /\.svg$/],
   ] as const) {
-    await page.getByRole("button", { name: "Export" }).click();
-    const download = page.waitForEvent("download");
-    await page.getByRole("menuitem", { name: new RegExp(`^${label}`) }).click();
-    const file = await download;
+    const file = await saveExport(page, label);
     expect(file.suggestedFilename()).toMatch(name);
     files[label] = await readFile(await file.path(), "utf8");
-    await page.keyboard.press("Escape");
   }
   expect(files["LaTeX"]).toContain("\\vdash");
   expect(files["Text"]).toContain("→L");
