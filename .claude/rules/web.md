@@ -108,67 +108,40 @@ the page reads.
   the Export panel's "Countermodel" (`ordinary_model_certificate`, standalone), shown for an
   ordinary proof only, greyed until a goal's close or hint found one. The figure's classes are
   `.countermodel*`. `tests/states.ts`'s ordinary walk ends on it.
-- **A classical proof's truth table and tableau are views of the stage, not a method of the
-  tab** (`Methods.tsx`, `src/lib/methods.ts`): "+ view" offers Truth table and Tableau, and
-  adds each as a rail cell, for a started proof of classical ordinary logic alone (`decidable`
-  in `Stage.tsx`), `ui.tab` holds `table` or `tableau`, and the stage puts its panel (`.method`) in the drawing's
-  place, the camera and the formulas' buttons hidden (`data-method`), the proof kept
-  as it was. The panel asks deduxit's `ordinary_table` or `ordinary_tableau` with the session's
-  sequent (`sequentText`) and shows the verdict in one sentence that names the values (the
-  cognitive load: no searching the table for the row), the table (the atoms, then the formulas
-  left of ⊢ and right of it, not every subformula) or the tree (numbered signed lines, a split
-  as two branches side by side, stacked in a compact window), and under a sequent that is not valid the
-  countermodel (`ModelFigure`, `Countermodel.tsx`). A table past deduxit's `table_atoms` says so
-  and draws on request up to 14 atoms (`MOST_ATOMS`) by sending the bound raised. They are views
-  and not a method of the tab (the registry's `methods`, the link's `k`) because they decide at
-  once and hold no steps: a tab of their own would hold nothing to do, and as views they cost a
-  visitor who does not press them nothing (the author's rule: not overwhelming). A model the
-  views build is made once (`createMemo`): a prop is a getter read at every use, and the table
-  built afresh per cell took 27 s for 2048 rows.
-- **A classical proof's translations and interpolant are two sheets over the stage, asked for
-  from "+ view" alone** (`Transforms.tsx`, `src/lib/transforms.ts`): for a started classical
-  ordinary proof, its "Into intuitionistic logic" (Translate group) and "Interpolant" (Read off
-  group) set `ui.menu` to `translate` or `interpolate`, a `.menu.transform` sheet (light
-  dismiss, Escape), its title taking the focus. Not rail cells (they are panels until they
-  become views of their own), and a visitor who does not ask meets nothing new (the author's
-  rule: not overwhelming). Each answer opens with its verdict
-  sentence (`method-verdict`, `role="status"`): a translation's two verdicts and that they agree,
-  then the translated sequent large, "Prove it in <logic>" (`prover.open` with the target's
-  calculus: a new chip, no `origin`), one line per logic and the target's Kripke model where it is
-  not valid (the classical one in words); an interpolant's keyword, the formula large, its three
-  checks (its atoms, then the two halves deduxit decided, `first` and `second`, written from
-  their own sequents). The translations are offered Glivenko, Kuroda, Gödel–Gentzen, Kolmogorov,
-  from the least change to the most, each into the logic `about` names (`transforms.test.ts`);
-  the partition is a toggle per formula (`aria-pressed` for part 1, its number written before it,
-  part 2 dashed), Craig's split (the formulas left of ⊢) at the start and again for each new
-  sequent. Both calls are sent `{}` as settings, as the table's are.
-- **A classical proof's normal forms and resolution are two more sheets from "+ view"** (Decide
-  group; `Clausal.tsx`, `src/lib/clausal.ts`), beside the translation's and the interpolant's and
-  built from their parts (`Sheet`, `Verdict`, `Refused`, `answered`, `classicalSequent`, exported
-  by `Transforms.tsx`): "Rewrite into a normal form" and "Refute by resolution" set `ui.menu` to
-  `normalize` or `resolve`. Nothing of them shows before a visitor presses one (the author's
-  rule: not overwhelming).
-  - The normal form (`ordinary_normalize`): the forms CNF, NNF, DNF, Tseitin, Plaisted–Greenbaum
-    (CNF first, a first course's; `FORMS` holds `about`'s names), the check's keyword first
-    (`Equivalent`, `Same verdict`, `Not checked`), the result large, then a stepper from the
-    sequent as typed (step 0) through each step's law, where it acts, and the sequent after it
-    (`stepTexts`: a step's `left` with the clauses `added` by it and every earlier step). The
-    last step's sequent is the result, which `clausal.test.ts` holds for every form.
-  - Resolution: Search (saturation), DPLL (its steps indented by their decisions, words in the
-    text font, the refutation read off) and By hand, the worked example first. Search and DPLL
-    call `ordinary_resolve`; By hand starts with `ordinary_clauses` and adds each resolvent
-    with `ordinary_resolve_step`, which checks the steps the page sends before it adds one, so a
-    document the page changed is refused. The page keeps the refutations made so far and undo
-    drops the last; nothing is accepted that deduxit did not add. Two clauses are chosen (a
-    third replaces the older), the atoms they clash on (`clashes`) are the buttons "Resolve on
-    p"; none means the two share no atom to resolve on, said in the status.
-  - **The graph view** (`Graph`): the given clauses on the top row, each resolvent one row
-    below its deeper parent (`layout`), the edges an `aria-hidden` SVG and each clause an HTML
-    button over it (44 by 44 pixels: a phone's target), placed through the CSSOM. The list and
-    the graph share one choice: a clause chosen in either is pressed in both, and the edges into
-    a chosen resolvent are marked (`data-on`). Each button's name starts "Clause N", hidden
-    words before and after the visible number and clause (SC 2.5.3). The graph scrolls
-    sideways where it is wider than the sheet.
+- **Every way of looking at a sequent is a view of it** (`Views.tsx`, `OtherViews.tsx`; the
+  guide's "+ view", boards D3, D13, D14): "+ view" (`ui.menu === "views"`) lists `entries` under
+  Prove, Decide, Translate, Read off and From this proof, a faint entry with its reason (`why`,
+  worded by the feedback skill's criterion: what is missing, then one action) and a check on a view
+  there. `addView` adds an `Added` to `ui.added[proof]`: the view, what it was made from (`source`:
+  the sequent as text for a view of the sequent, `sessionKey` of the session for one of the proof,
+  CE and λ) and the sequent's text and JSON then (`sequent`). The stage draws a view from that
+  snapshot, never from the proof's live sequent, so a view whose source changed (`staleOf`) shows
+  its old contents in `soft` with `StaleBar` over them: "Update", or "Start again" where it has
+  steps of its own (`markSteps`: a CE run, presses of the tableau by hand); its cell is dashed with
+  a red "!". The views: truth table and tableau (`MethodView` with the snapshot's text), the
+  tableau's "By hand" (`HandTableau.tsx`), resolution and the normal form (`Clausal.tsx`), the
+  interpolant (`InterpolantPanel` in `Transforms.tsx`), the four negative translations and the
+  embedding into linear logic, cut elimination and the λ-term (`Views.tsx`), a model of one's own,
+  the countermodel. A view with a way of working has its toggle where the calculus toggles stand
+  (`ui.ways`, `wayOf`: the tableau's Search or By hand, resolution's Search, DPLL or By hand, the
+  normal form's kinds, CE's Derivation or Net); the calculus toggles show on a proof's own view
+  and its net alone. Every view panel is a `ViewPanel` (`.method.view-panel`, a hidden h2 for the
+  heading order, `tabindex=0` since it scrolls). The table and the tableau decide, so a pack that
+  bars the search hides their cells (`decidable`).
+- **A translation is a view of its own** (`TranslationView`, `EmbeddingView`): the translated
+  sequent on a strip with "Prove it in LJ" (or LM, LL, ILL) at its end, the sign of "Prove apart",
+  its words shown with the guide on; then the verdicts. A negative translation's "Prove it in" is
+  the workspace's `proveTranslation` (a new chip, its line in the workspace); the embedding into
+  linear logic is the library's workspace operation `ordinary.embed` (the logic's default
+  embedding), run on a scratch document of its own (`embed`), its node's `summary` the text and
+  its `value` the linear sequent the new chip opens. The interpolant's parts are toggles (part 1
+  pressed, its number written before it), Craig's split at the start and again for a new sequent.
+- **The normal form and resolution are views of the sequent** (`Clausal.tsx`).
+  - The normal form (`ordinary_normalize`, `NormalView`): its kind is the view's toggle (`FORMS`,
+    CNF first, the five first-order forms with them), the steps numbered lines from the sequent
+    as typed (0), each with its law and where it acts, opening at the last
+    (`ui.stepAt`, `stepShown`, `stepTo`; `stepCounts` the count each view reports), the check's
+    keyword under the last; the tools' Undo steps back, "Next step" and "To the end" forward.
 - **A calculus of one's own** (deduxit's `rules_…` calls, `src/lib/custom.ts`,
   `src/islands/Custom.tsx`) is the registry's suite `rules`, its parameter the rule file's
   `name` (any name of at most 64 characters: `calculusOf` takes it, the built-in names are its
@@ -283,10 +256,9 @@ the page reads.
   model of your own" adds one world against the started ordinary sequent as a rail cell, M).
   The check is `ordinary_model`; its `invalid_model` refusal is said as "No model of … logic"
   with deduxit's reason (`refusalWords`).
-- **The countermodel view `⊭`** (board D9; `ui.tab` `"countermodel"`, `ui.counter`,
-  `data-method="countermodel"`, its cell after the proof's in `cellsOf`) shows one
-  countermodel at a time, of the proof it was opened on (`ui.counter.proof`; opening another
-  proof's takes the first one's cell away), and goes when that proof's sequent is typed anew
+- **The countermodel view `⊭`** (board D9; `ui.tab` `"countermodel"`, `ui.counters` by proof,
+  `counterOf`, `setCounter`, `data-method="countermodel"`, its cell after the proof's views in
+  `cellsOf`) is one per proof, each kept while another proof's is open, and goes when its proof's sequent is typed anew
   (`root`, `sameRoot`: the arena only grows, so the same sequent keeps its root and its
   arena's prefix). The structure is checked against the sequent as text (a goal's formulas as
   deduxit writes them, or the sequent as typed), never its JSON: once a ∀R or ∃L step was
@@ -299,7 +271,7 @@ the page reads.
     arguments), a row of squares per constant and per function's argument tuple (the element
     it names pressed); deduxit's `ordinary_structure` checks it after every change, and the
     sequent under the grid shows each formula's value and `⊭` or `⊨`. Its undo and redo are
-    the view's (`ui.counter.past`, `future`; the tools' Undo and Redo and Ctrl+Z on this view,
+    the view's (the counter's `past`, `future`; the tools' Undo and Redo and Ctrl+Z on this view,
     `undoStructure`), never the proof's. The symbols are read off the sequent's JSON
     (`signatureOf`: a predicate is a symbol an atom applies, `=` none). It opens from a goal's
     note ("See the countermodel", an outcome's `structure`) or, as M, from "+ view"'s "A model
@@ -307,7 +279,8 @@ the page reads.
     eigenvariable has none: no structure interprets one (deduxit's `refuted`). The toggles
     hide on this view: a structure has no calculus;
   - a propositional sequent's Kripke model (`ModelView` with the seed deduxit found), from
-    `ModelFigure`'s and the tableau by hand's "Change this model and check it";
+    `ModelFigure`'s "Change this model and check it" and the tableau by hand's "Check its
+    countermodel";
   - a modal sequent's model (`ModalCountermodel`, the editor bare, its verdict and system over
     it), whose cell stands while the sequent is not valid; the modal panel keeps the drawing
     and the button that opens it. The system's toggle stays: the model must meet it.
@@ -361,24 +334,26 @@ the page reads.
   open, its handout alone (`.pk-handout`, `print-only`: the title, each problem and its calculus,
   the link and the code), drawn at the body's end through a `Portal` so that it flows over
   pages, everything else in the body left out.
-- **A tableau written by hand** (`TableauCheck.tsx`, `src/lib/written.ts`, `ui.tab`
-  `"written"`): "Tableau by hand" in "+ view" for a started classical sequent adds it as a rail
-  cell, in the drawing's place. It begins with the sequent's
-  own lines (`startLines`, the root lines of `ordinary_tableau`'s tableau that cite no line;
-  deduxit's tableau itself is not shown), and `ordinary_tableau_review(text, sequent, settings)`
-  reviews it: `closed` and `open` right and finished (an open one's `countermodel` opens in the
-  model view), `wrong` and `unfinished` the student's to fix, its `text_line` selected in the
-  field; a text that is no tableau is the call's `parse` failure, its `details.line` and
-  `column` selected and `details.hint` said.
+- **The tableau by hand is built by presses** (`HandTableau.tsx`, `src/lib/hand.ts`; the guide
+  drops typing a tableau): it starts with the sequent's formulas, true left of ⊢ and false right
+  of it (`begin`); a press on a line expands it by its rule on every open branch below it
+  (`expand`), a branch closes by itself on a formula marked both true and false (or ⊥ true, ⊤
+  false), and the tableau is a function of the lines pressed (`replay`), so Undo, the tools' or
+  Ctrl+Z, drops the last press (`undoPress`). After every press the tableau is written in the
+  text deduxit reads (`written`: a branch starts with "- ", its lines two in, × with the two lines
+  that clash, `open` under a branch every line of which is expanded) and `ordinary_tableau_review`
+  judges it: closed, open (its countermodel opens in the countermodel view) or unfinished. A
+  line's button is named by what it shows first (`2 F b → a: false, …`, WCAG 2.5.3).
 - **vitest keeps a module cache** (`node_modules/.vitest-cache`) keyed by a file's content, the
   module's store path resolved in it: after deduxit's module changes (a lock bump, an
   `--override-input`), `rm -rf node_modules/.vitest-cache` or a unit test runs the old module.
-- **Proving a modal sequent step by step**: under a valid derivation, "Prove it step by step"
-  (`modalSteps`) turns the tab into a calculus given as data: the rule file `modal_calculus`
-  gives (`G3S4`), the sequent the root of the valid derivation (`rootSequent`, every compound
-  operand bracketed: the typed text read by the calculus would associate `∧` and `↔` otherwise,
-  and an atom named `R` is the calculus's relation), started before the tab changes, so a
-  refusal is said in the modal panel and leaves it whole; then the builder of `Custom.tsx`. Its offered steps are backward steps; in a sequent calculus a forward step
+- **Proving a modal sequent step by step**: "Prove step by step" among the tools of a valid modal
+  sequent (`modalSteps`) opens a proof in a calculus given as data beside the decision, in the
+  same chip (D11): the rule file `modal_calculus` gives (`G3S4`), the sequent the root of the valid
+  derivation (`rootSequent`, every compound operand bracketed: the typed text read by the calculus
+  would associate `∧` and `↔` otherwise, and an atom named `R` is the calculus's relation),
+  started first, so a refusal is said in the modal panel and leaves it whole; then the builder of
+  `Custom.tsx`. Its offered steps are backward steps; in a sequent calculus a forward step
   (deduxit's `Interactive::extend`) is the same node as the backward step at the same members,
   so the builder needs no call of its own for it.
 - **A modal tab in the workspace** joins as its statement (`modal.sequent`) and its decision
@@ -486,13 +461,22 @@ the page reads.
 The design guide (`design/redesign.md`, "The frame", "Window sizes", "Keys") is the spec; where a
 board and the guide disagree, the guide holds.
 
-- **A chip is a proof** (`state.proofs`): the top row's tab list (`role=tablist`, the arrow keys
-  move and choose, `rove` in `Frame.tsx`), each named with its state ("…, 1 goal open",
-  "proved", "refuted"). A proof not yet entered (`started()` false: no session, no modal or
-  lambda decision) shows **the new tab view** in the stage's place: the four logics (pressing one
-  sets the proof's calculus), "Open a file", "Restore N proofs", Learn and Practice inactive
-  ("Coming soon", said in a notice when pressed, since a hover follows no touch), About. "+" and
-  the word mark (a plain link to `/`, taken in place) reuse an empty proof before adding one.
+- **A chip is a sequent: a proof and the proofs beside it** (`Proof.beside`, stored with the
+  proof; `prover.chipOf`, `members`): the top row's tab list shows the proofs that are beside
+  none (`role=tablist`, the arrow keys move and choose, `rove` in `Frame.tsx`), each named with its
+  state ("…, 1 goal open", "proved", "refuted"). A calculus opened beside (`setCalculus`, the
+  natural deduction toggle), a copy of a proof ("+ view", or a link's copy, `arrive`) and the
+  labelled calculus of a modal decision join the chip as cells of its rail; a translation proved
+  and a goal proved apart are chips of their own. A press on the chosen chip switches between its
+  main view and its graph. Its close (`.chip-close`, an `aria-hidden` press target over the
+  chip's end, shown on hover and with the focus in the chip, always beside it on a touch screen)
+  and the key W close the chip with every proof beside it (`closeChip`), the notice's Undo
+  putting them back where they were. A proof not yet entered (`started()` false: no session, no
+  modal or lambda decision) shows **the new tab view** in the stage's place: the four logics
+  (pressing one sets the proof's calculus), "Open a file", "Restore N proofs", Learn and Practice
+  inactive ("Coming soon", said in a notice when pressed, since a hover follows no touch), About.
+  "+" and the word mark (a plain link to `/`, taken in place) reuse an empty proof before adding
+  one.
 - **The toggles** (`Toggles.tsx`) stand at the stage's top left on the new tab view and on a
   proof: ordinary logic's method and logic, linear logic's logic, Mix and Affine, modal logic's
   system, lambda's use; ordinary logic's method is "Sequent", "Natural" or "Fitch" (the last two
@@ -505,18 +489,25 @@ board and the guide disagree, the guide holds.
   warning is left. A replayed step is the same rule at the same positions, which deduxit checks
   in the new calculus: it may make other premises there (a split in ILL), still a legal proof.
   Structural rules and two-sided are the tools' "W C" and "Two-sided"; Cut is a tool.
-- **The rail's cells are views** (`cellsOf`): the proof (named by its calculus, LK, LL, NJ), its
-  net once finished (one capsule with the proof), and the views added by "+ view"
-  (`ui.added[proof]`: truth table, tableau, tableau by hand, a model), each a `ui.tab`. "+ view"
-  (`ui.menu === "views"`) lists the views grouped as the guide groups them, a faint entry with
-  its reason; the sheets of a translation, an interpolant, a normal form and resolution open from
-  it as panels until they become views of their own.
+- **The rail's cells are views** (`cellsOf`, a `Cell` names its proof and view): the graph's
+  cell first once there are two views (`G`, 44 by 30); then each proof of the chip, named by its
+  calculus (LK, LL, NJ; a copy with ⧉ and joined), its net once finished (one capsule with the
+  proof), the views added to it, a view made from the proof joined to it by a short line
+  (`data-tied`: CE, λ, a copy), a view out of date dashed with a red "!" (`data-stale`), and its
+  countermodel view. A cell's name holds what it shows ("Truth table, TT", "Glivenko's
+  translation, ¬¬ Gl") and its state. A press activates the cell's proof and shows its view.
+- **The graph of views** (`GraphView`, D19) is the sequent on a chip-shaped strip at the top and
+  each view under the one it was made from (`Cell.from`), joined by a line with a round elbow and
+  an arrow head (`.graph-elbow`), a view out of date dashed; a sequent the workspace made from a
+  proof by a translation is a chip-shaped node under it (`workspace.rows()`, the line's `from`),
+  a copy beside such a sequent not repeated. Each node is a button named by its badge's letters,
+  its name and its state, which opens the view; "Update all" is its tool.
 - **The tools** (`Tools`) are a toolbar (one stop of Tab, the arrow keys move), each with
   `aria-keyshortcuts` and its key in its hover; with the guide on (`Settings.guide`, the top row's
   "?") each shows its name. A compact window makes them a bar of Undo, Redo, Hint, Close all and
   More, the rest (`data-rare`) in More's row (`ui.more`); a short window keeps the column with
   the same split.
-- **Panels** (`ui.menu`: steps, search, export, import, the sheets, packs) stand left of the
+- **Panels** (`ui.menu`: steps, search, export, import, packs) stand left of the
   tools; in an expanded window the stage's box shrinks so that the drawing moves aside (the
   stage refits on its resize), in a medium one a panel lies over it, in a compact one it is a
   sheet above the bar. The Settings page and the dialogs (keys, About) are `ui.menu` too.
@@ -528,7 +519,9 @@ board and the guide disagree, the guide holds.
   `KeyboardEvent.key`, nothing in a field (Escape leaves it), nothing with Alt (AltGr), nothing
   while composing; Settings' "Single keys" (`Settings.singleKeys`, on at first) turns off every
   key but those with Ctrl or Cmd. `?` and Ctrl+/ open the list, whose first row is the guide's
-  switch. The zoom's keys are the stage's.
+  switch. The zoom's keys are the stage's. W closes the chosen sequent, G opens its graph (or
+  its main view from the graph), V and Shift+V move through the rail's cells across the chip's
+  proofs, T and Shift+T through the chips.
 - **Restore** (`App.tsx`): each visit holds a Web Lock named by its shelf key
   (`prover.shelfKey()`, held until the page closes; again after `leave()`). A plain visit (no
   fragment) with no other shelf key's lock held restores the last visit's proofs by itself;
@@ -787,7 +780,7 @@ board and the guide disagree, the guide holds.
 ## The workspace of linked tabs (`src/lib/workspace.ts`, `src/islands/Workspace.tsx`)
 
 - **Nothing of it before the first link**: no document, no call. A link is made by
-  "Prove it in ⟨logic⟩" on the translation's sheet (`proveTranslation`: the shown tab joined,
+  "Prove it in ⟨logic⟩" on a translation's view (`proveTranslation`: the shown tab joined,
   `ordinary.translate` and `ordinary.start` on it, one action "translation", the line's check
   made at once) and by "A copy of this proof" in "+ view" (`duplicate`, one action "copy"). deduxit's design is `plan/notes/63g-design.md` (sections 12 to 15) in deduxit.
 - **A linked tab is a proof node** (`ordinary.start`, class `work`) of deduxit's workspace
@@ -818,8 +811,8 @@ board and the guide disagree, the guide holds.
   runs the change's effect, which would read the tab's own sequent as a change).
 - **What needs no search is made again by itself** after every action (`remake`: the instant
   derived nodes not current).
-- **The page has no workspace panel**: the document and its links work, but nothing shows the
-  rows or a graph of them.
+- **The page has no workspace panel**: the graph of views shows the translations it made (as
+  chip-shaped nodes) and Update all; a copy it holds joins its proof's chip on a link's arrival.
 - **The link** of a linked tab is version 3 (`writeWorkspaceLink`: the tab's whole linked group,
   every tab joined to it by lines either way, packed without results; `n` the shown node); past the limit the
   tab's own link. Arriving (`arrive`) reads it as a claim (`workspace_open`), opens every linked
