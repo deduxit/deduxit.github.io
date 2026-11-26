@@ -95,12 +95,12 @@ export function viewCell(page: Page) {
 
 /** Chooses a modal system by its name, from the list its toggle opens. */
 export async function system(page: Page, name: string) {
-  await page.getByRole("button", { name: /^System / }).click();
+  await page.getByRole("button", { name: / system$/ }).click();
   await page
     .getByRole("listbox", { name: "Systems" })
     .getByRole("option", { name: new RegExp(`^${name} `) })
     .click();
-  await expect(page.getByRole("button", { name: `System ${name}` })).toBeVisible();
+  await expect(page.getByRole("button", { name: `${name} system` })).toBeVisible();
 }
 
 /** A tool of the view shown, by its name. */

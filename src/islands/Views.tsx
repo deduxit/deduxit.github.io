@@ -602,7 +602,16 @@ async function embed(prover: Prover, text: string, logic: Logic): Promise<Embedd
   const ran = await api.run(made.workspace, [node], "{}", settings);
   const view = await api.view(ran.workspace, "{}", settings);
   const image = view.nodes.find((n) => n.node === node);
-  if (!image?.summary || !image.value) throw new Error(JSON.stringify(image?.end ?? {}));
+  if (!image?.summary || !image.value) {
+    const why = image?.end?.reason ?? image?.end?.end ?? "it stopped";
+    throw new Error(
+      JSON.stringify({
+        code: "page",
+        kind: "refused",
+        message: `deduxit did not embed this sequent within the page's bounds: ${why}.`,
+      }),
+    );
+  }
   return { text: image.summary, value: image.value as Embedded["value"] };
 }
 
@@ -694,7 +703,8 @@ export function TermView(props: { prover: Prover; ui: Ui; proof: Proof; stale: b
       },
     ),
   );
-  termShown.set(props.proof.id, kept);
+  // The tools' Copy reads the term of the proof shown, which may change under the same view.
+  createEffect(() => termShown.set(props.proof.id, kept));
   return (
     <ViewPanel label="λ-term" stale={props.stale}>
       <Show when={props.stale}>

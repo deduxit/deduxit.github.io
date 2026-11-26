@@ -57,3 +57,12 @@ describe("a tableau built by hand", () => {
     expect(expand(f, once, 1)).toBe(once);
   });
 });
+
+describe("a branch with a line twice", () => {
+  it("is open once one of the twins is expanded, as deduxit's review has it", () => {
+    const sequent = "(a /\\ b) /\\ (a /\\ b) |- c";
+    const f = form(sequent);
+    const hand = replay(f, [1, 3]);
+    expect(review(written(f, hand), sequent).standing).toBe("open");
+  });
+});

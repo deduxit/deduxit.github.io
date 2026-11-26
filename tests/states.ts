@@ -452,6 +452,8 @@ export async function cutting(page: Page, visit: Visit) {
   await visit("cut");
   await premises.getByRole("button", { name: "Apply the cut" }).click();
   await press(page, "Close all");
+  // "Eliminate cuts" comes once the proof is finished.
+  await expect(page.getByRole("status").filter({ hasText: "Proved." })).toBeVisible();
   await press(page, "Eliminate cuts");
   const panel = page.getByRole("region", { name: "Cut elimination" });
   await expect(panel.getByRole("status")).toHaveText("1 cut left");
@@ -527,7 +529,7 @@ export async function lambdaing(page: Page, visit: Visit) {
 export async function modalising(page: Page, visit: Visit) {
   await goto(page);
   await calculus(page, ["Modal logic"]);
-  await expect((await switches(page)).getByRole("button", { name: "System K" })).toBeVisible();
+  await expect((await switches(page)).getByRole("button", { name: "K system" })).toBeVisible();
   await visit("modal entry");
   await page.getByRole("textbox", { name: "Sequent" }).fill("[]p -> [][]p");
   await page.getByRole("textbox", { name: "Sequent" }).press("Enter");

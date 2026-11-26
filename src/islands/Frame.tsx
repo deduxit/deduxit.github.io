@@ -398,10 +398,18 @@ export function TopRow(props: {
                     data-rove=""
                     data-proof={proof.id}
                     aria-selected={chosen()}
-                    aria-keyshortcuts="W"
+                    aria-keyshortcuts={chosen() ? "W Delete" : "Delete"}
                     tabindex={mine() ? 0 : -1}
                     aria-label={`${text()}, ${stateWords(proof)}`}
                     data-tip={text()}
+                    // Delete on a chip closes it, as in a list of tabs that can be closed (ARIA's
+                    // tabs pattern): a key that "Single keys" off leaves on, like the arrows.
+                    onKeyDown={(event) => {
+                      if (event.key !== "Delete" || event.altKey || event.ctrlKey || event.metaKey)
+                        return;
+                      event.preventDefault();
+                      props.closeChip(proof.id);
+                    }}
                     onClick={() => {
                       // A press on the chosen chip switches between its main view and its graph.
                       const main = props.prover.store.active === proof.id && ui.tab === "tree";

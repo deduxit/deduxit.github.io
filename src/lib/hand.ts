@@ -201,9 +201,11 @@ export function replay(form: SequentForm, pressed: readonly number[]): Hand {
 
 /** Whether every line of a branch that can be expanded has been. */
 export function finished(form: SequentForm, hand: Hand, branch: readonly Line[]): boolean {
-  return branch.every(
-    (l) => hand.expanded.has(l.number) || partsOf(form, l.sign, l.formula) === null,
-  );
+  // A line whose twin on the branch (the same sign and formula) was expanded has its results there.
+  const done = (l: Line) =>
+    hand.expanded.has(l.number) ||
+    branch.some((o) => o.sign === l.sign && o.formula === l.formula && hand.expanded.has(o.number));
+  return branch.every((l) => done(l) || partsOf(form, l.sign, l.formula) === null);
 }
 
 /** Whether every branch is closed. */

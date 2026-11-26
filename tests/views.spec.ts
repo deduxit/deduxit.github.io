@@ -201,3 +201,19 @@ test("a chip's close button closes the sequent, Undo brings it back, and W close
   await expect(chip).toHaveCount(0);
   await expect(page.getByRole("status").filter({ hasText: "closed." })).toBeVisible();
 });
+
+test("Delete on a chip closes it, and Undo of a close keeps an empty sequent's place", async ({
+  page,
+}) => {
+  await ordinary(page, "a /\\ b |- b /\\ a");
+  await page.getByRole("button", { name: "New sequent", exact: true }).click();
+  await expect(page.locator(".chip")).toHaveCount(2);
+  const chip = page.getByRole("tab", { name: /^a ∧ b ⊢ b ∧ a/ });
+  await chip.focus();
+  await page.keyboard.press("Delete");
+  await expect(chip).toHaveCount(0);
+  await page.getByRole("status").getByRole("button", { name: "Undo" }).click();
+  await expect(chip).toBeVisible();
+  // A sequent is chosen after the Undo: the box takes text.
+  await expect(page.locator('.chip[aria-selected="true"]')).toHaveCount(1);
+});

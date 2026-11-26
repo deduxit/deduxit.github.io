@@ -41,6 +41,7 @@ import type { Prover } from "./state";
 import { produce } from "solid-js/store";
 import { answered, failureIn, given, Refused, Verdict } from "./Transforms";
 import { type Ui, viewKey, wayOf } from "./ui";
+import { markSteps } from "./Views";
 
 /** The number of steps each normal form view has, by proof and view, for the tools that step it. */
 const [stepCounts, setStepCounts] = createSignal<Readonly<Record<string, number>>>({});
@@ -180,7 +181,11 @@ export function ResolutionView(props: {
       when={way() === "hand"}
       fallback={<Found text={props.sequent.text} way={way()} prover={props.prover} ui={props.ui} />}
     >
-      <ByHand text={props.sequent.text} prover={props.prover} />
+      <ByHand
+        text={props.sequent.text}
+        prover={props.prover}
+        onSteps={(n) => markSteps(props.ui, props.proof, "resolution", n > 1)}
+      />
     </Show>
   );
 }
@@ -236,13 +241,16 @@ function Found(props: { text: string; way: Way; prover: Prover; ui: Ui }) {
 }
 
 /** A refutation built by hand: two clauses chosen, an atom, the resolvent added, until □. */
-function ByHand(props: { text: string; prover: Prover }) {
+function ByHand(props: { text: string; prover: Prover; onSteps?: (made: number) => void }) {
   const [start] = createResource(
     () => props.text,
     (text) => answered(() => props.prover.api.ordinary.clauses(text, "", "{}")),
   );
   /** The refutations so far, the last the current one: each step adds one, undo drops it. */
   const [made, setMade] = createSignal<readonly Refutation[]>([]);
+  // The resolvents made (after the first refutation, the clauses alone) are the view's own steps:
+  // bringing it up to date would lose them.
+  createEffect(() => props.onSteps?.(made().length));
   createEffect(
     on(start, (s) => {
       const first = given<Refutation>(s);

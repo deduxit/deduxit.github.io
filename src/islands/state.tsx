@@ -1898,6 +1898,7 @@ export function createProver(say: (text: string) => void = () => undefined) {
       }));
       const active = store.active;
       const ids = new Set(closed.map((c) => c.proof.id));
+      const before = new Set(store.proofs.map((p) => p.id));
       batch(() => {
         const first = closed[0]?.at ?? 0;
         setStore("proofs", (all) => all.filter((p) => !ids.has(p.id)));
@@ -1910,16 +1911,16 @@ export function createProver(say: (text: string) => void = () => undefined) {
         batch(() => {
           // An empty sequent the close left in their place gives way to them.
           setStore("proofs", (all) => {
-            const kept = all.filter(
-              (p) => p.session || p.modal?.outcome || p.lambda?.statement || p.input.trim(),
-            );
+            // Only the empty sequent the close itself left gives way.
+            const kept = all.filter((p) => before.has(p.id) || p.session || p.input.trim());
             const back = [...kept];
             for (const c of closed)
               if (!back.some((p) => p.id === c.proof.id))
                 back.splice(Math.min(c.at, back.length), 0, c.proof);
             return back;
           });
-          setStore("active", active && ids.has(active) ? active : (store.active ?? chip));
+          const live = (id: string | null) => !!id && store.proofs.some((p) => p.id === id);
+          setStore("active", live(active) ? active : live(store.active) ? store.active : chip);
         });
         save();
       };

@@ -146,9 +146,11 @@ export function Toggles(props: { prover: Prover; ui: Ui }) {
     label: string;
     items: readonly { key: string; name: string; tip: string }[];
   }) => {
-    const p = proof();
-    const view = tab();
-    const now = () => (p ? wayOf(props.ui, p.id, view, w.items[0]?.key ?? "") : "");
+    // Read at each use: the same toggle serves the same view of another proof of the chip.
+    const now = () => {
+      const p = proof();
+      return p ? wayOf(props.ui, p.id, tab(), w.items[0]?.key ?? "") : "";
+    };
     return (
       <Seg
         label={w.label}
@@ -157,6 +159,8 @@ export function Toggles(props: { prover: Prover; ui: Ui }) {
           tip: item.tip,
           on: now() === item.key,
           pick: () => {
+            const p = proof();
+            const view = tab();
             if (!p) return;
             props.ui.setUi(
               "ways",
@@ -353,7 +357,7 @@ export function Toggles(props: { prover: Prover; ui: Ui }) {
             <button
               type="button"
               class="toggle-cell system-name"
-              aria-label={`System ${system()}`}
+              aria-label={`${system()} system`}
               aria-expanded={listing()}
               aria-haspopup="listbox"
               onKeyDown={closeOnEscape}

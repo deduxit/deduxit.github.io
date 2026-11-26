@@ -470,7 +470,8 @@ board and the guide disagree, the guide holds.
   and a goal proved apart are chips of their own. A press on the chosen chip switches between its
   main view and its graph. Its close (`.chip-close`, an `aria-hidden` press target over the
   chip's end, shown on hover and with the focus in the chip, always beside it on a touch screen)
-  and the key W close the chip with every proof beside it (`closeChip`), the notice's Undo
+  the key W, and Delete on a focused chip close the chip with every proof beside it
+  (`closeChip`), the notice's Undo
   putting them back where they were. A proof not yet entered (`started()` false: no session, no
   modal or lambda decision) shows **the new tab view** in the stage's place: the four logics
   (pressing one sets the proof's calculus), "Open a file", "Restore N proofs", Learn and Practice

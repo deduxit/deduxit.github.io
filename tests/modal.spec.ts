@@ -17,7 +17,7 @@ async function modalTab(page: Page, system = "K") {
   await calculus(page, ["Modal logic"]);
   await switches(page);
   if (system !== "K") await choose(page, system);
-  await expect(page.getByRole("button", { name: `System ${system}` })).toBeVisible();
+  await expect(page.getByRole("button", { name: `${system} system` })).toBeVisible();
 }
 
 /** Decides `sequent` in the tab's system and waits for its verdict. */
@@ -29,9 +29,9 @@ async function decide(page: Page, sequent: string) {
 
 test("the page shows nothing of modal logic until its logic is chosen", async ({ page }) => {
   await goto(page);
-  await expect(page.getByRole("button", { name: /^System / })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: / system$/ })).toHaveCount(0);
   await page.getByRole("button", { name: /^Modal logic/ }).click();
-  await expect(page.getByRole("button", { name: "System K" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "K system" })).toBeVisible();
 });
 
 test("a sequent not valid in K shows a checked countermodel in words of seeing", async ({
@@ -64,22 +64,22 @@ test("the conditions on what a world sees make the system, and its name opens th
   await modalTab(page);
   const conditions = page.getByRole("group", { name: "Conditions on what a world sees" });
   await conditions.getByRole("button", { name: "Reflexive" }).click();
-  await expect(page.getByRole("button", { name: "System T" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "T system" })).toBeVisible();
   // Reflexive makes every world see some world: Serial follows, pressed but not the system's own.
   await expect(conditions.getByRole("button", { name: "Serial" })).toHaveAttribute(
     "aria-pressed",
     "true",
   );
   await conditions.getByRole("button", { name: "Transitive" }).click();
-  await expect(page.getByRole("button", { name: "System S4" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "S4 system" })).toBeVisible();
   await conditions.getByRole("button", { name: "Reflexive" }).click();
-  await expect(page.getByRole("button", { name: "System K4" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "K4 system" })).toBeVisible();
   // The list of the fifteen closes on Escape and on a press outside.
-  await page.getByRole("button", { name: "System K4" }).click();
+  await page.getByRole("button", { name: "K4 system" }).click();
   await expect(page.getByRole("listbox", { name: "Systems" })).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(page.getByRole("listbox", { name: "Systems" })).toBeHidden();
-  await page.getByRole("button", { name: "System K4" }).click();
+  await page.getByRole("button", { name: "K4 system" }).click();
   await page.getByRole("textbox", { name: "Sequent" }).click();
   await expect(page.getByRole("listbox", { name: "Systems" })).toBeHidden();
 });
