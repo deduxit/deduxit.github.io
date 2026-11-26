@@ -29,11 +29,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1795661355,
-        "narHash": "sha256-NY9QPhZxjstGIvEqdP77E6MRcZzadDH4NBRFJsiy0ps=",
+        "lastModified": 1795686223,
+        "narHash": "sha256-3P1SWI0tzfzfiZFz/2DZQtgH8DaRWqSQhcyLpOPJnEw=",
         "owner": "deduxit",
         "repo": "deduxit",
-        "rev": "7e974ff93474b2cdf0818d02a89126f7390ed973",
+        "rev": "4c460de5eb30ed5edf24840523e59c52bcd31b16",
         "type": "github"
       },
       "original": {
