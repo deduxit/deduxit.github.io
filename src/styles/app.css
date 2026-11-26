@@ -1239,6 +1239,11 @@ svg.sign {
 .rule-card[data-told] {
   pointer-events: auto;
 }
+/* Where the stage's top leaves no room over the popover, the card stands under it. */
+.rule-card[data-below] {
+  bottom: auto;
+  top: calc(100% + var(--spacing-2));
+}
 .rule-drawn {
   justify-self: center;
   display: grid;
@@ -1330,6 +1335,15 @@ svg.sign {
   border-radius: var(--radius-row);
   background: var(--color-paper);
   font: var(--font-weight-normal) var(--text-math) / var(--leading-none) var(--font-math);
+}
+/* In a compact window the premises are a sheet: a ground and an edge of their own. */
+@media (width < 600px) {
+  .premises {
+    padding: var(--spacing-2);
+    border: var(--line) solid var(--color-line);
+    border-radius: var(--radius-panel);
+    background: var(--color-paper);
+  }
 }
 .prem .turn {
   padding: 0 var(--spacing-1);

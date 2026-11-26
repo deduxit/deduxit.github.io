@@ -98,6 +98,8 @@ export function RulePopover(props: {
       const k = carded();
       const button = k === null ? null : row?.querySelectorAll<HTMLElement>("button.rule")[k];
       if (button) card.style.left = `${button.offsetLeft}px`;
+      const top = card.closest(".stage")?.getBoundingClientRect().top ?? 0;
+      if (card.getBoundingClientRect().top < top) card.dataset["below"] = "";
     });
   };
   return (
