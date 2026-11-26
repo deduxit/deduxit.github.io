@@ -477,6 +477,22 @@ test("the zoom group is covered by neither the bottom box nor a note, nor where 
   }
 });
 
+test("a sheet's close button is drawn and reached by Tab only where the panel is a sheet", async ({
+  page,
+}) => {
+  await start(page, "A * B |- B * A");
+  await tool(page, "Steps").click();
+  const panel = page.getByRole("dialog", { name: "Steps" });
+  await expect(panel).toBeVisible();
+  const close = page.locator(".panels").getByRole("button", { name: "Close", exact: true });
+  // Not drawn, so not in the tab order either.
+  await expect(close).toBeHidden();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(close).toBeVisible();
+  await close.click();
+  await expect(panel).toBeHidden();
+});
+
 test.describe("a coarse pointer", () => {
   test.use({ hasTouch: true, isMobile: true, viewport: { width: 1024, height: 768 } });
 

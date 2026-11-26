@@ -1914,8 +1914,9 @@ svg.sign {
 .tool.more-only {
   display: none;
 }
-/* A sheet's close button: a compact window's alone, where the panels are sheets. */
-.sheet-close {
+/* A sheet's close button: a compact window's alone, where the panels are sheets. Outside one it is
+   not drawn and not in the tab order; the selector outweighs `.tool`'s display, which comes later. */
+.tool.sheet-close {
   display: none;
 }
 .menu .h {
@@ -3911,7 +3912,7 @@ table.keys th {
     border: 0;
     border-radius: 0;
   }
-  .sheet-close {
+  .tool.sheet-close {
     display: inline-flex;
     flex: none;
     align-self: flex-end;
