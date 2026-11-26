@@ -303,7 +303,7 @@ export function SettingsPage(props: {
           </fieldset>
         </Row>
         <p class="sub st-help">
-          The drawing, its formulas and the exports, unless Export chooses another.
+          The drawing and the exports use this font, unless Export picks another.
         </p>
         <Row label="Proof nets">
           <fieldset class="seg" aria-label="Proof nets">
@@ -471,7 +471,7 @@ export function SettingsPage(props: {
           label="Apply invertible rules by themselves"
           id="st-invertible"
           checked={s().invertible}
-          help="An invertible rule never loses a proof. The page takes them after each of your steps, and Undo takes them back with it."
+          help="An invertible rule never loses a proof. The page applies these rules after each of your steps, and Undo takes them back too."
           tip={INVERTIBLE_TIP}
           onChange={(on) => void props.prover.setInvertible(on)}
         />
@@ -490,7 +490,7 @@ export function SettingsPage(props: {
           label="Single keys"
           id="st-single-keys"
           checked={s().singleKeys}
-          help="Off, only the keys with Ctrl or Cmd, Tab, Enter, Space, the arrows and Escape act. Speech input types letters."
+          help="When this is off, only keys with Ctrl or Cmd act, besides Tab, Enter, Space, the arrows and Escape. Speech input types letters, so it may need this off."
           onChange={(singleKeys) => props.prover.setSettings({ singleKeys })}
         />
       </section>

@@ -150,8 +150,8 @@ export function ExportPanel(props: {
       if (!ordinarySession() && kind === "exhausted")
         return "An exhausted search leaves no certificate. Finish the proof, or let another engine refute the goal.";
       return ordinarySession()
-        ? "A Rocq file is written from a finished proof, or from the countermodel of a goal the search refuted. Finish the proof, or close a goal that is not valid."
-        : "A Rocq file is written from a finished proof, or from a goal the search refuted with a certificate. Finish the proof first.";
+        ? "Rocq needs a finished proof, or a goal the search showed not valid. Finish the proof, or close such a goal."
+        : "Rocq needs a finished proof, or a goal the search refuted. Finish the proof first.";
     }
     return null;
   };
