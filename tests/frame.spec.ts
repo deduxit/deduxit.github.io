@@ -417,6 +417,26 @@ test.describe("a medium window", () => {
       .poll(async () => (await page.locator(".stage").boundingBox())?.width ?? 0)
       .toBeLessThan(1280 - 60 - 300);
   });
+
+  test("shows the four logics two by two, inside the stage", async ({ page }) => {
+    await goto(page);
+    for (const width of [700, 840, 1280]) {
+      await page.setViewportSize({ width, height: 900 });
+      const logics = page.getByRole("region", { name: "New sequent" }).locator(".logic");
+      await expect(logics).toHaveCount(4);
+      const stage = await page.locator(".stage-area").boundingBox();
+      const boxes = await Promise.all((await logics.all()).map((l) => l.boundingBox()));
+      for (const box of boxes) {
+        expect(box?.x ?? 0).toBeGreaterThanOrEqual(stage?.x ?? 0);
+        expect((box?.x ?? 0) + (box?.width ?? 0)).toBeLessThanOrEqual(
+          (stage?.x ?? 0) + (stage?.width ?? 0),
+        );
+      }
+      // One row where the stage is as wide as the row of four, two rows where it is narrower.
+      const rows = new Set(boxes.map((box) => Math.round(box?.y ?? 0))).size;
+      expect(rows, `${width} wide`).toBe(width === 1280 ? 1 : 2);
+    }
+  });
 });
 
 /** Whether each of the zoom group's buttons is the element drawn at its centre. */

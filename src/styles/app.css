@@ -3726,6 +3726,13 @@ table.keys th {
   color: var(--color-ink2);
   text-wrap: balance;
 }
+/* Two by two on a stage narrower than the row of four and the view's padding (a medium window, and
+   an expanded one up to about 876 wide), as in a compact window: the row would run under the rail. */
+@container stage (width < 51rem) {
+  .logics {
+    grid-template-columns: minmax(0, var(--size-logic)) minmax(0, var(--size-logic));
+  }
+}
 .new-actions {
   display: flex;
   flex-wrap: wrap;
