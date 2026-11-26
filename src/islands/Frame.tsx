@@ -741,7 +741,14 @@ function Tool(props: {
 }
 
 /** The tools of the view shown, at the stage's top right; a compact window's bar along the bottom. */
-export function Tools(props: { prover: Prover; ui: Ui; hint: () => void; tour: () => void }) {
+export function Tools(props: {
+  prover: Prover;
+  ui: Ui;
+  hint: () => void;
+  tour: () => void;
+  /** Closes the chosen sequent, with an Undo in the notes. */
+  closeSequent: () => void;
+}) {
   const { ui, setUi } = props.ui;
   const proof = () => props.prover.current();
   const toggle = (menu: "steps" | "search" | "export" | "import") =>
@@ -1122,6 +1129,16 @@ export function Tools(props: { prover: Prover; ui: Ui; hint: () => void; tour: (
           icon={<Sign name="import" />}
           expanded={ui.menu === "import"}
           onClick={() => toggle("import")}
+        />
+        {/* A button outside the chips' tab list, which may hold tabs alone: the way to close a
+            sequent for a screen reader on a touch screen. More's rows alone show it. */}
+        <Tool
+          name="Close this sequent"
+          action="closeSequent"
+          rare
+          class="more-only"
+          icon={<Sign name="shut" />}
+          onClick={() => props.closeSequent()}
         />
       </fieldset>
       <Show when={props.prover.settings().guide}>

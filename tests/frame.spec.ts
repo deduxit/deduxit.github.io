@@ -433,3 +433,11 @@ test.describe("a coarse pointer", () => {
     }
   });
 });
+
+test("a medium or expanded window keeps Close this sequent to More's rows: the column has none", async ({
+  page,
+}) => {
+  await start(page, "A * B |- B * A");
+  await expect(tool(page, "Export")).toBeVisible();
+  await expect(tool(page, "Close this sequent")).toBeHidden();
+});

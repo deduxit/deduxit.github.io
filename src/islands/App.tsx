@@ -851,7 +851,16 @@ export default function App(props: {
                     }
                   >
                     <Stage prover={prover} ui={view} />
-                    <Tools prover={prover} ui={view} hint={() => void hint()} tour={tour} />
+                    <Tools
+                      prover={prover}
+                      ui={view}
+                      hint={() => void hint()}
+                      tour={tour}
+                      closeSequent={() => {
+                        const p = prover.current();
+                        if (p) closeChip(prover.chipOf(p.id));
+                      }}
+                    />
                   </Show>
                   <TogglesPlace prover={prover} ui={view} />
                   <div class="panels">

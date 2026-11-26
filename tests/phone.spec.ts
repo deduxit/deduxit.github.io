@@ -165,3 +165,19 @@ test("a fitted goal's buttons lie over its formulas, and its line follows it as 
   expect(await top()).toBeLessThan(before - 40);
   expect(steps).toEqual(Array(6).fill("over"));
 });
+
+test("More's rows close the chosen sequent with a real button, and Undo brings it back", async ({
+  page,
+}) => {
+  await start(page, "A * B |- B * A");
+  await start(page, "A |- A", false);
+  await expect(page.locator(".chip")).toHaveCount(2);
+  await tool(page, "More").click();
+  await tool(page, "Close this sequent").click();
+  await expect(page.locator(".chip")).toHaveCount(1);
+  await expect(page.locator(".chip")).toContainText("A ⊗ B ⊢ B ⊗ A");
+  const notice = page.getByRole("status").filter({ hasText: "closed." });
+  await notice.getByRole("button", { name: "Undo" }).click();
+  await expect(page.locator(".chip")).toHaveCount(2);
+  await expect(page.locator(".chip[aria-selected=true]")).toContainText("A ⊢ A");
+});

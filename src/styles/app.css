@@ -1910,6 +1910,10 @@ svg.sign {
   }
 }
 
+/* A tool of More's rows alone: hidden in the column of a medium or expanded window. */
+.tool.more-only {
+  display: none;
+}
 /* A sheet's close button: a compact window's alone, where the panels are sheets. */
 .sheet-close {
   display: none;
