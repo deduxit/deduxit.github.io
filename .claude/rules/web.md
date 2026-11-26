@@ -278,14 +278,32 @@ the page reads.
     here", a witness or a frame condition's world a dashed outline ("witness"), and the arrow
     a frame condition asks for drawn dashed (`missingArrow`; `kripke.test.ts` checks against
     deduxit that adding it meets the condition named there).
-- **The model view** (`ModelCheck.tsx`, `ui.tab` `"model"`, `data-method="model"`): an
-  ordinary model in the drawing's place, from `ui.modelSeed` (the model, the sequent as text
-  or JSON, the logic, whether deduxit found it). `ModelFigure`'s "Change this model and check
-  it" opens a countermodel there (from the stage's note, the truth table, the tableau and the
-  transformations' sheets, which it closes); "+ view"'s "A model of your own" adds one world
-  against the started ordinary sequent as a rail cell. The check is `ordinary_model`; its
-  `invalid_model` refusal is said as "No model of … logic" with deduxit's reason
-  (`refusalWords`).
+- **The model view** (`ModelCheck.tsx`, `ui.tab` `"model"`, `data-method="model"`): a
+  propositional model of one's own in the drawing's place, from `ui.modelSeed` ("+ view"'s "A
+  model of your own" adds one world against the started ordinary sequent as a rail cell, M).
+  The check is `ordinary_model`; its `invalid_model` refusal is said as "No model of … logic"
+  with deduxit's reason (`refusalWords`).
+- **The countermodel view `⊭`** (board D9; `ui.tab` `"countermodel"`, `ui.counter`,
+  `data-method="countermodel"`, its cell after the proof's in `cellsOf`) shows every
+  countermodel deduxit found, one per proof (`ui.counter.proof`):
+  - a first-order sequent's finite structure (`Structure.tsx`, `src/lib/structure.ts`): the
+    elements across the grid's top with "−" under each and "+" after them, a row of dots per
+    predicate (a nullary one spans the row; arity k: a row per tuple of its first k − 1
+    arguments), a row of squares per constant and per function's argument tuple (the element
+    it names pressed); deduxit's `ordinary_structure` checks it after every change, and the
+    sequent under the grid shows each formula's value and `⊭` or `⊨`. Its undo and redo are
+    the view's (`ui.counter.past`, `future`; the tools' Undo and Redo and Ctrl+Z on this view,
+    `undoStructure`), never the proof's. The symbols are read off the sequent's JSON
+    (`signatureOf`: a predicate is a symbol an atom applies, `=` none). It opens from a goal's
+    note ("See the countermodel", an outcome's `structure`) or, as M, from "+ view"'s "A model
+    of your own" on a first-order sequent (one element, `blank`). A goal naming an
+    eigenvariable has none: no structure interprets one (deduxit's `refuted`). The toggles
+    hide on this view: a structure has no calculus;
+  - a propositional sequent's Kripke model (`ModelView` with the seed deduxit found), from
+    `ModelFigure`'s and the tableau by hand's "Change this model and check it";
+  - a modal sequent's model (`ModalCountermodel`, the editor bare, its verdict and system over
+    it), whose cell stands while the sequent is not valid; the modal panel keeps the drawing
+    and the button that opens it. The system's toggle stays: the model must meet it.
 - **Course packs** (`src/lib/pack.ts` the formats, `src/islands/Packs.tsx` the runtime and its
   sheets, `PacksContext`): a pack `{"pack": 1, "title", "search", "problems": [{"suite",
   "parameter", "sequent"}]}` is `#v=4&k=…`, a hand-in `{"handin": 1, "pack", "answers"}` is
@@ -563,11 +581,24 @@ board and the guide disagree, the guide holds.
   again once it mounts, `placeSoon`): the rule popover over its formula, the goal's menu over
   its `⊢`, a split's or a cut's premises over the goal (the cut's box over them); below where
   the stage's top leaves no room; in a compact window each is a sheet at the stage's bottom,
-  above its controls. The witness chooser (`ui.witnessing`, a rule offered with `witness`) is
-  the cut's box's twin: the term typed in the formulas' font, Apply, Leave open (`$1`),
-  and deduxit's refusal said in it (`witnessed` in the state returns it); it takes the
-  selection's place, so digits typed in it pick no rule, and another formula picked closes it
-  for that formula's rules.
+  above its controls.
+- **The witness's box is in the rule popover** (board D8; `Witness` in `Goal.tsx`,
+  `ui.witnessing` beside `ui.selected`): a rule offered with `witness` (∃R, ∀L; one-sided ∃),
+  pressed, stays pressed and opens the box beside the row: the quantifier's variable
+  (`boundVariable` of the formula's text, `y =`), the term typed in the formulas' font with an
+  enter button, and `$1`, which leaves the witness open; deduxit's refusal stands under the
+  field (`witnessed` in the state answers it, `ordinaryRefusal`'s `witness` and `binding` in
+  an ordinary proof, which take deduxit's reason as written: it may start with a symbol's
+  name). Digits typed in the field pick no rule; Escape closes the box and gives the focus to
+  its rule; another formula picked closes it. ∀R and ∃L take no box: deduxit names their
+  eigenvariable, as the session's letters (`a`, `b`, …). An ordinary proof's rules carry
+  `witness` from `ordinary_rules` and its step a `witness` (`OrdinaryStep`).
+- **A proof replayed onto a goal letters its recorded witnesses** (`replayOnto` in the
+  state, `lettered` of `steps.ts` with the goal's path as `base`), as `play` does: a linear
+  action names an eigenvariable by its step's path (`{1.0}`), read as the letter that step took
+  in the session played on; an ordinary proof's steps (`replaySteps`) carry no witness, since
+  the session document holds a term's index and no text, so a witness replays open and the
+  axiom that used it fills it.
 - **Zoom is the stage's on the stage and the browser's everywhere else.** The stage keeps
   `touch-action: none`, so the browser makes no gesture there and the stage's pointers do:
   one on the field pans, a second finger (wherever it lands, a formula's button too) makes
