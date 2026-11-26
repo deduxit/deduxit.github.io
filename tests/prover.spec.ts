@@ -558,11 +558,11 @@ test("a sequent's state is told on its chip by a sign and in its name, not by it
   await start(page, "A |- A");
   await expect(chip(0)).toHaveAccessibleName("A ⊢ A, 1 goal open");
   await closeGoal(page);
-  await expect(chip(0).locator("svg.lucide-check")).toBeVisible();
+  await expect(chip(0).locator("svg.icon-check")).toBeVisible();
   await expect(chip(0)).toHaveAccessibleName("A ⊢ A, proved");
   await start(page, "A |- B", false);
   await closeGoal(page);
-  await expect(chip(1).locator("svg.lucide-x")).toBeVisible();
+  await expect(chip(1).locator("svg.icon-cross")).toBeVisible();
   await expect(chip(1)).toHaveAccessibleName("A ⊢ B, refuted");
   await page.getByRole("button", { name: "Settings", exact: true }).click();
   await page.getByRole("textbox", { name: "Budget, in units of work" }).fill("1");

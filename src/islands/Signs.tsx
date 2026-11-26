@@ -71,6 +71,58 @@ const PATHS = {
   save: "M9 3v8M5.5 7.5L9 11l3.5-3.5M3.5 12.5v2h11v-2",
   /** Print: a printer. */
   print: "M5.5 7V3h7v4M5.5 13h-2V7.5h11V13h-2M5.5 10.5h7V15h-7z",
+  /** Proved, done: a check. */
+  check: "M3.5 9.5l3.5 3.5 7.5-8",
+  /** Close every goal by the search: two checks. */
+  closeAll: "M1.5 9.5l3 3 6.5-7M8.5 12.5l.5.5 6.5-7",
+  /** The guide: a question mark in a circle. */
+  help: "M2 9a7 7 0 1 0 14 0a7 7 0 1 0-14 0M7 7a2 2 0 1 1 2.8 1.8c-.5.3-.8.7-.8 1.2v.5M9 13h.01",
+  /** The tour: a compass. */
+  tour: "M2 9a7 7 0 1 0 14 0a7 7 0 1 0-14 0M11.5 6.5l-1.5 3.5-3.5 1.5 1.5-3.5z",
+  /** Export: an arrow out of a tray. */
+  export: "M9 11V2.5M5.5 6L9 2.5 12.5 6M3 12.5v2.5h12v-2.5",
+  /** Import: an arrow down into a tray. */
+  import: "M9 2.5v8.5M5.5 7.5L9 11l3.5-3.5M3 12.5v2.5h12v-2.5",
+  /** Practice: a dumbbell. */
+  practice: "M4.5 6v6M2.5 7.5v3M13.5 6v6M15.5 7.5v3M4.5 9h9",
+  /** Learn: a mortarboard. */
+  learn: "M1.5 7L9 3.5 16.5 7 9 10.5zM4.5 8.5v4c1.5 1.3 3 2 4.5 2s3-.7 4.5-2v-4M16.5 7v4",
+  /** More: three dots. */
+  more: "M4 9h.01M9 9h.01M14 9h.01",
+  /** Open a file: an open folder. */
+  open: "M2.5 14.5v-10h4.5l1.5 1.5h6v2M2.5 14.5L5 8h11l-2.5 6.5z",
+  /** About: an i in a circle. */
+  info: "M2 9a7 7 0 1 0 14 0a7 7 0 1 0-14 0M9 8.5v4M9 5.5h.01",
+  /** Hint: a light bulb. */
+  hint: "M6.5 13h5M7 15.5h4M9 2.5a4.5 4.5 0 0 0-2.7 8.1c.4.3.7.8.7 1.4h4c0-.6.3-1.1.7-1.4A4.5 4.5 0 0 0 9 2.5z",
+  /** Steps: a numbered list. */
+  steps:
+    "M7.5 4.5h8M7.5 9h8M7.5 13.5h8M3 3.5l1-.5v3M2.5 8.2a1 1 0 0 1 2 .3l-2 2h2M2.5 12h2l-1 1.2a.9.9 0 1 1-1 1.4",
+  /** Dark: a moon. */
+  moon: "M15 10.5A6.5 6.5 0 1 1 7.5 3a5 5 0 0 0 7.5 7.5z",
+  /** Light: a sun. */
+  sun: "M6 9a3 3 0 1 0 6 0 3 3 0 1 0-6 0M9 1.5V3M9 15v1.5M1.5 9H3M15 9h1.5M3.7 3.7l1 1M13.3 13.3l1 1M3.7 14.3l1-1M13.3 4.7l1-1",
+  /** Undo: an arrow turning back to the left. */
+  undo: "M6.5 3.5L3 7l3.5 3.5M3 7h7.5a4.5 4.5 0 0 1 0 9H8",
+  /** Redo: an arrow turning back to the right. */
+  redo: "M11.5 3.5L15 7l-3.5 3.5M15 7H7.5a4.5 4.5 0 0 0 0 9H10",
+  /** Cut: scissors. */
+  cut: "M2.5 5a2 2 0 1 0 4 0 2 2 0 1 0-4 0M2.5 13a2 2 0 1 0 4 0 2 2 0 1 0-4 0M6.2 6.2L15 14M6.2 11.8L15 4",
+  /** Settings: three sliders. */
+  settings:
+    "M2.5 4.5h7M13.5 4.5h2M2.5 13.5h2M8.5 13.5h7M2.5 9h4.5M11 9h4.5M11.5 2.5v4M6.5 11.5v4M9 7v4",
+  /** Stop: a square. */
+  stop: "M4.5 4.5h9v9h-9z",
+  /** Fit the drawing: four corners. */
+  fit: "M2.5 6.5v-4h4M11.5 2.5h4v4M15.5 11.5v4h-4M6.5 15.5h-4v-4",
+  /** Zoom in: a magnifier with a plus. */
+  zoomIn: "M2.5 8a5.5 5.5 0 1 0 11 0 5.5 5.5 0 1 0-11 0M15.5 15.5l-3.6-3.6M5.5 8h5M8 5.5v5",
+  /** Zoom out: a magnifier with a minus. */
+  zoomOut: "M2.5 8a5.5 5.5 0 1 0 11 0 5.5 5.5 0 1 0-11 0M15.5 15.5l-3.6-3.6M5.5 8h5",
+  /** Holds: a check in a circle. */
+  holds: "M2 9a7 7 0 1 0 14 0a7 7 0 1 0-14 0M6 9.2l2 2 4-4.4",
+  /** Not known: a question mark in a circle. */
+  unknown: "M2 9a7 7 0 1 0 14 0a7 7 0 1 0-14 0M7 7a2 2 0 1 1 2.8 1.8c-.5.3-.8.7-.8 1.2v.5M9 13h.01",
   /** Share a link: two links of a chain. */
   share: "M7.5 10.5l3-3M8 5.5l1-1a2.8 2.8 0 0 1 4 4l-1 1M10 12.5l-1 1a2.8 2.8 0 0 1-4-4l1-1",
 } as const;
@@ -82,7 +134,7 @@ export type SignName = keyof typeof PATHS;
 export function Sign(props: { name: SignName; class?: string }) {
   return (
     <svg
-      class={`icon${props.class ? ` ${props.class}` : ""}`}
+      class={`icon icon-${props.name}${props.class ? ` ${props.class}` : ""}`}
       viewBox="0 0 18 18"
       fill="none"
       stroke="currentColor"

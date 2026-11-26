@@ -37,7 +37,7 @@ test("a saturation refutation is shown checked, by the inverse method", async ({
   await expect(note).not.toContainText("checker confirmed the set");
   await note.getByRole("button", { name: "more" }).click();
   await expect(note).toContainText("checker confirmed the set");
-  await expect(page.locator(".chip[aria-selected=true] svg.lucide-x")).toBeVisible();
+  await expect(page.locator(".chip[aria-selected=true] svg.icon-cross")).toBeVisible();
   // Why Rocq has nothing to give for this refutation is said in its place.
   const panel = await exportEntry(page, "Rocq");
   await expect(panel).toContainText("A refutation by saturation has no Rocq certificate");

@@ -1214,7 +1214,7 @@ board and the guide disagree, the guide holds.
 - **No raw value outside the tokens** (`src/styles/tokens.test.ts`): every length, colour,
   duration, weight, opacity and layer in `app.css` is a `var(--…)`; allowed bare are 0, 1,
   `1fr`, `50%`/`100%`, `100vw`/`100vh`/`100dvh`, and integers inside `calc()` as arithmetic
-  over tokens (so `repeat(4, …)` is written out). The island sizes no icon (`button svg.lucide`
+  over tokens (so `repeat(4, …)` is written out). The island sizes no icon (`button svg.icon`
   takes `--size-icon`) and writes no length in a string.
 - **The window's classes** are the guide's: compact under 600 pixels (`(width < 600px)`),
   expanded from 840 (`(width >= 840px)`), medium between, short under 480 high

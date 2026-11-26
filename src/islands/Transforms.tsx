@@ -7,7 +7,6 @@
  * is the formula with its three checks.
  */
 
-import { CircleCheck, CircleQuestionMark } from "lucide-solid";
 import { createEffect, createResource, createSignal, For, type JSX, on, Show } from "solid-js";
 import { type Failure, failure as failureOf } from "../lib/deduxit";
 import { formulaTexts, type SequentForm } from "../lib/ordinary";
@@ -23,6 +22,7 @@ import {
 } from "../lib/transforms";
 import { ModelFigure } from "./Countermodel";
 import type { Prover } from "./state";
+import { Sign } from "./Signs";
 import type { Ui } from "./ui";
 
 /** deduxit's answer: what it gave, or what it refused. */
@@ -223,8 +223,8 @@ function InterpolantView(props: { found: Interpolation; prover: Prover; ui: Ui }
 function Check(props: { ok: boolean; children: JSX.Element }) {
   return (
     <li class="tf-check" data-ok={props.ok ? "" : undefined}>
-      <Show when={props.ok} fallback={<CircleQuestionMark aria-hidden="true" />}>
-        <CircleCheck aria-hidden="true" />
+      <Show when={props.ok} fallback={<Sign name="unknown" />}>
+        <Sign name="holds" />
       </Show>
       <span>{props.children}</span>
     </li>

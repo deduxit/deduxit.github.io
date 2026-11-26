@@ -460,13 +460,13 @@ summary {
   text-decoration: underline;
   text-underline-offset: var(--spacing-0-5);
 }
-:is(button, a) :is(svg.lucide, svg.icon) {
+:is(button, a) svg.icon {
   width: var(--size-icon);
   height: var(--size-icon);
   stroke-width: var(--stroke-icon);
   flex: none;
 }
-.btn :is(svg.lucide, svg.icon) {
+.btn svg.icon {
   width: var(--size-icon-small);
   height: var(--size-icon-small);
   stroke-width: var(--stroke-icon-small);
@@ -2225,14 +2225,14 @@ svg.sign {
   align-items: baseline;
   gap: var(--spacing-2);
 }
-.tf-check svg.lucide {
+.tf-check svg.icon {
   flex: none;
   width: var(--size-icon);
   height: var(--size-icon);
   align-self: center;
   color: var(--color-ink2);
 }
-.tf-check[data-ok] svg.lucide {
+.tf-check[data-ok] svg.icon {
   color: var(--color-good);
 }
 .tf-check .m {

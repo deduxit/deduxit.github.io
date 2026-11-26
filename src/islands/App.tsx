@@ -12,7 +12,7 @@
  * Math also the drawings'.
  */
 
-import { X } from "lucide-solid";
+import { Sign } from "./Signs";
 import { createEffect, createSignal, For, on, onCleanup, onMount, Show } from "solid-js";
 import { unwrap } from "solid-js/store";
 import {
@@ -864,7 +864,7 @@ export default function App(props: {
                         data-tip="Close"
                         onClick={() => setUi("menu", null)}
                       >
-                        <X aria-hidden="true" />
+                        <Sign name="cross" />
                       </button>
                     </Show>
                     <Show when={ui.menu === "steps"}>

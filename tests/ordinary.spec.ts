@@ -15,7 +15,7 @@ import { calculus, closeGoal, goalMenu, goto, newTab, saveExport, switches, tool
 const mark = (page: Page) =>
   page.getByRole("tablist", { name: "Views of this sequent" }).getByRole("tab").first();
 /** The chosen sequent's chip carries the check of a finished proof. */
-const checked = (page: Page) => page.locator(".chip[aria-selected=true] svg.lucide-check");
+const checked = (page: Page) => page.locator(".chip[aria-selected=true] svg.icon-check");
 
 /** The drawing's texts: its formulas and rule labels, without its title and description. */
 const drawn = async (page: Page) =>

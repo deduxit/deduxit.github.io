@@ -55,7 +55,3 @@ never through `specialArgs`. The scheme is the author's learning sites'
   `@types/node` stays on the major of the Node.js it runs on (24, `engines.node`);
   `@playwright/test` equals nixpkgs' `playwright-driver` (the `playwright-version` check
   fails, naming the fix, when a bump moves one).
-- **`lucide-solid` is checked when the build starts** (`src/integrations/lucide.ts`): the
-  version package.json pins, ISC, a `solid` export condition and a peer range of
-  `solid-js` the installed Solid meets. A bump of either package that breaks one fails
-  `astro build`, naming it.

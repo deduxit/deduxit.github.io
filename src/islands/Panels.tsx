@@ -689,7 +689,7 @@ const LICENCES: readonly (readonly [string, string, string])[] = [
   ],
   ["Gentium Book Plus, the headings' font", "SIL OFL 1.1", "/fonts/GentiumBookPlus-OFL.txt"],
   ["Ysabeau Office, the text's font", "SIL OFL 1.1", "/fonts/YsabeauOffice-OFL.txt"],
-  ["The JavaScript's packages, Lucide's icons among them", "notices", "/licenses/bundle.txt"],
+  ["The JavaScript's packages", "notices", "/licenses/bundle.txt"],
   ["The Rust crates inside deduxit's modules", "notices", "/licenses/THIRD-PARTY-NOTICES.txt"],
   ["Rocq's logo, beside the Rocq export", "the Unlicense", "/licenses/rocq/LICENSE.txt"],
 ];

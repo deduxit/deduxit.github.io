@@ -10,32 +10,6 @@
  * the bottom (app.css).
  */
 
-import {
-  Check,
-  CheckCheck,
-  ChevronDown,
-  CircleHelp,
-  Compass,
-  CornerDownLeft,
-  Download,
-  Dumbbell,
-  Ellipsis,
-  FolderOpen,
-  GraduationCap,
-  Info,
-  Lightbulb,
-  ListOrdered,
-  Moon,
-  Plus,
-  Redo2,
-  Scissors,
-  SlidersHorizontal,
-  Square,
-  Sun,
-  Undo2,
-  Upload,
-  X,
-} from "lucide-solid";
 import { For, type JSX, onCleanup, onMount, Show } from "solid-js";
 import type { Sample } from "../lib/content";
 import { KEY_NAMES, type KeyAction, SHORTCUTS } from "../lib/keys";
@@ -437,10 +411,10 @@ export function TopRow(props: {
                   >
                     <span class="chip-text m">{proof.input ? tabText(proof) : "New"}</span>
                     <Show when={tone(proof) === "ok"}>
-                      <Check class="sign good" aria-hidden="true" />
+                      <Sign name="check" class="sign good" />
                     </Show>
                     <Show when={tone(proof) === "bad"}>
-                      <X class="sign bad" aria-hidden="true" />
+                      <Sign name="cross" class="sign bad" />
                     </Show>
                   </button>
                   {/* A pointer's way to close it; the key W does the same for the chip chosen. */}
@@ -466,7 +440,7 @@ export function TopRow(props: {
           data-key={KEY_NAMES.newTab}
           onClick={() => props.newTab()}
         >
-          <Plus aria-hidden="true" />
+          <Sign name="plus" />
         </button>
       </div>
       <button
@@ -477,7 +451,7 @@ export function TopRow(props: {
         data-tip="Guide"
         onClick={() => props.prover.setSettings({ guide: !settings().guide })}
       >
-        <CircleHelp aria-hidden="true" />
+        <Sign name="help" />
       </button>
       <button
         type="button"
@@ -493,8 +467,8 @@ export function TopRow(props: {
           props.setTheme(next);
         }}
       >
-        <Show when={darkShown(props.theme())} fallback={<Moon aria-hidden="true" />}>
-          <Sun aria-hidden="true" />
+        <Show when={darkShown(props.theme())} fallback={<Sign name="moon" />}>
+          <Sign name="sun" />
         </Show>
       </button>
       <button
@@ -507,7 +481,7 @@ export function TopRow(props: {
         data-key={KEY_NAMES.settings}
         onClick={() => setUi("menu", ui.menu === "settings" ? null : "settings")}
       >
-        <SlidersHorizontal aria-hidden="true" />
+        <Sign name="settings" />
       </button>
     </header>
   );
@@ -621,7 +595,7 @@ export function Rail(props: { prover: Prover; ui: Ui }) {
                   tone(proofOf(cell) as Proof) === "bad"
                 }
               >
-                <X class="count sign bad" aria-hidden="true" />
+                <Sign name="cross" class="count sign bad" />
               </Show>
             </button>
           )}
@@ -644,7 +618,7 @@ export function Rail(props: { prover: Prover; ui: Ui }) {
           setUi("menu", ui.menu === "views" ? null : "views");
         }}
       >
-        <Plus aria-hidden="true" />
+        <Sign name="plus" />
       </button>
       <Show when={ui.menu === "views"}>
         <div class="views-list panel menu" role="dialog" aria-label="Add a view">
@@ -655,7 +629,7 @@ export function Rail(props: { prover: Prover; ui: Ui }) {
             data-tip="Close"
             onClick={() => setUi("menu", null)}
           >
-            <X aria-hidden="true" />
+            <Sign name="cross" />
           </button>
           <For each={GROUPS}>
             {(group) => (
@@ -683,7 +657,9 @@ export function Rail(props: { prover: Prover; ui: Ui }) {
                             </span>
                             <span class="entry-name">{entry.name}</span>
                             <Show when={entry.there}>
-                              <Check class="sign good" aria-label="added" />
+                              <span class="sign-named" role="img" aria-label="added">
+                                <Sign name="check" class="sign good" />
+                              </span>
                             </Show>
                           </button>
                           <Show when={entry.why}>
@@ -871,14 +847,14 @@ export function Tools(props: { prover: Prover; ui: Ui; hint: () => void; tour: (
             <Tool
               name="Undo"
               action="undo"
-              icon={<Undo2 aria-hidden="true" />}
+              icon={<Sign name="undo" />}
               disabled={c().past.length === 0}
               onClick={() => viewUndo(props.prover, props.ui)}
             />
             <Tool
               name="Redo"
               action="redo"
-              icon={<Redo2 aria-hidden="true" />}
+              icon={<Sign name="redo" />}
               disabled={c().future.length === 0}
               onClick={() => viewRedo(props.prover, props.ui)}
             />
@@ -890,7 +866,7 @@ export function Tools(props: { prover: Prover; ui: Ui; hint: () => void; tour: (
           <Tool
             name="Undo"
             action="undo"
-            icon={<Undo2 aria-hidden="true" />}
+            icon={<Sign name="undo" />}
             disabled={!canStepBack() || busy()}
             onClick={() => viewUndo(props.prover, props.ui)}
           />
@@ -898,7 +874,7 @@ export function Tools(props: { prover: Prover; ui: Ui; hint: () => void; tour: (
             <Tool
               name="Steps"
               rare
-              icon={<ListOrdered aria-hidden="true" />}
+              icon={<Sign name="steps" />}
               disabled={(proof()?.elim[elimOn(props.prover, props.ui)]?.taken.length ?? 0) < 2}
               onClick={() =>
                 document.querySelector<HTMLDetailsElement>(".steps-taken")?.toggleAttribute("open")
@@ -992,7 +968,7 @@ export function Tools(props: { prover: Prover; ui: Ui; hint: () => void; tour: (
           <Tool
             name="Undo"
             action="undo"
-            icon={<Undo2 aria-hidden="true" />}
+            icon={<Sign name="undo" />}
             disabled={
               ruled()
                 ? (proof()?.custom?.view?.steps ?? 0) === 0 || busy()
@@ -1003,7 +979,7 @@ export function Tools(props: { prover: Prover; ui: Ui; hint: () => void; tour: (
           <Tool
             name="Redo"
             action="redo"
-            icon={<Redo2 aria-hidden="true" />}
+            icon={<Sign name="redo" />}
             disabled={
               !(proving() || ruled()) || !(proof()?.redo.length || proof()?.later.length) || busy()
             }
@@ -1013,7 +989,7 @@ export function Tools(props: { prover: Prover; ui: Ui; hint: () => void; tour: (
             name="Steps"
             action="steps"
             rare
-            icon={<ListOrdered aria-hidden="true" />}
+            icon={<Sign name="steps" />}
             disabled={!proving()}
             expanded={ui.menu === "steps"}
             onClick={() => toggle("steps")}
@@ -1023,7 +999,7 @@ export function Tools(props: { prover: Prover; ui: Ui; hint: () => void; tour: (
           <Tool
             name="Hint"
             action="hint"
-            icon={<Lightbulb aria-hidden="true" />}
+            icon={<Sign name="hint" />}
             disabled={searchOff()}
             onClick={props.hint}
           />
@@ -1033,7 +1009,7 @@ export function Tools(props: { prover: Prover; ui: Ui; hint: () => void; tour: (
               <Tool
                 name="Close all"
                 action="closeAll"
-                icon={<CheckCheck aria-hidden="true" />}
+                icon={<Sign name="closeAll" />}
                 disabled={searchOff()}
                 onClick={() => void props.prover.closeAll()}
               />
@@ -1041,7 +1017,7 @@ export function Tools(props: { prover: Prover; ui: Ui; hint: () => void; tour: (
           >
             <Tool
               name="Stop"
-              icon={<Square aria-hidden="true" />}
+              icon={<Sign name="stop" />}
               onClick={() => {
                 props.prover.stop();
                 say("Stopped: nothing was changed.");
@@ -1052,7 +1028,7 @@ export function Tools(props: { prover: Prover; ui: Ui; hint: () => void; tour: (
             name="The search's settings"
             class="caret"
             rare
-            icon={<ChevronDown aria-hidden="true" />}
+            icon={<Sign name="caret" />}
             expanded={ui.menu === "search"}
             disabled={!proving()}
             onClick={() => {
@@ -1094,7 +1070,7 @@ export function Tools(props: { prover: Prover; ui: Ui; hint: () => void; tour: (
             <Tool
               name="Cut"
               rare
-              icon={<Scissors aria-hidden="true" />}
+              icon={<Sign name="cut" />}
               disabled={!proving() || !!proof()?.view?.complete || busy()}
               pressed={ui.cutting !== null}
               onClick={() => {
@@ -1134,7 +1110,7 @@ export function Tools(props: { prover: Prover; ui: Ui; hint: () => void; tour: (
           name="Export"
           action="export"
           rare
-          icon={<Download aria-hidden="true" />}
+          icon={<Sign name="export" />}
           disabled={!proof()?.session || natural()}
           expanded={ui.menu === "export"}
           onClick={() => toggle("export")}
@@ -1143,7 +1119,7 @@ export function Tools(props: { prover: Prover; ui: Ui; hint: () => void; tour: (
           name="Import"
           action="import"
           rare
-          icon={<Upload aria-hidden="true" />}
+          icon={<Sign name="import" />}
           expanded={ui.menu === "import"}
           onClick={() => toggle("import")}
         />
@@ -1154,23 +1130,23 @@ export function Tools(props: { prover: Prover; ui: Ui; hint: () => void; tour: (
             name="Learn"
             rare
             soon
-            icon={<GraduationCap aria-hidden="true" />}
+            icon={<Sign name="learn" />}
             onClick={() => say("Learn is coming soon.")}
           />
           <Tool
             name="Practice"
             rare
             soon
-            icon={<Dumbbell aria-hidden="true" />}
+            icon={<Sign name="practice" />}
             onClick={() => say("Practice is coming soon.")}
           />
-          <Tool name="Tour" rare icon={<Compass aria-hidden="true" />} onClick={props.tour} />
+          <Tool name="Tour" rare icon={<Sign name="tour" />} onClick={props.tour} />
         </fieldset>
       </Show>
       <Tool
         name="More"
         class="more"
-        icon={<Ellipsis aria-hidden="true" />}
+        icon={<Sign name="more" />}
         expanded={ui.more}
         onClick={() => setUi("more", !ui.more)}
       />
@@ -1238,7 +1214,7 @@ export function BottomBox(props: { prover: Prover; ui: Ui; notes: JSX.Element })
           }}
         />
         <button type="submit" class="enter" aria-label="Enter" data-tip="Enter">
-          <CornerDownLeft aria-hidden="true" />
+          <Sign name="enter" />
           <span class="tool-name" aria-hidden="true">
             Enter
           </span>
@@ -1382,7 +1358,7 @@ export function NewTab(props: {
       </fieldset>
       <div class="new-actions">
         <button type="button" class="btn" onClick={() => file.click()}>
-          <FolderOpen aria-hidden="true" />
+          <Sign name="open" />
           Open a file
         </button>
         <input
@@ -1409,7 +1385,7 @@ export function NewTab(props: {
           data-tip="Coming soon"
           onClick={() => say("Learn is coming soon.")}
         >
-          <GraduationCap aria-hidden="true" />
+          <Sign name="learn" />
           Learn
         </button>
         <button
@@ -1419,11 +1395,11 @@ export function NewTab(props: {
           data-tip="Coming soon"
           onClick={() => say("Practice is coming soon.")}
         >
-          <Dumbbell aria-hidden="true" />
+          <Sign name="practice" />
           Practice
         </button>
         <button type="button" class="btn" onClick={() => setUi("menu", "about")}>
-          <Info aria-hidden="true" />
+          <Sign name="info" />
           About
         </button>
       </div>
@@ -1487,7 +1463,7 @@ export function Dialog(props: { label: string; onClose: () => void; children: JS
             data-tip="Close"
             onClick={() => props.onClose()}
           >
-            <X aria-hidden="true" />
+            <Sign name="cross" />
           </button>
         </div>
         {props.children}

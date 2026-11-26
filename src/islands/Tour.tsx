@@ -11,11 +11,11 @@
  * and has no motion of its own.
  */
 
-import { X } from "lucide-solid";
 import { createEffect, on, onCleanup, Show } from "solid-js";
 import type { Example, Stop } from "../lib/content";
 import { Written } from "./Written";
 import type { Prover } from "./state";
+import { Sign } from "./Signs";
 import type { Ui } from "./ui";
 
 /** The sequent the tour proves: README's first example. */
@@ -151,7 +151,7 @@ export function Tour(props: { prover: Prover; ui: Ui; stops: readonly Stop[] }) 
               </span>
             </span>
             <button type="button" class="btn icon" aria-label="End the tour" onClick={end}>
-              <X aria-hidden="true" />
+              <Sign name="cross" />
             </button>
           </p>
           <Show keyed when={s().id}>

@@ -10,7 +10,6 @@
  * the hint), the rule popover and the split chooser.
  */
 
-import { Maximize, ZoomIn, ZoomOut } from "lucide-solid";
 import {
   createEffect,
   createMemo,
@@ -1986,7 +1985,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
           data-key="−"
           onClick={() => zoom(0.8)}
         >
-          <ZoomOut aria-hidden="true" />
+          <Sign name="zoomOut" />
         </button>
         <span class="zoom-v">{Math.round(camera().k * 100)}%</span>
         <button
@@ -1998,7 +1997,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
           data-key="+"
           onClick={() => zoom(1.25)}
         >
-          <ZoomIn aria-hidden="true" />
+          <Sign name="zoomIn" />
         </button>
         <button
           type="button"
@@ -2009,7 +2008,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
           data-key="F"
           onClick={fitView}
         >
-          <Maximize aria-hidden="true" />
+          <Sign name="fit" />
         </button>
       </fieldset>
     </section>

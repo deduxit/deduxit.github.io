@@ -89,15 +89,16 @@ test("the Rocq library's old address forwards to its new one", async ({ page }) 
   await expect(page.getByRole("heading", { name: "rocq-deduxit's documentation" })).toBeVisible();
 });
 
-test("the pictograms are Lucide's, hidden from a screen reader, each control named", async ({
+test("the signs are the page's own, hidden from a screen reader, each control named", async ({
   page,
 }) => {
   await start(page, "A * B |- B * A");
-  const icons = page.locator(":is(.top-row, .tools) svg.lucide");
+  const icons = page.locator(":is(.top-row, .tools) svg.icon");
   expect(await icons.count()).toBeGreaterThanOrEqual(14);
   for (const icon of await icons.all()) {
     await expect(icon).toHaveAttribute("aria-hidden", "true");
-    await expect(icon).toHaveAttribute("class", /lucide-[a-z0-9-]+/);
+    await expect(icon).toHaveAttribute("class", /icon-[a-zA-Z]+/);
+    await expect(icon).toHaveAttribute("viewBox", "0 0 18 18");
   }
   // An icon alone names its control, and shows its tip on focus as on hover.
   for (const name of ["Undo", "Redo", "New sequent"]) {
