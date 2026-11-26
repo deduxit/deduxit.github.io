@@ -35,7 +35,7 @@ const SPOTS: Record<Stop["target"], string> = {
   tab: '.chip[aria-selected="true"]',
   stage: ".stage",
   formula: ".stage .fb",
-  goal: ".dock",
+  goal: ".stage .gt[data-active]",
   status: '.chip[aria-selected="true"]',
   bottom: ".tools",
 };
