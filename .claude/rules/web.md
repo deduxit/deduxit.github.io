@@ -518,6 +518,9 @@ board and the guide disagree, the guide holds.
   sheet above the bar. The Settings page and the dialogs (keys, About) are `ui.menu` too. A
   sheet's close button (`.tool.sheet-close`) shows in a compact window alone; outside one it is
   `display: none`, out of the tab order, by a selector that outweighs `.tool`'s later display.
+  A panel in a medium or expanded window ends a gap above the bottom box and its notes
+  (`--size-bottom`), so that it covers neither them nor the zoom; a compact window's sheet (a
+  panel, the list of views) hides the zoom while it is open, as a popover's does.
 - **A compact window under 480 high** (a phone's page at 400 % zoom, 320 by 200): the app keeps
   `--size-frame-least` (30rem) of height and the page scrolls up and down, so that no row lies
   over another (WCAG 1.4.10); every other window keeps the frame to the visible height.

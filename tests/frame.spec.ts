@@ -475,6 +475,17 @@ test("the zoom group is covered by neither the bottom box nor a note, nor where 
     await expect.poll(() => zoomUncovered(page), `${panel} open`).toBe(true);
     await page.keyboard.press("Escape");
   }
+  // A short window's panel ends above the box and the zoom; a phone's sheet hides the zoom.
+  await page.setViewportSize({ width: 640, height: 400 });
+  await tool(page, "More").click();
+  await tool(page, "Export").click();
+  await expect.poll(() => zoomUncovered(page), "Export open, 640 by 400").toBe(true);
+  await page.keyboard.press("Escape");
+  await page.setViewportSize({ width: 390, height: 844 });
+  await tool(page, "More").click();
+  await tool(page, "Export").click();
+  await expect(page.getByRole("dialog", { name: "Export" })).toBeVisible();
+  await expect(page.locator(".stage-ctl")).toBeHidden();
 });
 
 test("a sheet's close button is drawn and reached by Tab only where the panel is a sheet", async ({

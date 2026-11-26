@@ -3586,14 +3586,22 @@ textarea {
   color: var(--color-paper);
   font: var(--font-weight-medium) var(--text-body) / var(--leading-none) var(--font-text);
 }
-/* The panels: at the stage's top, left of the tools, with a 1 pixel line edge and a corner of 16. */
+/* The panels: at the stage's top, left of the tools, with a 1 pixel line edge and a corner of 16.
+   A long one ends a gap above the bottom box and its notes, so that it covers neither them nor
+   the zoom group beside them, and scrolls inside. */
 .panels > .menu {
   position: absolute;
   top: var(--size-inset);
   right: calc(var(--size-tools) + 2 * var(--size-inset));
   z-index: var(--layer-menu);
   width: min(var(--size-panel), calc(100% - var(--size-tools) - 3 * var(--size-inset)));
-  max-height: calc(100% - 2 * var(--size-inset));
+  max-height: calc(
+    100% -
+    var(--size-inset) -
+    var(--size-box-inset) -
+    var(--size-bottom) -
+    var(--spacing-2)
+  );
   overflow: auto;
   padding: var(--spacing-3);
   border-color: var(--color-line);
@@ -3992,8 +4000,10 @@ table.keys th {
   .stage-ctl {
     bottom: calc(var(--spacing-2) + var(--size-bottom) - var(--size-box-compact));
   }
-  /* A popover is a sheet over the stage's bottom: the zoom waits under it until it closes. */
-  .stage:has(.pop, .premises) > .stage-ctl {
+  /* A popover, a panel and the list of views are sheets over the stage's bottom: the zoom waits
+     under one, hidden, until it closes. */
+  .stage:has(.pop, .premises) > .stage-ctl,
+  .body:has(.views-list, .panels > .menu) .stage-ctl {
     visibility: hidden;
   }
   .stage-ctl .zoom-v {
