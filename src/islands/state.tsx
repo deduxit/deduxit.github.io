@@ -3116,6 +3116,26 @@ export function createProver(say: (text: string) => void = () => undefined) {
     },
 
     /**
+     * The formula each step of a proof acted on, by its entry in the history, written as the page
+     * shows a goal's formulas: a rule's principal formula, an axiom's formulas; null where a step
+     * names none (a cut, a search's graft) or deduxit's replay did not reach it.
+     */
+    async principals(p: Proof): Promise<(string | null)[]> {
+      const session = unwrap(p.session);
+      if (!session) return [];
+      if (isOrdinary(session)) {
+        const found = await attempt(() => api.ordinaryPrincipals(session, ordinaryJson()));
+        return found.ok ? found.value : session.history.map(() => null);
+      }
+      const view = unwrap(p.view);
+      const todo = actionsOf(session, view?.cuts, view);
+      const found = await attempt(() => api.principals(session, todo, replaying()));
+      return found.ok
+        ? found.value.map((o) => (o?.principal.length ? o.principal.map(shown).join(", ") : null))
+        : todo.map(() => null);
+    },
+
+    /**
      * Closes a goal with the proof made apart of it: its steps are taken again on the goal, in
      * order, each checked by deduxit in this proof, and a goal a search closed there is closed by
      * the search again. Where a step is refused or a goal stays open, nothing changes and the

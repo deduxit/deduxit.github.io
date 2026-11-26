@@ -232,6 +232,17 @@ export function retract(
     while (step !== undefined && invertible?.has(step)) step = below(parent.get(step));
   }
   if (step === undefined) return undefined;
+  return reopen(doc, step);
+}
+
+/**
+ * The session with a step taken back: the goal it expanded open again, every inference above
+ * it gone and the rest numbered anew in their order, and that goal's new number.
+ */
+function reopen(
+  doc: OrdinarySession,
+  step: number,
+): { session: OrdinarySession; reopened: number } {
   const gone = new Set(subtree(doc, step));
   gone.delete(step);
   const kept = doc.inferences.flatMap((_, i) => (gone.has(i) ? [] : [i]));
@@ -286,27 +297,65 @@ export function replaySteps(
 ): { goal: number; step: OrdinaryStep; formula: number; premises: readonly number[] }[] {
   const steps = stepsOf(doc);
   return doc.history.flatMap((goal, k) => {
-    const rule = steps[k]?.rule ?? "";
-    // The inference that holds the rule: the top of the goal's structural run.
-    let at = goal;
-    while (doc.inferences[at]?.rule !== rule) {
-      const next = doc.inferences[at]?.premises?.[0];
-      if (next === undefined) return [];
-      at = next;
+    const taken = takenAt(doc, goal, steps[k]?.rule ?? "");
+    return taken ? [{ goal, ...taken }] : [];
+  });
+}
+
+/**
+ * A step on `goal` as `ordinary_apply` takes it again, by the rule above its structural run;
+ * undefined where the goal holds no such step.
+ */
+function takenAt(
+  doc: OrdinarySession,
+  goal: number,
+  rule: string,
+): { step: OrdinaryStep; formula: number; premises: readonly number[] } | undefined {
+  // The inference that holds the rule: the top of the goal's structural run.
+  let at = goal;
+  while (doc.inferences[at]?.rule !== rule) {
+    const next = doc.inferences[at]?.premises?.[0];
+    if (next === undefined) return undefined;
+    at = next;
+  }
+  const top = doc.inferences[at];
+  const below = doc.inferences[goal];
+  if (!top || !below) return undefined;
+  const [side, position] = top.principal ?? [
+    "right" as Side,
+    top.right.findIndex((f) => top.left.includes(f)),
+  ];
+  const formula = top[side][position];
+  const at_ = formula === undefined ? -1 : below[side].indexOf(formula);
+  // The premises the step made, above its run: what the next steps act on.
+  return at_ < 0 || formula === undefined
+    ? undefined
+    : { step: { side, position: at_, rule }, formula, premises: top.premises ?? [] };
+}
+
+/**
+ * The formula each step of an ordinary session acted on, by its entry in the history, as
+ * deduxit's view writes it (`view` is `ordinary_view` on a session's JSON): a rule's principal
+ * formula, an axiom's formula, null where none is found. The document numbers formulas and has
+ * no text of its own, so each step's goal is opened again and read from the view.
+ */
+export function principalTexts(
+  doc: OrdinarySession,
+  view: (session: string) => string,
+): (string | null)[] {
+  const steps = stepsOf(doc);
+  return doc.history.map((goal, k) => {
+    const taken = takenAt(doc, goal, steps[k]?.rule ?? "");
+    if (!taken) return null;
+    try {
+      const { session, reopened } = reopen(doc, goal);
+      const shown = (JSON.parse(view(JSON.stringify(session))) as OrdinaryView).goals.find(
+        (g) => g.goal === reopened,
+      );
+      return shown?.[taken.step.side][taken.step.position] ?? null;
+    } catch {
+      return null;
     }
-    const top = doc.inferences[at];
-    const below = doc.inferences[goal];
-    if (!top || !below) return [];
-    const [side, position] = top.principal ?? [
-      "right" as Side,
-      top.right.findIndex((f) => top.left.includes(f)),
-    ];
-    const formula = top[side][position];
-    const at_ = formula === undefined ? -1 : below[side].indexOf(formula);
-    // The premises the step made, above its run: what the next steps act on.
-    return at_ < 0 || formula === undefined
-      ? []
-      : [{ goal, step: { side, position: at_, rule }, formula, premises: top.premises ?? [] }];
   });
 }
 

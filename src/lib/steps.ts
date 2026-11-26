@@ -19,7 +19,7 @@
  * step out numbers every later one differently, while the paths stay.
  */
 
-import type { Inference, Played, Prover, SessionDoc, StepForm, View } from "./deduxit";
+import type { GoalFormula, Inference, Played, Prover, SessionDoc, StepForm, View } from "./deduxit";
 
 /** A goal's place in the tree: the premise taken at each inference from the root. */
 export type Path = readonly number[];
@@ -572,6 +572,7 @@ export function play(
   start: Played,
   todo: readonly Action[],
   settings: string,
+  seen?: (index: number, played: Played) => void,
 ): Replayed {
   let played: Played = start;
   const failed: Path[] = [];
@@ -672,8 +673,9 @@ export function play(
       return false;
     }
   };
-  for (const action of todo) {
+  for (const [index, action] of todo.entries()) {
     if (failed.some((path) => within(action.path, path))) continue;
+    seen?.(index, played);
     if (action.kind === "step") {
       if (!step(action)) failed.push(action.path);
       continue;
@@ -709,6 +711,97 @@ export function play(
     }
   }
   return { ...played, failed };
+}
+
+/** The formulas a step or a cut acted on, as deduxit's view writes them. */
+export interface Operands {
+  /** The rule's principal formula; an axiom's two formulas; none for a cut or another rule without one. */
+  readonly principal: readonly GoalFormula[];
+  /** The formulas a split or a cut sent to its first premise. */
+  readonly left?: readonly GoalFormula[];
+}
+
+/**
+ * The formulas each step and cut of a session acted on, by its entry in the history, as
+ * deduxit's view writes them; null for a search's graft or a step whose replay failed. The
+ * session document numbers formulas by occurrence and has no text of its own, so the steps and
+ * cuts are taken again from the sequent and each goal read from the view just before its step;
+ * the searches' grafts are left out, since no later step lies under one.
+ */
+export function principals(
+  prover: Prover,
+  doc: SessionDoc,
+  todo: readonly Action[],
+  settings: string,
+): (Operands | null)[] {
+  const found: (Operands | null)[] = todo.map(() => null);
+  const kept = [...todo.entries()].filter(([, a]) => a.kind !== "close");
+  const start = JSON.parse(prover.start(JSON.stringify(doc.sequent), doc.mode, settings)) as Played;
+  play(
+    prover,
+    start,
+    kept.map(([, a]) => a),
+    settings,
+    (k, played) => {
+      const [index, action] = kept[k] ?? [];
+      if (index === undefined || action === undefined || action.kind === "close") return;
+      const goal = goalAt(played.session, action.path);
+      const formulas = played.view.goals.find((g) => g.goal === goal)?.formulas;
+      const inference = doc.inferences[doc.history[index] ?? -1];
+      if (!formulas || goal === undefined || !inference) return;
+      // With quantifiers the replay may order a goal's formulas otherwise: they are found by
+      // what they are, as `play` finds them.
+      const members = played.session.inferences[goal]?.sequent ?? [];
+      const taken = members.map(() => false);
+      const byKeys = (keys: readonly string[]) =>
+        played.view.forest === undefined
+          ? undefined
+          : positionsOf(members, memberKeys(played.session, played.view.forest), keys, taken);
+      const at = (positions: readonly number[] | undefined) =>
+        positions?.flatMap((p) => (formulas[p] ? [formulas[p]] : []));
+      if (action.kind === "cut") {
+        const left = (action.leftKeys && byKeys(action.leftKeys)) ?? action.left;
+        found[index] = { principal: [], left: at(left) ?? [] };
+        return;
+      }
+      const principal =
+        inference.principal === undefined
+          ? undefined
+          : ((action.keys && byKeys([action.keys.principal])?.[0]) ?? action.step.position);
+      if (principal !== undefined) taken[principal] = true;
+      const left = (action.keys?.left && byKeys(action.keys.left)) ?? action.step.left;
+      found[index] = {
+        principal:
+          principal !== undefined
+            ? (at([principal]) ?? [])
+            : inference.rule === "ax"
+              ? formulas
+              : [],
+        ...(left ? { left: at(left) ?? [] } : {}),
+      };
+    },
+  );
+  return found;
+}
+
+/**
+ * The positions in `goal` of formulas written as `wanted` writes them, each taken once, none
+ * `taken`; undefined where one is not there. Formulas written alike are the same formula, so any
+ * of them serves.
+ */
+export function placesOf(
+  goal: readonly GoalFormula[],
+  wanted: readonly GoalFormula[],
+  taken: boolean[] = goal.map(() => false),
+): number[] | undefined {
+  const found: number[] = [];
+  for (const w of wanted) {
+    const at = goal.findIndex((f, i) => !taken[i] && f.text === w.text && f.side === w.side);
+    if (at < 0) return undefined;
+    taken[at] = true;
+    found.push(at);
+  }
+  return found;
 }
 
 /** Replays actions from the session's sequent, in its mode. */

@@ -6,7 +6,8 @@
  * blocks the page. It answers the page's requests (src/lib/protocol.ts) with
  * the module's calls, plus the step tree's two that a replay is made of
  * (src/lib/steps.ts), run here so that one request rebuilds a session and
- * one terminate() stops it. The module keeps nothing between calls.
+ * one terminate() stops it, and the two that read each step's formula off
+ * the goals a replay passes. The module keeps nothing between calls.
  *
  * `render`, PNG and PDF from a drawing, is the call of a second module,
  * deduxit's renderers, loaded on the first such request and kept for the
@@ -18,8 +19,9 @@ import init, * as deduxit from "deduxit-web/deduxit_web.js";
 import wasm from "deduxit-web/deduxit_web_bg.wasm?url";
 import renderWasm from "deduxit-web/deduxit_web_render_bg.wasm?url";
 import type { Played, SessionDoc } from "../lib/deduxit";
+import { type OrdinarySession, principalTexts } from "../lib/ordinary";
 import { answer, type Request, type Response } from "../lib/protocol";
-import { type Action, play, replay } from "../lib/steps";
+import { type Action, play, principals, replay } from "../lib/steps";
 
 const calls = {
   about: deduxit.about,
@@ -119,6 +121,21 @@ const calls = {
   play: (start: string, todo: string, settings: string) =>
     JSON.stringify(
       play(deduxit, JSON.parse(start) as Played, JSON.parse(todo) as Action[], settings),
+    ),
+  principals: (session: string, todo: string, settings: string) =>
+    JSON.stringify(
+      principals(
+        deduxit,
+        JSON.parse(session) as SessionDoc,
+        JSON.parse(todo) as Action[],
+        settings,
+      ),
+    ),
+  ordinary_principals: (session: string, settings: string) =>
+    JSON.stringify(
+      principalTexts(JSON.parse(session) as OrdinarySession, (doc) =>
+        deduxit.ordinary_view(doc, settings),
+      ),
     ),
 };
 

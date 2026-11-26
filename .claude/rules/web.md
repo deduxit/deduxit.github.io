@@ -780,8 +780,18 @@ board and the guide disagree, the guide holds.
 - **A goal's formula is shown as it reads** (`shown` in `src/lib/words.ts`): in
   intuitionistic mode deduxit's `reading` (a hypothesis `A ⊸ B`), which its `text` is too, else
   the one-sided `text` in signs. The formulas' buttons are named so (`A ⊸ B, formula 2 of
-  goal 1`), and the rules popover and the premises of a split write them so; a step still
-  names a formula by its position.
+  goal 1`), and the rules popover, the premises of a split and Steps write them so; a step's
+  form (`apply`'s) still names a formula by its position.
+- **Steps names a step as textbooks and proof tools do: its rule, on its principal formula**
+  ("⊗ on B ⊗ A", "∧R on b ∧ a", "ax on b", "cut on A ⊗ B"; the Open Logic Project and
+  Pfenning's lecture notes label an inference by its rule and call the formula it acts on the
+  principal one, KeYmaera X and Click and coLLecT apply a rule at a formula), no goal number.
+  The session document numbers formulas by occurrence and holds no text, so the text comes from
+  deduxit's view of the step's goal: `principals` of `steps.ts` replays the steps from the
+  sequent in the worker (one request, the request `principals`) and reads each goal just before
+  its step; an ordinary session's `principalTexts` opens each step's goal again (`reopen`) and
+  reads `ordinary_view`. Until the answer comes, or where it has none, a step is its rule alone.
+  A search's close keeps "The ⟨engine⟩ closed goal N": it has no rule.
 - **An intuitionistic sequent is typed in ILL's syntax**: deduxit reads intuitionistic text
   strictly (a `~`, `^`, `par`, `|`, `?` or `bot` refused with a hint), so the page reads the
   field, a preview and an opened document with `read_as` in the proof's mode (`api.readAs`),

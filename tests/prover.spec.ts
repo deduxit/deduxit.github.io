@@ -89,7 +89,7 @@ test("a split shows its two premises over the goal; a chip pressed moves, and th
   await split.getByRole("button", { name: "Apply ⊗" }).click();
   await expect(split).toBeHidden();
   await tool(page, "Steps").click();
-  await expect(page.getByRole("dialog", { name: "Steps" })).toContainText("⊗ on goal 2");
+  await expect(page.getByRole("dialog", { name: "Steps" })).toContainText("⊗ on B ⊗ A");
 });
 
 test("undo takes back the last step on the active branch only, and redo puts it back", async ({
@@ -717,7 +717,7 @@ test("the step list goes back to a step, and redo brings the rest back", async (
   const steps = page.getByRole("dialog", { name: "Steps" });
   await expect(steps.getByRole("button")).toHaveText([
     /^0/,
-    /^1⅋ on goal 1/,
+    /^1⅋ on A⊥ ⅋ B⊥$/,
     /^2The focused search closed goal 2/,
   ]);
   await steps.getByRole("button", { name: /^0/ }).click();
@@ -972,7 +972,7 @@ test("a goal is closed by its proof made apart: its steps taken again, grey, and
   await tool(page, "Steps").click();
   const steps = page.getByRole("dialog", { name: "Steps" });
   await expect(steps.getByRole("button").nth(1)).not.toContainText("apart");
-  await expect(steps.getByRole("button").nth(2)).toContainText("⊗ on goal 2 apart");
+  await expect(steps.getByRole("button").nth(2)).toContainText("⊗ on B ⊗ A apart");
   // Steps taken back take the mark with them: what is taken by hand there is the visitor's.
   await page.keyboard.press("Escape");
   await tool(page, "Undo").click();

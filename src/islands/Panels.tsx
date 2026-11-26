@@ -13,7 +13,7 @@ import { type Failure, MATH_FONTS } from "../lib/deduxit";
 import { isHandin, readHandin } from "../lib/pack";
 import { isOrdinary, stepsOf } from "../lib/ordinary";
 import { actions, goalAt, paths, within } from "../lib/steps";
-import { notTaken, shown } from "../lib/words";
+import { displayed, notTaken, shown } from "../lib/words";
 import type { Theme } from "../lib/theme";
 import {
   DEFAULT_BUDGET,
@@ -610,31 +610,41 @@ export function StepsPanel(props: { prover: Prover }) {
       : closed
         ? "search"
         : "";
-  /** Each step, as the list says it: its rule and goal, or the search that closed the goal. */
+  /**
+   * The formula each step acted on, by its entry in the history, which deduxit's replay reads
+   * off the goals (a request per change of the session): until it answers, a step is its rule.
+   */
+  const [principals] = createResource(
+    () => {
+      const p = proof();
+      return p?.session ? { p, session: p.session } : undefined;
+    },
+    ({ p }) => props.prover.principals(p),
+  );
+  /** A step as the literature names one: its rule, on the formula it acts on. */
+  const named = (rule: string, at: number) => {
+    const formula = principals.latest?.[at];
+    return formula ? `${rule} on ${formula}` : rule;
+  };
+  /** Each step, as the list says it: its rule and formula, or the search that closed the goal. */
   const list = () => {
     const session = proof()?.session;
     if (!session) return [];
     if (isOrdinary(session)) {
       const where = paths(session);
-      return stepsOf(session).map((step) => {
+      return stepsOf(session).map((step, at) => {
         const path = where.get(step.goal) ?? [];
         const engine = proof()?.engines[pathKey(path)];
         return engine && engine !== APART
           ? { text: `The ${engineName(engine)} closed goal ${step.goal + 1}`, by: "search" }
-          : { text: `${step.rule} on goal ${step.goal + 1}`, by: byOf(path, false) };
+          : { text: named(step.rule, at), by: byOf(path, false) };
       });
     }
-    return actions(session, proof()?.view?.cuts, proof()?.view).map((action) =>
+    return actions(session, proof()?.view?.cuts, proof()?.view).map((action, at) =>
       action.kind === "step"
-        ? {
-            text: `${action.step.rule} on goal ${goalNumber(action.path)}`,
-            by: byOf(action.path, false),
-          }
+        ? { text: named(action.step.rule, at), by: byOf(action.path, false) }
         : action.kind === "cut"
-          ? {
-              text: `cut on ${action.formula} in goal ${goalNumber(action.path)}`,
-              by: byOf(action.path, false),
-            }
+          ? { text: `cut on ${displayed(action.formula)}`, by: byOf(action.path, false) }
           : {
               text: `The ${engineName(proof()?.engines[pathKey(action.path)] ?? "") || "search"} closed goal ${goalNumber(action.path)}`,
               by: byOf(action.path, true),

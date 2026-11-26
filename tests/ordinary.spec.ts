@@ -73,6 +73,16 @@ test("the new tab view offers the four logics, ordinary first, and an ordinary s
   expect(text).toContain("∧R");
   expect(text).toContain("∧L");
   expect(text).not.toMatch(LINEAR);
+  // Steps names each step as a textbook does: its rule, on the formula it acts on.
+  await tool(page, "Steps").click();
+  await expect(page.getByRole("dialog", { name: "Steps" }).getByRole("button")).toHaveText([
+    /^0/,
+    /^1∧R on b ∧ a$/,
+    /^2∧L on a ∧ b$/,
+    /^3ax on b$/,
+    /^4∧L on a ∧ b$/,
+    /^5ax on a$/,
+  ]);
 });
 
 test("an ordinary goal's close says not valid, and the guide offers the logic's examples", async ({

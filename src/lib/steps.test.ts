@@ -11,6 +11,7 @@ import {
   type Path,
   paths,
   play,
+  principals,
   replay,
   retract,
   searchMade,
@@ -44,6 +45,30 @@ describe("the step tree", () => {
     );
     const doc: SessionDoc = closed.session;
     same(replay(deduxit, doc, actions(doc), S).session, doc);
+  });
+
+  it("reads each step's formulas off the goals: the principal, a split's left, an axiom's two", () => {
+    let p = started("A * B |- B * A");
+    p = step(p, 0, 0, "⅋");
+    const split = step(p, 1, 2, "⊗", [1]);
+    const closed = JSON.parse(
+      deduxit.close(JSON.stringify(split.session), split.opened[1] ?? 0, S),
+    );
+    const doc: SessionDoc = closed.session;
+    const text = (o: {
+      principal: readonly { text: string }[];
+      left?: readonly { text: string }[];
+    }) => ({
+      principal: o.principal.map((f) => f.text),
+      left: o.left?.map((f) => f.text),
+    });
+    const found = principals(deduxit, doc, actions(doc), S);
+    expect(found.map((o) => (o ? text(o) : null))).toEqual([
+      { principal: ["~A ⅋ ~B"], left: undefined },
+      { principal: ["B ⊗ A"], left: ["~B"] },
+      // The search's axiom, a graft of one inference, reads as a step.
+      { principal: ["~A", "A"], left: undefined },
+    ]);
   });
 
   it("undoes the last step on the active goal's branch, keeping later steps elsewhere", () => {

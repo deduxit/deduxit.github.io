@@ -89,6 +89,10 @@ export async function proving(page: Page, visit: Visit) {
   await press(page, "Close all");
   await expect(page.getByText("Proved. Every goal is closed.")).toBeVisible();
   await visit("proved");
+  await press(page, "Steps", visit);
+  await expect(page.getByRole("dialog", { name: "Steps" })).toContainText("⊗ on B ⊗ A");
+  await visit("steps by rule and formula");
+  await page.keyboard.press("Escape");
   await page.getByRole("tab", { name: "Proof net" }).click();
   await visit("net");
   await page.getByRole("tab", { name: /^Classical linear logic/ }).click();

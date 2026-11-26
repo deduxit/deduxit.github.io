@@ -47,7 +47,7 @@ import type { Comparison, Interpolation } from "./transforms";
 import type { NormalForm, Refutation, Resolution, Stepped as ResolvedStep } from "./clausal";
 import type { Action as WorkspaceAction, WorkspaceView } from "./workspace";
 import { type Client, createClient, type WorkerLike } from "./protocol";
-import type { Action, Replayed } from "./steps";
+import type { Action, Operands, Replayed } from "./steps";
 
 /** What `about` answers. */
 export interface About {
@@ -454,5 +454,11 @@ export function createApi(changed: (pending: number) => void) {
       json<Replayed>("replay", doc(session), JSON.stringify(todo), settings),
     play: (start: Played, todo: readonly Action[], settings: string) =>
       json<Replayed>("play", JSON.stringify(start), JSON.stringify(todo), settings),
+    /** The formulas each action of a session acted on (`principals` of the step tree). */
+    principals: (session: SessionDoc, todo: readonly Action[], settings: string) =>
+      json<(Operands | null)[]>("principals", doc(session), JSON.stringify(todo), settings),
+    /** The formula each step of an ordinary session acted on (`principalTexts`). */
+    ordinaryPrincipals: (session: OrdinarySession, settings: string) =>
+      json<(string | null)[]>("ordinary_principals", JSON.stringify(session), settings),
   };
 }
