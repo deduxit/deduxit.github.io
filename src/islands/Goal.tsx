@@ -55,8 +55,8 @@ function RuleDrawn(props: { rule: string }) {
  * The rule popover at a formula: one button per rule of its connective, side by side, a rule that
  * does not apply to this goal greyed among them. The pointer or the keyboard on a rule shows its
  * card, the rule drawn, and for a greyed rule the reason under it; a press on a greyed rule shows
- * the card until the next press, which a touch screen, having no hover, needs. The digits pick a
- * rule and the arrow keys move along the row while the popover has the focus.
+ * the card until the next press, which a touch screen, having no hover, needs. The arrow keys move
+ * along the row; the digits, which pick a rule, are the stage's.
  */
 export function RulePopover(props: {
   formula: string;
@@ -79,14 +79,8 @@ export function RulePopover(props: {
     if (event.ctrlKey || event.metaKey || event.altKey || !props.offered) return;
     const buttons = [...(row?.querySelectorAll<HTMLButtonElement>("button.rule") ?? [])];
     const at = buttons.indexOf(document.activeElement as HTMLButtonElement);
-    if (/^[1-9]$/.test(event.key)) {
-      const k = Number(event.key) - 1;
-      const rule = props.offered[k];
-      if (!rule) return;
-      event.preventDefault();
-      buttons[k]?.focus();
-      press(rule, k);
-    } else if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
+    // The digits are the stage's, which takes them on the formula's button too.
+    if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
       event.preventDefault();
       const next = (at + (event.key === "ArrowRight" ? 1 : -1) + buttons.length) % buttons.length;
       buttons[next]?.focus();

@@ -343,6 +343,20 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
     ),
   );
 
+  /**
+   * Lays the formulas' buttons anew; the one that had the focus hands it to its successor, the
+   * same formula of the same goal, so a key typed next (a rule's digit) still reaches it.
+   */
+  function layHits(next: Hit[]) {
+    const had = (document.activeElement as HTMLElement | null)?.closest<HTMLElement>(".fb");
+    const at = had
+      ? `.fb[data-goal="${had.dataset["goal"]}"][data-position="${had.dataset["position"]}"]`
+      : null;
+    setHits(next);
+    if (at && !had?.isConnected)
+      stage.querySelector<HTMLElement>(at)?.focus({ preventScroll: true });
+  }
+
   /** Marks the open goals, the active one and the search's inferences, and lays the buttons over the formulas. */
   function decorate(net: boolean) {
     const v = view();
@@ -414,7 +428,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
     // deduxit's ⋮ over an open goal gives way to the goal's line.
     for (const text of host.querySelectorAll("svg > text"))
       if (text.textContent === "⋮") text.classList.add("goal-dots");
-    setHits(targets(v.goals));
+    layHits(targets(v.goals));
     setGoalHits(goalTargets(v.goals));
   }
 
@@ -668,7 +682,7 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
           hostSession === proof()?.session &&
           !(ui.tab === "net" && netReady())
         ) {
-          setHits(targets(view()?.goals ?? []));
+          layHits(targets(view()?.goals ?? []));
           setGoalHits(goalTargets(view()?.goals ?? []));
         }
       },
@@ -1231,14 +1245,22 @@ export function Stage(props: { prover: Prover; ui: Ui }) {
         event.preventDefault();
       } else if (
         ui.selected &&
-        !ui.offered &&
         !ui.split &&
         !ui.witnessing &&
         /^[1-9]$/.test(event.key) &&
-        (event.target as Element).closest(".fb")
+        ((event.target as Element).closest(".fb, .rules-pop") || event.target === document.body)
       ) {
+        // A digit on the formula's button or in its popover picks a rule, or where nothing has
+        // the focus (the button it was on laid anew as its goal became the active one); typed
+        // before the rules arrive, it picks one then. A greyed rule takes the focus, its card
+        // saying why.
         event.preventDefault();
-        typedEarly = Number(event.key);
+        const k = Number(event.key);
+        const rule = ui.offered?.[k - 1];
+        if (!ui.offered) typedEarly = k;
+        else if (rule?.refused)
+          popover?.querySelectorAll<HTMLButtonElement>("button.rule")[k - 1]?.focus();
+        else if (rule) void choose(rule);
       } else if (
         ui.split &&
         event.key === "Enter" &&
