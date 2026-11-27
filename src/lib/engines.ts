@@ -21,8 +21,9 @@ export interface Engine {
 }
 
 /**
- * Every engine the page may name, in deduxit's order, then the finite model search (an ordinary
- * method, which a first-order goal's close takes) and the classical refuter.
+ * Every engine the page may name, in deduxit's order, then the ordinary methods a first-order
+ * goal's close takes (the connection prover, grounding, the finite model search) and the
+ * classical refuter.
  */
 export const ENGINES: Readonly<Record<string, Engine>> = {
   focus: {
@@ -59,6 +60,16 @@ export const ENGINES: Readonly<Record<string, Engine>> = {
     name: "inverse method",
     does: "derives sequents forward from the axioms until the goal or nothing new comes",
     source: "Chaudhuri and Pfenning 2005, the focused inverse method",
+  },
+  connection: {
+    name: "connection prover",
+    does: "connects complementary literals on every path through the goal's formulas",
+    source: "Otten 2011 and 2016, the non-clausal connection calculus (nanoCoP)",
+  },
+  grounding: {
+    name: "grounding search",
+    does: "puts the goal's constants for its variables and decides the result by a SAT solver",
+    source: "Herbrand's theorem for the Bernays–Schönfinkel and the monadic class",
   },
   models: {
     name: "finite model search",

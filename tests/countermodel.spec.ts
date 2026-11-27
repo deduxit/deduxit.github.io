@@ -28,8 +28,8 @@ test("a first-order sequent's countermodel is changed press by press, and undone
   await classical(page, "exists x. p(x) |- forall x. p(x)");
   await closeGoal(page);
   await expect(page.locator(".goal-note")).toContainText("deduxit found a finite structure");
-  // The note names the engine that found the countermodel.
-  await expect(page.locator(".goal-note .engine")).toHaveText("Finite model search");
+  // The note names the engine that found the countermodel: grounding, before the model search.
+  await expect(page.locator(".goal-note .engine")).toHaveText("Grounding search");
   await page.getByRole("button", { name: "See the countermodel" }).click();
   await expect(page.getByRole("tab", { name: "Countermodel, ⊭" })).toHaveAttribute(
     "aria-selected",
@@ -135,6 +135,31 @@ test("a countermodel goes with its sequent when another is typed in its place", 
   await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
   await expect(page.getByRole("button", { name: /^p\(c\), formula 1/ })).toBeVisible();
   await expect(page.getByRole("tab", { name: "Countermodel, ⊭" })).toHaveCount(0);
+});
+
+test("a first-order goal is closed by the search, its eigenvariable a constant there", async ({
+  page,
+}) => {
+  await classical(
+    page,
+    "forall x. (p(x) -> q(x)), p(c) |- (exists y. q(y)) /\\ (forall z. (r(z) -> r(z)))",
+  );
+  await rule(page, /^\(∃y\. q\(y\)\) ∧ \(∀z\. \(r\(z\) → r\(z\)\)\), formula/, "∧R");
+  await rule(page, /^∀z\. \(r\(z\) → r\(z\)\), formula/, "∀R");
+  // The goal r(a) → r(a) holds the eigenvariable a; the search proves it as it is.
+  await (await goalMenu(page)).getByRole("button", { name: "Close goal" }).click();
+  await expect(page.locator(".note.searched")).toHaveText(/^Goal \d+ closed by the [a-z ]+\.$/);
+  await tool(page, "Close all").click();
+  await expect(proved(page)).toBeVisible();
+});
+
+test("a first-order goal's hint carries the witness of its ∃R", async ({ page }) => {
+  await classical(page, "p(c) |- exists x. p(x)");
+  await page.getByRole("button", { name: "Guide", exact: true }).click();
+  await tool(page, "Hint").click();
+  await expect(page.locator(".hint-line")).toContainText(
+    "Press ∃x. p(x) and take ∃R with the witness c.",
+  );
 });
 
 test("a Kripke model with growing domains is named as what decided the goal", async ({ page }) => {

@@ -1376,7 +1376,9 @@ export function createProver(say: (text: string) => void = () => undefined) {
     }
     const closed = result.value;
     const outcome = closed.outcome as unknown as Outcome;
-    if (closed.outcome.verdict === "valid" && !closed.refused) {
+    // A valid goal deduxit has no derivation of to graft stays open.
+    const grafted = !closed.view.goals.some((g) => g.goal === goal);
+    if (closed.outcome.verdict === "valid" && !closed.refused && grafted) {
       const engine = engineOf(outcome);
       update(p.id, (q) => {
         q.later = [];
@@ -1400,7 +1402,14 @@ export function createProver(say: (text: string) => void = () => undefined) {
           sentence: closed.refused.message,
           tone: "warn" as Tone,
         }
-      : ordinaryVerdict(closed.outcome);
+      : closed.outcome.verdict === "valid"
+        ? {
+            keyword: "Valid, but not added to the derivation",
+            sentence:
+              "deduxit showed the goal valid, but not by a derivation of this goal alone: by a clausal proof, or with the equality axioms the goal lacks. The goal stays open; prove it step by step.",
+            tone: "warn" as Tone,
+          }
+        : ordinaryVerdict(closed.outcome);
     update(p.id, (q) => {
       q.note = { path, said, tone: said.tone, outcome, budget, ...(all ? { all } : {}) };
       if (path.length === 0) q.verdict = { ...said, outcome };

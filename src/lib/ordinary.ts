@@ -432,18 +432,20 @@ export function ordinaryStep(formulas: readonly GoalFormula[], step: StepForm): 
 
 /**
  * A hint's steps as the page's: the first by its place in the goal (the ladder points at that
- * formula), every one with its side, since each acts on the goal the one before opened.
+ * formula), every one with its side, since each acts on the goal the one before opened; a ∃R or
+ * ∀L with the witness deduxit gave, where it gave one.
  */
 export function hintSteps(
   formulas: readonly GoalFormula[],
   steps: readonly OrdinaryStep[],
 ): StepForm[] {
   const left = formulas.filter((f) => f.side === "input").length;
-  return steps.map((s, i) =>
-    i === 0
-      ? { position: s.side === "left" ? s.position : left + s.position, rule: s.rule }
-      : { side: s.side, position: s.position, rule: s.rule },
-  );
+  return steps.map((s, i) => {
+    const witness = s.witness === undefined ? {} : { witness: s.witness };
+    return i === 0
+      ? { position: s.side === "left" ? s.position : left + s.position, rule: s.rule, ...witness }
+      : { side: s.side, position: s.position, rule: s.rule, ...witness };
+  });
 }
 
 /** The ordinary sequent as the tab shows it: the ASCII connectives as their signs. */
@@ -516,7 +518,7 @@ export function ordinaryVerdict(outcome: OrdinaryOutcome): Said & { tone: Tone }
     memory_limit: "it reached the memory a tab allows",
     stopped: "it was stopped",
     incomplete:
-      "at first order it finds proofs but cannot show that none exists, and it found no finite countermodel",
+      "at first order it found neither a proof nor a finite countermodel, and the proof search may miss a proof (a goal with an open witness $1 is never refuted, since the axiom may still fill it)",
   };
   return {
     keyword: "Unknown: gave up",

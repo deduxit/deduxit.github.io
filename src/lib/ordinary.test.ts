@@ -67,6 +67,18 @@ describe("the ordinary suite", () => {
     ]);
   });
 
+  it("closes a first-order goal by the search, and keeps a hint's witness", () => {
+    const p = start("forall x. (p(x) -> q(x)), p(c) |- exists y. q(y)", "intuitionistic");
+    const goal = asView(p.view).goals[0];
+    const hint = JSON.parse(deduxit.ordinary_hint(JSON.stringify(p.session), 0, S));
+    expect(hintSteps(goal?.formulas ?? [], hint.steps)).toEqual([
+      { position: 2, rule: "∃R", witness: "c" },
+    ]);
+    const closed = JSON.parse(deduxit.ordinary_close(JSON.stringify(p.session), 0, S));
+    expect(closed.outcome.verdict).toBe("valid");
+    expect(closed.view.complete).toBe(true);
+  });
+
   it("writes a session's sequent as the parser reads it back", () => {
     for (const text of [
       "~(a /\\ b) |- ~a \\/ ~b",

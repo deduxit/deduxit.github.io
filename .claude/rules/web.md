@@ -853,7 +853,9 @@ board and the guide disagree, the guide holds.
 - **The hint points at the next press from where the visitor is** (`pointer` in `Stage.tsx`;
   `hint` in `App.tsx` asks deduxit once per goal, `ui.ladder`): the formula to press; with that
   formula chosen, the rule to take (ringed in the popover); with its split open, the chips to
-  move and then the apply button; it takes no step and nothing back. The ring is always shown;
+  move and then the apply button; it takes no step and nothing back. An ordinary `∃R` or `∀L`
+  whose witness deduxit gives (`hintSteps` keeps the step's `witness`, a term the goal holds)
+  says it: "take ∃R with the witness c". The ring is always shown;
   the words are a line over the bottom box with the guide on (and in the live region), and
   where the search finds no proof the line says so and to undo whatever the guide.
 - **The guide's sentence** (`GuideLine` in `Stage.tsx`): with the guide on, one sentence over the
@@ -1182,11 +1184,18 @@ board and the guide disagree, the guide holds.
 
 - An outcome names its engine (`engine`), but a classical refutation is the classical
   refuter's work (`engineOf`), and an ordinary outcome's is its image's (`search.image`) or, by
-  another method, the method (`search.method`: a first-order goal's close and hint are the
-  finite model search's, `models`). The chip beside a goal's note and beside the hint's line
+  another method, the method (`search.method`: a first-order goal's close and hint name the
+  method that answered, `connection`, `grounding` or `models`, each in `ENGINES`, or the
+  embedding's image). The chip beside a goal's note and beside the hint's line
   ("Hint. Focused search Press …"), the label beside a graft's
   rule (`text.engine` after the rule label, from `Proof.engines`, a goal's path to the
   engine, kept in the shelf), and the step list name it; the hover gives the source.
+- **A first-order ordinary goal is closed by the search** as a propositional one is: deduxit's
+  `ordinary_close` proves it and grafts the derivation, checked, or refutes it with a finite
+  structure or a Kripke model with growing domains, its eigenvariables constants there.
+  `closeOrdinary` takes a goal as closed only where the view no longer lists it: a goal deduxit
+  finds valid without a derivation of the goal alone (a clausal proof, or `=` without its
+  axioms) stays open with "Valid, but not added to the derivation".
 - **A search that closes goals says which engine did** (`Proof.searched`, written by `close`,
   `closeOrdinary` alone and Close all of either suite, cleared by `show` at the next change and
   when another search starts;

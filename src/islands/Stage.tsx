@@ -2096,10 +2096,12 @@ export function pointer(prover: Prover, view: Ui): Pointer | null {
         }
       : { words: "This split works. Press the arrow to apply it.", move: [], ready: true };
   }
+  // An ordinary ∃R or ∀L the search gave a witness to says which.
+  const take = step.witness ? `${step.rule} with the witness ${step.witness}` : step.rule;
   if (ui.selected?.goal === goal && ui.selected.position === step.position)
-    return { words: `Take ${step.rule}.`, rule: step.rule, move: [], ready: false };
+    return { words: `Take ${take}.`, rule: step.rule, move: [], ready: false };
   return {
-    words: `Press ${named(step.position)} and take ${step.rule}.`,
+    words: `Press ${named(step.position)} and take ${take}.`,
     formula: step.position,
     move: [],
     ready: false,
