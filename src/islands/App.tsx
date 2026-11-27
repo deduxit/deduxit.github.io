@@ -729,7 +729,9 @@ export default function App(props: {
       const act: Partial<Record<typeof action, () => void>> = {
         undo: () =>
           ui.tab === "tree"
-            ? (proving || !!proof?.custom?.session) && void prover.undo()
+            ? proof?.lambda?.untyped
+              ? void prover.lambdaStep(proof.id, -1)
+              : (proving || !!proof?.custom?.session) && void prover.undo()
             : viewUndo(prover, view),
         redo: () =>
           ui.tab === "tree"

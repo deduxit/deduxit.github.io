@@ -706,10 +706,6 @@ guide on.
 
 ## What the page needs from elsewhere
 
-- **Untyped lambda-terms** are not in deduxit: reading an untyped term,
-  the linear and affine checks, reduction step by step with a bound, and
-  the principal simple type. Until deduxit has them, "Untyped" is
-  inactive.
 - **The exports' settings** (a picture's font, background and scale, the
   form of the rule names, a whole document, the text tree's line, the
   Rocq lemma's name) are deduxit's `--style` options. The current page

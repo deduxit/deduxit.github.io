@@ -100,6 +100,8 @@ const calls = {
   lambda_read_type: deduxit.lambda_read_type,
   lambda_inhabit: deduxit.lambda_inhabit,
   lambda_enumerate: deduxit.lambda_enumerate,
+  lambda_reduce: deduxit.lambda_reduce,
+  lambda_infer: deduxit.lambda_infer,
   modal_read: deduxit.modal_read,
   modal_decide: deduxit.modal_decide,
   modal_countermodel: deduxit.modal_countermodel,

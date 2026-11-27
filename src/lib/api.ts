@@ -42,7 +42,7 @@ import type {
 } from "./custom";
 import type { Forcing } from "./kripke";
 import type { Evaluated } from "./structure";
-import type { Inhabitants, Inhabitation } from "./lambda";
+import type { Inhabitants, Inhabitation, Reduction } from "./lambda";
 import type { TableauReview } from "./written";
 import type { Evaluation, ModalOutcome } from "./modal";
 import type { OrdinaryOutcome, OrdinarySession, OrdinaryStep, OrdinaryView } from "./ordinary";
@@ -423,6 +423,15 @@ export function createApi(changed: (pending: number) => void) {
       /** The type's terms, listed and counted; `options` `{"depth", "max_terms"}` or `""`. */
       enumerate: (type: string, options: string, settings: string) =>
         json<Inhabitants>("lambda_enumerate", type, options, settings),
+      /**
+       * The term reduced by β: the term reached with its `text`, how the reduction ended and the
+       * next redex's place; `options` `{"strategy", "steps", "nodes"}` or `""`.
+       */
+      reduce: (term: string, options: string, settings: string) =>
+        json<Reduction>("lambda_reduce", term, options, settings),
+      /** An untyped term typed at its most general simple type, with its `judgement`. */
+      infer: (term: string, settings: string) =>
+        json<{ readonly judgement: string }>("lambda_infer", term, settings),
     },
     /**
      * The workspace's calls (`workspace_…`): the linked tabs. `doc` is the workspace's document as

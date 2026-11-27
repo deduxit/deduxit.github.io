@@ -244,6 +244,8 @@ export function ExportPanel(props: {
   const offOther = (entry: Entry): string | null | undefined => {
     if (entry.endsWith("-link") || entry === "pack") return undefined;
     const k = kind();
+    if (k === "lambda" && proof()?.lambda?.untyped)
+      return "An untyped term has no typing derivation to write. Copy its link instead.";
     if (entry === "text" || entry === "session" || entry === "rocq")
       return k === "natural"
         ? "deduxit writes natural deduction as LaTeX, Typst or a picture."

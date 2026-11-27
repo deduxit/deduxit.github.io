@@ -240,6 +240,23 @@ the page reads.
   terms of a type are found in the simple calculus alone. The drawing shows only while the tab
   holds a checked term (`typing`), since a resource keeps its last value when its source goes. A
   lambda tab takes no rule hints.
+- **Untyped lambda-terms** (board D12) are three more values of the same parameter
+  (`untyped`, `untyped_linear`, `untyped_affine`, deduxit's names), so a link, the shelf and
+  `suites.test.ts` take them as any calculus; the toggles are two `Seg`s, "Typed"/"Untyped" and the
+  use, which `calculusWith` and `useOf` join and part. Every text is a term there. A term read is
+  checked (`lambda_check`: "Well formed", or deduxit's reason for the uses), then shown at step 0
+  (`lambda_reduce` with `{"steps": 0}`) and typed (`lambda_infer`: the judgement at its most
+  general simple type, `principalWords`, or `ill_typed`'s reason, `untypableWords`). **Every step
+  is taken again from the term as read** (`reduceTo` with `{"steps": n}`; Undo is n − 1, "To the
+  end" n + 1000): the reduction's `term` is nested without its `version`, which deduxit's readers
+  need, so the page never hands a reached term back. The next redex is `next`, a UTF-16 range of
+  `term.text` (JavaScript's own indices), drawn as `mark.redex` in `--color-lapis` and underlined
+  (the colour is not all that tells it; the logo's lapis is `--color-logo`, never this). The
+  words never say a term has no normal form (`reductionWords`): a bound reached is "Not
+  finished". The tools on such a term are Undo, Next step and To the end (`lambdaStep`), and
+  Ctrl+Z steps back; Export offers only the links (no typing derivation to write). Turning a
+  typed tab to Untyped drops the binders' types from the field's text (`eraseTypes`); the other
+  way the typed reader's hint says what to write.
 - **The model editor** (`src/islands/KripkeEditor.tsx`, its data, geometry and words in
   `src/lib/kripke.ts`) draws a Kripke model of either suite on an SVG canvas and changes it;
   deduxit's check of what was drawn is the only judge, so the editor sends the model as drawn

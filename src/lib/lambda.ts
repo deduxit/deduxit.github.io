@@ -13,14 +13,57 @@ import type { Said } from "./words";
 export const prettyLambda = (input: string): string =>
   input.replaceAll("\\", "λ").replaceAll("|-", "⊢").replaceAll("->", "→").replaceAll("-o", "⊸");
 
-/** A lambda calculus, as deduxit names it. */
-export type LambdaCalculus = "simple" | "linear" | "affine";
+/** A lambda calculus, as deduxit names it: typed or untyped, and how often a variable is used. */
+export type LambdaCalculus =
+  | "simple"
+  | "linear"
+  | "affine"
+  | "untyped"
+  | "untyped_linear"
+  | "untyped_affine";
 
-/** The calculi, in the order the select offers them, the simply typed one first. */
-export const LAMBDA_CALCULI: readonly LambdaCalculus[] = ["simple", "linear", "affine"];
+/** How often a term may use each variable: any number of times, exactly once, at most once. */
+export type LambdaUse = "simple" | "linear" | "affine";
+
+/** The uses, in the order the toggle offers them. */
+export const LAMBDA_USES: readonly LambdaUse[] = ["simple", "linear", "affine"];
+
+/** The calculi, the typed ones first, each in the uses' order. */
+export const LAMBDA_CALCULI: readonly LambdaCalculus[] = [
+  "simple",
+  "linear",
+  "affine",
+  "untyped",
+  "untyped_linear",
+  "untyped_affine",
+];
+
+/** Whether a calculus's terms carry no types. */
+export const isUntyped = (c: LambdaCalculus): boolean => c.startsWith("untyped");
+
+/** How often a calculus's terms may use each variable. */
+export const useOf = (c: LambdaCalculus): LambdaUse =>
+  c === "untyped" ? "simple" : (c.replace("untyped_", "") as LambdaUse);
+
+/** The calculus of a use, typed or untyped. */
+export const calculusWith = (use: LambdaUse, untyped: boolean): LambdaCalculus =>
+  untyped ? (use === "simple" ? "untyped" : `untyped_${use}`) : use;
+
+/**
+ * A typed term's text with every λ's type left out (`\x:a -> b. x` to `\x. x`), for the switch to
+ * an untyped calculus: a type ends at its binder's `.`, since no type has one.
+ */
+export const eraseTypes = (text: string): string =>
+  text.replace(/([λ\\]\s*[\p{L}\p{N}_']+)\s*:[^.]*\./gu, "$1.");
 
 /** A term to try: composition's first half, a function applied to an argument. */
 export const TERM_EXAMPLE = String.raw`\f:a -> b. \x:a. f x`;
+
+/** An untyped term to try: the function that applies its argument twice, given the identity. */
+export const UNTYPED_EXAMPLE = String.raw`(\f. \x. f (f x)) (\y. y)`;
+
+/** An untyped term to try where every variable is used once: application, given the identity. */
+export const UNTYPED_LINEAR_EXAMPLE = String.raw`(\f. \x. f x) (\y. y)`;
 
 /** A type to try: two terms, one for each argument it can give back. */
 export const TYPE_EXAMPLE = "a -> a -> a";
@@ -80,14 +123,96 @@ export const CALCULUS_WORDS: Readonly<Record<LambdaCalculus, string>> = {
   simple: "Simply typed",
   linear: "Linear",
   affine: "Affine",
+  untyped: "Untyped",
+  untyped_linear: "Untyped linear",
+  untyped_affine: "Untyped affine",
 };
 
-/** What a calculus asks of a term's variables, in one sentence. */
-export const CALCULUS_SENTENCES: Readonly<Record<LambdaCalculus, string>> = {
+/** What a use asks of a term's variables, in one sentence. */
+export const CALCULUS_SENTENCES: Readonly<Record<LambdaUse, string>> = {
   simple: "A variable may be used any number of times.",
   linear: "Every variable is used exactly once.",
   affine: "Every variable is used at most once.",
 };
+
+/** Where in the term's text the next step reduces, in UTF-16 code units as JavaScript counts. */
+export interface Span {
+  readonly start: number;
+  readonly end: number;
+}
+
+/**
+ * How a reduction ended: in normal form, at its bound on steps or on the term's size, or refused
+ * by a limit (deduxit's `lambda.reduction`).
+ */
+export type ReductionEnd = "normal_form" | "steps" | "nodes" | "refused";
+
+/** A term reduced by β, as the bindings' `lambda_reduce` answers. */
+export interface Reduction {
+  /** The term reached, with its `text`. */
+  readonly term: { readonly text: string };
+  /** The steps taken, each naming its redex. */
+  readonly steps: readonly unknown[];
+  readonly end: ReductionEnd;
+  /** The bound reached, for `steps` and `nodes`. */
+  readonly limit?: number;
+  /** Why a limit refused the reduction, in an error's form. */
+  readonly reason?: { readonly message?: string };
+  /** The redex the next step reduces, or null in normal form. */
+  readonly next: Span | null;
+}
+
+/** An untyped term's verdict: its variables used as its calculus asks. */
+export const formedWords = (use: LambdaUse): Said => ({
+  keyword: "Well formed",
+  sentence: CALCULUS_SENTENCES[use],
+});
+
+/** An untyped term its calculus refuses, the reason as deduxit says it. */
+export const illFormedWords = (reason: string): Said => ({
+  keyword: "Not well formed",
+  sentence: `${reason.charAt(0).toUpperCase()}${reason.slice(1)}.`,
+});
+
+/**
+ * Where a reduction stands after `taken` steps, in a sentence; never that it has no end. `bounded`
+ * says the steps were "To the end"'s, which stopped at its bound on steps.
+ */
+export function reductionWords(reached: Reduction, taken: number, bounded = false): string {
+  const after = taken === 1 ? "1 step" : `${taken} steps`;
+  if (bounded && reached.end === "steps")
+    return `Not finished after ${after}, the bound on steps. The part in blue is reduced next.`;
+  switch (reached.end) {
+    case "normal_form":
+      return taken === 0
+        ? "It is in normal form: no part of it can be reduced."
+        : `Normal form after ${after}: no part of it can be reduced.`;
+    case "nodes":
+      return `Not finished after ${after}: the term grew past ${reached.limit ?? 0} parts, the bound on its size.`;
+    case "refused":
+      return `Not finished after ${after}: ${reached.reason?.message ?? "a limit stopped it"}.`;
+    default:
+      return taken === 0
+        ? "The part in blue is reduced next. Press Next step to reduce it."
+        : `After ${after}. The part in blue is reduced next.`;
+  }
+}
+
+/**
+ * An untyped term's most general simple type, in a sentence, from the judgement deduxit wrote of
+ * the term typed at it (`w : a ⊢ M : b → b`): the type, and the free variables' types it needs.
+ */
+export function principalWords(judgement: string): string {
+  const type = judgement.slice(judgement.lastIndexOf(" : ") + 3);
+  const turnstile = judgement.indexOf("⊢");
+  const context = turnstile > 0 ? judgement.slice(0, turnstile).trim() : "";
+  return context
+    ? `Its most general simple type is ${type}, given ${context}.`
+    : `Its most general simple type is ${type}.`;
+}
+
+/** That no simple type fits an untyped term, with deduxit's reason. */
+export const untypableWords = (reason: string): string => `No simple type fits it: ${reason}.`;
 
 /** A checked term's verdict. */
 export const typedWords = (typed: Typed): Said => ({
@@ -147,10 +272,13 @@ export function lambdaState(work: {
   readonly typing: string | null;
   readonly illTyped: string | null;
   readonly found: Inhabitation | null;
+  readonly untyped?: boolean;
 }): { readonly words: string; readonly tone: "ok" | "bad" | "warn" | "none" } {
   if (work.kind === "term") {
-    if (work.illTyped) return { words: "Not well typed", tone: "bad" };
-    return work.typing ? { words: "Well typed", tone: "ok" } : { words: "Checking", tone: "none" };
+    if (work.illTyped)
+      return { words: work.untyped ? "Not well formed" : "Not well typed", tone: "bad" };
+    if (!work.typing) return { words: "Checking", tone: "none" };
+    return { words: work.untyped ? "Well formed" : "Well typed", tone: "ok" };
   }
   if (work.kind === "type" && work.found) {
     const said = inhabitationWords(work.found);

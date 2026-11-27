@@ -2313,7 +2313,9 @@ export function GuideLine(props: { prover: Prover; ui: Ui }) {
       return p.calculus.suite === "ordinary"
         ? null
         : p.calculus.suite === "lambda"
-          ? "Type a term or a type below and press Enter."
+          ? p.calculus.calculus === "simple"
+            ? "Type a term or a type below and press Enter."
+            : "Type a term below and press Enter."
           : "Type a sequent below and press Enter.";
     const said = viewWords(props.ui, p);
     if (said !== undefined) return said;

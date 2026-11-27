@@ -215,7 +215,15 @@ export function calculusOf(
 export function markOf(c: Calculus): string {
   if (c.suite === "rules") return c.calculus;
   if (c.suite === "modal") return c.system;
-  if (c.suite === "lambda") return { simple: "λ→", linear: "λ⊸", affine: "λ⊸+aff" }[c.calculus];
+  if (c.suite === "lambda")
+    return {
+      simple: "λ→",
+      linear: "λ⊸",
+      affine: "λ⊸+aff",
+      untyped: "λ",
+      untyped_linear: "λ lin",
+      untyped_affine: "λ aff",
+    }[c.calculus];
   if (c.suite === "ordinary")
     return isNatural(c)
       ? { classical: "NK", intuitionistic: "NJ", minimal: "NM" }[c.logic]

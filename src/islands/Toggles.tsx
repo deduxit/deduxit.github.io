@@ -6,7 +6,7 @@
  * Ordinary logic: "Sequent" or "Natural", and classical, intuitionistic or minimal logic (LK, LJ,
  * and LJ without ex falso). Linear logic: classical or intuitionistic, and the single toggles Mix
  * and Affine, and on a net's view how the net is drawn. Modal logic: its system, one of the
- * fifteen from K to S5. Lambda-terms: how often a term may use a variable. A change keeps the
+ * fifteen from K to S5. Lambda-terms: typed or untyped, and how often a term may use a variable. A change keeps the
  * proof where its steps hold in the new calculus; where one does not, the new calculus opens
  * beside the proof, which keeps its own.
  */
@@ -15,7 +15,14 @@ import { createEffect, createSignal, For, onCleanup, Show } from "solid-js";
 import { produce } from "solid-js/store";
 import { FORMS } from "../lib/clausal";
 import type { Mode } from "../lib/deduxit";
-import { CALCULUS_WORDS, LAMBDA_CALCULI } from "../lib/lambda";
+import {
+  CALCULUS_WORDS,
+  calculusWith,
+  isUntyped,
+  LAMBDA_USES,
+  type LambdaUse,
+  useOf,
+} from "../lib/lambda";
 import { CONDITION_WORDS, CONDITIONS, closure, SYSTEMS, systemOf, systemWords } from "../lib/modal";
 import {
   type Calculus as Chosen,
@@ -69,6 +76,16 @@ export function Toggles(props: { prover: Prover; ui: Ui }) {
   const system = () => {
     const c = calculus();
     return c.suite === "modal" ? c.system : "K";
+  };
+  /** Whether the lambda calculus is untyped. */
+  const lambdaUntyped = () => {
+    const c = calculus();
+    return c.suite === "lambda" && isUntyped(c.calculus);
+  };
+  /** How often the lambda calculus lets a term use each variable. */
+  const lambdaUse = (): LambdaUse => {
+    const c = calculus();
+    return c.suite === "lambda" ? useOf(c.calculus) : "simple";
   };
 
   /** Changes the calculus: the proof stays where its steps hold, else the new one opens beside. */
@@ -428,36 +445,24 @@ export function Toggles(props: { prover: Prover; ui: Ui }) {
           </fieldset>
         </Show>
         <Show when={calculus().suite === "lambda"}>
-          <fieldset class="toggle" aria-label="Typing">
-            <button
-              type="button"
-              class="toggle-cell"
-              aria-pressed={true}
-              data-tip="Simply typed terms"
-            >
-              Typed
-            </button>
-            <button
-              type="button"
-              class="toggle-cell"
-              aria-pressed={false}
-              aria-disabled="true"
-              data-tip="Coming soon"
-              onClick={() => setUi("notice", { text: "Untyped lambda-terms are coming soon." })}
-            >
-              Untyped
-            </button>
-          </fieldset>
+          <Seg
+            label="Typing"
+            items={[false, true].map((untyped) => ({
+              name: untyped ? "Untyped" : "Typed",
+              tip: untyped
+                ? "Terms without types, reduced step by step"
+                : "Terms whose every λ names its variable's type",
+              on: lambdaUntyped() === untyped,
+              pick: () => void ask(lambda(calculusWith(lambdaUse(), untyped))),
+            }))}
+          />
           <Seg
             label="How often a term may use each variable"
-            items={LAMBDA_CALCULI.map((each) => ({
+            items={LAMBDA_USES.map((each) => ({
               name: USE_WORDS[each],
-              tip: CALCULUS_WORDS[each],
-              on: (() => {
-                const c = calculus();
-                return c.suite === "lambda" && c.calculus === each;
-              })(),
-              pick: () => void ask(lambda(each)),
+              tip: CALCULUS_WORDS[calculusWith(each, lambdaUntyped())],
+              on: lambdaUse() === each,
+              pick: () => void ask(lambda(calculusWith(each, lambdaUntyped()))),
             }))}
           />
         </Show>

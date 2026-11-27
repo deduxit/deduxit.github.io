@@ -63,7 +63,14 @@ import {
   modelJson,
   rootSequent,
 } from "../lib/modal";
-import { type Inhabitants, type Inhabitation, isTerm } from "../lib/lambda";
+import {
+  eraseTypes,
+  type Inhabitants,
+  type Inhabitation,
+  isTerm,
+  isUntyped,
+  type Reduction,
+} from "../lib/lambda";
 import { Cancelled } from "../lib/protocol";
 import {
   type Shelf,
@@ -256,6 +263,21 @@ export interface LambdaWork {
   listed: Inhabitants | null;
   /** What deduxit said of the last call, shown in the panel. */
   problem: Said | null;
+  /** Whether the calculus is untyped: the term is reduced step by step and given a simple type. */
+  untyped: boolean;
+  /** An untyped term's most general simple type: the judgement of the term typed at it. */
+  principal: string | null;
+  /** Why no simple type fits the untyped term, as deduxit says it. */
+  untypable: string | null;
+  /** How many steps of β the stage shows taken from the term as read. */
+  taken: number;
+  /**
+   * The term reached after `taken` steps, its next redex and how the reduction ended. Every step
+   * is taken again from the term as read, so Undo is one step fewer.
+   */
+  reached: Reduction | null;
+  /** Whether `reached` is "To the end"'s, which its bound on steps may have stopped. */
+  bounded: boolean;
 }
 
 /** One open proof. */
@@ -620,6 +642,9 @@ const modalWork = (calculus: Calculus): ModalWork | null =>
     ? { statement: null, outcome: null, model: null, world: null, evaluation: null, problem: null }
     : null;
 
+/** How many steps "To the end" takes at most, deduxit's default bound of a reduction. */
+const LAMBDA_RUN = 1000;
+
 /** The work of a new lambda tab, nothing read yet. */
 const lambdaWork = (calculus: Calculus): LambdaWork | null =>
   calculus.suite === "lambda"
@@ -632,6 +657,12 @@ const lambdaWork = (calculus: Calculus): LambdaWork | null =>
         found: null,
         listed: null,
         problem: null,
+        untyped: isUntyped(calculus.calculus),
+        principal: null,
+        untypable: null,
+        taken: 0,
+        reached: null,
+        bounded: false,
       }
     : null;
 
@@ -1187,6 +1218,16 @@ export function createProver(say: (text: string) => void = () => undefined) {
         } else if (illTyped(checked.failed)) q.lambda.illTyped = illTyped(checked.failed);
         else if (checked.failed) q.lambda.problem = inputProblem(checked.failed);
       });
+      if (checked.ok && isUntyped(calculus.calculus)) {
+        await reduceTo(id, statement, 0, false);
+        const typed = await attempt(() => api.lambda.infer(statement, settings));
+        update(id, (q) => {
+          if (!q.lambda || q.lambda.statement !== statement) return;
+          if (typed.ok) q.lambda.principal = typed.value.judgement;
+          else if (illTyped(typed.failed)) q.lambda.untypable = illTyped(typed.failed);
+          else if (typed.failed) q.lambda.problem = inputProblem(typed.failed);
+        });
+      }
     } else {
       const found = await attempt(() => api.lambda.inhabit(statement, settings));
       update(id, (q) => {
@@ -1204,6 +1245,26 @@ export function createProver(say: (text: string) => void = () => undefined) {
       }
     }
     save();
+  }
+
+  /**
+   * Shows an untyped term reduced by at most `steps` steps of β from the term as read: the term
+   * reached and its next redex. A refusal leaves the step shown as it was and says why.
+   */
+  async function reduceTo(id: string, statement: string, steps: number, bounded: boolean) {
+    const options = JSON.stringify({ steps });
+    const reduced = await attempt(() => api.lambda.reduce(statement, options, lambdaJson()));
+    update(id, (q) => {
+      if (!q.lambda || q.lambda.statement !== statement) return;
+      if (!reduced.ok) {
+        if (reduced.failed) q.lambda.problem = inputProblem(reduced.failed);
+        return;
+      }
+      q.lambda.reached = reduced.value;
+      q.lambda.taken = reduced.value.steps.length;
+      q.lambda.bounded = bounded;
+      q.lambda.problem = null;
+    });
   }
 
   /**
@@ -1743,6 +1804,18 @@ export function createProver(say: (text: string) => void = () => undefined) {
       });
     }),
 
+    /**
+     * Moves an untyped term's reduction: `step` 1 one step on, -1 one step back, null to the end
+     * within the bounds.
+     */
+    lambdaStep: guard(async (id: string, step: 1 | -1 | null) => {
+      const work = store.proofs.find((q) => q.id === id)?.lambda;
+      if (!work?.statement || !work.reached) return;
+      if (step === -1 && work.taken === 0) return;
+      if (step !== -1 && !work.reached.next) return;
+      await reduceTo(id, work.statement, work.taken + (step ?? LAMBDA_RUN), step === null);
+    }),
+
     /** Changes a custom proof's rule file as typed; the calculus is named by the file's name. */
     setCustomFile(id: string, file: string) {
       update(id, (q) => {
@@ -2211,8 +2284,17 @@ export function createProver(say: (text: string) => void = () => undefined) {
         p.calculus.suite === "lambda"
       ) {
         // A modal sequent is decided again in the system chosen; one of another suite is read
-        // again from the field's text, which the modal syntax reads as ordinary logic's.
+        // again from the field's text, which the modal syntax reads as ordinary logic's. A typed
+        // term read as an untyped one drops its types, which the untyped calculi refuse.
+        const input =
+          p.calculus.suite === "lambda" &&
+          !isUntyped(p.calculus.calculus) &&
+          calculus.suite === "lambda" &&
+          isUntyped(calculus.calculus)
+            ? eraseTypes(p.input)
+            : p.input;
         update(id, (q) => {
+          q.input = input;
           q.calculus = calculus;
           q.session = null;
           q.view = null;
@@ -2228,7 +2310,7 @@ export function createProver(say: (text: string) => void = () => undefined) {
           q.modal = modalWork(calculus);
           q.lambda = lambdaWork(calculus);
         });
-        if (p.input.trim()) await startText(id, p.input, calculus);
+        if (input.trim()) await startText(id, input, calculus);
         return;
       }
       if (calculus.suite === "rules" || p.calculus.suite === "rules") {

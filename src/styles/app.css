@@ -792,6 +792,20 @@ svg.sign {
 .custom-drawing svg :is(g[stroke], path, line) {
   stroke: var(--color-ink);
 }
+/* An untyped term being reduced: the term reached on its own line, the part reduced next in
+   lapis and underlined, so the colour is not all that tells it. */
+.lambda-term {
+  max-width: 100%;
+  margin: var(--spacing-3) 0 var(--spacing-2);
+  overflow-wrap: anywhere;
+  font-size: var(--text-head);
+}
+.lambda-term .redex {
+  background: none;
+  color: var(--color-lapis);
+  text-decoration: underline var(--line-strong) var(--color-lapis);
+  text-underline-offset: var(--line-strong);
+}
 .custom-file {
   width: min(100%, var(--size-text));
 }

@@ -579,7 +579,7 @@ export async function customStep(page: Page, words: string) {
 
 /**
  * Lambda-terms: the new tab view with its toggle, a term checked with its typing derivation, a
- * type's term found and its terms listed, and an ill-typed term.
+ * type's term found and its terms listed, an ill-typed term, and an untyped term reduced a step.
  */
 export async function lambdaing(page: Page, visit: Visit) {
   await goto(page);
@@ -609,6 +609,15 @@ export async function lambdaing(page: Page, visit: Visit) {
   await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
   await expect(page.locator(".lambda .kw.bad", { hasText: "Not well typed" })).toBeVisible();
   await visit("lambda ill typed");
+  await newTab(page);
+  await (await switches(page)).getByRole("button", { name: "Untyped" }).click();
+  await visit("lambda untyped entry");
+  await page.getByRole("textbox", { name: "Sequent" }).fill(String.raw`(\f. \x. f (f x)) (\y. y)`);
+  await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
+  await expect(page.locator(".lambda-term mark.redex")).toBeVisible();
+  await press(page, "Next step");
+  await expect(page.locator(".lambda-reduction [role=status]")).toContainText("After 1 step");
+  await visit("lambda untyped reduced");
 }
 
 /**

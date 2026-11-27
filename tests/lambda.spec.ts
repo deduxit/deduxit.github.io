@@ -3,7 +3,8 @@
 
 // Lambda-terms on the page: the new tab view's logic opens them, a term typed is checked and its
 // typing derivation drawn, a type typed gets a term found and its terms listed and counted, an
-// ill-typed term says why, and the link keeps the text and the calculus.
+// ill-typed term says why, and the link keeps the text and the calculus. An untyped term is
+// reduced a step at a time with its next redex marked, and given its most general simple type.
 
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
@@ -47,10 +48,64 @@ test("the page shows nothing of lambda-terms until their logic is chosen", async
     "aria-pressed",
     "true",
   );
-  // Untyped terms wait for deduxit: the toggle is inactive and says so when pressed.
-  // An inactive control is aria-disabled, which Playwright presses only when forced.
-  await page.getByRole("button", { name: "Untyped" }).click({ force: true });
-  await expect(page.getByRole("status").filter({ hasText: "coming soon" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Typed", exact: true })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+});
+
+test("an untyped term is reduced a step at a time, its next redex marked, and typed", async ({
+  page,
+}) => {
+  await lambdaTab(page);
+  await (await switches(page)).getByRole("button", { name: "Untyped" }).click();
+  await read(page, String.raw`(\f. \x. f (f x)) (\y. y)`);
+  await expect(page.locator(".lambda .kw.ok")).toHaveText("Well formed");
+  await expect(page.locator(".lambda-reduction")).toContainText(
+    "Its most general simple type is a → a.",
+  );
+  const term = page.locator(".lambda-term");
+  const redex = term.locator("mark.redex");
+  await expect(term).toHaveText("(λf. λx. f (f x)) (λy. y)");
+  await expect(redex).toHaveText("(λf. λx. f (f x)) (λy. y)");
+  await tool(page, "Next step").click();
+  await expect(term).toHaveText("λx. (λy. y) ((λy. y) x)");
+  await expect(redex).toHaveText("(λy. y) ((λy. y) x)");
+  await expect(page.locator(".lambda-reduction [role=status]")).toHaveText(
+    "After 1 step. The part in blue is reduced next.",
+  );
+  await tool(page, "To the end").click();
+  await expect(term).toHaveText("λx. x");
+  await expect(redex).toHaveCount(0);
+  await expect(page.locator(".lambda-reduction [role=status]")).toHaveText(
+    "Normal form after 3 steps: no part of it can be reduced.",
+  );
+  await expect(tool(page, "Next step")).toBeDisabled();
+  // Undo goes back one step, by the tool or the key.
+  await tool(page, "Undo").click();
+  await expect(term).toHaveText("λx. (λy. y) x");
+  await page.keyboard.press("Control+z");
+  await expect(term).toHaveText("λx. (λy. y) ((λy. y) x)");
+  await expect(viewCell(page)).toHaveAttribute("data-tip", "Lambda-terms, λ");
+  await expect(page).toHaveURL(/u=lambda&m=untyped\b/);
+});
+
+test("an untyped term that applies a variable to itself has no simple type", async ({ page }) => {
+  await lambdaTab(page);
+  // A typed term keeps its text without its types when the toggle turns to Untyped.
+  await read(page, String.raw`\x:a. x`);
+  await (await switches(page)).getByRole("button", { name: "Untyped" }).click();
+  await expect(page.getByRole("textbox", { name: "Sequent" })).toHaveValue(String.raw`\x. x`);
+  await expect(page.locator(".lambda .kw.ok")).toHaveText("Well formed");
+  await newTab(page);
+  await read(page, String.raw`(\x. x x) (\x. x x)`);
+  await expect(page.locator(".lambda-reduction")).toContainText("No simple type fits it: in `x x`");
+  // In the untyped linear calculus the same term is refused for its uses of x.
+  await (await switches(page))
+    .getByRole("group", { name: "How often a term may use each variable" })
+    .getByRole("button", { name: "Linear" })
+    .click();
+  await expect(page.locator(".lambda .kw.bad")).toHaveText("Not well formed");
 });
 
 test("a term is checked and its typing derivation drawn by natural deduction's rules", async ({

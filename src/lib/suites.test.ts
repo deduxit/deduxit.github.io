@@ -61,6 +61,7 @@ describe("the suite registry", () => {
     expect(calculusOf("modal", "sequent", "S6")).toBeUndefined();
     // A lambda calculus is checked by typing, which a link names by leaving the method out.
     expect(calculusOf("lambda", undefined, "linear")).toEqual(lambda("linear"));
+    expect(calculusOf("lambda", undefined, "untyped_affine")).toEqual(lambda("untyped_affine"));
     expect(calculusOf("lambda", "sequent", "simple")).toBeUndefined();
     expect(calculusOf("lambda", undefined, "system-f")).toBeUndefined();
     expect(calculusOf("modal", "natural", "K")).toBeUndefined();
@@ -83,5 +84,7 @@ describe("the tab's mark on a wide screen", () => {
     expect(calculusWords(modal("K"))).toBe("Modal, K (no condition)");
     expect(markLabel(lambda("simple"))).toBe("Lambda-terms (λ→)");
     expect(calculusWords(lambda("affine"))).toBe("Lambda-terms, affine");
+    expect(markLabel(lambda("untyped_linear"))).toBe("Lambda-terms (λ lin)");
+    expect(calculusWords(lambda("untyped_linear"))).toBe("Lambda-terms, untyped linear");
   });
 });

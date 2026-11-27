@@ -792,6 +792,11 @@ export function Tools(props: {
     const added = addedOf(props.ui, p.id, ui.tab);
     return !!added && staleOf(p, added);
   };
+  /** An untyped term's work while it is being reduced, or false. */
+  const reducing = () => {
+    const work = proof()?.lambda;
+    return !!work?.untyped && !!work.reached && work;
+  };
   /** Whether the stepped view shown can go back a step. */
   const canStepBack = () => {
     const p = proof();
@@ -977,6 +982,35 @@ export function Tools(props: {
             }}
           />
         </fieldset>
+      </Show>
+      <Show when={ui.tab === "tree" && reducing()}>
+        {(work) => (
+          <>
+            <fieldset class="tool-group" aria-label="Steps">
+              <Tool
+                name="Undo"
+                action="undo"
+                icon={<Sign name="undo" />}
+                disabled={work().taken === 0 || busy()}
+                onClick={() => void props.prover.lambdaStep(proof()?.id ?? "", -1)}
+              />
+            </fieldset>
+            <fieldset class="tool-group" aria-label="Forward">
+              <Tool
+                name="Next step"
+                icon={<Sign name="next" />}
+                disabled={!work().reached?.next || busy()}
+                onClick={() => void props.prover.lambdaStep(proof()?.id ?? "", 1)}
+              />
+              <Tool
+                name="To the end"
+                icon={<Sign name="end" />}
+                disabled={!work().reached?.next || busy()}
+                onClick={() => void props.prover.lambdaStep(proof()?.id ?? "", null)}
+              />
+            </fieldset>
+          </>
+        )}
       </Show>
       <Show when={proving() || (ui.tab === "tree" && !!proof()?.custom?.session)}>
         <fieldset class="tool-group" aria-label="Steps">
