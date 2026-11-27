@@ -50,11 +50,20 @@ export const calculusWith = (use: LambdaUse, untyped: boolean): LambdaCalculus =
   untyped ? (use === "simple" ? "untyped" : `untyped_${use}`) : use;
 
 /**
- * A typed term's text with every λ's type left out (`\x:a -> b. x` to `\x. x`), for the switch to
- * an untyped calculus: a type ends at its binder's `.`, since no type has one.
+ * A typed term's text with its types left out, for the switch to an untyped calculus: every λ's
+ * (`\x:a -> b. x` to `\x. x`; a type ends at its binder's `.`, since no type has one) and a
+ * context's (`x : a, f : a -> b |- f x` to `x, f |- f x`; no type has a `,`).
  */
-export const eraseTypes = (text: string): string =>
-  text.replace(/([λ\\]\s*[\p{L}\p{N}_']+)\s*:[^.]*\./gu, "$1.");
+export function eraseTypes(text: string): string {
+  const bare = text.replace(/([λ\\]\s*[\p{L}\p{N}_']+)\s*:[^.]*\./gu, "$1.");
+  const turnstile = /⊢|\|-/u.exec(bare);
+  if (!turnstile || !bare.slice(0, turnstile.index).trim()) return bare;
+  const names = bare
+    .slice(0, turnstile.index)
+    .split(",")
+    .map((declared) => declared.replace(/:.*/su, "").trim());
+  return `${names.join(", ")} ${bare.slice(turnstile.index)}`;
+}
 
 /** A term to try: composition's first half, a function applied to an argument. */
 export const TERM_EXAMPLE = String.raw`\f:a -> b. \x:a. f x`;

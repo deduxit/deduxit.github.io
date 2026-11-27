@@ -105,6 +105,9 @@ describe("what the panel says", () => {
   it("drops a typed term's types for an untyped calculus, and pairs typing with use", () => {
     expect(eraseTypes(String.raw`\f:a -> b. \x:a. f x`)).toBe(String.raw`\f. \x. f x`);
     expect(eraseTypes("λx:a ⊸ b. x")).toBe("λx. x");
+    const judged = eraseTypes("x : a, f : a -> b |- f x");
+    expect(judged).toBe("x, f |- f x");
+    expect(() => deduxit.lambda_read(judged, "untyped", "")).not.toThrow();
     for (const c of LAMBDA_CALCULI) expect(calculusWith(useOf(c), isUntyped(c))).toBe(c);
   });
 
