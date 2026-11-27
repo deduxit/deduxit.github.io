@@ -172,3 +172,21 @@ test("Export writes a checked term's typing derivation as LaTeX, Typst or a pict
     panel.getByText("deduxit writes a term's typing as LaTeX, Typst or a picture."),
   ).toBeVisible();
 });
+
+test("a typed and an untyped tab each keep their own verdict and drawing", async ({ page }) => {
+  await lambdaTab(page);
+  await read(page, String.raw`\x:a. x`);
+  await expect(page.locator(".lambda .custom-drawing svg")).toBeVisible();
+  await newTab(page);
+  await (await switches(page)).getByRole("button", { name: "Untyped" }).click();
+  await read(page, String.raw`(\x. x x) (\y. y)`);
+  const chips = page.getByRole("tablist", { name: "Sequents" }).getByRole("tab");
+  await chips.first().click();
+  await expect(page.locator(".lambda .kw.ok")).toHaveText("Well typed");
+  await expect(page.locator(".lambda .custom-drawing svg")).toBeVisible();
+  // Back on the untyped term: its own words, and no other term's typing derivation.
+  await chips.nth(1).click();
+  await expect(page.locator(".lambda .kw.ok")).toHaveText("Well formed");
+  await expect(page.locator(".lambda-term")).toBeVisible();
+  await expect(page.locator(".lambda .custom-drawing svg")).toHaveCount(0);
+});

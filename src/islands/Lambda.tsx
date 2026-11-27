@@ -214,12 +214,15 @@ function Read(props: { prover: Prover }) {
             fallback={
               <Show when={work()?.typing && work()?.judgement} fallback={<>Checking…</>}>
                 {(judgement) => {
-                  const said = untyped()
-                    ? formedWords(useOf(calculusOf(props)))
-                    : typedWords({ calculus: calculusOf(props), judgement: judgement() });
+                  // Read again on every change: another tab's term may take this one's place
+                  // while the condition stays true.
+                  const said = () =>
+                    untyped()
+                      ? formedWords(useOf(calculusOf(props)))
+                      : typedWords({ calculus: calculusOf(props), judgement: judgement() });
                   return (
                     <>
-                      <span class="kw ok">{said.keyword}</span> {said.sentence}
+                      <span class="kw ok">{said().keyword}</span> {said().sentence}
                     </>
                   );
                 }}
@@ -227,10 +230,10 @@ function Read(props: { prover: Prover }) {
             }
           >
             {(reason) => {
-              const said = untyped() ? illFormedWords(reason()) : illTypedWords(reason());
+              const said = () => (untyped() ? illFormedWords(reason()) : illTypedWords(reason()));
               return (
                 <>
-                  <span class="kw bad">{said.keyword}</span> {said.sentence}
+                  <span class="kw bad">{said().keyword}</span> {said().sentence}
                 </>
               );
             }}
@@ -258,7 +261,7 @@ function Read(props: { prover: Prover }) {
       </Show>
       <Show when={work()?.problem}>{(said) => <Why said={said()} class="custom-problem" />}</Show>
       <Show
-        when={work()?.typing && drawing()}
+        when={!untyped() && work()?.typing && drawing()}
         fallback={
           <Show when={found()?.term?.judgement}>
             {(judgement) => <p class="method-verdict m">{judgement()}</p>}
