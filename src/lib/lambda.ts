@@ -13,14 +13,26 @@ import type { Said } from "./words";
 export const prettyLambda = (input: string): string =>
   input.replaceAll("\\", "λ").replaceAll("|-", "⊢").replaceAll("->", "→").replaceAll("-o", "⊸");
 
-/** A lambda calculus, as deduxit names it: typed or untyped, and how often a variable is used. */
+/**
+ * A lambda calculus, as deduxit names it: simply typed, System F or untyped, and how often a
+ * variable is used.
+ */
 export type LambdaCalculus =
   | "simple"
   | "linear"
   | "affine"
   | "untyped"
   | "untyped_linear"
-  | "untyped_affine";
+  | "untyped_affine"
+  | "system_f"
+  | "system_f_linear"
+  | "system_f_affine";
+
+/** How a calculus types its terms: simple types, System F's types `∀X. A`, or none. */
+export type LambdaTyping = "simple" | "system_f" | "untyped";
+
+/** The typings, in the order the toggle offers them. */
+export const LAMBDA_TYPINGS: readonly LambdaTyping[] = ["simple", "system_f", "untyped"];
 
 /** How often a term may use each variable: any number of times, exactly once, at most once. */
 export type LambdaUse = "simple" | "linear" | "affine";
@@ -28,7 +40,7 @@ export type LambdaUse = "simple" | "linear" | "affine";
 /** The uses, in the order the toggle offers them. */
 export const LAMBDA_USES: readonly LambdaUse[] = ["simple", "linear", "affine"];
 
-/** The calculi, the typed ones first, each in the uses' order. */
+/** The calculi, the simply typed ones first, then the untyped, then System F, each in the uses' order. */
 export const LAMBDA_CALCULI: readonly LambdaCalculus[] = [
   "simple",
   "linear",
@@ -36,26 +48,41 @@ export const LAMBDA_CALCULI: readonly LambdaCalculus[] = [
   "untyped",
   "untyped_linear",
   "untyped_affine",
+  "system_f",
+  "system_f_linear",
+  "system_f_affine",
 ];
 
+/** How a calculus types its terms. */
+export const typingOf = (c: LambdaCalculus): LambdaTyping =>
+  c.startsWith("untyped") ? "untyped" : c.startsWith("system_f") ? "system_f" : "simple";
+
 /** Whether a calculus's terms carry no types. */
-export const isUntyped = (c: LambdaCalculus): boolean => c.startsWith("untyped");
+export const isUntyped = (c: LambdaCalculus): boolean => typingOf(c) === "untyped";
 
 /** How often a calculus's terms may use each variable. */
-export const useOf = (c: LambdaCalculus): LambdaUse =>
-  c === "untyped" ? "simple" : (c.replace("untyped_", "") as LambdaUse);
+export const useOf = (c: LambdaCalculus): LambdaUse => {
+  const use = c.replace(/^(?:untyped|system_f)_?/u, "");
+  return use === "" ? "simple" : (use as LambdaUse);
+};
 
-/** The calculus of a use, typed or untyped. */
-export const calculusWith = (use: LambdaUse, untyped: boolean): LambdaCalculus =>
-  untyped ? (use === "simple" ? "untyped" : `untyped_${use}`) : use;
+/** The calculus of a use and a typing. */
+export const calculusWith = (use: LambdaUse, typing: LambdaTyping): LambdaCalculus =>
+  typing === "simple" ? use : use === "simple" ? typing : `${typing}_${use}`;
 
 /**
  * A typed term's text with its types left out, for the switch to an untyped calculus: every λ's
- * (`\x:a -> b. x` to `\x. x`; a type ends at its binder's `.`, since no type has one) and a
- * context's (`x : a, f : a -> b |- f x` to `x, f |- f x`; no type has a `,`).
+ * (`\x:a -> b. x` to `\x. x`; a type ends at its binder's `.`, once System F's `forall X.` is
+ * taken out of it), a context's (`x : a, f : a -> b |- f x` to `x, f |- f x`; no type has a
+ * `,`), and System F's type abstractions (`/\X.`, `ΛX.`) and type applications (`[a]`).
  */
 export function eraseTypes(text: string): string {
-  const bare = text.replace(/([λ\\]\s*[\p{L}\p{N}_']+)\s*:[^.]*\./gu, "$1.");
+  // The binders' types go before the type abstractions, since `/\` is also a type's ∧.
+  const bare = text
+    .replace(/(?:∀\s*|\bforall\s+)[\p{L}\p{N}_']+\s*\./gu, "")
+    .replace(/([λ\\]\s*[\p{L}\p{N}_']+)\s*:[^.]*\./gu, "$1.")
+    .replace(/(?:Λ|\/\\)\s*[\p{L}\p{N}_']+\s*\.\s*/gu, "")
+    .replace(/\s*\[[^\]]*\]/gu, "");
   const turnstile = /⊢|\|-/u.exec(bare);
   if (!turnstile || !bare.slice(0, turnstile.index).trim()) return bare;
   const names = bare
@@ -73,6 +100,9 @@ export const UNTYPED_EXAMPLE = String.raw`(\f. \x. f (f x)) (\y. y)`;
 
 /** An untyped term to try where every variable is used once: application, given the identity. */
 export const UNTYPED_LINEAR_EXAMPLE = String.raw`(\f. \x. f x) (\y. y)`;
+
+/** A System F term to try: the identity of every type, used at the type `a`. */
+export const SYSTEM_F_EXAMPLE = String.raw`(/\X. \x:X. x) [a]`;
 
 /** A type to try: two terms, one for each argument it can give back. */
 export const TYPE_EXAMPLE = "a -> a -> a";
@@ -135,6 +165,23 @@ export const CALCULUS_WORDS: Readonly<Record<LambdaCalculus, string>> = {
   untyped: "Untyped",
   untyped_linear: "Untyped linear",
   untyped_affine: "Untyped affine",
+  system_f: "System F",
+  system_f_linear: "Linear System F",
+  system_f_affine: "Affine System F",
+};
+
+/** What each typing is, for the toggle's tip. */
+export const TYPING_TIPS: Readonly<Record<LambdaTyping, string>> = {
+  simple: "Terms whose every λ names its variable's type",
+  system_f: "Typed terms with types ∀X. A that hold for every type, as /\\X. M and M [A]",
+  untyped: "Terms without types, reduced step by step",
+};
+
+/** A typing in a few words, for the toggle. */
+export const TYPING_WORDS: Readonly<Record<LambdaTyping, string>> = {
+  simple: "Simply typed",
+  system_f: "System F",
+  untyped: "Untyped",
 };
 
 /** What a use asks of a term's variables, in one sentence. */

@@ -242,8 +242,9 @@ the page reads.
   lambda tab takes no rule hints.
 - **Untyped lambda-terms** (board D12) are three more values of the same parameter
   (`untyped`, `untyped_linear`, `untyped_affine`, deduxit's names), so a link, the shelf and
-  `suites.test.ts` take them as any calculus; the toggles are two `Seg`s, "Typed"/"Untyped" and the
-  use, which `calculusWith` and `useOf` join and part. Every text is a term there. A term read is
+  `suites.test.ts` take them as any calculus; the toggles are two `Seg`s, the typing ("Simply
+  typed", "System F", "Untyped") and the use, which `calculusWith`, `typingOf` and `useOf` join and
+  part. Every text is a term there. A term read is
   checked (`lambda_check`: "Well formed", or deduxit's reason for the uses), then shown at step 0
   (`lambda_reduce` with `{"steps": 0}`) and typed (`lambda_infer`: the judgement at its most
   general simple type, `principalWords`, or `ill_typed`'s reason, `untypableWords`). **Every step
@@ -257,6 +258,15 @@ the page reads.
   Ctrl+Z steps back; Export offers only the links (no typing derivation to write). Turning a
   typed tab to Untyped drops the binders' types from the field's text (`eraseTypes`); the other
   way the typed reader's hint says what to write.
+- **System F** (board D12's third typing) is three more values of the parameter (`system_f`,
+  `system_f_linear`, `system_f_affine`); the typing toggle is a `Seg` of `LAMBDA_TYPINGS`
+  ("Simply typed", "System F", "Untyped", `typingOf` and `calculusWith` join it with the use).
+  A System F term takes the typed path (`lambda_check`, then `lambda_draw`, whose rules add `∀I`
+  and `∀E`); every text is a term there, and deduxit's reader refuses a `λ` without its type with
+  the reason that System F infers none, which the field's note shows. `eraseTypes` also drops
+  `forall X.`, `/\X.`/`ΛX.` and `[A]` for the switch to Untyped, the binders' types before the
+  type abstractions, since `/\` is also a type's ∧. Its mark is `λ2` (Barendregt's name in the
+  λ-cube).
 - **The model editor** (`src/islands/KripkeEditor.tsx`, its data, geometry and words in
   `src/lib/kripke.ts`) draws a Kripke model of either suite on an SVG canvas and changes it;
   deduxit's check of what was drawn is the only judge, so the editor sends the model as drawn

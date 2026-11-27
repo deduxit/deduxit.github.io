@@ -21,7 +21,7 @@ they can be played, and what they show follows what is pressed.
 | D9 Model | A first-order countermodel |
 | D10 Settings | The Settings page |
 | D11 Modal | Modal logic: the system, the verdict, the countermodel |
-| D12 Lambda | Lambda-terms, typed and untyped |
+| D12 Lambda | Lambda-terms, simply typed, in System F and untyped |
 | D13 Ways | Every other view of a sequent: table, tableau, resolution, normal form, interpolant, model, translations |
 | D14 Made | Views made from a proof: cut elimination, the lambda-term, a copy |
 | D15 Drawing | Pan, zoom, fit, and how a net is drawn |
@@ -440,7 +440,7 @@ Ten groups, by what a visitor wants to do. "Board" names where the design is dra
 | Decide a modal sequent | A symbol on the new tab view. The sequent is decided on Enter and again when the system changes. A countermodel is a view of its own, `⊭`, changed by pressing. Where the toggles are stand the system's name and five conditions on what a world sees; the conditions make the system, and a press on the name opens the list of the fifteen | D11 |
 | Prove a valid modal sequent step by step | "Prove step by step" among the tools of a valid sequent makes a view in the labelled calculus | D11 |
 | Check or find a lambda-term | A symbol on the new tab view. One toggle says how often a variable may be used: "Unrestricted", "Linear", "Affine". The box takes a term, which is checked and drawn with its typing derivation, or a type, for which a term is found. "List its terms" among the tools | D12 |
-| Work with untyped lambda-terms | A second toggle, "Typed" or "Untyped". An untyped term is reduced step by step, the part reduced next in lapis, with "Next step" and "To the end" as for cut elimination; a line says which simple type it would have, or that none fits | D12 |
+| Work with untyped lambda-terms, or with System F | A second toggle, "Simply typed", "System F" or "Untyped". A term of System F is checked and drawn as a simply typed one is, every type abstraction and application written. An untyped term is reduced step by step, the part reduced next in lapis, with "Next step" and "To the end" as for cut elimination; a line says which simple type it would have, or that none fits | D12 |
 | Prove in rules of one's own | Left out, at least for now | left out |
 
 ### 5. Look at a sequent in another way

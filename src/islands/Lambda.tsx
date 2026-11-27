@@ -6,7 +6,8 @@
  * and a type to try. A term typed is checked: its type and its typing derivation drawn, a
  * judgement per part, or why it is not well typed. A type typed gets a term found, which deduxit
  * reads back from a proof of the type's formula, or the news that it has none; its terms are
- * listed and counted on request. An untyped term is checked for how it uses its variables, given
+ * listed and counted on request. A term of System F is checked and drawn as a typed one is, its
+ * types abstracted and applied as written. An untyped term is checked for how it uses its variables, given
  * its most general simple type, and reduced by β a step at a time with the tools, the part reduced
  * next marked. Nothing leaves the page: deduxit runs in its worker.
  */
@@ -24,9 +25,11 @@ import {
   type LambdaCalculus,
   principalWords,
   reductionWords,
+  SYSTEM_F_EXAMPLE,
   TERM_EXAMPLE,
   TYPE_EXAMPLE,
   typedWords,
+  typingOf,
   UNTYPED_EXAMPLE,
   UNTYPED_LINEAR_EXAMPLE,
   untypableWords,
@@ -55,9 +58,39 @@ const calculusOf = (props: { prover: Prover }): LambdaCalculus => {
 /** Before anything is read: what a term is, and a term (and a type) to try. */
 function Setup(props: { prover: Prover }) {
   return (
-    <Show when={isUntyped(calculusOf(props))} fallback={<TypedSetup prover={props.prover} />}>
-      <UntypedSetup prover={props.prover} />
+    <Show
+      when={typingOf(calculusOf(props)) !== "simple"}
+      fallback={<TypedSetup prover={props.prover} />}
+    >
+      <Show when={isUntyped(calculusOf(props))} fallback={<SystemFSetup prover={props.prover} />}>
+        <UntypedSetup prover={props.prover} />
+      </Show>
     </Show>
+  );
+}
+
+/** Before a term of System F is read: what its types add, and a term to try. */
+function SystemFSetup(props: { prover: Prover }) {
+  return (
+    <>
+      <p class="method-verdict">
+        System F adds types that hold for every type: ΛX. M, written /\X. M, has the type ∀X. A when
+        M has the type A, and M [a] uses it at the type a. So ΛX. λx:X. x is the identity of every
+        type, and its type is ∀X. X → X.
+      </p>
+      <p class="method-verdict">
+        Type a term in the field above, every \ with its variable's type and every type it is used
+        at in brackets: System F infers no types. {CALCULUS_SENTENCES[useOf(calculusOf(props))]}
+      </p>
+      <Show when={props.prover.current()?.lambda?.problem}>
+        {(said) => <Why said={said()} class="custom-problem" />}
+      </Show>
+      <p class="row">
+        <button type="button" class="btn" onClick={() => tryText(props.prover, SYSTEM_F_EXAMPLE)}>
+          Try {SYSTEM_F_EXAMPLE}
+        </button>
+      </p>
+    </>
   );
 }
 

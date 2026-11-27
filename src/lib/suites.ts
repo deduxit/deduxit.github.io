@@ -223,6 +223,9 @@ export function markOf(c: Calculus): string {
       untyped: "λ",
       untyped_linear: "λ lin",
       untyped_affine: "λ aff",
+      system_f: "λ2",
+      system_f_linear: "λ2⊸",
+      system_f_affine: "λ2⊸+aff",
     }[c.calculus];
   if (c.suite === "ordinary")
     return isNatural(c)

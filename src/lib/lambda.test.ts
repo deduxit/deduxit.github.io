@@ -7,17 +7,18 @@ import {
   countWords,
   eraseTypes,
   isTerm,
-  isUntyped,
   LAMBDA_CALCULI,
   lambdaState,
   prettyLambda,
   principalWords,
   type Reduction,
   reductionWords,
+  SYSTEM_F_EXAMPLE,
   TERM_EXAMPLE,
   TYPE_EXAMPLE,
   type Typed,
   typedWords,
+  typingOf,
   UNTYPED_EXAMPLE,
   useOf,
 } from "./lambda";
@@ -108,7 +109,19 @@ describe("what the panel says", () => {
     const judged = eraseTypes("x : a, f : a -> b |- f x");
     expect(judged).toBe("x, f |- f x");
     expect(() => deduxit.lambda_read(judged, "untyped", "")).not.toThrow();
-    for (const c of LAMBDA_CALCULI) expect(calculusWith(useOf(c), isUntyped(c))).toBe(c);
+    for (const c of LAMBDA_CALCULI) expect(calculusWith(useOf(c), typingOf(c))).toBe(c);
+  });
+
+  it("checks a term of System F and drops its type abstractions for an untyped calculus", () => {
+    const term = deduxit.lambda_read(SYSTEM_F_EXAMPLE, "system_f", "");
+    const typed = JSON.parse(deduxit.lambda_check(term, "")) as Typed;
+    expect(typedWords(typed).sentence).toMatch(/^Its type is a → a\./);
+    const polymorphic = String.raw`\f:forall X. X -> X. (/\Y. \y:Y. f [Y] y) [a /\ b]`;
+    const erased = eraseTypes(polymorphic);
+    expect(erased).toBe(String.raw`\f. (\y. f y)`);
+    expect(() => deduxit.lambda_read(erased, "untyped", "")).not.toThrow();
+    // A conjunction in a binder's type is no type abstraction.
+    expect(eraseTypes(String.raw`\x:a /\ b. x`)).toBe(String.raw`\x. x`);
   });
 
   it("counts a type's terms in words", () => {

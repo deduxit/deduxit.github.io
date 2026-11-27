@@ -6,7 +6,8 @@
  * Ordinary logic: "Sequent" or "Natural", and classical, intuitionistic or minimal logic (LK, LJ,
  * and LJ without ex falso). Linear logic: classical or intuitionistic, and the single toggles Mix
  * and Affine, and on a net's view how the net is drawn. Modal logic: its system, one of the
- * fifteen from K to S5. Lambda-terms: typed or untyped, and how often a term may use a variable. A change keeps the
+ * fifteen from K to S5. Lambda-terms: simply typed, System F or untyped, and how often a term may
+ * use a variable. A change keeps the
  * proof where its steps hold in the new calculus; where one does not, the new calculus opens
  * beside the proof, which keeps its own.
  */
@@ -18,9 +19,13 @@ import type { Mode } from "../lib/deduxit";
 import {
   CALCULUS_WORDS,
   calculusWith,
-  isUntyped,
+  LAMBDA_TYPINGS,
   LAMBDA_USES,
+  type LambdaTyping,
   type LambdaUse,
+  TYPING_TIPS,
+  TYPING_WORDS,
+  typingOf,
   useOf,
 } from "../lib/lambda";
 import { CONDITION_WORDS, CONDITIONS, closure, SYSTEMS, systemOf, systemWords } from "../lib/modal";
@@ -77,10 +82,10 @@ export function Toggles(props: { prover: Prover; ui: Ui }) {
     const c = calculus();
     return c.suite === "modal" ? c.system : "K";
   };
-  /** Whether the lambda calculus is untyped. */
-  const lambdaUntyped = () => {
+  /** How the lambda calculus types its terms. */
+  const lambdaTyping = (): LambdaTyping => {
     const c = calculus();
-    return c.suite === "lambda" && isUntyped(c.calculus);
+    return c.suite === "lambda" ? typingOf(c.calculus) : "simple";
   };
   /** How often the lambda calculus lets a term use each variable. */
   const lambdaUse = (): LambdaUse => {
@@ -447,22 +452,20 @@ export function Toggles(props: { prover: Prover; ui: Ui }) {
         <Show when={calculus().suite === "lambda"}>
           <Seg
             label="Typing"
-            items={[false, true].map((untyped) => ({
-              name: untyped ? "Untyped" : "Typed",
-              tip: untyped
-                ? "Terms without types, reduced step by step"
-                : "Terms whose every λ names its variable's type",
-              on: lambdaUntyped() === untyped,
-              pick: () => void ask(lambda(calculusWith(lambdaUse(), untyped))),
+            items={LAMBDA_TYPINGS.map((typing) => ({
+              name: TYPING_WORDS[typing],
+              tip: TYPING_TIPS[typing],
+              on: lambdaTyping() === typing,
+              pick: () => void ask(lambda(calculusWith(lambdaUse(), typing))),
             }))}
           />
           <Seg
             label="How often a term may use each variable"
             items={LAMBDA_USES.map((each) => ({
               name: USE_WORDS[each],
-              tip: CALCULUS_WORDS[calculusWith(each, lambdaUntyped())],
+              tip: CALCULUS_WORDS[calculusWith(each, lambdaTyping())],
               on: lambdaUse() === each,
-              pick: () => void ask(lambda(calculusWith(each, lambdaUntyped()))),
+              pick: () => void ask(lambda(calculusWith(each, lambdaTyping()))),
             }))}
           />
         </Show>

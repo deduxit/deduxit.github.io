@@ -4,7 +4,8 @@
 // Lambda-terms on the page: the new tab view's logic opens them, a term typed is checked and its
 // typing derivation drawn, a type typed gets a term found and its terms listed and counted, an
 // ill-typed term says why, and the link keeps the text and the calculus. An untyped term is
-// reduced a step at a time with its next redex marked, and given its most general simple type.
+// reduced a step at a time with its next redex marked, and given its most general simple type. A
+// term of System F is checked and drawn with its type abstractions and applications.
 
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
@@ -48,7 +49,7 @@ test("the page shows nothing of lambda-terms until their logic is chosen", async
     "aria-pressed",
     "true",
   );
-  await expect(page.getByRole("button", { name: "Typed", exact: true })).toHaveAttribute(
+  await expect(page.getByRole("button", { name: "Simply typed", exact: true })).toHaveAttribute(
     "aria-pressed",
     "true",
   );
@@ -124,6 +125,32 @@ test("a term is checked and its typing derivation drawn by natural deduction's r
   await expect(page).toHaveURL(/u=lambda&m=simple/);
   await page.reload();
   await expect(page.locator(".lambda .kw.ok")).toHaveText("Well typed");
+});
+
+test("a term of System F is checked and drawn, and loses its types for an untyped calculus", async ({
+  page,
+}) => {
+  await lambdaTab(page);
+  await (await switches(page)).getByRole("button", { name: "System F" }).click();
+  await read(page, String.raw`(/\X. \x:X. x) [a]`);
+  await expect(page.locator(".lambda .kw.ok")).toHaveText("Well typed");
+  await expect(page.locator(".lambda .method-verdict").first()).toContainText("Its type is a → a.");
+  const drawing = page.locator(".lambda .custom-drawing svg");
+  await expect(drawing.locator("desc")).toContainText("by ∀E from");
+  await expect(drawing.locator("desc")).toContainText("by ∀I from");
+  await expect(viewCell(page)).toHaveAttribute("data-tip", "Lambda-terms, λ2");
+  await expect(page).toHaveURL(/u=lambda&m=system_f\b/);
+  // A λ without its type is refused: System F infers none.
+  await page.getByRole("textbox", { name: "Sequent" }).fill(String.raw`\x. x`);
+  await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
+  await expect(page.locator("#box-problem")).toContainText("infers no types");
+  // Untyped drops the type abstraction, the application and the binder's type.
+  await page.getByRole("textbox", { name: "Sequent" }).fill(String.raw`(/\X. \x:X. x) [a]`);
+  await page.getByRole("textbox", { name: "Sequent" }).press("Enter");
+  await expect(page.locator(".lambda .kw.ok")).toHaveText("Well typed");
+  await (await switches(page)).getByRole("button", { name: "Untyped" }).click();
+  await expect(page.getByRole("textbox", { name: "Sequent" })).toHaveValue(String.raw`(\x. x)`);
+  await expect(page.locator(".lambda .kw.ok")).toHaveText("Well formed");
 });
 
 test("a type's term is found, and its terms listed and counted", async ({ page }) => {
