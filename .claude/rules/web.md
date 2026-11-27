@@ -186,6 +186,20 @@ the page reads.
   session's (`citedLines`), refusing on the page a number no line in force is shown by; both
   drawings come from one session (`rules_draw` with `view.layout`), and Save as writes the
   drawing shown (`rules_export`).
+  **The goal's `?`** (`GoalSteps`' menu, the `nd-menu` group "This goal") holds what the other
+  calculi's goal menu holds: "Close goal" (`rules_close`: deduxit's search proves the goal from
+  the lines in force in LJ, LK or LM and takes the proof rewritten into the rule set step by
+  step, each checked; `Work.closes` records the step counts around it, so Undo takes a close
+  back whole), "Hint" (`rules_hint`, its step in words, `hintWords`, with "Take it", which applies
+  it: `rules_apply` with its `given`, or `rules_assume` where the goal is a line in force), and,
+  where the goal has no proof, "Go back" (undoes steps nearest first until the goal reopened has
+  a proof by `rules_hint`'s verdict). A note at the goal (`.goal-note`) says what the search
+  found (`ordinaryVerdict` of the ordinary outcome). **The marking** asks `rules_hint` of each
+  open goal within `MARK_BUDGET`, once per its calculus, lines and formula (`marks`, a module
+  store), and writes "no proof" on the goal and its button where the verdict is `not_valid`.
+  **The steps list takes `rules_candidates`**: the legal steps as before, then every rule that
+  does not apply as a greyed button (`aria-disabled`) whose press shows deduxit's reason (a
+  `role=note` line), as the rule popover of the other calculi greys its rules.
 - **Modal logic** (deduxit's `modal_…` calls, `src/lib/modal.ts`, `src/islands/Modal.tsx`) is
   the registry's suite `modal`, its parameter `system` (the fifteen names, `K` the default), the
   method `sequent` (the labelled sequent calculus). The new tab view's "Modal logic" chooses it,

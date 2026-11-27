@@ -29,8 +29,11 @@ import type {
 } from "./deduxit";
 import type {
   CustomChecked,
+  CustomHinted,
+  CustomJudged,
   CustomOffered,
   CustomPlayed,
+  CustomSearched,
   CustomSession,
   CustomStep,
   CustomView,
@@ -317,6 +320,28 @@ export function createApi(changed: (pending: number) => void) {
         json<CustomView>("rules_view", JSON.stringify(session), settings),
       rules: (session: CustomSession, goal: number, settings: string) =>
         json<CustomOffered[]>("rules_rules", JSON.stringify(session), goal, settings),
+      /** Every rule with whether its step is legal on the goal, and why not where it is not. */
+      candidates: (session: CustomSession, goal: number, settings: string) =>
+        json<CustomJudged[]>("rules_candidates", JSON.stringify(session), goal, settings),
+      /**
+       * In a natural deduction calculus deduxit ships: the search decides the goal from the lines
+       * in force and takes the proof it finds step by step, each step checked.
+       */
+      close: (session: CustomSession, goal: number, settings: string) =>
+        json<CustomPlayed & CustomSearched & { refused: Failure | null }>(
+          "rules_close",
+          JSON.stringify(session),
+          goal,
+          settings,
+        ),
+      /** The search's hint on a natural deduction goal: the proof's first step, if it found one. */
+      hint: (session: CustomSession, goal: number, settings: string) =>
+        json<CustomSearched & { steps: CustomHinted[] }>(
+          "rules_hint",
+          JSON.stringify(session),
+          goal,
+          settings,
+        ),
       apply: (session: CustomSession, goal: number, step: CustomStep, settings: string) =>
         json<CustomPlayed & { opened: number[] }>(
           "rules_apply",

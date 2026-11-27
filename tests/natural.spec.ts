@@ -150,3 +150,57 @@ test("a change of logic with steps taken opens the new logic beside, and ? prove
     .click();
   await expect(page.locator(".chip")).toHaveCount(2);
 });
+
+/** Opens the `?` menu of the goal shown and presses one of its actions. */
+async function goalAction(page: Page, name: string) {
+  await page.getByRole("button", { name: "?, this goal: its actions" }).click();
+  await page.getByRole("group", { name: "This goal" }).getByRole("button", { name }).click();
+}
+
+test("? closes a goal by the search, and Undo takes the proof back whole", async ({ page }) => {
+  await natural(page);
+  await deduce(page, "a → b, b → c ⊢ a → c");
+  const view = page.getByRole("region", { name: "Natural deduction" });
+  await goalAction(page, "Close goal");
+  await expect(view.locator(".goal-note")).toHaveCount(0);
+  await expect(view.getByRole("status").first()).toContainText("Every goal is closed");
+  await view.getByRole("button", { name: "Check the proof" }).click();
+  await expect(view.getByRole("status").first()).toContainText("Valid in NJ");
+  await view.getByRole("button", { name: "Undo" }).click();
+  await expect(view.getByText("Open goal 1 of 1")).toBeVisible();
+});
+
+test("a hint names the proof's next step, which Take it applies", async ({ page }) => {
+  await natural(page);
+  await deduce(page, "a ∧ b ⊢ b ∧ a");
+  const view = page.getByRole("region", { name: "Natural deduction" });
+  await goalAction(page, "Hint");
+  await expect(view.locator(".hint-line")).toContainText("Apply ∧I.");
+  await view.locator(".hint-line").getByRole("button", { name: "Take it" }).click();
+  await expect(view.getByText("Open goal 1 of 2")).toBeVisible();
+});
+
+test("a rule that does not apply is greyed and says why when pressed", async ({ page }) => {
+  await natural(page);
+  await deduce(page, "a ∧ b ⊢ b ∧ a");
+  const steps = page.getByRole("list", { name: "Steps that apply" });
+  const greyed = steps.getByRole("button", { name: "→I", exact: true });
+  await expect(greyed).toHaveAttribute("aria-disabled", "true");
+  // A greyed rule is aria-disabled, which Playwright will not press unforced; a visitor can.
+  await greyed.click({ force: true });
+  await expect(steps.getByRole("note")).toContainText("→I does not apply.");
+});
+
+test("a goal with no proof is marked, and Go back returns to one that has a proof", async ({
+  page,
+}) => {
+  await natural(page);
+  await deduce(page, "a ⊢ a ∨ b");
+  const view = page.getByRole("region", { name: "Natural deduction" });
+  await customStep(page, "∨I₂");
+  await expect(view.locator(".nd-goal")).toContainText("no proof");
+  await goalAction(page, "Go back");
+  await expect(view.locator(".goal-note")).toContainText("Went back");
+  await expect(view.locator(".nd-goal")).toContainText("a ∨ b");
+  await expect(view.locator(".nd-goal")).not.toContainText("no proof");
+});

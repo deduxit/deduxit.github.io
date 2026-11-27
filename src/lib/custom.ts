@@ -9,6 +9,9 @@
  * themselves.
  */
 
+import type { Failure } from "./deduxit";
+import type { OrdinaryOutcome } from "./ordinary";
+
 /** The built-in calculi a visitor starts from, by deduxit's names, the first the default. */
 export const STARTERS = [
   { name: "LJ", words: "LJ, Gentzen's intuitionistic sequent calculus" },
@@ -100,6 +103,33 @@ export interface CustomOffered {
   readonly rule: string;
   readonly at: readonly number[];
   readonly needs: readonly string[];
+}
+
+/**
+ * A rule with whether its step is legal on the goal as it stands, as `rules_candidates` answers
+ * it: once per choice of members where it is legal (`needs` the names a value must be given
+ * for), once with `at` empty and the `refusal` `rules_apply` would throw where it is not.
+ */
+export interface CustomJudged {
+  readonly rule: string;
+  readonly at: readonly number[];
+  readonly status: "applies" | "needs_input" | "refused";
+  readonly needs?: readonly string[];
+  readonly refusal?: Failure;
+}
+
+/**
+ * What the search on a natural deduction goal found (`rules_close`, `rules_hint`): the ordinary
+ * outcome of the goal as a sequent, the lines in force its hypotheses.
+ */
+export interface CustomSearched {
+  readonly outcome: OrdinaryOutcome;
+}
+
+/** A hint's step: a rule to apply with what it needs given, or `null` to close by a line. */
+export interface CustomHinted {
+  readonly rule: string | null;
+  readonly given: Readonly<Record<string, string>>;
 }
 
 /** A step as `rules_apply` takes it. */
